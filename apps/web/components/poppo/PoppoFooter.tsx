@@ -30,8 +30,8 @@ export const PoppoFooter: React.FC = () => {
         POPPO LIVE
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 pb-12 border-b border-gray-100">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-16 pb-8 sm:pb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-8 pb-10 border-b border-gray-100">
           
           {/* Brand & Mission Column (Col 1 & 2 on wide screens) */}
           <div className="lg:col-span-2 space-y-5">

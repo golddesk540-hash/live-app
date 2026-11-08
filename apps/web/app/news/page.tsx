@@ -81,11 +81,34 @@ export default function NewsCenterPage() {
           </div>
         </div>
 
+        {/* Mobile Horizontal Category Bar (Visible on mobile/tablet) */}
+        <div className="lg:hidden flex items-center gap-2 overflow-x-auto pb-3 pt-6 border-b border-gray-100 scrollbar-none">
+          {categories.map((cat) => {
+            const isActive = activeCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => {
+                  setActiveCategory(cat.id);
+                  setCurrentPage(1);
+                }}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0 transition-all ${
+                  isActive
+                    ? 'bg-[#5653FE] text-white shadow-xs'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {cat.label}
+              </button>
+            );
+          })}
+        </div>
+
         {/* 2-Column Body: Left Category Sidebar + Right 2-Col Article Grid (Matching 04_news_page.png) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 pt-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 pt-6 lg:pt-10">
           
-          {/* Left Category Sidebar */}
-          <aside className="lg:col-span-3 space-y-2">
+          {/* Left Category Sidebar (Desktop Only) */}
+          <aside className="hidden lg:block lg:col-span-3 space-y-2">
             <div className="text-xs font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">
               {isUr ? 'زمرہ جات' : 'Categories'}
             </div>

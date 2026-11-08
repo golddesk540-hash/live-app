@@ -139,10 +139,10 @@ export default function PoppoCoinRechargePage() {
       </header>
 
       {/* 2. RECHARGE CONTAINER (Matching 10_coin_recharge_user_id_page.png) */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
+      <main className="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-6 py-6 sm:py-10 space-y-5 sm:space-y-8">
         
         {/* Step 1: User ID Verification Section */}
-        <section className="bg-[#121A30] rounded-3xl p-6 sm:p-8 border border-gray-800 shadow-xl space-y-4">
+        <section className="bg-[#121A30] rounded-2xl sm:rounded-3xl p-4 sm:p-7 border border-gray-800 shadow-xl space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-[#5653FE] text-white flex items-center justify-center text-xs font-bold">
@@ -223,7 +223,7 @@ export default function PoppoCoinRechargePage() {
         </section>
 
         {/* Step 2: Country / Region & Payment Channel */}
-        <section className="bg-[#121A30] rounded-3xl p-6 sm:p-8 border border-gray-800 shadow-xl space-y-6">
+        <section className="bg-[#121A30] rounded-2xl sm:rounded-3xl p-4 sm:p-7 border border-gray-800 shadow-xl space-y-5">
           <div className="flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-[#5653FE] text-white flex items-center justify-center text-xs font-bold">
               2
@@ -283,7 +283,7 @@ export default function PoppoCoinRechargePage() {
         </section>
 
         {/* Step 3: Coin Packages Grid (Matching 10_coin_recharge_user_id_page.png) */}
-        <section className="bg-[#121A30] rounded-3xl p-6 sm:p-8 border border-gray-800 shadow-xl space-y-6">
+        <section className="bg-[#121A30] rounded-2xl sm:rounded-3xl p-4 sm:p-7 border border-gray-800 shadow-xl space-y-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-[#5653FE] text-white flex items-center justify-center text-xs font-bold">
@@ -293,13 +293,13 @@ export default function PoppoCoinRechargePage() {
                 {isUr ? 'کوائن پیکج منتخب کریں' : 'Select Coin Amount'}
               </h2>
             </div>
-            <span className="text-xs text-amber-400 font-semibold flex items-center gap-1">
+            <span className="text-[11px] sm:text-xs text-amber-400 font-semibold flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5" />
               <span>Official 0% Extra Fee</span>
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4">
             {coinPackages.map((pkg) => {
               const isSelected = selectedPackage.id === pkg.id;
               const convertedPrice = (pkg.usdPrice * selectedCountry.rate).toFixed(
@@ -310,7 +310,7 @@ export default function PoppoCoinRechargePage() {
                 <div
                   key={pkg.id}
                   onClick={() => setSelectedPackage(pkg)}
-                  className={`relative p-4 sm:p-5 rounded-2xl cursor-pointer border transition-all duration-200 flex flex-col justify-between ${
+                  className={`relative p-3.5 sm:p-5 rounded-xl sm:rounded-2xl cursor-pointer border transition-all duration-200 flex flex-col justify-between ${
                     isSelected
                       ? 'bg-gradient-to-b from-[#5653FE]/20 to-[#121A30] border-[#5653FE] ring-2 ring-[#5653FE]/50 shadow-lg shadow-purple-500/20'
                       : 'bg-[#0A0F1D] border-gray-800 hover:border-gray-700 hover:bg-[#0E1528]'
@@ -363,7 +363,7 @@ export default function PoppoCoinRechargePage() {
         </section>
 
         {/* Step 4: Checkout Summary & Agreement Bar (Matching 10_coin_recharge_user_id_page.png) */}
-        <section className="bg-[#121A30] rounded-3xl p-6 sm:p-8 border border-gray-800 shadow-xl space-y-6">
+        <section className="bg-[#121A30] rounded-2xl sm:rounded-3xl p-4 sm:p-7 border border-gray-800 shadow-xl space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-800">
             <div>
               <div className="text-xs text-gray-400">Total Purchase:</div>

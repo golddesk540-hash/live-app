@@ -236,107 +236,80 @@ export default function PoppoLiveExplorePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] text-gray-900 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#F8F9FA] text-gray-900 flex flex-col font-sans pb-16 lg:pb-0">
       
-      {/* 1. TOP HEADER (Matching 01_live_explore_web_app.png) */}
-      <header className="sticky top-0 z-40 bg-white border-b border-gray-200 h-16 sm:h-18 px-4 sm:px-6 flex items-center justify-between gap-4">
+      {/* 1. TOP HEADER (Responsive for mobile & desktop) */}
+      <header className="sticky top-0 z-40 bg-white border-b border-gray-200 h-14 sm:h-16 px-3 sm:px-6 flex items-center justify-between gap-2 sm:gap-4">
         {/* Left: Poppo Logo */}
-        <div className="flex items-center gap-6">
-          <PoppoLogo />
+        <div className="flex items-center gap-3 sm:gap-6 shrink-0">
+          <PoppoLogo size="sm" className="sm:hidden" />
+          <PoppoLogo size="md" className="hidden sm:inline-flex" />
         </div>
 
-        {/* Center: Search Bar */}
-        <div className="flex-1 max-w-xl mx-4 hidden md:block">
+        {/* Center: Search Bar (Desktop) */}
+        <div className="flex-1 max-w-lg mx-2 hidden md:block">
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isUr ? 'اپنی پسندیدہ لائیو براڈکاسٹ تلاش کریں...' : 'Search for live content you like'}
-              className="w-full pl-10 pr-4 py-2 bg-gray-100 hover:bg-gray-150 focus:bg-white rounded-full text-sm border border-transparent focus:border-[#5653FE] focus:ring-2 focus:ring-[#5653FE]/20 outline-none transition-all"
+              placeholder={isUr ? 'لائیو براڈکاسٹ تلاش کریں...' : 'Search for live content you like'}
+              className="w-full pl-9 pr-4 py-1.5 bg-gray-100 hover:bg-gray-150 focus:bg-white rounded-full text-xs sm:text-sm border border-transparent focus:border-[#5653FE] outline-none transition-all"
             />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
-              >
-                ✕
-              </button>
-            )}
           </div>
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2 sm:gap-4 text-sm font-medium">
+        <div className="flex items-center gap-1.5 sm:gap-3 text-xs sm:text-sm font-medium">
           {/* Get Coins Link */}
           <Link
             href="/recharge"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-amber-50 text-gray-800 hover:text-amber-600 transition-colors"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-gray-800 hover:text-amber-700 transition-colors border border-amber-200/60"
           >
-            <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-white text-[10px] font-black shadow-xs">
+            <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-white text-[9px] font-black">
               💰
             </div>
-            <span className="hidden sm:inline font-semibold">{isUr ? 'کوائنز حاصل کریں' : 'Get Coins'}</span>
-          </Link>
-
-          {/* Get The App */}
-          <Link
-            href="/download"
-            className="hidden lg:flex items-center gap-1.5 text-gray-600 hover:text-[#5653FE] transition-colors"
-          >
-            <Download className="w-4 h-4 text-[#5653FE]" />
-            <span>{isUr ? 'ایپ ڈاؤن لوڈ' : 'Get the App'}</span>
-          </Link>
-
-          {/* Web Desktop Link */}
-          <Link
-            href="/"
-            className="hidden xl:flex items-center gap-1 text-gray-500 hover:text-gray-800 transition-colors text-xs"
-          >
-            <Laptop className="w-3.5 h-3.5" />
-            <span>web desktop</span>
+            <span className="font-semibold text-xs">{isUr ? 'کوائنز' : 'Coins'}</span>
           </Link>
 
           {/* Language Toggle */}
           <button
             onClick={toggleLang}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-gray-700 hover:bg-gray-100 rounded-full transition-colors border border-gray-200"
+            className="flex items-center gap-1 px-2 py-1 text-xs text-gray-700 hover:bg-gray-100 rounded-full transition-colors border border-gray-200"
           >
             <Globe className="w-3.5 h-3.5 text-[#5653FE]" />
-            <span>{isUr ? 'اردو' : 'English'}</span>
+            <span className="hidden xs:inline">{isUr ? 'اردو' : 'English'}</span>
           </button>
 
-          {/* Login Button (Poppo Purple Pill) */}
+          {/* Login Button */}
           <Link
             href="/login"
-            className="px-5 py-2 rounded-full bg-[#5653FE] hover:bg-[#433ffd] text-white font-semibold text-xs sm:text-sm shadow-sm transition-all transform hover:scale-[1.02]"
+            className="px-3.5 sm:px-5 py-1.5 rounded-full bg-[#5653FE] hover:bg-[#433ffd] text-white font-semibold text-xs shadow-sm transition-all"
           >
             {isUr ? 'لاگ ان' : 'Log in'}
           </Link>
         </div>
       </header>
 
-      {/* 2. BODY LAYOUT: LEFT SIDEBAR + MAIN LIVE STREAM CONTENT */}
+      {/* 2. BODY LAYOUT: LEFT SIDEBAR (Desktop) + MAIN CONTENT */}
       <div className="flex-1 flex max-w-[1920px] w-full mx-auto">
         
-        {/* LEFT SIDEBAR (Matching 01_live_explore_web_app.png) */}
-        <aside className="w-16 sm:w-20 lg:w-60 bg-white border-r border-gray-200 flex flex-col justify-between shrink-0 p-3 sm:p-4">
-          <div className="space-y-6">
+        {/* LEFT SIDEBAR (Desktop only - hidden on mobile to maximize viewport) */}
+        <aside className="hidden lg:flex w-56 xl:w-60 bg-white border-r border-gray-200 flex-col justify-between shrink-0 p-4">
+          <div className="space-y-5">
             
-            {/* Get The App Purple Action Button (Desktop Only) */}
-            <div className="hidden lg:block">
-              <Link
-                href="/download"
-                className="w-full py-2.5 px-4 bg-[#5653FE] hover:bg-[#433ffd] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all"
-              >
-                <Download className="w-4 h-4" />
-                <span>{isUr ? 'ایپ حاصل کریں' : 'Get the App'}</span>
-              </Link>
-            </div>
+            {/* Get The App Action */}
+            <Link
+              href="/download"
+              className="w-full py-2 px-3 bg-[#5653FE] hover:bg-[#433ffd] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition-all"
+            >
+              <Download className="w-4 h-4" />
+              <span>{isUr ? 'ایپ حاصل کریں' : 'Get the App'}</span>
+            </Link>
 
             {/* Navigation Menu */}
-            <nav className="space-y-1.5">
+            <nav className="space-y-1">
               {[
                 { name: isUr ? 'لائیو' : 'Live', icon: Radio, active: true, href: '/live', badge: 'LIVE' },
                 { name: isUr ? 'پارٹی روم' : 'Party', icon: Users, active: false, href: '/live', badge: null },
@@ -347,17 +320,16 @@ export default function PoppoLiveExplorePage() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                  className={`flex items-center gap-3 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
                     item.active
                       ? 'bg-purple-50 text-[#5653FE]'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  } justify-center lg:justify-start`}
-                  title={item.name}
+                  }`}
                 >
-                  <item.icon className={`w-5 h-5 shrink-0 ${item.active ? 'text-[#5653FE]' : 'text-gray-500'}`} />
-                  <span className="hidden lg:inline">{item.name}</span>
+                  <item.icon className={`w-4 h-4 shrink-0 ${item.active ? 'text-[#5653FE]' : 'text-gray-500'}`} />
+                  <span>{item.name}</span>
                   {item.badge && (
-                    <span className="hidden lg:inline ml-auto text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-500 text-white animate-pulse">
+                    <span className="ml-auto text-[9px] font-black px-1.5 py-0.5 rounded bg-rose-500 text-white animate-live-dot">
                       {item.badge}
                     </span>
                   )}
@@ -366,38 +338,51 @@ export default function PoppoLiveExplorePage() {
             </nav>
           </div>
 
-          {/* Bottom Sidebar QR Code Box */}
-          <div className="hidden lg:block p-3 rounded-xl border border-gray-100 bg-gray-50 text-center">
-            <div className="w-20 h-20 mx-auto bg-white p-1 rounded-lg border border-gray-200 mb-2 flex items-center justify-center">
+          {/* Bottom Sidebar QR Box */}
+          <div className="p-3 rounded-xl border border-gray-100 bg-gray-50 text-center">
+            <div className="w-16 h-16 mx-auto bg-white p-1 rounded-lg border border-gray-200 mb-1.5 flex items-center justify-center">
               <div className="w-full h-full bg-gradient-to-br from-[#5653FE] to-indigo-950 rounded flex flex-col justify-between p-1">
                 <div className="flex justify-between">
-                  <div className="w-2.5 h-2.5 bg-white rounded-xs"></div>
-                  <div className="w-2.5 h-2.5 bg-white rounded-xs"></div>
+                  <div className="w-2 h-2 bg-white rounded-xs"></div>
+                  <div className="w-2 h-2 bg-white rounded-xs"></div>
                 </div>
-                <div className="w-1.5 h-1.5 bg-yellow-300 rounded-full mx-auto"></div>
+                <div className="w-1 h-1 bg-yellow-300 rounded-full mx-auto"></div>
                 <div className="flex justify-between">
-                  <div className="w-2.5 h-2.5 bg-white rounded-xs"></div>
+                  <div className="w-2 h-2 bg-white rounded-xs"></div>
                   <div className="w-1 h-1 bg-white"></div>
                 </div>
               </div>
             </div>
-            <p className="text-[11px] font-bold text-gray-800">Scan to watch on mobile</p>
-            <p className="text-[9px] text-gray-400">Available on iOS & Android</p>
+            <p className="text-[10px] font-bold text-gray-800">Scan for Mobile HD</p>
           </div>
         </aside>
 
         {/* MAIN FEED AREA */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <main className="flex-1 p-3 sm:p-5 lg:p-7 overflow-y-auto">
           
-          {/* Country / Region Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-none mb-6">
+          {/* Mobile Search Bar (Visible on mobile/tablet) */}
+          <div className="md:hidden mb-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search live streams..."
+                className="w-full pl-8 pr-3 py-1.5 bg-white rounded-full text-xs border border-gray-200 focus:border-[#5653FE] outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Country / Region Filter Pills: Smooth swipe on mobile */}
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-3 scrollbar-none mb-3 sm:mb-5">
             {countries.map((c) => (
               <button
                 key={c.id}
                 onClick={() => setActiveTab(c.id)}
-                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold flex items-center gap-1.5 shrink-0 transition-all ${
+                className={`px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 shrink-0 transition-all ${
                   activeTab === c.id
-                    ? 'bg-[#5653FE] text-white shadow-md shadow-purple-500/20'
+                    ? 'bg-[#5653FE] text-white shadow-xs'
                     : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200'
                 }`}
               >
@@ -405,36 +390,15 @@ export default function PoppoLiveExplorePage() {
                 <span>{c.label}</span>
               </button>
             ))}
-
-            <div className="ml-auto pl-2 shrink-0">
-              <button className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 px-3 py-2 bg-white rounded-full border border-gray-200">
-                <span>{isUr ? 'مزید ممالک' : 'More'}</span>
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
-            </div>
           </div>
 
-          {/* Mobile Search Bar if viewport < md */}
-          <div className="md:hidden mb-4">
-            <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search live streams..."
-                className="w-full pl-10 pr-4 py-2 bg-white rounded-full text-sm border border-gray-200 focus:border-[#5653FE] outline-none"
-              />
-            </div>
-          </div>
-
-          {/* STREAM CARDS GRID (4-COLUMNS DESKTOP MATCHING SCREENSHOT) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          {/* STREAM CARDS GRID (2 cols on mobile, 3 on tablet, 4 on desktop) */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4 lg:gap-6">
             {filteredStreams.map((stream) => (
               <div
                 key={stream.id}
                 onClick={() => setSelectedStream(stream)}
-                className="group relative bg-white rounded-2xl overflow-hidden border border-gray-150 hover:border-[#5653FE]/50 hover:shadow-xl hover:shadow-purple-500/10 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer flex flex-col"
+                className="group relative bg-white rounded-2xl overflow-hidden border border-gray-150 hover:border-[#5653FE]/50 hover:shadow-xl hover:shadow-purple-500/10 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col"
               >
                 {/* Thumbnail Image Container */}
                 <div className="relative aspect-[3/4] w-full overflow-hidden bg-gray-900">
@@ -448,77 +412,67 @@ export default function PoppoLiveExplorePage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
 
                   {/* Top-Right: Audio Waves & Viewer Count */}
-                  <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 border border-white/10 shadow-sm">
-                    {/* Animated audio wave bars */}
-                    <div className="flex items-center gap-0.5 h-3">
-                      <span className="w-0.5 bg-[#5653FE] animate-wave-bar-1"></span>
-                      <span className="w-0.5 bg-pink-400 animate-wave-bar-2"></span>
-                      <span className="w-0.5 bg-yellow-400 animate-wave-bar-3"></span>
-                      <span className="w-0.5 bg-cyan-400 animate-wave-bar-4"></span>
+                  <div className="absolute top-2 sm:top-2.5 right-2 sm:right-2.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] sm:text-xs font-semibold flex items-center gap-1 border border-white/10 shadow-xs">
+                    <div className="flex items-center gap-0.5 h-2.5">
+                      <span className="w-0.5 bg-[#5653FE] animate-wave-bar-1" />
+                      <span className="w-0.5 bg-pink-400 animate-wave-bar-2" />
+                      <span className="w-0.5 bg-yellow-400 animate-wave-bar-3" />
                     </div>
                     <span>{stream.viewers}</span>
                   </div>
 
-                  {/* Top-Left: Country Flag + Tag Badge */}
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                    <span className="text-base drop-shadow-sm">{stream.flag}</span>
-                    <span className="px-2 py-0.5 rounded-md bg-black/50 backdrop-blur-md text-white text-[11px] font-medium border border-white/10">
+                  {/* Top-Left: Country Flag */}
+                  <div className="absolute top-2 sm:top-2.5 left-2 sm:left-2.5 flex items-center gap-1">
+                    <span className="text-sm sm:text-base drop-shadow-sm">{stream.flag}</span>
+                    <span className="hidden xs:inline-block px-1.5 py-0.5 rounded bg-black/50 backdrop-blur-md text-white text-[9px] sm:text-[10px] font-medium border border-white/10">
                       {stream.tag}
                     </span>
                   </div>
 
                   {/* Middle Badge: PK Battle / Party Room */}
                   {stream.isPk && (
-                    <div className="absolute top-1/2 left-3 -translate-y-1/2 flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-red-600 via-rose-500 to-blue-600 text-white text-[11px] font-black shadow-lg shadow-rose-600/30">
-                      <Swords className="w-3 h-3" />
-                      <span>PK 1v1</span>
+                    <div className="absolute top-1/2 left-2 -translate-y-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-red-600 to-blue-600 text-white text-[9px] sm:text-[10px] font-black shadow-md">
+                      <Swords className="w-2.5 h-2.5" />
+                      <span>PK</span>
                     </div>
                   )}
 
                   {stream.isParty && (
-                    <div className="absolute top-1/2 left-3 -translate-y-1/2 flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[11px] font-black shadow-lg">
-                      <Users className="w-3 h-3" />
+                    <div className="absolute top-1/2 left-2 -translate-y-1/2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[9px] sm:text-[10px] font-black shadow-md">
+                      <Users className="w-2.5 h-2.5" />
                       <span>{stream.partySeats}</span>
                     </div>
                   )}
 
-                  {/* Hover Quick Action Play Icon */}
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
-                    <div className="w-14 h-14 rounded-full bg-[#5653FE]/90 text-white flex items-center justify-center shadow-lg transform scale-75 group-hover:scale-100 transition-transform">
-                      <Radio className="w-6 h-6 animate-pulse" />
-                    </div>
-                  </div>
-
-                  {/* Bottom Stream Title Inside Image */}
-                  <div className="absolute bottom-3 left-3 right-3 text-white">
-                    <p className="text-xs font-semibold line-clamp-1 drop-shadow-md">
+                  {/* Stream Title inside image */}
+                  <div className="absolute bottom-2 left-2 right-2 text-white">
+                    <p className="text-[11px] sm:text-xs font-semibold line-clamp-1 drop-shadow-md">
                       {stream.title}
                     </p>
                   </div>
                 </div>
 
                 {/* Card Info Footer */}
-                <div className="p-3.5 bg-white flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5 min-w-0">
+                <div className="p-2 sm:p-3 bg-white flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
                     <div className="relative shrink-0">
                       <img
                         src={stream.avatar}
                         alt={stream.name}
-                        className="w-10 h-10 rounded-full object-cover border-2 border-[#5653FE]"
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-[#5653FE]"
                       />
-                      <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white"></span>
+                      <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 border border-white" />
                     </div>
                     <div className="min-w-0">
-                      <h4 className="text-sm font-bold text-gray-900 truncate group-hover:text-[#5653FE] transition-colors">
+                      <h4 className="text-xs sm:text-sm font-bold text-gray-900 truncate group-hover:text-[#5653FE] transition-colors leading-tight">
                         {stream.name}
                       </h4>
-                      <p className="text-[11px] text-gray-400">ID: {stream.userId}</p>
+                      <p className="text-[10px] text-gray-400 font-mono truncate">ID: {stream.userId}</p>
                     </div>
                   </div>
 
-                  {/* Follow / Enter mini button */}
-                  <div className="shrink-0">
-                    <span className="text-xs font-bold text-[#5653FE] bg-purple-50 group-hover:bg-[#5653FE] group-hover:text-white px-2.5 py-1 rounded-full transition-colors">
+                  <div className="shrink-0 hidden xs:block">
+                    <span className="text-[10px] sm:text-xs font-bold text-[#5653FE] bg-purple-50 group-hover:bg-[#5653FE] group-hover:text-white px-2 py-0.5 rounded-full transition-colors">
                       Join
                     </span>
                   </div>
@@ -527,40 +481,74 @@ export default function PoppoLiveExplorePage() {
             ))}
           </div>
 
-          {/* Floating Scroll To Top & Feedback Action */}
-          <div className="fixed bottom-8 right-8 flex flex-col gap-3 z-30">
+          {/* Floating Action Button */}
+          <div className="fixed bottom-20 lg:bottom-8 right-4 sm:right-8 flex flex-col gap-2 z-30">
             <button
               onClick={scrollToTop}
               title="Scroll to top"
-              className="w-11 h-11 rounded-full bg-white text-gray-700 hover:text-[#5653FE] hover:bg-gray-50 border border-gray-200 shadow-lg flex items-center justify-center transition-all"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white text-gray-700 hover:text-[#5653FE] hover:bg-gray-50 border border-gray-200 shadow-lg flex items-center justify-center transition-all"
             >
-              <ChevronUp className="w-5 h-5" />
+              <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <Link
-              href="/contact"
-              title="Customer Support"
-              className="w-11 h-11 rounded-full bg-[#5653FE] text-white hover:bg-[#433ffd] shadow-lg shadow-purple-500/30 flex items-center justify-center transition-all"
-            >
-              <HelpCircle className="w-5 h-5" />
-            </Link>
           </div>
         </main>
       </div>
 
-      {/* 3. INTERACTIVE LIVE ROOM PREVIEW MODAL */}
+      {/* 3. MOBILE BOTTOM NAVIGATION BAR (Visible on mobile/tablet) */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-gray-200 py-1 px-4 flex items-center justify-around shadow-lg">
+        <Link
+          href="/live"
+          className="flex flex-col items-center gap-0.5 py-1 text-[#5653FE] font-bold text-[10px]"
+        >
+          <Radio className="w-5 h-5 text-[#5653FE]" />
+          <span>Live</span>
+        </Link>
+        <Link
+          href="/live"
+          className="flex flex-col items-center gap-0.5 py-1 text-gray-600 hover:text-gray-900 font-medium text-[10px]"
+        >
+          <Users className="w-5 h-5" />
+          <span>Party</span>
+        </Link>
+        <Link
+          href="/recharge"
+          className="flex flex-col items-center gap-0.5 py-1 text-amber-600 font-bold text-[10px]"
+        >
+          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-white text-xs shadow-xs">
+            💰
+          </div>
+          <span>Coins</span>
+        </Link>
+        <Link
+          href="/news"
+          className="flex flex-col items-center gap-0.5 py-1 text-gray-600 hover:text-gray-900 font-medium text-[10px]"
+        >
+          <Sparkles className="w-5 h-5" />
+          <span>News</span>
+        </Link>
+        <Link
+          href="/login"
+          className="flex flex-col items-center gap-0.5 py-1 text-gray-600 hover:text-gray-900 font-medium text-[10px]"
+        >
+          <User className="w-5 h-5" />
+          <span>Profile</span>
+        </Link>
+      </nav>
+
+      {/* 4. INTERACTIVE LIVE ROOM PREVIEW MODAL */}
       {selectedStream && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="relative bg-gray-950 text-white rounded-3xl overflow-hidden max-w-4xl w-full max-h-[90vh] flex flex-col lg:flex-row shadow-2xl border border-white/10">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+          <div className="relative bg-gray-950 text-white rounded-2xl sm:rounded-3xl overflow-hidden max-w-4xl w-full max-h-[92vh] flex flex-col lg:flex-row shadow-2xl border border-white/10">
             {/* Close Button */}
             <button
               onClick={() => setSelectedStream(null)}
-              className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center border border-white/20 transition-all"
+              className="absolute top-3 right-3 z-30 w-8 h-8 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center border border-white/20 transition-all"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
             {/* Video Player Canvas (Left) */}
-            <div className="relative flex-1 bg-black flex items-center justify-center min-h-[350px] lg:min-h-[550px] overflow-hidden">
+            <div className="relative flex-1 bg-black flex items-center justify-center min-h-[260px] sm:min-h-[360px] lg:min-h-[500px] overflow-hidden">
               <img
                 src={selectedStream.cover}
                 alt={selectedStream.name}
@@ -569,37 +557,37 @@ export default function PoppoLiveExplorePage() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/60" />
 
               {/* Host Tag on Top Left */}
-              <div className="absolute top-4 left-4 flex items-center gap-3 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+              <div className="absolute top-3 left-3 flex items-center gap-2 bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10">
                 <img
                   src={selectedStream.avatar}
                   alt={selectedStream.name}
-                  className="w-8 h-8 rounded-full border border-purple-400"
+                  className="w-6 h-6 rounded-full border border-purple-400"
                 />
                 <div>
-                  <div className="text-xs font-bold leading-tight">{selectedStream.name}</div>
-                  <div className="text-[10px] text-gray-300">ID: {selectedStream.userId}</div>
+                  <div className="text-[11px] font-bold leading-tight">{selectedStream.name}</div>
+                  <div className="text-[9px] text-gray-300">ID: {selectedStream.userId}</div>
                 </div>
-                <button className="ml-2 px-3 py-1 rounded-full bg-[#5653FE] text-white text-[11px] font-bold">
+                <button className="ml-1.5 px-2 py-0.5 rounded-full bg-[#5653FE] text-white text-[10px] font-bold">
                   + Follow
                 </button>
               </div>
 
               {/* Live Status Animation */}
-              <div className="absolute bottom-6 left-6 right-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-rose-400">Live Streaming</span>
-                  <span className="text-xs text-gray-300">• {selectedStream.viewers} watching</span>
+              <div className="absolute bottom-4 left-4 right-4">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-live-dot"></span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400">Live Streaming</span>
+                  <span className="text-[10px] text-gray-300">• {selectedStream.viewers} watching</span>
                 </div>
-                <h3 className="text-lg font-bold text-white mb-2">{selectedStream.title}</h3>
+                <h3 className="text-sm sm:text-base font-bold text-white mb-2 line-clamp-1">{selectedStream.title}</h3>
 
                 {/* Quick Interactive Gifts Bar */}
-                <div className="flex items-center gap-2 pt-2 border-t border-white/10">
-                  {['🌹 Rose (1 Coin)', '🚀 Rocket (100)', '👑 Crown (500)', '🏎️ Sports Car (1,000)'].map((gift) => (
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  {['🌹 Rose', '🚀 Rocket', '👑 Crown', '🏎️ Car'].map((gift) => (
                     <Link
                       key={gift}
                       href="/recharge"
-                      className="px-2.5 py-1 bg-white/10 hover:bg-[#5653FE] rounded-lg text-xs font-medium backdrop-blur-md transition-colors"
+                      className="px-2 py-0.5 bg-white/15 hover:bg-[#5653FE] rounded-lg text-[10px] font-medium backdrop-blur-md transition-colors shrink-0"
                     >
                       {gift}
                     </Link>
@@ -609,63 +597,53 @@ export default function PoppoLiveExplorePage() {
             </div>
 
             {/* Chat & Interaction Sidebar (Right) */}
-            <div className="w-full lg:w-80 bg-gray-900 border-l border-white/10 flex flex-col justify-between p-4">
+            <div className="w-full lg:w-72 bg-gray-900 border-t lg:border-t-0 lg:border-l border-white/10 flex flex-col justify-between p-3 sm:p-4 max-h-[220px] lg:max-h-none">
               <div>
-                <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
-                  <h4 className="text-sm font-bold flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-[#5653FE]" />
+                <div className="flex items-center justify-between pb-2 border-b border-white/10 mb-2">
+                  <h4 className="text-xs font-bold flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5 text-[#5653FE]" />
                     <span>Live Room Chat</span>
                   </h4>
-                  <span className="text-[10px] text-emerald-400 font-semibold">● Realtime</span>
+                  <span className="text-[9px] text-emerald-400 font-semibold">● Realtime</span>
                 </div>
 
-                <div className="space-y-2.5 max-h-[300px] overflow-y-auto text-xs pr-1">
-                  <div className="p-2 rounded bg-purple-950/40 border border-purple-800/40 text-purple-200">
+                <div className="space-y-1.5 max-h-[110px] lg:max-h-[260px] overflow-y-auto text-[11px] pr-1">
+                  <div className="p-1.5 rounded bg-purple-950/40 border border-purple-800/40 text-purple-200 text-[10px]">
                     <span className="font-bold">System: </span>
-                    <span>Welcome to {selectedStream.name}'s room! Please respect Poppo Community Rules.</span>
+                    <span>Welcome to {selectedStream.name}'s room! Please respect rules.</span>
                   </div>
                   <div className="text-gray-300">
-                    <span className="font-bold text-amber-400">VIP_Alex: </span>
-                    <span>Hello from Philippines! 🇵🇭 Amazing voice!</span>
+                    <span className="font-bold text-amber-400">Alex_PH: </span>
+                    <span>Hello from Philippines! 🇵🇭</span>
                   </div>
                   <div className="text-gray-300">
-                    <span className="font-bold text-pink-400">Star_Host_99: </span>
-                    <span>Sent 10x Roses 🌹🌹🌹</span>
+                    <span className="font-bold text-pink-400">Host_Star: </span>
+                    <span>Sent 10x Roses 🌹</span>
                   </div>
                   <div className="text-gray-300">
-                    <span className="font-bold text-blue-400">Rana_Pk: </span>
-                    <span>Hit the PK target today! Zabardast! 🔥</span>
+                    <span className="font-bold text-blue-400">Farhan_Pk: </span>
+                    <span>Let's win this round! 🔥</span>
                   </div>
                 </div>
               </div>
 
-              {/* Chat Input & Download Prompt */}
-              <div className="pt-4 border-t border-white/10 space-y-3">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    placeholder="Log in to send comments..."
-                    readOnly
-                    className="flex-1 bg-gray-800 rounded-full px-3.5 py-2 text-xs text-gray-400 border border-white/10 cursor-pointer"
-                    onClick={() => {
-                      window.location.href = '/login';
-                    }}
-                  />
-                  <Link
-                    href="/login"
-                    className="w-8 h-8 rounded-full bg-[#5653FE] text-white flex items-center justify-center shrink-0"
-                  >
-                    <Send className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-                <div className="text-center">
-                  <Link
-                    href="/download"
-                    className="text-[11px] text-[#5653FE] hover:underline font-semibold"
-                  >
-                    Download App for full HD streaming & Party Seats →
-                  </Link>
-                </div>
+              {/* Chat Input */}
+              <div className="pt-2 border-t border-white/10 flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Say something..."
+                  readOnly
+                  className="flex-1 bg-gray-800 rounded-full px-3 py-1.5 text-[10px] text-gray-400 border border-white/10 cursor-pointer"
+                  onClick={() => {
+                    window.location.href = '/login';
+                  }}
+                />
+                <Link
+                  href="/login"
+                  className="w-7 h-7 rounded-full bg-[#5653FE] text-white flex items-center justify-center shrink-0"
+                >
+                  <Send className="w-3 h-3" />
+                </Link>
               </div>
             </div>
           </div>

@@ -76,11 +76,32 @@ export const PoppoPolicyLayout: React.FC<PoppoPolicyLayoutProps> = ({
     >
       <PoppoHeader />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 xl:gap-14">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
+        
+        {/* Mobile Horizontal Policy Tabs (Visible on mobile & tablet) */}
+        <div className="lg:hidden flex items-center gap-2 overflow-x-auto pb-4 mb-6 border-b border-gray-150 scrollbar-none">
+          {policyNavItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.id}
+                href={item.href}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0 transition-all ${
+                  isActive
+                    ? 'bg-[#5653FE] text-white shadow-xs'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-14">
           
-          {/* LEFT COLUMN: Main Policy Document Content (70% width) */}
-          <div className="lg:col-span-8 order-2 lg:order-1">
+          {/* LEFT COLUMN: Main Policy Document Content */}
+          <div className="lg:col-span-8">
             {/* Document Header */}
             <div className="pb-8 border-b border-gray-150 mb-8">
               <span className="text-[11px] font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
@@ -120,8 +141,8 @@ export const PoppoPolicyLayout: React.FC<PoppoPolicyLayoutProps> = ({
             </div>
           </div>
 
-          {/* RIGHT COLUMN: 3D Blue Folder Graphic + Navigation Menu (30% width) */}
-          <aside className="lg:col-span-4 order-1 lg:order-2 space-y-6">
+          {/* RIGHT COLUMN: 3D Blue Folder Graphic + Navigation Menu (Desktop) */}
+          <aside className="hidden lg:block lg:col-span-4 space-y-6">
             
             {/* Top 3D Blue Folder Illustration (Exact Authentic Element from Screenshots 05-09) */}
             <div className="relative p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-blue-50 via-indigo-50/50 to-purple-50/30 border border-blue-100/80 overflow-hidden flex flex-col items-center text-center shadow-xs">

@@ -246,9 +246,24 @@ export const PoppoHeader: React.FC<PoppoHeaderProps> = ({ onOpenLogin }) => {
           <Link
             href="/recharge"
             onClick={() => setIsMobileMenuOpen(false)}
+            className="py-2 px-3 rounded-lg text-sm font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 flex items-center justify-between"
+          >
+            <span>{isUr ? 'کوائنز حاصل کریں' : 'Get Coins (Top Up)'}</span>
+            <span className="text-[10px] bg-amber-500 text-white font-bold px-1.5 py-0.5 rounded">0% Fee</span>
+          </Link>
+          <Link
+            href="/download"
+            onClick={() => setIsMobileMenuOpen(false)}
             className="py-2 px-3 rounded-lg text-sm font-semibold text-gray-800 hover:bg-gray-50 hover:text-[#5653FE]"
           >
-            {isUr ? 'کوائنز حاصل کریں' : 'Get Coins'}
+            {isUr ? 'موبائل ایپ ڈاؤن لوڈ' : 'Download App'}
+          </Link>
+          <Link
+            href="/agency"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="py-2 px-3 rounded-lg text-sm font-semibold text-gray-800 hover:bg-gray-50 hover:text-[#5653FE]"
+          >
+            {isUr ? 'ایجنسی پارٹنر بنیں' : 'Agency Partnership'}
           </Link>
 
           <div className="border-t border-gray-100 pt-2 flex flex-col gap-1">
