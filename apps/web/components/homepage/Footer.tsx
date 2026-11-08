@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { content } from './content';
 import { ShieldCheck, Heart } from 'lucide-react';
 
@@ -18,7 +19,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-white/10">
           {/* Brand Info */}
           <div className={`lg:col-span-2 flex flex-col gap-4 ${isUr ? 'text-right' : 'text-left'}`}>
-            <div className={`flex items-center gap-3 ${isUr ? 'justify-end' : 'justify-start'}`}>
+            <Link href="/" className={`flex items-center gap-3 ${isUr ? 'justify-end' : 'justify-start'}`}>
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-popo-pink via-purple-600 to-popo-cyan p-[2px] shadow-glow-pink">
                 <div className="w-full h-full bg-popo-dark-950 rounded-[14px] flex items-center justify-center font-black text-xl text-popo-pink">
                   P
@@ -27,7 +28,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
               <span className="font-black text-2xl tracking-tight text-white">
                 POPO <span className="text-popo-pink">LIVE</span>
               </span>
-            </div>
+            </Link>
 
             <p className="text-xs sm:text-sm text-popo-text-secondary leading-relaxed max-w-sm">
               {t.tagline}
@@ -55,11 +56,12 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
           <div className={`flex flex-col gap-3 ${isUr ? 'text-right' : 'text-left'}`}>
             <h4 className="text-sm font-bold text-white uppercase tracking-wider">{t.platforms}</h4>
             <ul className="flex flex-col gap-2 text-xs">
-              <li><a href="#live" className="hover:text-white transition-colors">{isUr ? 'لائیو اسٹریمنگ' : 'Live Streams'}</a></li>
-              <li><a href="#party" className="hover:text-white transition-colors">{isUr ? '۹ سیٹ پارٹی رومز' : '9-Seat Party Lounges'}</a></li>
-              <li><a href="#pk" className="hover:text-white transition-colors">{isUr ? 'پی کے بیٹلز' : 'PK Battles'}</a></li>
-              <li><a href="#download" className="hover:text-white transition-colors">{isUr ? 'موبائل ایپس' : 'Mobile Applications'}</a></li>
-              <li><a href="/design-system" target="_blank" className="text-popo-cyan hover:underline">{isUr ? 'ڈیزائن سسٹم پریویو' : 'Design Tokens Preview'}</a></li>
+              <li><Link href="/" className="hover:text-white transition-colors">{isUr ? 'ہوم' : 'Home'}</Link></li>
+              <li><Link href="/#live" className="hover:text-white transition-colors">{isUr ? 'لائیو اسٹریمنگ' : 'Live Streams'}</Link></li>
+              <li><Link href="/#party" className="hover:text-white transition-colors">{isUr ? '۹ سیٹ پارٹی رومز' : '9-Seat Party Lounges'}</Link></li>
+              <li><Link href="/#pk" className="hover:text-white transition-colors">{isUr ? 'پی کے بیٹلز' : 'PK Battles'}</Link></li>
+              <li><Link href="/#download" className="hover:text-white transition-colors">{isUr ? 'موبائل ایپس' : 'Mobile Applications'}</Link></li>
+              <li><Link href="/design-system" target="_blank" className="text-popo-cyan hover:underline">{isUr ? 'ڈیزائن سسٹم پریویو' : 'Design Tokens Preview'}</Link></li>
             </ul>
           </div>
 
@@ -67,10 +69,10 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
           <div className={`flex flex-col gap-3 ${isUr ? 'text-right' : 'text-left'}`}>
             <h4 className="text-sm font-bold text-white uppercase tracking-wider">{t.creators}</h4>
             <ul className="flex flex-col gap-2 text-xs">
-              <li><a href="#agency" className="hover:text-white transition-colors">{isUr ? 'ہوسٹ رجسٹریشن' : 'Become a Host'}</a></li>
-              <li><a href="#agency" className="hover:text-white transition-colors">{isUr ? 'ایجنسی پارٹنرشپ' : 'Agency Portal'}</a></li>
-              <li><a href="#home" className="hover:text-white transition-colors">{isUr ? 'کوائن سیلرز' : 'Authorized Coin Resellers'}</a></li>
-              <li><a href="#news" className="hover:text-white transition-colors">{isUr ? 'کمیونٹی ایونٹس' : 'Leaderboards & Events'}</a></li>
+              <li><Link href="/agency" className="hover:text-white transition-colors">{isUr ? 'ایجنسی پارٹنرشپ' : 'Agency Portal'}</Link></li>
+              <li><Link href="/agency#apply" className="hover:text-white transition-colors">{isUr ? 'ہوسٹ رجسٹریشن' : 'Become a Host'}</Link></li>
+              <li><Link href="/contact" className="hover:text-white transition-colors">{isUr ? 'کوائن سیلرز رابطہ' : 'Authorized Coin Resellers'}</Link></li>
+              <li><Link href="/news" className="hover:text-white transition-colors">{isUr ? 'کمیونٹی ایونٹس' : 'Leaderboards & Events'}</Link></li>
             </ul>
           </div>
 
@@ -78,13 +80,12 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
           <div className={`flex flex-col gap-3 ${isUr ? 'text-right' : 'text-left'}`}>
             <h4 className="text-sm font-bold text-white uppercase tracking-wider">{t.legal}</h4>
             <ul className="flex flex-col gap-2 text-xs">
-              <li><span className="hover:text-white transition-colors cursor-pointer">{isUr ? 'استعمال کی شرائط' : 'Terms of Service'}</span></li>
-              <li><span className="hover:text-white transition-colors cursor-pointer">{isUr ? 'پرائیویسی پالیسی' : 'Privacy Policy'}</span></li>
-              <li><span className="hover:text-white transition-colors cursor-pointer">{isUr ? 'کمیونٹی گائیڈ لائنز' : 'Community Guidelines'}</span></li>
-              <li><span className="hover:text-white transition-colors cursor-pointer">{isUr ? 'ہوسٹ ایگریمنٹ' : 'Host Agreement'}</span></li>
-              <li><span className="hover:text-white transition-colors cursor-pointer">{isUr ? 'ریفنڈ پالیسی' : 'Refund Policy'}</span></li>
+              <li><Link href="/about" className="hover:text-white transition-colors">{isUr ? 'ہمارے متعلق' : 'About Us'}</Link></li>
+              <li><Link href="/contact" className="hover:text-white transition-colors">{isUr ? 'رابطہ کریں' : 'Contact Us'}</Link></li>
+              <li><span className="hover:text-white transition-colors cursor-pointer">{isUr ? 'استعمال کی شرائط' : 'Terms of Service (Draft)'}</span></li>
+              <li><span className="hover:text-white transition-colors cursor-pointer">{isUr ? 'پرائیویسی پالیسی' : 'Privacy Policy (Draft)'}</span></li>
+              <li><span className="hover:text-white transition-colors cursor-pointer">{isUr ? 'کمیونٹی گائیڈ لائنز' : 'Community Guidelines (Draft)'}</span></li>
               <li><span className="hover:text-white transition-colors cursor-pointer">{isUr ? 'چائلڈ سیفٹی چارٹر' : 'Child Safety & Protection'}</span></li>
-              <li><span className="hover:text-white transition-colors cursor-pointer">{isUr ? 'کوکی پالیسی' : 'Cookie Policy'}</span></li>
             </ul>
           </div>
         </div>
