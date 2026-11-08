@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     // Find existing user or register new user
     let userRows = await query(
-      `SELECT id, poppo_id, email, phone, nickname, avatar_url, gender, is_adult_verified, status
+      `SELECT id, poppo_id, email, phone, nickname, avatar_url, gender, is_adult_verified, is_profile_completed, status
        FROM popolive.users
        WHERE phone = $1
        LIMIT 1`,
@@ -91,6 +91,7 @@ export async function POST(req: NextRequest) {
       avatarUrl: user.avatar_url,
       gender: user.gender,
       isAdultVerified: user.is_adult_verified,
+      isProfileCompleted: Boolean(user.is_profile_completed),
       status: user.status,
       isNewUser,
     };

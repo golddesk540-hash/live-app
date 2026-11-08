@@ -10,5 +10,29 @@
     "language": "en",
     "ipHash": "87e6331ac4bd914f",
     "userAgent": "node"
+  },
+  {
+    "consentId": "cs_1794131839040_79984e44",
+    "anonymousSessionId": "sess_3etzff9czr_1794131839028",
+    "termsVersion": "v4.2.0",
+    "privacyVersion": "v4.2.0",
+    "status": "accepted",
+    "acceptedAt": "2026-11-08T09:57:19.039Z",
+    "isAdultConfirmed": true,
+    "language": "en",
+    "ipHash": "87e6331ac4bd914f",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+  },
+  {
+    "consentId": "cs_1794132412346_e4680a25",
+    "anonymousSessionId": "profile_test_gate",
+    "termsVersion": "v4.2.0",
+    "privacyVersion": "v4.2.0",
+    "status": "accepted",
+    "acceptedAt": "2026-11-08T10:06:52.344Z",
+    "isAdultConfirmed": true,
+    "language": "en",
+    "ipHash": "87e6331ac4bd914f",
+    "userAgent": "node"
   }
 ]

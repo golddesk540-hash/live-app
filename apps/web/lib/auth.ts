@@ -16,6 +16,9 @@ export interface AuthUser {
   is_adult_verified: boolean;
   status: string;
   created_at: string;
+  country: string | null;
+  country_code: string | null;
+  is_profile_completed: boolean;
 }
 
 export interface SessionData {
@@ -245,6 +248,7 @@ export async function validateSessionToken(sessionToken: string): Promise<AuthUs
   const rows = await query(
     `SELECT u.id, u.poppo_id, u.email, u.phone, u.nickname, u.avatar_url,
             u.gender, u.birthdate, u.is_adult_verified, u.status, u.created_at,
+            u.country, u.country_code, u.is_profile_completed,
             s.expires_at
      FROM popolive.sessions s
      JOIN popolive.users u ON s.user_id = u.id
@@ -264,11 +268,55 @@ export async function validateSessionToken(sessionToken: string): Promise<AuthUs
     nickname: r.nickname,
     avatar_url: r.avatar_url,
     gender: r.gender,
-    birthdate: r.birthdate ? r.birthdate.toISOString() : null,
+    birthdate: r.birthdate ? r.birthdate.toISOString().split('T')[0] : null,
     is_adult_verified: r.is_adult_verified,
     status: r.status,
     created_at: r.created_at ? r.created_at.toISOString() : '',
+    country: r.country || 'Pakistan',
+    country_code: r.country_code || 'PK',
+    is_profile_completed: Boolean(r.is_profile_completed),
   };
+}
+
+export async function getAuthenticatedUser(req: NextRequest): Promise<AuthUser | null> {
+  const token = req.cookies.get('poppo_session')?.value;
+  if (!token) return null;
+  return validateSessionToken(token);
+}
+
+// -------------------------------------------------------------
+// Age Calculation & Validation (18+ Mandatory)
+// -------------------------------------------------------------
+export function calculateAge(birthdateStr: string): number {
+  const birthdate = new Date(birthdateStr);
+  if (isNaN(birthdate.getTime())) return 0;
+  const today = new Date();
+  let age = today.getFullYear() - birthdate.getFullYear();
+  const m = today.getMonth() - birthdate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthdate.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+// -------------------------------------------------------------
+// Nickname Validation (3-20 alphanumeric characters)
+// -------------------------------------------------------------
+export function validateNicknameFormat(nickname: string): { valid: boolean; error?: string } {
+  if (!nickname || typeof nickname !== 'string') {
+    return { valid: false, error: 'Nickname is required.' };
+  }
+  const trimmed = nickname.trim();
+  if (trimmed.length < 3) {
+    return { valid: false, error: 'Nickname must be at least 3 characters long.' };
+  }
+  if (trimmed.length > 20) {
+    return { valid: false, error: 'Nickname cannot exceed 20 characters.' };
+  }
+  if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) {
+    return { valid: false, error: 'Nickname can only contain letters, numbers, and underscores.' };
+  }
+  return { valid: true };
 }
 
 export async function destroySession(sessionToken: string): Promise<void> {

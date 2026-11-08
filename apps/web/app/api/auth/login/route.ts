@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     // 3. Find user by email, phone, or poppo_id
     const rows = await query(
       `SELECT id, poppo_id, email, phone, password_hash, nickname, avatar_url,
-              gender, birthdate, is_adult_verified, status, created_at
+              gender, birthdate, is_adult_verified, is_profile_completed, status, created_at
        FROM popolive.users
        WHERE LOWER(email) = $1 OR phone = $1 OR poppo_id = $1
        LIMIT 1`,
@@ -110,6 +110,7 @@ export async function POST(req: NextRequest) {
       avatarUrl: user.avatar_url,
       gender: user.gender,
       isAdultVerified: user.is_adult_verified,
+      isProfileCompleted: Boolean(user.is_profile_completed),
       status: user.status,
     };
 

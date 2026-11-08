@@ -176,8 +176,9 @@ function LoginContent() {
           ? `خوش آمدید ${data.user.nickname}! لاگ ان کامیاب۔`
           : `Welcome back, ${data.user.nickname}! Redirecting...`
       );
+      const target = data.user?.isProfileCompleted ? '/' : '/complete-profile';
       setTimeout(() => {
-        router.push('/');
+        router.push(target);
       }, 900);
     } catch (err: any) {
       setErrorMessage(err.message || 'Login failed. Please check your credentials.');
@@ -271,8 +272,9 @@ function LoginContent() {
           ? `کامیابی! خوش آمدید ${data.user.nickname}`
           : `Success! Welcome to Popo Live, ${data.user.nickname}`
       );
+      const target = data.user?.isProfileCompleted ? '/' : '/complete-profile';
       setTimeout(() => {
-        router.push('/');
+        router.push(target);
       }, 900);
     } catch (err: any) {
       setErrorMessage(err.message || 'OTP verification failed.');
@@ -323,7 +325,7 @@ function LoginContent() {
           : `Account created successfully! Your Poppo ID: ${data.user.poppoId}`
       );
       setTimeout(() => {
-        router.push('/');
+        router.push('/complete-profile');
       }, 900);
     } catch (err: any) {
       setErrorMessage(err.message || 'Registration failed.');

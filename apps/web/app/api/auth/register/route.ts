@@ -111,6 +111,7 @@ export async function POST(req: NextRequest) {
         avatarUrl: newUser.avatar_url,
         gender: newUser.gender,
         isAdultVerified: newUser.is_adult_verified,
+        isProfileCompleted: false,
         status: newUser.status,
       },
     });
