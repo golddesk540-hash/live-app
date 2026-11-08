@@ -66,6 +66,25 @@ export async function GET(
     );
     const totalGifts = Number(giftsRes[0]?.total || 0);
 
+    // Check target user's privacy settings
+    const privacyRows = await query(
+      `SELECT profile_visibility, gender_visibility, follow_permissions, message_permissions
+       FROM popolive.user_privacy_settings WHERE user_id = $1`,
+      [targetUser.id]
+    );
+    const privacy = privacyRows[0] || {
+      profile_visibility: 'everyone',
+      gender_visibility: 'everyone',
+      follow_permissions: 'everyone',
+      message_permissions: 'everyone',
+    };
+
+    const isGenderHidden = !isSelf && privacy.gender_visibility === 'only_me';
+    const isProfileRestricted =
+      !isSelf &&
+      (privacy.profile_visibility === 'only_me' ||
+        (privacy.profile_visibility === 'followers' && !isFollowing));
+
     return NextResponse.json({
       success: true,
       profile: {
@@ -75,8 +94,8 @@ export async function GET(
         avatarUrl: targetUser.avatar_url || '/avatars/default.png',
         country: targetUser.country || 'Pakistan',
         countryCode: targetUser.country_code || 'PK',
-        gender: targetUser.gender || 'unspecified',
-        bio: targetUser.bio || '',
+        gender: isGenderHidden ? 'unspecified' : targetUser.gender || 'unspecified',
+        bio: isProfileRestricted ? 'This profile is private.' : targetUser.bio || '',
         hostLevel: Number(targetUser.host_level) || 1,
         wealthLevel: Number(targetUser.wealth_level) || 1,
         isAdultVerified: Boolean(targetUser.is_adult_verified),
@@ -89,6 +108,7 @@ export async function GET(
         isBlocked,
         hasBlockedViewer,
         isSelf,
+        isPrivateProfile: isProfileRestricted,
       },
     });
   } catch (err: any) {
