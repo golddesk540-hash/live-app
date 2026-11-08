@@ -198,17 +198,17 @@ export default function LiveRoomPage() {
       <header className="relative z-20 flex items-center justify-between px-4 py-3 bg-gradient-to-b from-black/80 to-transparent">
         {/* Host info badge */}
         <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md p-1.5 pr-3 rounded-full border border-white/10">
-          <Link href={`/profile/${room.host.id}`} className="relative">
+          <Link href={`/user/${room.host.id || room.host.poppoId}`} className="relative group/avatar">
             <img
               src={room.host.avatarUrl}
               alt={room.host.nickname}
-              className="w-10 h-10 rounded-full object-cover ring-2 ring-pink-500"
+              className="w-10 h-10 rounded-full object-cover ring-2 ring-pink-500 group-hover/avatar:scale-105 transition-transform"
             />
             <span className="absolute -bottom-1 -right-1 text-xs">{room.flagEmoji}</span>
           </Link>
-          <div className="flex flex-col">
+          <Link href={`/user/${room.host.id || room.host.poppoId}`} className="flex flex-col group/name">
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold leading-tight max-w-[110px] truncate">
+              <span className="text-xs font-bold leading-tight max-w-[110px] truncate group-hover/name:text-pink-300 transition-colors">
                 {room.host.nickname}
               </span>
               <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-semibold border border-pink-500/30">
@@ -216,7 +216,7 @@ export default function LiveRoomPage() {
               </span>
             </div>
             <span className="text-[10px] text-zinc-400">ID: {room.host.poppoId}</span>
-          </div>
+          </Link>
 
           <button
             onClick={toggleFollow}

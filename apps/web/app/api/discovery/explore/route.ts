@@ -80,6 +80,8 @@ export async function GET(req: NextRequest) {
         u.avatar_url AS host_avatar_url,
         u.gender AS host_gender,
         u.host_level,
+        u.wealth_level,
+        u.is_adult_verified,
         u.country AS user_country,
         u.country_code AS user_country_code,
         pk.id AS pk_id,
@@ -136,6 +138,8 @@ export async function GET(req: NextRequest) {
           avatarUrl: r.host_avatar_url || '/avatars/default.png',
           gender: r.host_gender || 'unknown',
           hostLevel: r.host_level || 1,
+          wealthLevel: r.wealth_level || 1,
+          isVerified: Boolean(r.is_adult_verified || (r.host_level && r.host_level >= 5)),
         },
         pkDetails: r.is_pk && r.pk_id ? {
           pkId: r.pk_id,

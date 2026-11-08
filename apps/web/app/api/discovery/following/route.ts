@@ -52,11 +52,13 @@ export async function GET(req: NextRequest) {
         u.country_code,
         u.host_level,
         u.wealth_level,
+        u.is_adult_verified,
         lr.id AS room_id,
         lr.room_number,
         lr.title AS room_title,
         lr.cover_url,
         lr.category,
+        lr.tags,
         lr.is_live,
         lr.is_pk,
         lr.viewer_count,
@@ -111,6 +113,7 @@ export async function GET(req: NextRequest) {
           country: r.country || 'Pakistan',
           countryCode: r.country_code || 'PK',
           flagEmoji,
+          tags: Array.isArray(r.tags) && r.tags.length > 0 ? r.tags : ['Live', 'Follow'],
           startedAt: r.started_at,
           isFollowing: true,
           host: {
@@ -120,6 +123,8 @@ export async function GET(req: NextRequest) {
             avatarUrl: r.avatar_url || '/avatars/default.png',
             gender: r.gender,
             hostLevel: r.host_level || 1,
+            wealthLevel: r.wealth_level || 1,
+            isVerified: Boolean(r.is_adult_verified || (r.host_level && r.host_level >= 5)),
           },
         });
       } else {

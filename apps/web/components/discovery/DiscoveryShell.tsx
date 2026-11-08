@@ -45,6 +45,7 @@ import {
   Globe,
   Filter,
 } from 'lucide-react';
+import LiveRoomCard from './LiveRoomCard';
 
 export type DiscoveryTab = 'explore' | 'following' | 'new' | 'pk';
 
@@ -54,6 +55,7 @@ interface RoomItem {
   title: string;
   coverUrl: string;
   category: string;
+  status?: string;
   isLive: boolean;
   isPk: boolean;
   viewerCount: number;
@@ -70,6 +72,8 @@ interface RoomItem {
     poppoId: string;
     avatarUrl: string;
     hostLevel?: number;
+    wealthLevel?: number;
+    isVerified?: boolean;
   };
   pkDetails?: {
     pkId: string;
@@ -729,9 +733,9 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           {activeTab === 'explore' && (
             <div className="space-y-4">
               {loading && exploreRooms.length === 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                    <div key={i} className="aspect-[3/4] rounded-2xl bg-white/5 animate-pulse border border-white/5" />
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+                    <div key={i} className="aspect-[3/4] rounded-2xl sm:rounded-3xl bg-white/5 animate-pulse border border-white/5" />
                   ))}
                 </div>
               ) : exploreRooms.length === 0 ? (
@@ -758,51 +762,9 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
                   {exploreRooms.map((room) => (
-                    <Link
-                      key={room.roomId}
-                      href={`/live/room/${room.roomId}`}
-                      className="group relative rounded-2xl sm:rounded-3xl overflow-hidden aspect-[3/4] bg-[#120e26] border border-white/10 shadow-lg hover:shadow-pink-500/20 hover:border-pink-500/50 transition-all transform hover:-translate-y-1 block"
-                    >
-                      <img
-                        src={room.coverUrl}
-                        alt={room.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
-
-                      {/* TOP-LEFT: Pink LIVE Badge */}
-                      <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-gradient-to-r from-[#FF2E74] to-[#E91E63] text-white text-[10px] font-black uppercase shadow-md shadow-pink-500/30">
-                        <span>LIVE</span>
-                      </div>
-
-                      {/* TOP-RIGHT: PK tag */}
-                      {room.isPk && (
-                        <div className="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-md bg-purple-600/90 text-white text-[9px] font-black flex items-center gap-1 shadow-md">
-                          <Swords className="w-2.5 h-2.5" />
-                          <span>PK</span>
-                        </div>
-                      )}
-
-                      {/* BOTTOM OVERLAY INFO (Flag + Viewers on Left, Diamonds/Coins on Right) */}
-                      <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10 flex items-center justify-between text-xs text-white">
-                        <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10">
-                          <span className="text-sm leading-none">{room.flagEmoji}</span>
-                          <span className="font-extrabold text-xs tracking-tight">{room.viewersFormatted}</span>
-                        </div>
-
-                        <div className="flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10 text-amber-300 font-bold text-xs">
-                          <span>💎</span>
-                          <span>{room.coinsFormatted}</span>
-                        </div>
-                      </div>
-
-                      <div className="absolute bottom-10 left-2.5 right-2.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <p className="text-[11px] font-bold text-white truncate drop-shadow">{room.host.nickname}</p>
-                        <p className="text-[10px] text-zinc-300 truncate">{room.title}</p>
-                      </div>
-                    </Link>
+                    <LiveRoomCard key={room.roomId} room={room} />
                   ))}
                 </div>
               )}
@@ -862,23 +824,9 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                     </div>
 
                     {followingData?.liveRooms && followingData.liveRooms.length > 0 ? (
-                      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
                         {followingData.liveRooms.map((room) => (
-                          <Link
-                            key={room.roomId}
-                            href={`/live/room/${room.roomId}`}
-                            className="group relative rounded-2xl overflow-hidden aspect-[3/4] bg-[#120e26] border border-pink-500/30 shadow-lg hover:border-pink-500 transition-all block"
-                          >
-                            <img src={room.coverUrl} alt={room.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-                            <div className="absolute top-2.5 left-2.5 z-10 px-2 py-0.5 rounded-md bg-[#FF2E74] text-white text-[10px] font-black uppercase">
-                              LIVE
-                            </div>
-                            <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10 flex items-center justify-between text-xs text-white">
-                              <span className="font-bold truncate max-w-[110px]">{room.host.nickname}</span>
-                              <span className="text-[11px] font-extrabold bg-black/40 px-2 py-0.5 rounded-md">{room.viewersFormatted}</span>
-                            </div>
-                          </Link>
+                          <LiveRoomCard key={room.roomId} room={room} />
                         ))}
                       </div>
                     ) : (
