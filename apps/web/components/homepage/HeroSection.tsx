@@ -115,91 +115,82 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ lang }) => {
             </div>
           </div>
 
-          {/* Right Column: Visual Live Preview Showcase Card */}
-          <div className="lg:col-span-5 flex justify-center relative">
-            {/* Visual Phone Mockup / Live Stream Window */}
-            <div className="relative w-full max-w-[340px] sm:max-w-[380px] aspect-[9/16] rounded-[36px] overflow-hidden bg-popo-dark-900 border-4 border-white/15 shadow-2xl p-4 flex flex-col justify-between">
-              {/* Background Streamer Simulated Video */}
+          {/* Right Column: Visual Live Creator Showcase with Neon Heart (02_homepage_desktop.png) */}
+          <div className="lg:col-span-5 flex justify-center items-center relative">
+            {/* Glowing Neon Heart SVG Backdrop */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none -z-0">
+              <svg
+                viewBox="0 0 400 400"
+                className="w-[360px] sm:w-[440px] h-[360px] sm:h-[440px] text-popo-pink opacity-80 animate-pulse duration-3000 filter drop-shadow-[0_0_35px_rgba(255,26,108,0.7)]"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M200 340C200 340 70 240 40 160C10 80 80 30 140 50C180 63 200 100 200 100C200 100 220 63 260 50C320 30 390 80 360 160C330 240 200 340 200 340Z"
+                  stroke="url(#heart-gradient)"
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <defs>
+                  <linearGradient id="heart-gradient" x1="40" y1="50" x2="360" y2="340" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#FF1A6C" />
+                    <stop offset="0.5" stopColor="#FF4D8D" />
+                    <stop offset="1" stopColor="#7928CA" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+
+            {/* Main Creator Portrait Showcase */}
+            <div className="relative z-10 w-full max-w-[340px] sm:max-w-[380px] aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl border border-white/10 group">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80"
-                alt="Live streaming preview"
-                className="absolute inset-0 w-full h-full object-cover"
+                alt="Popo Live featured broadcaster"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/70 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/30 pointer-events-none" />
 
-              {/* Streamer Top Bar Capsule */}
-              <div className="relative z-10 flex items-center justify-between">
-                <div className="flex items-center gap-2 bg-black/55 backdrop-blur-md rounded-full p-1 pr-3 border border-white/15">
-                  <Avatar
-                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-                    size="sm"
-                    ring="live"
-                  />
-                  <div className="flex flex-col text-left">
-                    <span className="text-xs font-bold text-white leading-tight">Noor Fatima 🇵🇰</span>
-                    <span className="text-[10px] text-amber-400 font-extrabold flex items-center gap-0.5">
-                      ⭐️ 148,200 Pts
-                    </span>
-                  </div>
-                  <button className="text-[10px] font-extrabold text-white bg-popo-pink px-2 py-0.5 rounded-full shadow-glow-pink hover:opacity-90 transition-opacity">
-                    + Follow
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full text-white text-xs font-bold border border-white/15">
-                  <Radio className="w-3 h-3 text-popo-live animate-pulse" />
-                  <span>3,842</span>
-                </div>
+              {/* In-Frame Live Badges */}
+              <div className="absolute top-4 inset-x-4 flex items-center justify-between z-10">
+                <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-popo-pink text-white text-xs font-black shadow-glow-pink">
+                  <Radio className="w-3.5 h-3.5 animate-pulse" />
+                  LIVE
+                </span>
+                <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-semibold border border-white/15">
+                  🇵🇰 Pakistan
+                </span>
               </div>
 
-              {/* Floating Gift Effect Pill */}
-              <div className="relative z-10 self-start animate-bounce duration-1000">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-amber-500/40 via-purple-600/40 to-popo-pink/40 backdrop-blur-xl border border-amber-400/40 shadow-glow-gold">
-                  <div className="w-7 h-7 rounded-full bg-amber-400 flex items-center justify-center text-sm">
-                    🚀
+              {/* Floating Gift Trigger Mockup */}
+              <div className="absolute bottom-16 left-4 z-10">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-black/60 backdrop-blur-md border border-amber-400/30 shadow-glow-gold">
+                  <div className="w-6 h-6 rounded-full bg-amber-400 flex items-center justify-center text-xs">
+                    🎁
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-[11px] font-bold text-white">Hamza sent Luxury Rocket!</span>
-                    <span className="text-[9px] text-amber-300 font-extrabold">+5,000 Host Points</span>
+                    <span className="text-[11px] font-bold text-white">Luxury Crown</span>
+                    <span className="text-[9px] text-amber-300 font-extrabold">+1,200 Pts</span>
                   </div>
                 </div>
               </div>
 
-              {/* Bottom In-Room Feed & Actions */}
-              <div className="relative z-10 flex flex-col gap-2 text-left">
-                {/* Chat Bubbles */}
-                <div className="flex flex-col gap-1 max-w-[85%]">
-                  <div className="bg-black/50 backdrop-blur-md rounded-xl px-2.5 py-1 text-xs border border-white/5 inline-flex items-center gap-1.5">
-                    <Badge variant="level" level={42} size="xs" />
-                    <span className="font-bold text-popo-pink">Zaid:</span>
-                    <span className="text-white">Love the new song! ❤️</span>
-                  </div>
-                  <div className="bg-black/50 backdrop-blur-md rounded-xl px-2.5 py-1 text-xs border border-white/5 inline-flex items-center gap-1.5">
-                    <Badge variant="level" level={65} size="xs" />
-                    <Badge variant="vip" size="xs">VIP</Badge>
-                    <span className="font-bold text-amber-400">Sultan:</span>
-                    <span className="text-white">PK Battle starting soon ⚔️</span>
-                  </div>
+              {/* Bottom Host Metadata */}
+              <div className="absolute bottom-4 inset-x-4 z-10 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-white leading-tight">Noor Fatima</h3>
+                  <span className="text-xs text-popo-text-secondary">Singing & Acoustic</span>
                 </div>
-
-                {/* Bottom Stream Action Tray */}
-                <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/10">
-                  <div className="flex-1 bg-black/60 backdrop-blur-md rounded-full px-3 py-1.5 text-xs text-popo-text-muted border border-white/10">
-                    Say something...
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white">
-                    <Heart className="w-4 h-4 fill-popo-pink text-popo-pink" />
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-r from-amber-400 to-popo-pink flex items-center justify-center text-white shadow-glow-pink">
-                    <Gift className="w-4 h-4" />
-                  </div>
+                <div className="flex items-center gap-1 bg-black/70 backdrop-blur-md px-3 py-1 rounded-full text-white text-xs font-bold border border-white/15">
+                  <span className="text-popo-pink">●</span>
+                  <span>14.8k</span>
                 </div>
               </div>
             </div>
 
             {/* Decorative Floating Badges */}
-            <div className="absolute -top-4 -left-6 hidden sm:flex items-center gap-2 p-3 rounded-2xl bg-popo-dark-850/90 backdrop-blur-xl border border-white/15 shadow-card-dark">
+            <div className="absolute -top-3 -left-4 hidden sm:flex items-center gap-2 p-3 rounded-2xl bg-popo-dark-850/90 backdrop-blur-xl border border-white/15 shadow-card-dark z-20">
               <span className="text-xl">🎙️</span>
               <div className="text-left">
                 <span className="text-xs font-bold text-white block">9-Seat Party Room</span>
@@ -207,11 +198,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ lang }) => {
               </div>
             </div>
 
-            <div className="absolute -bottom-4 -right-4 hidden sm:flex items-center gap-2 p-3 rounded-2xl bg-popo-dark-850/90 backdrop-blur-xl border border-white/15 shadow-card-dark">
+            <div className="absolute -bottom-3 -right-4 hidden sm:flex items-center gap-2 p-3 rounded-2xl bg-popo-dark-850/90 backdrop-blur-xl border border-white/15 shadow-card-dark z-20">
               <ShieldCheck className="w-5 h-5 text-emerald-400" />
               <div className="text-left">
-                <span className="text-xs font-bold text-white block">Safe & Verified</span>
-                <span className="text-[10px] text-popo-text-secondary font-semibold">Strict 18+ Age Gate</span>
+                <span className="text-xs font-bold text-white block">Verified Host</span>
+                <span className="text-[10px] text-popo-text-secondary font-semibold">Strict 18+ Protection</span>
               </div>
             </div>
           </div>

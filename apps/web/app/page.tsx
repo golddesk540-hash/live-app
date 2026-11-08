@@ -4,6 +4,10 @@ import React, { useState } from 'react';
 import {
   Navbar,
   HeroSection,
+  MainFeaturesSection,
+  PopularLiveHostsSection,
+  WhyChooseSection,
+  HowItWorksSection,
   LiveExperienceSection,
   PartyRoomsSection,
   PKBattlesSection,
@@ -35,28 +39,40 @@ export default function HomePage() {
       />
 
       <main className="flex flex-col">
-        {/* 2. Hero Section */}
+        {/* 2. Hero Section (02_homepage_desktop.png) */}
         <HeroSection lang={lang} />
 
-        {/* 3. Live Streaming Experience */}
+        {/* 3. Main Features 4-Card Row (02_homepage_desktop.png) */}
+        <MainFeaturesSection lang={lang} />
+
+        {/* 4. Popular Live Hosts Carousel (02_homepage_desktop.png) */}
+        <PopularLiveHostsSection lang={lang} />
+
+        {/* 5. Why Choose Popo Live */}
+        <WhyChooseSection lang={lang} />
+
+        {/* 6. How Popo Live Works */}
+        <HowItWorksSection lang={lang} />
+
+        {/* 7. Live Streaming Deep Dive */}
         <LiveExperienceSection lang={lang} />
 
-        {/* 4. Party Rooms (9-Seat Voice Lounges) */}
+        {/* 8. Party Rooms (9-Seat Voice Lounges) */}
         <PartyRoomsSection lang={lang} />
 
-        {/* 5. PK Battles (1v1 Arena) */}
+        {/* 9. PK Battles (1v1 Arena) */}
         <PKBattlesSection lang={lang} />
 
-        {/* 6. Gifts and Rewards (70% Host Conversion) */}
+        {/* 10. Gifts and Rewards (70% Host Conversion) */}
         <GiftsRewardsSection lang={lang} />
 
-        {/* 7. Creator and Agency */}
+        {/* 11. Creator and Agency */}
         <CreatorAgencySection lang={lang} />
 
-        {/* 8. Download App */}
+        {/* 12. Join Our Community / Download App CTA */}
         <DownloadAppSection lang={lang} />
 
-        {/* 9. News Preview */}
+        {/* 13. News Highlights */}
         <NewsSection lang={lang} />
       </main>
 
