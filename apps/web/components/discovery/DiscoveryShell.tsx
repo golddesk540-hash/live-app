@@ -46,6 +46,9 @@ import {
   Filter,
 } from 'lucide-react';
 import LiveRoomCard from './LiveRoomCard';
+import DiscoveryBannerCarousel from './DiscoveryBannerCarousel';
+import RankDoorSection from './RankDoorSection';
+import RankingPreviewSection from './RankingPreviewSection';
 
 export type DiscoveryTab = 'explore' | 'following' | 'new' | 'pk';
 
@@ -731,7 +734,16 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           {/* TAB 1: EXPLORE DISCOVERY TAB */}
           {/* ========================================================================= */}
           {activeTab === 'explore' && (
-            <div className="space-y-4">
+            <div className="space-y-5 sm:space-y-6">
+              {/* 1. Promotional Banner Carousel (Matching 03_05 1:1) */}
+              <DiscoveryBannerCarousel />
+
+              {/* 2. Rank Door Shortcuts (Event, Rank, Agency, Notice) */}
+              <RankDoorSection />
+
+              {/* 3. Ranking Podium Preview (Rank 2 Silver, Rank 1 Gold Center, Rank 3 Bronze) */}
+              <RankingPreviewSection />
+
               {loading && exploreRooms.length === 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
