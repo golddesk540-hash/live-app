@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { LanguageProvider } from '@/lib/languageContext';
+import PoppoTermsGate from '@/components/poppo/PoppoTermsGate';
 
 export const metadata: Metadata = {
   title: 'Poppo Live — Live Streaming & Social Entertainment Hub',
@@ -16,7 +17,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-white text-gray-900 antialiased selection:bg-[#5653FE] selection:text-white">
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider>
+          <PoppoTermsGate />
+          {children}
+        </LanguageProvider>
       </body>
     </html>
   );
