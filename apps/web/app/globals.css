@@ -1,58 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Inter:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
   --background: #FFFFFF;
-  --foreground: #111827;
+  --foreground: #0F172A;
 
   /* Official Poppo Live Brand Colors */
   --poppo-blue: #5653FE;
-  --poppo-blue-hover: #4643E0;
-  --poppo-blue-light: #EEF0FF;
-  --poppo-indigo: #4F46E5;
-
-  /* Accent & State */
+  --poppo-blue-hover: #433FFD;
+  --poppo-blue-subtle: #EEF0FF;
   --poppo-pink: #FF1A6C;
-  --poppo-purple: #7928CA;
   --poppo-gold: #FFB800;
-  --poppo-live: #FF2B44;
-  --poppo-cyan: #00E5FF;
-  --poppo-success: #10B981;
-  --poppo-warning: #F59E0B;
-  --poppo-error: #EF4444;
+  --poppo-live-red: #FF2B44;
 
-  /* Surfaces */
-  --poppo-bg-light: #FFFFFF;
-  --poppo-bg-subtle: #F8F9FA;
-  --poppo-bg-card: #FFFFFF;
-  --poppo-border-light: #E5E7EB;
-
-  /* Typography */
-  --poppo-text-main: #111827;
-  --poppo-text-muted: #6B7280;
-
-  /* Shared Radii */
-  --radius-pill: 9999px;
-  --radius-card: 16px;
-  --radius-input: 10px;
+  /* Typography Font Families */
+  --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-urdu: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Urdu Typesetting', Tahoma, serif;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  letter-spacing: -0.01em;
 }
 
-/* Custom clean scrollbar */
+/* RTL Helpers for Urdu */
+[dir="rtl"] {
+  text-align: right;
+}
+
+.font-urdu {
+  font-family: var(--font-urdu);
+  line-height: 1.85;
+}
+
+/* Custom Refined Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F3F4F6;
+  background: #F8F9FA;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -64,16 +61,6 @@ body {
   background: #94A3B8;
 }
 
-/* RTL Helpers for Urdu */
-[dir="rtl"] {
-  text-align: right;
-}
-
-.font-urdu {
-  font-family: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Urdu Typesetting', Tahoma, serif;
-  line-height: 1.8;
-}
-
 /* Hide scrollbar for clean carousels */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
@@ -81,4 +68,138 @@ body {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ========================================================
+   KEYFRAME ANIMATIONS FOR REALISTIC LIVE STREAM INTERACTION
+   ======================================================== */
+
+@keyframes float-heart {
+  0% {
+    transform: translateY(0) scale(0.9) rotate(0deg);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateY(-24px) scale(1.1) rotate(-8deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-50px) scale(0.95) rotate(8deg);
+    opacity: 0;
+  }
+}
+
+@keyframes gentle-bob {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+}
+
+@keyframes audio-wave-pulse {
+  0%, 100% {
+    height: 4px;
+  }
+  50% {
+    height: 14px;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(86, 83, 254, 0.5);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(86, 83, 254, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(86, 83, 254, 0);
+  }
+}
+
+@keyframes live-indicator-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+@keyframes gift-car-drive {
+  0% {
+    transform: translateX(-120%) scale(0.8);
+    opacity: 0;
+  }
+  20% {
+    transform: translateX(0) scale(1.05);
+    opacity: 1;
+  }
+  80% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(120%) scale(0.9);
+    opacity: 0;
+  }
+}
+
+/* Utility animation classes */
+.animate-float-heart {
+  animation: float-heart 3s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
+
+.animate-gentle-bob {
+  animation: gentle-bob 4s ease-in-out infinite;
+}
+
+.animate-gentle-bob-delayed {
+  animation: gentle-bob 4s ease-in-out infinite 2s;
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-live-dot {
+  animation: live-indicator-pulse 1.6s ease-in-out infinite;
+}
+
+.animate-wave-bar-1 {
+  animation: audio-wave-pulse 0.8s ease-in-out infinite;
+}
+
+.animate-wave-bar-2 {
+  animation: audio-wave-pulse 0.8s ease-in-out infinite 0.2s;
+}
+
+.animate-wave-bar-3 {
+  animation: audio-wave-pulse 0.8s ease-in-out infinite 0.4s;
+}
+
+.animate-wave-bar-4 {
+  animation: audio-wave-pulse 0.8s ease-in-out infinite 0.15s;
+}
+
+/* Glassmorphism Surface helpers */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(229, 231, 235, 0.7);
+}
+
+.glass-panel-dark {
+  background: rgba(10, 15, 29, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }

@@ -52,30 +52,30 @@ export default function AboutAndContactPage() {
 
       <main className="overflow-hidden">
         {/* 1. HERO SECTION (03_about_and_contact_page.png) */}
-        <section className="pt-16 sm:pt-24 pb-16 bg-gradient-to-b from-purple-50/40 via-white to-white text-center">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <span className="text-xs font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
+        <section className="pt-10 sm:pt-16 pb-12 bg-gradient-to-b from-purple-50/40 via-white to-white text-center">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <span className="text-[11px] font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
               {isUr ? 'ہمارے بارے میں اور رابطہ' : 'About Poppo & Connect With Us'}
             </span>
-            <h1 className="text-4xl sm:text-6xl font-black text-gray-950 mt-4 tracking-tight uppercase">
+            <h1 className="text-2xl sm:text-4xl md:text-[44px] font-extrabold text-gray-950 mt-3 tracking-tight uppercase">
               {isUr ? 'ہم سے رابطہ کریں' : 'GET IN TOUCH WITH US'}
             </h1>
-            <p className="mt-4 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            <p className="mt-3 text-xs sm:text-sm text-gray-600 max-w-xl mx-auto leading-relaxed">
               {isUr
                 ? 'چاہے آپ ایجنسی پارٹنرشپ قائم کرنا چاہتے ہوں، سوال پوچھنا ہو، یا تکنیکی مدد درکار ہو، ہماری ٹیم ہر موڑ پر آپ کی رہنمائی کے لیے حاضر ہے۔'
                 : "Whether you're looking to collaborate, have a question, or need support, we're here to help you every step of the way."}
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <a
                 href="#business-inquiries"
-                className="px-7 py-3 rounded-full bg-[#5653FE] hover:bg-[#433ffd] text-white font-bold text-sm shadow-md transition-all hover:scale-105"
+                className="px-6 py-2.5 rounded-full bg-[#5653FE] hover:bg-[#433ffd] text-white font-bold text-xs sm:text-sm shadow-sm transition-all hover:scale-105"
               >
                 {isUr ? 'تعاون / اشتراک' : 'Collaborate'}
               </a>
               <a
                 href="#quick-support"
-                className="px-7 py-3 rounded-full bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 font-bold text-sm shadow-xs transition-all hover:scale-105"
+                className="px-6 py-2.5 rounded-full bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 font-bold text-xs sm:text-sm shadow-xs transition-all hover:scale-105"
               >
                 {isUr ? 'مدد حاصل کریں' : 'Get Help'}
               </a>
@@ -107,20 +107,20 @@ export default function AboutAndContactPage() {
           {/* Large Faint Watermark Text "ABOUT" */}
           <div
             aria-hidden="true"
-            className="pointer-events-none select-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[140px] sm:text-[220px] font-black text-gray-200/50 tracking-widest uppercase z-0"
+            className="pointer-events-none select-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[90px] sm:text-[140px] font-black text-gray-200/40 tracking-widest uppercase z-0"
           >
             ABOUT
           </div>
 
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <span className="text-xs font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
+            <div className="text-center max-w-2xl mx-auto mb-12">
+              <span className="text-[11px] font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
                 {isUr ? 'ہماری کہانی' : 'Where Our Story Begins'}
               </span>
-              <h2 className="text-3xl sm:text-5xl font-black text-gray-950 mt-3 tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-950 mt-2 tracking-tight">
                 {isUr ? 'ویڈیو سوشل کا مستقبل دریافت کریں' : 'Explore The Future Of Video Social'}
               </h2>
-              <p className="mt-4 text-sm sm:text-base text-gray-600 leading-relaxed">
+              <p className="mt-2 text-xs sm:text-sm text-gray-600 leading-relaxed">
                 {isUr
                   ? 'پوپو لائیو ایک جدید اور جامع لائیو براڈکاسٹنگ پلیٹ فارم ہے جس کا مقصد اجنبیوں کو دوست بنانا اور دنیا بھر کے لوگوں کے درمیان خوشیوں کا تبادلہ ہے۔'
                   : 'Poppo Live is redefining how people interact online by combining high-definition live streaming, multi-mic voice lounges, gamified PK competitions, and genuine creator economies.'}
@@ -128,16 +128,16 @@ export default function AboutAndContactPage() {
             </div>
 
             {/* Mission & Vision 2-Column Cards (Matching Screenshot) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               {/* Mission Card */}
-              <div className="bg-white rounded-3xl p-8 sm:p-10 border border-gray-200 shadow-sm hover:shadow-xl transition-all">
-                <div className="w-14 h-14 rounded-2xl bg-purple-100 text-[#5653FE] flex items-center justify-center mb-6">
-                  <Compass className="w-7 h-7" />
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm hover:shadow-lg transition-all">
+                <div className="w-12 h-12 rounded-2xl bg-purple-100 text-[#5653FE] flex items-center justify-center mb-4">
+                  <Compass className="w-6 h-6" />
                 </div>
-                <h3 className="text-2xl font-black text-gray-950 mb-3">
+                <h3 className="text-xl font-bold text-gray-950 mb-2">
                   {isUr ? 'ہمارا مشن (Our Mission)' : 'Our Mission'}
                 </h3>
-                <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
                   {isUr
                     ? 'دنیا کے ہر کونے سے لوگوں کو بااختیار بنانا کہ وہ ریئل ٹائم ویڈیو اور آواز کے ذریعے اپنی شناخت، فن اور صلاحیتوں کا اظہار کر سکیں اور بغیر کسی جغرافیائی یا لسانی رکاوٹ کے پائیدار دوستیاں قائم کر سکیں۔'
                     : 'To connect people from every corner of the world through the power of real-time video, authentic interactions, and celebratory moments—fostering warmth, kindness, and unforgettable digital experiences.'}
@@ -145,14 +145,14 @@ export default function AboutAndContactPage() {
               </div>
 
               {/* Vision Card */}
-              <div className="bg-white rounded-3xl p-8 sm:p-10 border border-gray-200 shadow-sm hover:shadow-xl transition-all">
-                <div className="w-14 h-14 rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center mb-6">
-                  <Sparkles className="w-7 h-7" />
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm hover:shadow-lg transition-all">
+                <div className="w-12 h-12 rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center mb-4">
+                  <Sparkles className="w-6 h-6" />
                 </div>
-                <h3 className="text-2xl font-black text-gray-950 mb-3">
+                <h3 className="text-xl font-bold text-gray-950 mb-2">
                   {isUr ? 'ہمارا وژن (Our Vision)' : 'Our Vision'}
                 </h3>
-                <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
+                <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
                   {isUr
                     ? 'دنیا کا سب سے محفوظ، متحرک اور معاشی طور پر بااختیار سوشل سٹیج تعمیر کرنا، جہاں ہر باصلاحیت ہوسٹ اور ایجنسی اپنی تخلیقی محنت سے ایک کامیاب اور پائیدار عالمی کیریئر حاصل کر سکے۔'
                     : 'To build the world’s most inclusive, creative, and rewarding digital stage where anyone can turn their passion into a thriving global career while upholding strict 18+ safety and child protection compliance.'}

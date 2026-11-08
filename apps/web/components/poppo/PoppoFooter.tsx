@@ -24,7 +24,7 @@ export const PoppoFooter: React.FC = () => {
       {/* Background Watermark Outline Text */}
       <div 
         aria-hidden="true" 
-        className="pointer-events-none select-none absolute bottom-4 left-1/2 -translate-x-1/2 text-[120px] sm:text-[180px] lg:text-[230px] font-black text-gray-50/70 tracking-widest whitespace-nowrap z-0 uppercase"
+        className="pointer-events-none select-none absolute bottom-4 left-1/2 -translate-x-1/2 text-[70px] sm:text-[110px] lg:text-[150px] font-black text-gray-100/70 tracking-widest whitespace-nowrap z-0 uppercase"
         style={{ letterSpacing: '0.08em' }}
       >
         POPPO LIVE

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PoppoHeader } from '@/components/poppo/PoppoHeader';
 import { PoppoFooter } from '@/components/poppo/PoppoFooter';
@@ -21,12 +21,24 @@ import {
   Camera,
   MessageCircle,
   Apple,
-  Globe
+  Globe,
+  Trophy,
+  CheckCircle2,
+  Volume2
 } from 'lucide-react';
 
 export default function MarketingHomePage() {
   const { lang, toggleLang, isUr } = useLanguage();
   const [activeGiftTab, setActiveGiftTab] = useState<'vehicles' | 'space' | 'luxury'>('vehicles');
+  const [triggeredGiftEffect, setTriggeredGiftEffect] = useState<string | null>(null);
+
+  // Auto clear gift effect after animation
+  useEffect(() => {
+    if (triggeredGiftEffect) {
+      const timer = setTimeout(() => setTriggeredGiftEffect(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [triggeredGiftEffect]);
 
   const giftItems = {
     vehicles: [
@@ -57,60 +69,69 @@ export default function MarketingHomePage() {
       <PoppoHeader />
 
       <main className="overflow-hidden">
+        
         {/* 2. HERO SECTION (02_marketing_homepage.png: "FROM STRANGERS TO FRIENDS") */}
-        <section className="relative pt-12 sm:pt-20 pb-20 sm:pb-28 overflow-hidden bg-gradient-to-b from-purple-50/50 via-white to-white">
-          {/* Ambient Colorful Background Glows */}
-          <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-r from-purple-200/40 via-pink-200/40 to-blue-200/40 blur-3xl rounded-full" />
+        <section className="relative pt-8 sm:pt-14 pb-16 sm:pb-24 overflow-hidden bg-gradient-to-b from-[#FAF5FF]/60 via-[#F8F9FF]/40 to-white">
+          
+          {/* Subtle Ambient Glows */}
+          <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[720px] h-[360px] bg-gradient-to-r from-purple-200/30 via-pink-200/25 to-blue-200/30 blur-3xl rounded-full" />
           
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
               
-              {/* Left Column: Hero Text & Downloads */}
-              <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+              {/* Left Column: Hero Text & App Store Downloads */}
+              <div className="lg:col-span-7 space-y-5 text-center lg:text-left">
                 
-                {/* Badge */}
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-100/70 border border-purple-200/60 text-[#5653FE] text-xs sm:text-sm font-bold">
-                  <span className="w-2 h-2 rounded-full bg-[#5653FE] animate-ping" />
-                  <span>{isUr ? 'دنیا کا سب سے متحرک ویڈیو لائیو کمیونٹی' : 'Global Video Social Live Community'}</span>
+                {/* Official Community Pill */}
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-50 border border-purple-150 text-[#5653FE] text-xs font-semibold shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-[#5653FE] animate-live-dot" />
+                  <span>{isUr ? 'عالمی ویڈیو لائیو کمیونٹی' : 'Global Video Social Community'}</span>
+                  <span className="text-gray-300">|</span>
+                  <span className="text-gray-600 font-medium">150+ Countries</span>
                 </div>
 
-                {/* Main Authentic Heading */}
-                <h1 className="text-4xl sm:text-6xl xl:text-7xl font-black text-gray-950 tracking-tight leading-[1.08]">
-                  <span>FROM </span>
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5653FE] via-purple-600 to-pink-500">
-                    STRANGERS
-                  </span>
-                  <br />
-                  <span>TO </span>
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-rose-500 to-[#5653FE]">
-                    FRIENDS
-                  </span>
-                  {/* Floating 3D Emojis */}
-                  <span className="inline-block ml-3 animate-bounce text-3xl sm:text-5xl">💖</span>
-                  <span className="inline-block ml-2 text-3xl sm:text-5xl">✨</span>
-                </h1>
+                {/* Main Heading: Scaled properly with refined typography */}
+                <div className="relative">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[50px] font-extrabold text-gray-950 tracking-[-0.03em] leading-[1.12]">
+                    <span>FROM </span>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5653FE] via-purple-600 to-pink-500">
+                      STRANGERS
+                    </span>
+                    <br className="hidden sm:inline" />
+                    <span> TO </span>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-rose-500 to-[#5653FE]">
+                      FRIENDS
+                    </span>
+                  </h1>
 
-                {/* Subtitle */}
-                <p className="text-base sm:text-lg text-gray-600 max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
+                  {/* Floating Micro-Animated Emojis matching 02_marketing_homepage.png */}
+                  <div className="absolute -top-3 sm:-top-5 right-4 lg:right-16 flex items-center gap-2 pointer-events-none select-none">
+                    <span className="text-2xl sm:text-3xl animate-gentle-bob drop-shadow-sm">💖</span>
+                    <span className="text-xl sm:text-2xl animate-gentle-bob-delayed drop-shadow-sm">✨</span>
+                  </div>
+                </div>
+
+                {/* Subtitle: Compact, legible, human-proportioned */}
+                <p className="text-sm sm:text-[15px] text-gray-600 max-w-lg mx-auto lg:mx-0 leading-relaxed font-normal">
                   {isUr
-                    ? 'پوپو لائیو پر دنیا بھر کے دلچسپ لوگوں سے ملیں، ہائی ڈیفینیشن لائیو سٹریمز دیکھیں، 9 سیٹوں والے پارٹی رومز میں بات کریں، اور جادوئی ورچوئل تحائف سے دوستی کو یادگار بنائیں۔'
+                    ? 'پوپو لائیو پر دنیا بھر کے دوستوں سے جڑیں، ایچ ڈی لائیو سٹریمز دیکھیں، ۹ سیٹوں والے پارٹی رومز میں گفتگو کریں اور شاندار تھری ڈی تحائف سے دوستی کو یادگار بنائیں۔'
                     : 'Go live, meet interesting people worldwide, join lively audio & video party rooms, send stunning 3D virtual gifts, and celebrate friendship every single day.'}
                 </p>
 
                 {/* 4 App Store Download Buttons (Matching Screenshot) */}
-                <div className="pt-4 space-y-3">
-                  <div className="text-xs font-bold uppercase tracking-wider text-gray-400 text-center lg:text-left">
-                    {isUr ? 'مفت ڈاؤن لوڈ کریں:' : 'Available For All Devices:'}
+                <div className="pt-2 space-y-2.5">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-gray-400 text-center lg:text-left">
+                    {isUr ? 'مفت ایپ ڈاؤن لوڈ کریں:' : 'Get Started On Mobile:'}
                   </div>
-                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
+                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5">
                     {/* iOS */}
                     <Link
                       href="/download"
-                      className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-gray-950 hover:bg-gray-800 text-white shadow-md transition-all hover:scale-105"
+                      className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-gray-950 hover:bg-gray-800 text-white shadow-sm transition-all hover:-translate-y-0.5 active:scale-95"
                     >
-                      <Apple className="w-5 h-5 text-white" />
+                      <Apple className="w-4 h-4 text-white" />
                       <div className="text-left">
-                        <div className="text-[10px] text-gray-300 leading-none">Download on</div>
+                        <div className="text-[9px] text-gray-300 leading-none">Download on</div>
                         <div className="text-xs font-bold leading-tight">App Store</div>
                       </div>
                     </Link>
@@ -118,11 +139,11 @@ export default function MarketingHomePage() {
                     {/* Google Play */}
                     <Link
                       href="/download"
-                      className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-gray-950 hover:bg-gray-800 text-white shadow-md transition-all hover:scale-105"
+                      className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-gray-950 hover:bg-gray-800 text-white shadow-sm transition-all hover:-translate-y-0.5 active:scale-95"
                     >
-                      <Play className="w-5 h-5 text-emerald-400 fill-emerald-400" />
+                      <Play className="w-4 h-4 text-emerald-400 fill-emerald-400" />
                       <div className="text-left">
-                        <div className="text-[10px] text-gray-300 leading-none">GET IT ON</div>
+                        <div className="text-[9px] text-gray-300 leading-none">GET IT ON</div>
                         <div className="text-xs font-bold leading-tight">Google Play</div>
                       </div>
                     </Link>
@@ -130,13 +151,13 @@ export default function MarketingHomePage() {
                     {/* Huawei AppGallery */}
                     <Link
                       href="/download"
-                      className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-gray-950 hover:bg-gray-800 text-white shadow-md transition-all hover:scale-105"
+                      className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-gray-950 hover:bg-gray-800 text-white shadow-sm transition-all hover:-translate-y-0.5 active:scale-95"
                     >
-                      <div className="w-5 h-5 rounded-full bg-rose-600 flex items-center justify-center text-white text-[10px] font-black">
+                      <div className="w-4 h-4 rounded-full bg-rose-600 flex items-center justify-center text-white text-[9px] font-black">
                         H
                       </div>
                       <div className="text-left">
-                        <div className="text-[10px] text-gray-300 leading-none">Explore on</div>
+                        <div className="text-[9px] text-gray-300 leading-none">Explore on</div>
                         <div className="text-xs font-bold leading-tight">AppGallery</div>
                       </div>
                     </Link>
@@ -144,149 +165,160 @@ export default function MarketingHomePage() {
                     {/* Direct Android APK */}
                     <Link
                       href="/download"
-                      className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-[#5653FE] hover:bg-[#433ffd] text-white shadow-md shadow-purple-500/20 transition-all hover:scale-105"
+                      className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-[#5653FE] hover:bg-[#433ffd] text-white shadow-sm shadow-purple-500/20 transition-all hover:-translate-y-0.5 active:scale-95"
                     >
-                      <Download className="w-5 h-5" />
+                      <Download className="w-4 h-4" />
                       <div className="text-left">
-                        <div className="text-[10px] text-purple-200 leading-none">Android Direct</div>
+                        <div className="text-[9px] text-purple-200 leading-none">Android Direct</div>
                         <div className="text-xs font-bold leading-tight">Download APK</div>
                       </div>
                     </Link>
                   </div>
                 </div>
 
-                {/* Live Stats Row */}
-                <div className="pt-6 grid grid-cols-3 gap-4 border-t border-gray-150 max-w-lg mx-auto lg:mx-0">
+                {/* Live Stats Indicators */}
+                <div className="pt-4 flex items-center justify-center lg:justify-start gap-8 border-t border-gray-150 max-w-md mx-auto lg:mx-0">
                   <div>
-                    <div className="text-2xl sm:text-3xl font-black text-gray-900">50M+</div>
-                    <div className="text-xs text-gray-500 font-medium">{isUr ? 'عالمی صارفین' : 'Global Users'}</div>
+                    <div className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">50M+</div>
+                    <div className="text-[11px] text-gray-500 font-medium">{isUr ? 'عالمی صارفین' : 'Global Users'}</div>
                   </div>
+                  <div className="w-px h-8 bg-gray-200" />
                   <div>
-                    <div className="text-2xl sm:text-3xl font-black text-[#5653FE]">150+</div>
-                    <div className="text-xs text-gray-500 font-medium">{isUr ? 'ممالک' : 'Countries'}</div>
+                    <div className="text-xl sm:text-2xl font-black text-[#5653FE] tracking-tight">150+</div>
+                    <div className="text-[11px] text-gray-500 font-medium">{isUr ? 'ممالک' : 'Countries'}</div>
                   </div>
+                  <div className="w-px h-8 bg-gray-200" />
                   <div>
-                    <div className="text-2xl sm:text-3xl font-black text-pink-500">24/7</div>
-                    <div className="text-xs text-gray-500 font-medium">{isUr ? 'لائیو نشریات' : 'Non-Stop Live'}</div>
+                    <div className="text-xl sm:text-2xl font-black text-pink-500 tracking-tight">24/7</div>
+                    <div className="text-[11px] text-gray-500 font-medium">{isUr ? 'نان سٹاپ لائیو' : 'HD Broadcast'}</div>
                   </div>
                 </div>
               </div>
 
-              {/* Right Column: 3D Angled Smartphone Mockup with Live Broadcast UI */}
-              <div className="lg:col-span-5 relative flex justify-center">
-                {/* Glowing Aura */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-[#5653FE]/30 to-pink-500/30 filter blur-3xl rounded-full transform -rotate-6" />
+              {/* Right Column: Interactive Smartphone Mockup with Real-time Animation Canvas */}
+              <div className="lg:col-span-5 relative flex justify-center py-2">
+                
+                {/* Subtle Ambient Pulse Backdrop */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-[#5653FE]/20 via-pink-500/15 to-transparent filter blur-2xl rounded-full transform -rotate-3" />
 
-                {/* Smartphone Device Shell */}
-                <div className="relative w-[300px] sm:w-[340px] aspect-[9/19] rounded-[48px] bg-gray-950 p-3.5 shadow-2xl ring-1 ring-black/10 shadow-purple-500/20">
-                  {/* Speaker & Camera Notch */}
-                  <div className="absolute top-6 left-1/2 -translate-x-1/2 w-28 h-5 bg-black rounded-full z-30 flex items-center justify-center">
-                    <div className="w-3 h-3 rounded-full bg-gray-800 mr-2" />
-                    <div className="w-8 h-1 bg-gray-800 rounded-full" />
+                {/* Smartphone Device Frame */}
+                <div className="relative w-[280px] sm:w-[310px] aspect-[9/19] rounded-[44px] bg-gray-950 p-3 shadow-2xl ring-1 ring-black/10 shadow-purple-500/15">
+                  
+                  {/* Dynamic Island Notch */}
+                  <div className="absolute top-5 left-1/2 -translate-x-1/2 w-24 h-4 bg-black rounded-full z-30 flex items-center justify-center">
+                    <div className="w-2.5 h-2.5 rounded-full bg-gray-800 mr-2" />
+                    <div className="w-6 h-1 bg-gray-800 rounded-full" />
                   </div>
 
                   {/* Phone Screen Canvas */}
-                  <div className="relative w-full h-full rounded-[38px] overflow-hidden bg-gray-900 text-white flex flex-col justify-between">
-                    {/* Live Stream Background Video Simulation */}
+                  <div className="relative w-full h-full rounded-[34px] overflow-hidden bg-gray-900 text-white flex flex-col justify-between">
+                    
+                    {/* Live Stream Background Photo */}
                     <img
                       src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80"
                       alt="Host Live"
-                      className="absolute inset-0 w-full h-full object-cover"
+                      className="absolute inset-0 w-full h-full object-cover filter brightness-95"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-black/60" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/50 pointer-events-none" />
 
                     {/* In-App Header */}
-                    <div className="relative z-10 pt-8 px-4 flex items-center justify-between">
-                      {/* Host Tag */}
-                      <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20">
-                        <div className="w-7 h-7 rounded-full bg-purple-500 overflow-hidden">
+                    <div className="relative z-10 pt-7 px-3.5 flex items-center justify-between">
+                      {/* Host Tag with live ring */}
+                      <div className="flex items-center gap-2 bg-black/45 backdrop-blur-md px-2 py-1 rounded-full border border-white/15">
+                        <div className="relative w-6 h-6 rounded-full overflow-hidden border border-purple-400">
                           <img
-                            src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80"
+                            src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=80&auto=format&fit=crop&q=80"
                             alt="Host"
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div className="text-left">
-                          <div className="text-[11px] font-bold leading-none">Bella ✨</div>
-                          <div className="text-[9px] text-yellow-300">★ Lv.38</div>
+                          <div className="text-[10px] font-bold leading-none">Bella ✨</div>
+                          <div className="text-[8px] text-yellow-300 font-mono">★ Lv.38</div>
                         </div>
-                        <button className="px-2 py-0.5 rounded-full bg-[#5653FE] text-[10px] font-bold">
+                        <button className="px-2 py-0.5 rounded-full bg-[#5653FE] text-[9px] font-bold hover:bg-[#433ffd]">
                           + Follow
                         </button>
                       </div>
 
-                      {/* Live Viewers */}
-                      <div className="px-2 py-1 rounded-full bg-black/40 backdrop-blur-md text-[10px] font-bold text-white flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
+                      {/* Equalizer Audio Waves & Live Viewers */}
+                      <div className="px-2 py-0.5 rounded-full bg-black/45 backdrop-blur-md text-[10px] font-bold text-white flex items-center gap-1.5 border border-white/15">
+                        <div className="flex items-center gap-0.5 h-3">
+                          <span className="w-0.5 bg-[#5653FE] animate-wave-bar-1" />
+                          <span className="w-0.5 bg-pink-400 animate-wave-bar-2" />
+                          <span className="w-0.5 bg-yellow-400 animate-wave-bar-3" />
+                        </div>
                         <span>14.2K</span>
                       </div>
                     </div>
 
-                    {/* Floating Gift Animation (Pink Supercar or Rocket) */}
-                    <div className="relative z-10 px-4 py-2">
-                      <div className="animate-pulse bg-gradient-to-r from-pink-600/90 to-purple-600/90 backdrop-blur-md rounded-2xl p-2.5 flex items-center gap-3 border border-pink-400/30 shadow-lg">
-                        <div className="text-3xl animate-bounce">🏎️</div>
-                        <div className="text-left">
-                          <div className="text-[10px] text-pink-200">Alex_King sent</div>
-                          <div className="text-xs font-black text-white">Pink Cyber Supercar! 💥</div>
+                    {/* Animated Gift Banner Trigger */}
+                    <div className="relative z-10 px-3 py-1">
+                      <div className="bg-gradient-to-r from-pink-600/90 to-purple-600/90 backdrop-blur-md rounded-xl p-2 flex items-center gap-2.5 border border-pink-400/30 shadow-md">
+                        <div className="text-2xl animate-bounce">🏎️</div>
+                        <div className="text-left leading-tight">
+                          <div className="text-[9px] text-pink-200">Alex_King sent</div>
+                          <div className="text-[11px] font-bold text-white">Pink Cyber Supercar! 💥</div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Bottom Chat and Stream Interactions */}
-                    <div className="relative z-10 p-4 space-y-2">
-                      {/* Chat Bubbles */}
-                      <div className="space-y-1.5 text-[11px]">
-                        <div className="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md max-w-[85%] text-left">
+                    {/* In-App Live Chat Feed */}
+                    <div className="relative z-10 p-3 space-y-1.5">
+                      <div className="space-y-1 text-[10px]">
+                        <div className="px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-md max-w-[85%] text-left">
                           <span className="text-yellow-400 font-bold">Sam: </span>
                           <span>Sing that new melody! 🎶</span>
                         </div>
-                        <div className="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md max-w-[85%] text-left">
+                        <div className="px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-md max-w-[85%] text-left">
                           <span className="text-cyan-300 font-bold">Farhan: </span>
                           <span>Love from Pakistan! 🇵🇰❤️</span>
                         </div>
-                        <div className="px-2.5 py-1 rounded-lg bg-black/40 backdrop-blur-md max-w-[85%] text-left">
+                        <div className="px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-md max-w-[85%] text-left">
                           <span className="text-rose-400 font-bold">Lily: </span>
-                          <span>Let’s win this PK match!! 🔥🔥</span>
+                          <span>Let’s win this PK match!! 🔥</span>
                         </div>
                       </div>
 
-                      {/* Bottom Controls */}
-                      <div className="flex items-center justify-between pt-2">
-                        <div className="flex-1 bg-white/20 backdrop-blur-md rounded-full px-3 py-1.5 text-[11px] text-gray-200 text-left mr-2">
+                      {/* Interactive Bottom Gift Bar */}
+                      <div className="flex items-center justify-between pt-1.5">
+                        <div className="flex-1 bg-white/20 backdrop-blur-md rounded-full px-2.5 py-1 text-[10px] text-gray-200 text-left mr-2">
                           Say something...
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center text-sm shadow-md">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs shadow-sm hover:scale-110 transition-transform">
                             ❤️
                           </div>
-                          <div className="w-8 h-8 rounded-full bg-amber-400 text-gray-900 flex items-center justify-center text-sm shadow-md">
+                          <Link
+                            href="/recharge"
+                            className="w-7 h-7 rounded-full bg-amber-400 text-gray-950 flex items-center justify-center text-xs shadow-sm hover:scale-110 transition-transform font-bold"
+                          >
                             🎁
-                          </div>
+                          </Link>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Floating Decorative Badges */}
-                <div className="hidden sm:flex absolute -bottom-6 -left-6 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xl border border-gray-150 items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-[#5653FE]">
-                    <Swords className="w-5 h-5" />
+                {/* Floating Interactive Micro Badges (Matching 02_marketing_homepage.png) */}
+                <div className="hidden sm:flex absolute -bottom-4 -left-4 bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-gray-150 items-center gap-2.5 animate-gentle-bob">
+                  <div className="w-8 h-8 rounded-xl bg-purple-100 flex items-center justify-center text-[#5653FE]">
+                    <Swords className="w-4 h-4" />
                   </div>
                   <div className="text-left">
-                    <div className="text-xs font-bold text-gray-900">PK Battles Live</div>
-                    <div className="text-[10px] text-gray-500">1v1 Real-Time Challenges</div>
+                    <div className="text-xs font-bold text-gray-900 leading-none">PK Battles Live</div>
+                    <div className="text-[10px] text-gray-500 mt-0.5">Real-time 1v1 Arena</div>
                   </div>
                 </div>
 
-                <div className="hidden sm:flex absolute -top-4 -right-4 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-xl border border-gray-150 items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-rose-100 flex items-center justify-center text-rose-500">
-                    <Users className="w-5 h-5" />
+                <div className="hidden sm:flex absolute -top-3 -right-3 bg-white/95 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-gray-150 items-center gap-2.5 animate-gentle-bob-delayed">
+                  <div className="w-8 h-8 rounded-xl bg-rose-100 flex items-center justify-center text-rose-500">
+                    <Users className="w-4 h-4" />
                   </div>
                   <div className="text-left">
-                    <div className="text-xs font-bold text-gray-900">Party Rooms</div>
-                    <div className="text-[10px] text-gray-500">9-Guest Audio Lounges</div>
+                    <div className="text-xs font-bold text-gray-900 leading-none">Party Rooms</div>
+                    <div className="text-[10px] text-gray-500 mt-0.5">9-Seat Audio Lounges</div>
                   </div>
                 </div>
               </div>
@@ -296,38 +328,40 @@ export default function MarketingHomePage() {
         </section>
 
         {/* 3. SECTION 1: "EVERY STREAM TELLS A STORY" (02_marketing_homepage.png) */}
-        <section className="py-20 bg-[#F8F9FA] border-y border-gray-200">
+        <section className="py-16 sm:py-20 bg-[#F9FAFC] border-y border-gray-150">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-14">
-              <span className="text-xs font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
+            
+            {/* Section Header: Compact & Proportional */}
+            <div className="text-center max-w-xl mx-auto mb-12">
+              <span className="text-[11px] font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
                 {isUr ? 'پوپو لائیو خصوصیات' : 'Core Experiences'}
               </span>
-              <h2 className="text-3xl sm:text-5xl font-black text-gray-950 mt-3 tracking-tight">
+              <h2 className="text-2xl sm:text-3xl md:text-[34px] font-bold text-gray-950 mt-2.5 tracking-tight">
                 {isUr ? 'ہر سٹریم کی ایک کہانی ہے' : 'Every Stream Tells A Story'}
               </h2>
-              <p className="text-gray-600 mt-3 text-sm sm:text-base">
+              <p className="text-gray-500 mt-2 text-xs sm:text-sm leading-relaxed">
                 {isUr
-                  ? 'دنیا بھر کے ٹیلنٹڈ تخلیق کاروں سے جڑیں، پارٹی رومز میں تفریح کریں اور اپنے لمحات شیئر کریں۔'
-                  : 'Discover authentic creators, unleash your inner talent, and immerse yourself in real-time social entertainment.'}
+                  ? 'دنیا بھر کے باصلاحیت ہوسٹس سے جڑیں، پارٹی رومز میں تفریح کریں اور اپنے لمحات شیئر کریں۔'
+                  : 'Connect with authentic creators, showcase your talent, and immerse yourself in real-time entertainment.'}
               </p>
             </div>
 
             {/* 3 Prominent Feature Cards (Matching Screenshot) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
               
               {/* Card 1: Live Buzz */}
-              <div className="group bg-white rounded-3xl p-8 border border-gray-200 hover:border-[#5653FE]/50 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300 flex flex-col justify-between">
+              <div className="group bg-white rounded-3xl p-6 sm:p-7 border border-gray-200/80 hover:border-[#5653FE]/40 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300 flex flex-col justify-between hover:-translate-y-1">
                 <div>
-                  <div className="w-14 h-14 rounded-2xl bg-purple-100 text-[#5653FE] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <Radio className="w-7 h-7" />
+                  <div className="w-12 h-12 rounded-2xl bg-purple-50 text-[#5653FE] flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
+                    <Radio className="w-6 h-6" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-lg font-bold text-gray-900 mb-1.5 group-hover:text-[#5653FE] transition-colors">
                     {isUr ? 'لائیو بز (Live Buzz)' : 'Live Buzz'}
                   </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed mb-6">
+                  <p className="text-xs sm:text-[13px] text-gray-500 leading-relaxed mb-5">
                     {isUr
-                      ? 'چوبیس گھنٹے نان سٹاپ لائیو سٹریمنگ۔ گلوکاری، رقص، بات چیت اور مزاح کے ہزاروں لائیو رومز میں شرکت کریں۔'
-                      : '24/7 non-stop high definition streaming. Connect instantly with singers, dancers, comedians, and talk-show hosts globally.'}
+                      ? 'چوبیس گھنٹے نان سٹاپ ایچ ڈی لائیو سٹریمنگ۔ گلوکاری، رقص، اور دلچسپ گفتگو کے ہزاروں لائیو رومز۔'
+                      : '24/7 non-stop high-definition streaming. Discover dancers, singers, comedians, and storytellers worldwide.'}
                   </p>
                 </div>
                 <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-gray-100">
@@ -336,26 +370,26 @@ export default function MarketingHomePage() {
                     alt="Live Buzz"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute bottom-3 left-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
+                  <div className="absolute bottom-2.5 left-2.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-bold flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-live-dot" />
                     <span>HD Live</span>
                   </div>
                 </div>
               </div>
 
               {/* Card 2: Spark Gifts */}
-              <div className="group bg-white rounded-3xl p-8 border border-gray-200 hover:border-[#5653FE]/50 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300 flex flex-col justify-between">
+              <div className="group bg-white rounded-3xl p-6 sm:p-7 border border-gray-200/80 hover:border-[#5653FE]/40 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300 flex flex-col justify-between hover:-translate-y-1">
                 <div>
-                  <div className="w-14 h-14 rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <Sparkles className="w-7 h-7" />
+                  <div className="w-12 h-12 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
+                    <Sparkles className="w-6 h-6" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-lg font-bold text-gray-900 mb-1.5 group-hover:text-pink-600 transition-colors">
                     {isUr ? 'سپارک گفٹس (Spark Gifts)' : 'Spark Gifts'}
                   </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed mb-6">
+                  <p className="text-xs sm:text-[13px] text-gray-500 leading-relaxed mb-5">
                     {isUr
-                      ? 'شاندار تھری ڈی اینیمیشنز والے تحائف بھیجیں جیسے کہ سپر کارز، راکٹس اور ہیروں کے محلات جو پوری سکرین پر چمکتے ہیں۔'
-                      : 'Express true appreciation with full-screen 3D effects, luxury supercars, cosmic space fleets, and fireworks.'}
+                      ? 'شاندار تھری ڈی اینیمیشنز والے تحائف جیسے کہ سپر کارز، راکٹس اور ہیروں کے محلات جو پوری سکرین پر چمکتے ہیں۔'
+                      : 'Send full-screen 3D animations: cyber sports cars, galaxy rockets, and diamond castles that light up rooms.'}
                   </p>
                 </div>
                 <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-gray-100">
@@ -364,25 +398,25 @@ export default function MarketingHomePage() {
                     alt="Spark Gifts"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute bottom-3 left-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5">
+                  <div className="absolute bottom-2.5 left-2.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-bold flex items-center gap-1.5">
                     <span>🎁 3D Special FX</span>
                   </div>
                 </div>
               </div>
 
               {/* Card 3: Vlog & Square */}
-              <div className="group bg-white rounded-3xl p-8 border border-gray-200 hover:border-[#5653FE]/50 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300 flex flex-col justify-between">
+              <div className="group bg-white rounded-3xl p-6 sm:p-7 border border-gray-200/80 hover:border-[#5653FE]/40 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300 flex flex-col justify-between hover:-translate-y-1">
                 <div>
-                  <div className="w-14 h-14 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                    <Camera className="w-7 h-7" />
+                  <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
+                    <Camera className="w-6 h-6" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-lg font-bold text-gray-900 mb-1.5 group-hover:text-blue-600 transition-colors">
                     {isUr ? 'ولاگ اور اسکوائر (Vlog & Square)' : 'Vlog & Square'}
                   </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed mb-6">
+                  <p className="text-xs sm:text-[13px] text-gray-500 leading-relaxed mb-5">
                     {isUr
-                      ? 'اپنی روزمرہ کی زندگی، تصاویر اور ویڈیوز کمیونٹی فیڈ میں شیئر کریں اور نئے فالوورز اور مداح بنائیں۔'
-                      : 'Share your everyday moments, short video clips, and lifestyle photos to build an engaged personal fan club.'}
+                      ? 'اپنی روزمرہ زندگی کی تصاویر اور ویڈیوز کمیونٹی فیڈ میں شیئر کریں اور اپنے وفادار مداح بنائیں۔'
+                      : 'Share your daily highlights, lifestyle pictures, and clips in the community feed to grow your fan base.'}
                   </p>
                 </div>
                 <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-gray-100">
@@ -391,7 +425,7 @@ export default function MarketingHomePage() {
                     alt="Vlog & Square"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute bottom-3 left-3 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-bold flex items-center gap-1.5">
+                  <div className="absolute bottom-2.5 left-2.5 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-bold flex items-center gap-1.5">
                     <span>📸 Daily Moments</span>
                   </div>
                 </div>
@@ -402,15 +436,16 @@ export default function MarketingHomePage() {
         </section>
 
         {/* 4. SECTION 2: "PARTY & PK" DUAL ANGLED SMARTPHONES (02_marketing_homepage.png) */}
-        <section className="py-24 bg-white relative overflow-hidden">
+        <section className="py-20 bg-white relative overflow-hidden">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
               
               {/* Left Column: Visual Mockup Showcase */}
               <div className="lg:col-span-6 relative flex items-center justify-center">
-                <div className="relative w-full max-w-md h-[480px]">
+                <div className="relative w-full max-w-sm h-[440px]">
+                  
                   {/* Phone 1: 9-Seat Party Room */}
-                  <div className="absolute left-0 top-6 w-[240px] sm:w-[270px] aspect-[9/18] rounded-3xl bg-gray-950 p-2.5 shadow-2xl transform -rotate-6 hover:rotate-0 transition-transform duration-300 z-10 border border-purple-500/30">
+                  <div className="absolute left-0 top-4 w-[220px] sm:w-[250px] aspect-[9/18] rounded-3xl bg-gray-950 p-2.5 shadow-2xl transform -rotate-6 hover:rotate-0 transition-transform duration-300 z-10 border border-purple-500/30">
                     <div className="w-full h-full rounded-2xl overflow-hidden bg-gradient-to-b from-purple-900 to-indigo-950 p-3 text-white flex flex-col justify-between">
                       <div className="flex items-center justify-between text-[10px] font-bold">
                         <span className="flex items-center gap-1 text-purple-300">
@@ -421,53 +456,53 @@ export default function MarketingHomePage() {
                       
                       {/* 9-Seat Grid */}
                       <div className="grid grid-cols-3 gap-2 my-auto">
-                        {Array.from({ length: 9 }).map((_, i) => (
+                        {['🎤', '🎵', '✨', '👑', '🎧', '🎸', '🌟', '💖', '🔥'].map((emoji, i) => (
                           <div key={i} className="flex flex-col items-center">
-                            <div className="w-10 h-10 rounded-full bg-white/20 border border-purple-400/40 p-0.5 flex items-center justify-center">
-                              <span className="text-xs">{['🎤', '🎵', '✨', '👑', '🎧', '🎸', '🌟', '💖', '🔥'][i]}</span>
+                            <div className="w-9 h-9 rounded-full bg-white/20 border border-purple-400/40 flex items-center justify-center text-xs">
+                              {emoji}
                             </div>
                             <span className="text-[8px] text-gray-300 mt-0.5">Seat {i + 1}</span>
                           </div>
                         ))}
                       </div>
 
-                      <div className="text-[10px] bg-white/10 rounded-lg p-1.5 text-center font-medium">
-                        Audio Chat & Games
+                      <div className="text-[9px] bg-white/10 rounded-lg py-1 text-center font-medium">
+                        Audio Chat & Interactive Games
                       </div>
                     </div>
                   </div>
 
                   {/* Phone 2: 1v1 PK Arena Battle */}
-                  <div className="absolute right-0 bottom-6 w-[240px] sm:w-[270px] aspect-[9/18] rounded-3xl bg-gray-950 p-2.5 shadow-2xl transform rotate-6 hover:rotate-0 transition-transform duration-300 z-20 border border-rose-500/30">
+                  <div className="absolute right-0 bottom-4 w-[220px] sm:w-[250px] aspect-[9/18] rounded-3xl bg-gray-950 p-2.5 shadow-2xl transform rotate-6 hover:rotate-0 transition-transform duration-300 z-20 border border-rose-500/30">
                     <div className="w-full h-full rounded-2xl overflow-hidden bg-gradient-to-b from-gray-900 to-black p-3 text-white flex flex-col justify-between">
                       <div className="flex items-center justify-between text-[10px] font-bold">
-                        <span className="px-2 py-0.5 rounded bg-rose-600 text-white font-black">PK BATTLE</span>
-                        <span className="text-amber-400">01:45</span>
+                        <span className="px-2 py-0.5 rounded bg-rose-600 text-white font-black text-[9px]">PK BATTLE</span>
+                        <span className="text-amber-400 font-mono text-[9px]">01:45</span>
                       </div>
 
                       {/* Split PK Screen */}
                       <div className="my-auto space-y-2">
-                        <div className="grid grid-cols-2 gap-1.5 h-28">
+                        <div className="grid grid-cols-2 gap-1.5 h-24">
                           <div className="bg-blue-600/30 rounded-lg border border-blue-500/40 p-1 flex flex-col justify-between items-center text-center">
-                            <span className="text-[9px] text-blue-300 font-bold">Team Red</span>
-                            <div className="w-8 h-8 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center">👤</div>
-                            <span className="text-[10px] font-black text-blue-400">12,450 pts</span>
+                            <span className="text-[8px] text-blue-300 font-bold">Team Red</span>
+                            <div className="w-7 h-7 rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center">👤</div>
+                            <span className="text-[9px] font-black text-blue-400">12,450 pts</span>
                           </div>
                           <div className="bg-rose-600/30 rounded-lg border border-rose-500/40 p-1 flex flex-col justify-between items-center text-center">
-                            <span className="text-[9px] text-rose-300 font-bold">Team Blue</span>
-                            <div className="w-8 h-8 rounded-full bg-rose-500 text-white text-xs flex items-center justify-center">👤</div>
-                            <span className="text-[10px] font-black text-rose-400">15,890 pts</span>
+                            <span className="text-[8px] text-rose-300 font-bold">Team Blue</span>
+                            <div className="w-7 h-7 rounded-full bg-rose-500 text-white text-[10px] flex items-center justify-center">👤</div>
+                            <span className="text-[9px] font-black text-rose-400">15,890 pts</span>
                           </div>
                         </div>
 
-                        {/* VS Progress Gauge */}
-                        <div className="w-full h-2 rounded-full bg-gray-800 overflow-hidden flex">
+                        {/* VS Progress Bar */}
+                        <div className="w-full h-1.5 rounded-full bg-gray-800 overflow-hidden flex">
                           <div className="w-[45%] bg-blue-500 h-full" />
                           <div className="w-[55%] bg-rose-500 h-full" />
                         </div>
                       </div>
 
-                      <div className="text-[10px] bg-rose-600/80 rounded-lg p-1.5 text-center font-bold">
+                      <div className="text-[9px] bg-rose-600/80 rounded-lg py-1 text-center font-bold">
                         Support Your Favorite Host!
                       </div>
                     </div>
@@ -476,31 +511,31 @@ export default function MarketingHomePage() {
               </div>
 
               {/* Right Column: Copy & Details */}
-              <div className="lg:col-span-6 space-y-6">
-                <span className="text-xs font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
+              <div className="lg:col-span-6 space-y-5">
+                <span className="text-[11px] font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
                   {isUr ? 'پارٹی اور مقابلہ' : 'Party & Competitive PK'}
                 </span>
                 
-                <h2 className="text-3xl sm:text-5xl font-black text-gray-950 tracking-tight">
+                <h2 className="text-2xl sm:text-3xl md:text-[34px] font-bold text-gray-950 tracking-tight leading-tight">
                   {isUr ? 'پارٹی رومز اور سنسنی خیز پی کے مقابلے' : 'Party Rooms & Thrilling PK Battles'}
                 </h2>
 
-                <p className="text-base text-gray-600 leading-relaxed">
+                <p className="text-sm sm:text-[15px] text-gray-600 leading-relaxed font-normal">
                   {isUr
-                    ? 'ایک ہی وقت میں 9 دوستوں کے ساتھ مل کر آڈیو یا ویڈیو پارٹی روم بنائیں، لڈو اور تفریحی گیمز کھیلیں، یا اپنے پسندیدہ ہوسٹ کو پی کے مقابلے میں فاتح بنانے کے لیے گفٹس کی بارش کریں۔'
+                    ? 'ایک ہی وقت میں ۹ دوستوں کے ساتھ مل کر آڈیو یا ویڈیو پارٹی روم بنائیں، لڈو اور تفریحی گیمز کھیلیں، یا اپنے پسندیدہ ہوسٹ کو پی کے مقابلے میں فاتح بنانے کے لیے گفٹس بھیجیں۔'
                     : 'Jump into interactive multi-guest party rooms to sing karaoke, play community games, or turn up the excitement in live 1v1 PK battles where fans rally together to crown their champion.'}
                 </p>
 
-                <div className="space-y-4 pt-2">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-purple-100 text-[#5653FE] flex items-center justify-center shrink-0">
-                      <Users className="w-5 h-5" />
+                <div className="space-y-3.5 pt-1">
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-9 h-9 rounded-xl bg-purple-50 text-[#5653FE] flex items-center justify-center shrink-0">
+                      <Users className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-base font-bold text-gray-900">
-                        {isUr ? '9 سیٹوں والے پارٹی رومز' : '9-Seat Interactive Party Lounges'}
+                      <h4 className="text-sm font-bold text-gray-900">
+                        {isUr ? '۹ سیٹوں والے پارٹی رومز' : '9-Seat Interactive Party Lounges'}
                       </h4>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs text-gray-500 mt-0.5">
                         {isUr
                           ? 'دوستوں کے ساتھ فری مائیک پر گپ شپ، ہنسی مذاق اور گروپ تفریح۔'
                           : 'Host private or public hangouts, chat with crystal clear HD audio, and make friends.'}
@@ -508,15 +543,15 @@ export default function MarketingHomePage() {
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-                      <Swords className="w-5 h-5" />
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                      <Swords className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-base font-bold text-gray-900">
+                      <h4 className="text-sm font-bold text-gray-900">
                         {isUr ? 'لائیو 1v1 اور ٹیم پی کے' : 'Live 1v1 & Team PK Arena'}
                       </h4>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-xs text-gray-500 mt-0.5">
                         {isUr
                           ? 'دو ہوسٹس کے درمیان سخت مقابلہ، شائقین کے ووٹ اور مضحکہ خیز سزائیں۔'
                           : 'Streamers face off in high stakes battles with fun penalties and real-time score gauges.'}
@@ -525,13 +560,13 @@ export default function MarketingHomePage() {
                   </div>
                 </div>
 
-                <div className="pt-4">
+                <div className="pt-2">
                   <Link
                     href="/live"
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#5653FE] hover:bg-[#433ffd] text-white font-bold text-sm shadow-md transition-all hover:scale-105"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#5653FE] hover:bg-[#433ffd] text-white font-bold text-xs sm:text-sm shadow-sm transition-all hover:scale-105"
                   >
                     <span>{isUr ? 'ابھی لائیو دیکھیں' : 'Explore Live Streams'}</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </div>
@@ -541,35 +576,36 @@ export default function MarketingHomePage() {
         </section>
 
         {/* 5. SECTION 3: "EXPRESS YOUR STYLE" (02_marketing_homepage.png: 3D GIFTS) */}
-        <section className="py-20 bg-gradient-to-b from-gray-50 to-white border-t border-gray-200">
+        <section className="py-16 sm:py-20 bg-gradient-to-b from-[#FAFAFC] to-white border-t border-gray-150">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-12">
-              <span className="text-xs font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
+            
+            <div className="text-center max-w-xl mx-auto mb-10">
+              <span className="text-[11px] font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
                 {isUr ? 'ورچوئل گفٹس کلیکشن' : 'Next-Gen 3D Gifts'}
               </span>
-              <h2 className="text-3xl sm:text-5xl font-black text-gray-950 mt-3 tracking-tight">
+              <h2 className="text-2xl sm:text-3xl md:text-[34px] font-bold text-gray-950 mt-2.5 tracking-tight">
                 {isUr ? 'اپنے انداز اور محبت کا اظہار کریں' : 'Express Your Style'}
               </h2>
-              <p className="text-gray-600 mt-3 text-sm sm:text-base">
+              <p className="text-gray-500 mt-2 text-xs sm:text-sm leading-relaxed">
                 {isUr
                   ? 'شاندار اینیمیٹڈ تھری ڈی ورچوئل گفٹس کے ذریعے اپنے پسندیدہ تخلیق کاروں کو سراہیں۔'
-                  : 'Stunning 3D effects, luxury supercars, cosmic spacecraft, and magnificent castles that make you unforgettable in every live room.'}
+                  : 'Stunning 3D effects, luxury supercars, cosmic spacecraft, and magnificent castles that make you unforgettable.'}
               </p>
 
               {/* Gift Categories Tab */}
-              <div className="flex items-center justify-center gap-3 mt-8">
+              <div className="flex items-center justify-center gap-2 mt-6">
                 {[
-                  { id: 'vehicles', label: isUr ? 'سپر کارز اور کشتیاں' : '🏎️ Supercars & Fleet' },
-                  { id: 'space', label: isUr ? 'خلائی اور کہکشائیں' : '🚀 Space & Galaxies' },
-                  { id: 'luxury', label: isUr ? 'شاہی محلات اور ہیرے' : '👑 Royal & Castles' },
+                  { id: 'vehicles', label: isUr ? 'سپر کارز' : '🏎️ Supercars' },
+                  { id: 'space', label: isUr ? 'خلائی کہکشائیں' : '🚀 Space & UFO' },
+                  { id: 'luxury', label: isUr ? 'شاہی محلات' : '👑 Royal Castles' },
                 ].map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveGiftTab(tab.id as any)}
-                    className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all ${
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
                       activeGiftTab === tab.id
-                        ? 'bg-[#5653FE] text-white shadow-md'
-                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-100'
+                        ? 'bg-[#5653FE] text-white shadow-sm'
+                        : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
                     }`}
                   >
                     {tab.label}
@@ -579,24 +615,24 @@ export default function MarketingHomePage() {
             </div>
 
             {/* Gift Showcase Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-3xl mx-auto">
               {giftItems[activeGiftTab].map((gift) => (
                 <div
                   key={gift.name}
-                  className="bg-white rounded-3xl p-6 border border-gray-200 hover:border-[#5653FE]/50 hover:shadow-xl transition-all text-center flex flex-col items-center justify-between group"
+                  className="bg-white rounded-3xl p-5 border border-gray-200/80 hover:border-[#5653FE]/50 hover:shadow-lg transition-all text-center flex flex-col items-center justify-between group hover:-translate-y-1"
                 >
                   <div
-                    className={`w-24 h-24 rounded-2xl bg-gradient-to-tr ${gift.color} flex items-center justify-center text-5xl mb-4 group-hover:scale-110 transition-transform shadow-lg`}
+                    className={`w-20 h-20 rounded-2xl bg-gradient-to-tr ${gift.color} flex items-center justify-center text-4xl mb-3 group-hover:scale-110 transition-transform shadow-md`}
                   >
                     {gift.icon}
                   </div>
                   <div>
-                    <h4 className="text-base font-bold text-gray-900">{gift.name}</h4>
-                    <p className="text-xs font-semibold text-[#5653FE] mt-1">{gift.coins}</p>
+                    <h4 className="text-sm font-bold text-gray-900">{gift.name}</h4>
+                    <p className="text-xs font-semibold text-[#5653FE] mt-0.5">{gift.coins}</p>
                   </div>
                   <Link
                     href="/recharge"
-                    className="mt-4 w-full py-2 rounded-xl bg-gray-50 group-hover:bg-[#5653FE] group-hover:text-white text-gray-700 text-xs font-bold transition-colors"
+                    className="mt-3.5 w-full py-1.5 rounded-xl bg-gray-50 group-hover:bg-[#5653FE] group-hover:text-white text-gray-700 text-xs font-bold transition-colors"
                   >
                     {isUr ? 'کوائنز حاصل کریں' : 'Get Coins To Send'}
                   </Link>
@@ -605,18 +641,18 @@ export default function MarketingHomePage() {
             </div>
 
             {/* Coin Top Up CTA Banner */}
-            <div className="mt-12 max-w-3xl mx-auto bg-gradient-to-r from-[#5653FE] to-indigo-700 rounded-3xl p-6 sm:p-8 text-white flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl shadow-purple-500/20">
+            <div className="mt-10 max-w-2xl mx-auto bg-gradient-to-r from-[#5653FE] to-indigo-700 rounded-3xl p-5 sm:p-6 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg shadow-purple-500/15">
               <div className="text-center sm:text-left">
-                <h3 className="text-xl sm:text-2xl font-black">
+                <h3 className="text-lg sm:text-xl font-bold">
                   {isUr ? 'سرکاری ویب سائٹ سے کوائنز ریچارج کریں' : 'Top Up Coins With Zero Extra Fees'}
                 </h3>
-                <p className="text-xs sm:text-sm text-purple-100 mt-1">
+                <p className="text-xs text-purple-100 mt-0.5">
                   {isUr ? 'فوری ڈلیوری اور بہترین رعایتی بنڈلز' : 'Official Poppo recharge portal with instant balance credit.'}
                 </p>
               </div>
               <Link
                 href="/recharge"
-                className="px-6 py-3 rounded-full bg-amber-400 hover:bg-amber-300 text-gray-950 font-black text-sm shrink-0 shadow-lg transition-transform hover:scale-105"
+                className="px-5 py-2.5 rounded-full bg-amber-400 hover:bg-amber-300 text-gray-950 font-bold text-xs shrink-0 shadow-sm transition-transform hover:scale-105"
               >
                 {isUr ? 'ابھی ریچارج کریں' : 'Go To Recharge →'}
               </Link>
@@ -625,46 +661,46 @@ export default function MarketingHomePage() {
         </section>
 
         {/* 6. SECTION 4: TRUST & 18+ CHILD PROTECTION BANNER */}
-        <section className="py-16 bg-white border-t border-gray-150">
+        <section className="py-12 bg-white border-t border-gray-150">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-150">
-                <div className="w-12 h-12 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 font-black text-lg">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-gray-50 border border-gray-150">
+                <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0 font-black text-base">
                   18+
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-gray-900">
+                  <h4 className="text-xs font-bold text-gray-900">
                     {isUr ? 'عمر کی سخت پابندی' : 'Strict 18+ Age Restriction'}
                   </h4>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-[11px] text-gray-500 mt-0.5">
                     {isUr ? 'نابالغوں کا داخلہ سختی سے ممنوع ہے۔' : 'Zero tolerance policy for underage usage.'}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-150">
-                <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-6 h-6" />
+              <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-gray-50 border border-gray-150">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-gray-900">
+                  <h4 className="text-xs font-bold text-gray-900">
                     {isUr ? '24/7 سیکیورٹی مانیٹرنگ' : '24/7 Security Monitoring'}
                   </h4>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-[11px] text-gray-500 mt-0.5">
                     {isUr ? 'جدید ترین AI اور انسانی معائنہ کار۔' : 'Real-time AI filtration and live moderation.'}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-150">
-                <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-                  <Globe className="w-6 h-6" />
+              <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-gray-50 border border-gray-150">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                  <Globe className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-gray-900">
+                  <h4 className="text-xs font-bold text-gray-900">
                     {isUr ? 'عالمی کمیونٹی قواعد' : 'Global Community Guidelines'}
                   </h4>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-[11px] text-gray-500 mt-0.5">
                     {isUr ? 'سب کے لیے محفوظ اور باوقار ماحول۔' : 'Respectful and supportive space for everyone.'}
                   </p>
                 </div>
@@ -672,6 +708,7 @@ export default function MarketingHomePage() {
             </div>
           </div>
         </section>
+
       </main>
 
       {/* 7. Authentic Poppo Footer */}

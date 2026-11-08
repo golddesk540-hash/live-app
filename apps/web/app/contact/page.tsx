@@ -55,30 +55,30 @@ export default function ContactUsPage() {
 
       <main className="overflow-hidden">
         {/* 1. HERO SECTION (03_about_and_contact_page.png) */}
-        <section className="pt-16 sm:pt-24 pb-16 bg-gradient-to-b from-purple-50/40 via-white to-white text-center">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <span className="text-xs font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
+        <section className="pt-10 sm:pt-16 pb-12 bg-gradient-to-b from-purple-50/40 via-white to-white text-center">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <span className="text-[11px] font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
               {isUr ? 'پوپو لائیو کسٹمر و کاروباری رابطہ' : 'Official Poppo Live Contact Desk'}
             </span>
-            <h1 className="text-4xl sm:text-6xl font-black text-gray-950 mt-4 tracking-tight uppercase">
+            <h1 className="text-2xl sm:text-4xl md:text-[44px] font-extrabold text-gray-950 mt-3 tracking-tight uppercase">
               {isUr ? 'ہم سے رابطہ کریں' : 'GET IN TOUCH WITH US'}
             </h1>
-            <p className="mt-4 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            <p className="mt-3 text-xs sm:text-sm text-gray-600 max-w-xl mx-auto leading-relaxed">
               {isUr
                 ? 'چاہے آپ ایجنسی بنانا چاہتے ہوں، پلیٹ فارم کے حوالے سے سوال ہو، یا فوری کسٹمر سپورٹ درکار ہو، ہماری ٹیم 24 گھنٹے آپ کی خدمت کے لیے تیار ہے۔'
                 : "Whether you're looking to collaborate, have a question, or need support, we're here to help you every step of the way."}
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <a
                 href="#business-desk"
-                className="px-7 py-3 rounded-full bg-[#5653FE] hover:bg-[#433ffd] text-white font-bold text-sm shadow-md transition-all hover:scale-105"
+                className="px-6 py-2.5 rounded-full bg-[#5653FE] hover:bg-[#433ffd] text-white font-bold text-xs sm:text-sm shadow-sm transition-all hover:scale-105"
               >
                 {isUr ? 'کاروباری تعاون' : 'Collaborate'}
               </a>
               <a
                 href="#ticket-flow"
-                className="px-7 py-3 rounded-full bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 font-bold text-sm shadow-xs transition-all hover:scale-105"
+                className="px-6 py-2.5 rounded-full bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 font-bold text-xs sm:text-sm shadow-xs transition-all hover:scale-105"
               >
                 {isUr ? 'مدد حاصل کریں' : 'Get Help'}
               </a>

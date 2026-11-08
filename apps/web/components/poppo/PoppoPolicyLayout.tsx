@@ -83,10 +83,10 @@ export const PoppoPolicyLayout: React.FC<PoppoPolicyLayoutProps> = ({
           <div className="lg:col-span-8 order-2 lg:order-1">
             {/* Document Header */}
             <div className="pb-8 border-b border-gray-150 mb-8">
-              <span className="text-xs font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
+              <span className="text-[11px] font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
                 {isUr ? 'قانونی دستاویز' : 'Legal Compliance Document'}
               </span>
-              <h1 className="text-3xl sm:text-5xl font-black text-gray-950 mt-3 tracking-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-[34px] font-bold text-gray-950 mt-2.5 tracking-tight">
                 {isUr && titleUr ? titleUr : title}
               </h1>
               <div className="flex items-center gap-2 mt-3 text-xs sm:text-sm text-gray-400">

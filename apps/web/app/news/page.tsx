@@ -53,13 +53,13 @@ export default function NewsCenterPage() {
         {/* Page Title & Search Header (04_news_page.png) */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-10 border-b border-gray-150">
           <div>
-            <span className="text-xs font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
+            <span className="text-[11px] font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
               {isUr ? 'سرکاری معلومات' : 'Official Press & Bulletins'}
             </span>
-            <h1 className="text-4xl sm:text-6xl font-black text-gray-950 mt-3 tracking-tight uppercase">
+            <h1 className="text-3xl sm:text-4xl md:text-[44px] font-extrabold text-gray-950 mt-2.5 tracking-tight uppercase">
               {isUr ? 'نیوز سینٹر' : 'NEWS'}
             </h1>
-            <p className="mt-2 text-sm sm:text-base text-gray-500 max-w-xl">
+            <p className="mt-2 text-xs sm:text-sm text-gray-500 max-w-lg">
               {isUr
                 ? 'پلیٹ فارم اپڈیٹس، ایونٹس، اور قانونی ضوابط سے باخبر رہیں۔'
                 : 'Stay informed with our latest announcements, product launches, creator activities, and compliance policies.'}

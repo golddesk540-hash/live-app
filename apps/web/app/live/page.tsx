@@ -434,7 +434,7 @@ export default function PoppoLiveExplorePage() {
               <div
                 key={stream.id}
                 onClick={() => setSelectedStream(stream)}
-                className="group relative bg-white rounded-2xl overflow-hidden border border-gray-150 hover:border-[#5653FE]/40 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300 cursor-pointer flex flex-col"
+                className="group relative bg-white rounded-2xl overflow-hidden border border-gray-150 hover:border-[#5653FE]/50 hover:shadow-xl hover:shadow-purple-500/10 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer flex flex-col"
               >
                 {/* Thumbnail Image Container */}
                 <div className="relative aspect-[3/4] w-full overflow-hidden bg-gray-900">
@@ -448,12 +448,13 @@ export default function PoppoLiveExplorePage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none" />
 
                   {/* Top-Right: Audio Waves & Viewer Count */}
-                  <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 border border-white/10">
+                  <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-semibold flex items-center gap-1.5 border border-white/10 shadow-sm">
                     {/* Animated audio wave bars */}
                     <div className="flex items-center gap-0.5 h-3">
-                      <span className="w-0.5 h-1.5 bg-[#5653FE] animate-pulse"></span>
-                      <span className="w-0.5 h-3 bg-pink-400 animate-pulse delay-75"></span>
-                      <span className="w-0.5 h-2 bg-yellow-400 animate-pulse delay-150"></span>
+                      <span className="w-0.5 bg-[#5653FE] animate-wave-bar-1"></span>
+                      <span className="w-0.5 bg-pink-400 animate-wave-bar-2"></span>
+                      <span className="w-0.5 bg-yellow-400 animate-wave-bar-3"></span>
+                      <span className="w-0.5 bg-cyan-400 animate-wave-bar-4"></span>
                     </div>
                     <span>{stream.viewers}</span>
                   </div>
