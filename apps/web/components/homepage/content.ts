@@ -1,0 +1,226 @@
+export const content = {
+  en: {
+    nav: {
+      home: 'Home',
+      live: 'Live Streams',
+      party: 'Party Rooms',
+      pk: 'PK Battles',
+      agency: 'Agency',
+      news: 'News',
+      about: 'About Us',
+      contact: 'Contact',
+      login: 'Login',
+      download: 'Download App',
+      language: 'اردو',
+    },
+    hero: {
+      tag: 'Next-Gen Live Streaming Social Ecosystem',
+      titleHighlight: 'Connect, Stream & Shine',
+      titleRest: 'With Millions Worldwide',
+      description:
+        'Popo Live brings you ultra-low latency interactive live streaming, 9-seat voice lounges, high-stakes PK battles, and real creator earnings with a 70% host gift share.',
+      ctaPrimary: 'Download App Now',
+      ctaSecondary: 'Explore Live Streams',
+      activeStreamers: '12,400+ Live Now',
+      activeUsers: '2.5M+ Global Community',
+      verifiedHosts: '100% Verified Hosts',
+    },
+    live: {
+      tag: 'Real-Time Entertainment',
+      title: 'Discover Talented Broadcasters 24/7',
+      subtitle:
+        'From vocalists and dancers to casual talk shows, immerse yourself in high-definition interactive broadcasts.',
+      categories: ['All', 'Singing & Music', 'PK Battles', 'Chit-Chat', 'Gaming', 'Dance'],
+      watchLive: 'Watch Live',
+      viewAll: 'Explore All 1,200+ Rooms',
+    },
+    party: {
+      tag: 'Interactive Audio Lounges',
+      title: '9-Seat Group Voice & Video Parties',
+      subtitle:
+        'Host your own circle or take a seat with friends. Crystal-clear stereo audio, customized room themes, and host microphone controls.',
+      hostSeat: 'Host Position',
+      requestSeat: 'Request a Seat',
+      activeListeners: 'Listening Now',
+      features: [
+        '1 Host + 8 Guest Speaker Seats',
+        'Custom 3D Theme Backgrounds',
+        'Anti-Spam & Audio Moderation',
+        'Simultaneous Gift Shower Effects',
+      ],
+    },
+    pk: {
+      tag: 'Adrenaline Head-to-Head',
+      title: 'Thrilling 1v1 Streamer PK Battles',
+      subtitle:
+        'Two broadcasters battle for supremacy while their fan clubs send gifts to push the score bar. Who will take the crown?',
+      battleTimer: 'Battle Time Remaining',
+      sendGiftBoost: 'Send Gift to Boost Host',
+      winnerBonus: 'Winner takes top leaderboard spot and victory boosts.',
+    },
+    gifts: {
+      tag: 'Virtual Economy & Transparency',
+      title: 'Luxury Virtual Gifts & Instant Rewards',
+      subtitle:
+        'Support your favorite hosts with dazzling animated gifts. 70% of gift coin values convert directly into withdrawable host points.',
+      hostShareNotice: 'Official Platform Standard: 70% of gift coins become redeemable host points.',
+      coinsLabel: 'Coins',
+      pointsLabel: 'Host Points',
+      rechargeBtn: 'Buy Coins',
+      withdrawBtn: 'Creator Withdrawals',
+    },
+    agency: {
+      tag: 'Creator Careers & Agencies',
+      title: 'Grow as a Broadcaster or Build an Agency',
+      subtitle:
+        'Transparent creator development with daily streaming missions, streak bonuses, and agency revenue sharing.',
+      hostCard: {
+        title: 'Become a Verified Host',
+        desc: 'Reach Level 5, pass facial KYC verification, and start earning from day one with daily streaming milestone bonuses.',
+        btn: 'Apply as Host',
+      },
+      agencyCard: {
+        title: 'Agency Partnership',
+        desc: 'Sign and manage host rosters, track live broadcasting analytics, and earn agency commission splits through a dedicated dashboard.',
+        btn: 'Register Agency',
+      },
+    },
+    download: {
+      tag: 'Join Anywhere, Anytime',
+      title: 'Get Popo Live on Android & iOS',
+      subtitle:
+        'Experience seamless video streaming, real-time voice parties, and vibrant creator interactions on your smartphone.',
+      scanQR: 'Scan QR code to install directly from verified app stores',
+      appStore: 'Download on Apple App Store',
+      googlePlay: 'Get it on Google Play',
+      ageRule: 'Strict 18+ Platform • Store Verified & Secure',
+    },
+    news: {
+      tag: 'Community News & Updates',
+      title: 'Latest From the Popo Live World',
+      subtitle: 'Platform updates, upcoming tournaments, and creator milestone stories.',
+      readMore: 'Read Full Story',
+    },
+    footer: {
+      tagline: 'The premier live streaming and audio entertainment social platform.',
+      platforms: 'Platforms',
+      creators: 'Creators & Agencies',
+      legal: 'Legal & Policies',
+      safety: 'Safety & Trust',
+      copyright: '© 2026 Popo Live Global Inc. All rights reserved.',
+      disclaimer: 'Must be 18+ to use. Streaming and gifting are subject to community terms.',
+    },
+  },
+  ur: {
+    nav: {
+      home: 'ہوم',
+      live: 'لائیو اسٹریمز',
+      party: 'پارٹی رومز',
+      pk: 'پی کے مقابلے',
+      agency: 'ایجنسی',
+      news: 'خبریں',
+      about: 'ہمارے متعلق',
+      contact: 'رابطہ کریں',
+      login: 'لاگ ان',
+      download: 'ایپ ڈاؤنلوڈ کریں',
+      language: 'English',
+    },
+    hero: {
+      tag: 'جدید ترین لائیو اسٹریمنگ سوشل نیٹ ورک',
+      titleHighlight: 'دنیا بھر سے جڑیں،',
+      titleRest: 'اسٹریم کریں اور چمکیں',
+      description:
+        'پوپو لائیو آپ کے لیے لایا ہے تیز رفتار ویڈیو اسٹریمنگ، ۹ سیٹوں والے وائس رومز، پی کے مقابلے، اور ۷۰ فیصد ہوسٹ گفٹ شیئر کے ساتھ تصدیق شدہ آمدنی۔',
+      ctaPrimary: 'ابھی ایپ ڈاؤنلوڈ کریں',
+      ctaSecondary: 'لائیو اسٹریمز دیکھیں',
+      activeStreamers: '۱۲,۴۰۰+ لائیو براڈکاسٹرز',
+      activeUsers: '۲۵ لاکھ+ فعال صارفین',
+      verifiedHosts: '۱۰۰٪ تصدیق شدہ ہوسٹس',
+    },
+    live: {
+      tag: 'براہِ راست تفریح',
+      title: 'ہر وقت باصلاحیت ہوسٹس کو دریافت کریں',
+      subtitle:
+        'گلوکاری، شاعری، رقص، اور دلچسپ گفتگو کے بہترین ایچ ڈی لائیو نشریات سے لطف اندوز ہوں۔',
+      categories: ['تمام', 'گلوکاری و موسیقی', 'پی کے مقابلے', 'گپ شپ', 'گیمنگ', 'ڈانس'],
+      watchLive: 'دیکھیں',
+      viewAll: 'تمام ۱,۲۰۰+ رومز دیکھیں',
+    },
+    party: {
+      tag: 'وائس و ویڈیو لاؤنجز',
+      title: '۹ سیٹوں والے گروپ وائس پارٹی رومز',
+      subtitle:
+        'اپنا ذاتی پارٹی روم بنائیں یا دوستوں کے ساتھ سیٹ حاصل کریں۔ شفاف سٹیریو آڈیو اور ہوسٹ مائیک کنٹرولز۔',
+      hostSeat: 'ہوسٹ کی سیٹ',
+      requestSeat: 'سیٹ کی درخواست کریں',
+      activeListeners: 'سننے والے',
+      features: [
+        '۱ ہوسٹ + ۸ مہمان اسپیکر سیٹیں',
+        'خوبصورت تھری ڈی روم تھیمز',
+        'شور اور سپیم سے محفوظ جدید مائیک کنٹرولز',
+        'ایک ساتھ ورچوئل گفٹس کے شاندار اینیمیشنز',
+      ],
+    },
+    pk: {
+      tag: 'سنسنی خیز ون آن ون مقابلہ',
+      title: 'ہوسٹس کے درمیان براہِ راست پی کے بیٹلز',
+      subtitle:
+        'دو ہوسٹس کے درمیان زبردست مقابلہ جہاں فینز تحائف بھیج کر اسکور بار کو فتح کی طرف دھکیلتے ہیں۔',
+      battleTimer: 'باقی ماندہ وقت',
+      sendGiftBoost: 'ہوسٹ کو گفٹ بھیج کر آگے بڑھائیں',
+      winnerBonus: 'فاتح ہوسٹ کو خصوصی پوائنٹس اور رینکنگ بوسٹ ملتا ہے۔',
+    },
+    gifts: {
+      tag: 'ورچوئل معیشت اور شفافیت',
+      title: 'شاندار ورچوئل تحائف اور ہوسٹ انعامات',
+      subtitle:
+        'اپنے پسندیدہ ہوسٹ کو پرتعیش تحائف بھیجیں۔ ۷۰ فیصد گفٹ کوائنز براہِ راست ہوسٹ پوائنٹس میں تبدیل ہو جاتے ہیں۔',
+      hostShareNotice: 'پلیٹ فارم اصول: گفٹ سکے کا ۷۰٪ حصہ براہِ راست ہوسٹ پوائنٹس بنتا ہے۔',
+      coinsLabel: 'کوائنز',
+      pointsLabel: 'ہوسٹ پوائنٹس',
+      rechargeBtn: 'کوائنز خریدیں',
+      withdrawBtn: 'پوائنٹس کیش آؤٹ',
+    },
+    agency: {
+      tag: 'کری ایٹر کیریئر اور ایجنسی',
+      title: 'بطور ہوسٹ کمائیں یا اپنی ایجنسی بنائیں',
+      subtitle:
+        'روزانہ اسٹریمنگ ٹاسکس، اسٹریک بونس، اور ایجنسی پارٹنرشپ کا مکمل شفاف نظام۔',
+      hostCard: {
+        title: 'تصدیق شدہ ہوسٹ بنیں',
+        desc: 'لیول ۵ حاصل کریں، چہرے کی تصدیق مکمل کریں اور روزانہ کے اسٹریمنگ ٹاسکس سے پہلے دن سے کمائیں۔',
+        btn: 'ہوسٹ بننے کی درخواست',
+      },
+      agencyCard: {
+        title: 'ایجنسی رجسٹر کریں',
+        desc: 'نئے ہوسٹس شامل کریں، ان کے اسٹریمنگ گھنٹوں کی نگرانی کریں اور مخصوص ڈیش بورڈ سے ایجنسی کمیشن حاصل کریں۔',
+        btn: 'ایجنسی رجسٹریشن',
+      },
+    },
+    download: {
+      tag: 'کہیں بھی، کبھی بھی',
+      title: 'پوپو لائیو اینڈرائڈ اور آئی او ایس پر حاصل کریں',
+      subtitle:
+        'اپنے اسمارٹ فون پر تیز رفتار ویڈیو، وائس پارٹیز اور سماجی تفریح کا حقیقی تجربہ حاصل کریں۔',
+      scanQR: 'آفیشل ایپ اسٹور سے انسٹال کرنے کے لیے کیو آر کوڈ اسکین کریں',
+      appStore: 'ایپل ایپ اسٹور پر ڈاؤنلوڈ کریں',
+      googlePlay: 'گوگل پلے پر حاصل کریں',
+      ageRule: 'صرف ۱۸ سال اور اس سے زائد عمر کے لیے • محفوظ ایپ اسٹور ریلیز',
+    },
+    news: {
+      tag: 'کمیونٹی خبریں اور اعلانات',
+      title: 'پوپو لائیو کی تازہ ترین پیش رفت',
+      subtitle: 'نئے فیچرز، ٹورنامنٹس، اور نمایاں ہوسٹس کی کامیابیاں۔',
+      readMore: 'مزید پڑھیں',
+    },
+    footer: {
+      tagline: 'دنیا بھر میں لائیو ویڈیو اور وائس تفریح کا سرکردہ پلیٹ فارم۔',
+      platforms: 'پلیٹ فارمز',
+      creators: 'کری ایٹرز اور ایجنسیاں',
+      legal: 'قانونی پالیسیاں',
+      safety: 'حفاظت اور اعتماد',
+      copyright: '© ۲۰۲۶ پوپو لائیو گلوبل۔ جملہ حقوق محفوظ ہیں۔',
+      disclaimer: 'استعمال کے لیے عمر ۱۸ سال ہونی چاہیے۔ اسٹریمنگ کمیونٹی اصولوں کے تابع ہے۔',
+    },
+  },
+};
