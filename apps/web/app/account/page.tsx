@@ -332,7 +332,7 @@ function WebAccountContent() {
     { id: 'blacklist', label_en: 'Blacklist', label_ur: 'بلیک لسٹ', icon: Slash, href: '/settings/blacklist', badge: stats.blacklistCount },
     { id: 'help', label_en: 'Help Center', label_ur: 'ہیلپ سینٹر', icon: HelpCircle, href: '/help' },
     { id: 'tickets', label_en: 'My Support Tickets', label_ur: 'میری ٹکٹس', icon: Clock, href: '/help/my-tickets', badge: stats.openTicketsCount },
-    { id: 'closure', label_en: 'Account Closure', label_ur: 'اکاؤنٹ بندش', icon: AlertOctagon, href: '/policies' },
+    { id: 'closure', label_en: 'Account Closure', label_ur: 'اکاؤنٹ بندش', icon: AlertOctagon, href: '/account/close' },
   ];
 
   if (loading || !account) {
