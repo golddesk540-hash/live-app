@@ -34,6 +34,9 @@ async function main() {
   // 1. Pull latest code from GitHub
   await exec('cd /var/www/popo-live && git fetch origin main && git reset --hard origin/main');
 
+  // 1.5. Apply Migration 010 (Live Rooms & PK Activities) on VPS PostgreSQL
+  await exec('cd /var/www/popo-live/apps/web && node data/migrations/apply_010.cjs');
+
   // 2. Build Next.js
   await exec('cd /var/www/popo-live/apps/web && npm run build');
 

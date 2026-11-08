@@ -42,3 +42,13 @@ export const COUNTRIES_LIST: CountryItem[] = [
   { code: 'CH', name: 'Switzerland', flag: '🇨🇭', phoneCode: '+41' },
   { code: 'MX', name: 'Mexico', flag: '🇲🇽', phoneCode: '+52' },
 ];
+
+export function getCountryFlag(codeOrName?: string | null): string {
+  if (!codeOrName) return '🇵🇰';
+  const clean = codeOrName.trim().toUpperCase();
+  const match = COUNTRIES_LIST.find(
+    (c) => c.code.toUpperCase() === clean || c.name.toUpperCase() === clean
+  );
+  return match ? match.flag : '🌐';
+}
+

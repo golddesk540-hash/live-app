@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { query } from '@/lib/db';
+import { getCountryFlag } from '@/lib/countries';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +35,12 @@ const CATEGORY_SHORTCUTS = [
   { id: 'rank', name_en: 'Rank', name_ur: 'رینک', icon: 'trophy', color: 'from-amber-500 to-yellow-600', href: '/agency' },
 ];
 
+function formatMetric(num: number): string {
+  if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  return num.toString();
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -44,131 +51,144 @@ export async function GET(req: NextRequest) {
 
     const authUser = await getAuthenticatedUser(req).catch(() => null);
 
-    // 1. Fetch real users from database
-    let userQuery = `
-      SELECT id, poppo_id, nickname, avatar_url, country, country_code,
-             bio, host_level, wealth_level, status, created_at
-      FROM popolive.users
-      WHERE status != 'closed'
-    `;
-    const params: any[] = [];
+    let whereClause = ["lr.is_live = true", "lr.status = 'live'"];
+    let params: any[] = [];
 
     if (search.trim()) {
       params.push(`%${search.trim()}%`);
-      userQuery += ` AND (nickname ILIKE $${params.length} OR poppo_id ILIKE $${params.length} OR bio ILIKE $${params.length})`;
+      whereClause.push(`(lr.title ILIKE $${params.length} OR u.nickname ILIKE $${params.length} OR u.poppo_id ILIKE $${params.length})`);
     }
 
     if (country.trim() && country.toLowerCase() !== 'all') {
-      params.push(country.trim());
-      userQuery += ` AND country ILIKE $${params.length}`;
+      params.push(country.trim().toUpperCase());
+      whereClause.push(`lr.country_code = $${params.length}`);
     }
 
-    // Tab-specific filters
-    if (tab === 'following' && authUser) {
-      params.push(authUser.id);
-      userQuery += ` AND id IN (SELECT following_id FROM popolive.follows WHERE follower_id = $${params.length})`;
-    } else if (tab === 'new') {
-      userQuery += ` ORDER BY created_at DESC LIMIT 20`;
-    } else {
-      userQuery += ` ORDER BY host_level DESC, wealth_level DESC LIMIT 24`;
+    if (tab === 'pk') {
+      whereClause.push('lr.is_pk = true');
     }
 
-    let rows = await query(userQuery, params);
-
-    // If following tab has 0 follows, fallback to recommended creators
     let isFallbackFollowing = false;
+
+    if (tab === 'following') {
+      if (authUser) {
+        params.push(authUser.id);
+        whereClause.push(`lr.host_id IN (SELECT following_id FROM popolive.user_follows WHERE follower_id = $${params.length})`);
+      } else {
+        // Guest user on following tab has 0 follows -> trigger fallback
+        isFallbackFollowing = true;
+      }
+    }
+
+    let sql = `
+      SELECT 
+        lr.id,
+        lr.room_number,
+        lr.host_id,
+        lr.title,
+        lr.cover_url,
+        lr.category,
+        lr.is_live,
+        lr.is_pk,
+        lr.current_pk_id,
+        lr.viewer_count,
+        lr.coins_earned,
+        lr.country,
+        lr.country_code,
+        lr.tags,
+        u.id AS user_id,
+        u.nickname AS host_nickname,
+        u.poppo_id AS host_poppo_id,
+        u.avatar_url AS host_avatar_url,
+        u_opp.nickname AS opp_nickname
+      FROM popolive.live_rooms lr
+      JOIN popolive.users u ON lr.host_id = u.id
+      LEFT JOIN popolive.pk_activities pk ON lr.current_pk_id = pk.id
+      LEFT JOIN popolive.users u_opp ON (
+        pk.id IS NOT NULL AND (
+          CASE WHEN pk.host_a_id = u.id THEN pk.host_b_id ELSE pk.host_a_id END = u_opp.id
+        )
+      )
+      WHERE ${whereClause.join(' AND ')}
+      ${tab === 'new' ? 'ORDER BY lr.created_at DESC' : 'ORDER BY lr.viewer_count DESC'}
+      LIMIT 24
+    `;
+
+    let rows = await query<any>(sql, params);
+
+    // If following tab had 0 live followed rooms, fallback to recommended
     if (tab === 'following' && rows.length === 0) {
       isFallbackFollowing = true;
-      rows = await query(
-        `SELECT id, poppo_id, nickname, avatar_url, country, country_code,
-                bio, host_level, wealth_level, status, created_at
-         FROM popolive.users
-         ORDER BY host_level DESC LIMIT 6`
-      );
+      const recSql = `
+        SELECT 
+          lr.id,
+          lr.room_number,
+          lr.host_id,
+          lr.title,
+          lr.cover_url,
+          lr.category,
+          lr.is_live,
+          lr.is_pk,
+          lr.current_pk_id,
+          lr.viewer_count,
+          lr.coins_earned,
+          lr.country,
+          lr.country_code,
+          lr.tags,
+          u.id AS user_id,
+          u.nickname AS host_nickname,
+          u.poppo_id AS host_poppo_id,
+          u.avatar_url AS host_avatar_url,
+          NULL AS opp_nickname
+        FROM popolive.live_rooms lr
+        JOIN popolive.users u ON lr.host_id = u.id
+        WHERE lr.is_live = true AND lr.status = 'live'
+        ORDER BY lr.viewer_count DESC
+        LIMIT 6
+      `;
+      rows = await query<any>(recSql);
     }
 
-    // Default covers if user avatar is local/placeholder
-    const defaultCovers = [
-      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=600&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=600&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1516726817505-f5ed825624d8?w=600&auto=format&fit=crop&q=80',
-    ];
+    const rooms = rows.map((r: any) => ({
+      id: r.id,
+      roomNumber: r.room_number,
+      roomTitle: r.title,
+      hostId: r.host_id,
+      hostName: r.host_nickname || 'Streamer',
+      hostPoppoId: r.host_poppo_id || '---',
+      hostAvatar: r.host_avatar_url || '/avatars/default.png',
+      coverImage: r.cover_url || r.host_avatar_url || '/avatars/default.png',
+      country: r.country || 'Pakistan',
+      countryCode: r.country_code || 'PK',
+      flagEmoji: getCountryFlag(r.country_code),
+      viewers: formatMetric(r.viewer_count || 0),
+      viewersRaw: r.viewer_count || 0,
+      coinsEarned: parseInt(r.coins_earned || '0', 10),
+      coinsFormatted: formatMetric(parseInt(r.coins_earned || '0', 10)),
+      isLive: Boolean(r.is_live),
+      isPk: Boolean(r.is_pk),
+      pkOpponent: r.opp_nickname || null,
+      category: r.category === 'party' ? 'Party' : (r.is_pk ? 'PK' : 'Live'),
+      tags: r.tags || ['Live', r.country || 'Pakistan'],
+    }));
 
-    const categoryTitles: Record<string, string[]> = {
-      explore: [
-        'Late Night Talk Show & Songs 🎵',
-        'VIP Party Room Open! Join Mic 🎙️',
-        'Chit-Chat & Acoustic Vibes 🎸',
-        'Weekend Special Stream with Friends ✨',
-        'Dancing & Energy Non-Stop 🔥',
-      ],
-      pk: [
-        '🔥 PK BATTLE ROUND 3! Need top support! 🏆',
-        '⚡ Rivalry Clash! Team Islamabad vs Team Lahore!',
-        '⚔️ 1v1 Battle! Send Victory Gifts to Win!',
-        '👑 Crown Defender Match! Let’s Go!',
-      ],
-      new: [
-        'First time live! Say hello 👋',
-        'New creator in town! Welcome me 💖',
-        'Making new friends & chatting 🌸',
-        'Guitar session - testing live stream 🎸',
-      ],
-      following: [
-        'Live now! Come say hi 🥰',
-        'Streaming your favorite requests 🎶',
-        'Friday Night Exclusive Hangout ✨',
-      ],
-    };
-
-    const pkOpponents = ['Sana_Queen', 'Roxana', 'Zaid_Star', 'Kiko_PH', 'Bilal_Pro', 'Elena_Live'];
-
-    // Map rows into rich live room cards
-    const rooms = rows.map((u: any, idx: number) => {
-      const isPk = tab === 'pk' || idx % 3 === 0;
-      const titles = categoryTitles[tab] || categoryTitles.explore;
-      const title = titles[idx % titles.length];
-      const cover = u.avatar_url && u.avatar_url.startsWith('http')
-        ? u.avatar_url
-        : defaultCovers[idx % defaultCovers.length];
-
-      // Format viewer count
-      const rawCount = Math.floor(1200 + (u.host_level * 320) + (idx * 175));
-      const formattedViewers = rawCount >= 1000 ? `${(rawCount / 1000).toFixed(1)}K` : `${rawCount}`;
-
-      return {
-        id: `room-${u.poppo_id}`,
-        roomTitle: title,
-        hostId: u.id,
-        hostName: u.nickname,
-        hostPoppoId: u.poppo_id,
-        hostAvatar: u.avatar_url || cover,
-        coverImage: cover,
-        country: u.country || 'Pakistan',
-        countryCode: u.country_code || 'PK',
-        viewers: formattedViewers,
-        viewersRaw: rawCount,
-        isLive: true,
-        isPk,
-        pkOpponent: isPk ? pkOpponents[idx % pkOpponents.length] : null,
-        category: isPk ? 'PK' : idx % 2 === 0 ? 'Live' : 'Party',
-        tags: [isPk ? 'PK Battle' : 'Music', u.country || 'Global'],
-      };
-    });
+    // Real tab counts
+    const tabCounts = await query<any>(`
+      SELECT 
+        (SELECT COUNT(*)::int FROM popolive.live_rooms WHERE is_live = true AND status = 'live') AS explore_count,
+        (SELECT COUNT(*)::int FROM popolive.pk_activities WHERE status = 'active') AS pk_count,
+        (SELECT COUNT(*)::int FROM popolive.users WHERE status = 'active') AS new_count
+    `);
+    const counts = tabCounts[0] || { explore_count: 0, pk_count: 0, new_count: 0 };
 
     return NextResponse.json({
       success: true,
       tab,
-      authenticated: !!authUser,
+      authenticated: Boolean(authUser),
       currentUser: authUser ? {
         id: authUser.id,
-        nickname: authUser.nickname,
         poppoId: authUser.poppo_id,
+        nickname: authUser.nickname,
         avatarUrl: authUser.avatar_url,
       } : null,
       banners: DEFAULT_BANNERS,
@@ -177,14 +197,17 @@ export async function GET(req: NextRequest) {
       totalRooms: rooms.length,
       isFallbackFollowing,
       tabs: [
-        { id: 'explore', label_en: 'Explore', label_ur: 'دریافت کریں', count: rooms.length },
-        { id: 'following', label_en: 'Following', label_ur: 'فالوئنگ', count: authUser ? (isFallbackFollowing ? 0 : rooms.length) : null },
-        { id: 'new', label_en: 'New', label_ur: 'نئے', count: 24 },
-        { id: 'pk', label_en: 'PK', label_ur: 'پی کے', count: 18 },
+        { id: 'explore', label_en: 'Explore', label_ur: 'دریافت کریں', count: counts.explore_count },
+        { id: 'following', label_en: 'Following', label_ur: 'فالوئنگ', count: authUser ? null : 0 },
+        { id: 'new', label_en: 'New', label_ur: 'نئے', count: counts.new_count },
+        { id: 'pk', label_en: 'PK', label_ur: 'پی کے', count: counts.pk_count },
       ],
     });
-  } catch (err: any) {
-    console.error('Error in GET /api/live/discovery:', err);
-    return NextResponse.json({ error: 'Failed to retrieve live discovery data.' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Error fetching discovery feed:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to load discovery feed', details: error.message },
+      { status: 500 }
+    );
   }
 }
