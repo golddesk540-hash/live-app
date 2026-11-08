@@ -14,6 +14,7 @@ import {
   Bell,
   Moon,
   Info,
+  HelpCircle,
   ChevronRight,
   LogOut,
   Check,
@@ -573,7 +574,23 @@ function SettingsContent() {
             <span className="text-xs text-white/50">{isUr ? 'ڈارک تھیم' : 'Dark'}</span>
           </div>
 
-          {/* ITEM 8: About */}
+          {/* ITEM 8: Help & Feedback */}
+          <Link
+            href="/help"
+            className="w-full p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 flex items-center justify-between text-left transition-all group"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-9 h-9 rounded-xl bg-pink-500/10 flex items-center justify-center text-pink-400 group-hover:scale-105 transition-transform">
+                <HelpCircle className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-bold text-white">
+                {isUr ? 'مدد اور تاثرات' : 'Help & Feedback'}
+              </span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
+          </Link>
+
+          {/* ITEM 9: About */}
           <Link
             href="/policies"
             className="w-full p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 flex items-center justify-between text-left transition-all group"
