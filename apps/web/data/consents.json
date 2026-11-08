@@ -130,5 +130,41 @@
     "language": "en",
     "ipHash": "87e6331ac4bd914f",
     "userAgent": "node"
+  },
+  {
+    "consentId": "cs_1794134355898_7c3efd39",
+    "anonymousSessionId": "public_profile_test_anon",
+    "termsVersion": "v4.2.0",
+    "privacyVersion": "v4.2.0",
+    "status": "accepted",
+    "acceptedAt": "2026-11-08T10:39:15.897Z",
+    "isAdultConfirmed": true,
+    "language": "en",
+    "ipHash": "87e6331ac4bd914f",
+    "userAgent": "node"
+  },
+  {
+    "consentId": "cs_1794134371346_8c46e3d9",
+    "anonymousSessionId": "profile_test_anon",
+    "termsVersion": "v4.2.0",
+    "privacyVersion": "v4.2.0",
+    "status": "accepted",
+    "acceptedAt": "2026-11-08T10:39:31.345Z",
+    "isAdultConfirmed": true,
+    "language": "en",
+    "ipHash": "87e6331ac4bd914f",
+    "userAgent": "node"
+  },
+  {
+    "consentId": "cs_1794134416961_d4f2a93a",
+    "anonymousSessionId": "screenshot_anon_6",
+    "termsVersion": "v4.2.0",
+    "privacyVersion": "v4.2.0",
+    "status": "accepted",
+    "acceptedAt": "2026-11-08T10:40:16.960Z",
+    "isAdultConfirmed": true,
+    "language": "en",
+    "ipHash": "87e6331ac4bd914f",
+    "userAgent": "node"
   }
 ]
