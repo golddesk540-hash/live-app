@@ -262,7 +262,7 @@ function CompleteProfileContent() {
       );
 
       setTimeout(() => {
-        router.push('/');
+        router.push('/user-id');
       }, 1000);
     } catch (err: any) {
       setErrorMessage(err.message || 'Error saving profile.');

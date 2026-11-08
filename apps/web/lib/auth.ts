@@ -218,8 +218,53 @@ export async function verifyPhoneOtp(phone: string, otp: string): Promise<boolea
 }
 
 // -------------------------------------------------------------
-// 5. Session Management
+// 5. Session Management & Device Tracking
 // -------------------------------------------------------------
+export interface SessionInfo {
+  id: string;
+  isCurrent: boolean;
+  deviceType: string;
+  browserName: string;
+  osName: string;
+  location: string;
+  ipMasked: string;
+  createdAt: string;
+  lastActiveAt: string;
+  expiresAt: string;
+}
+
+export function parseUserAgentDetails(ua: string): { deviceType: string; browserName: string; osName: string } {
+  let deviceType = 'desktop';
+  let browserName = 'Chrome';
+  let osName = 'Windows';
+
+  if (!ua || ua === 'Unknown') {
+    return { deviceType, browserName, osName };
+  }
+
+  // OS Detection
+  if (/Windows/i.test(ua)) osName = 'Windows';
+  else if (/Mac OS|Macintosh/i.test(ua)) osName = 'macOS';
+  else if (/iPhone/i.test(ua)) osName = 'iOS';
+  else if (/iPad/i.test(ua)) osName = 'iPadOS';
+  else if (/Android/i.test(ua)) osName = 'Android';
+  else if (/Linux/i.test(ua)) osName = 'Linux';
+
+  // Browser Detection
+  if (/Edg\//i.test(ua)) browserName = 'Edge';
+  else if (/Chrome\//i.test(ua) && !/Edg/i.test(ua)) browserName = 'Chrome';
+  else if (/Firefox\//i.test(ua)) browserName = 'Firefox';
+  else if (/Safari\//i.test(ua) && !/Chrome/i.test(ua)) browserName = 'Safari';
+  else if (/Opera|OPR\//i.test(ua)) browserName = 'Opera';
+
+  // Device Type
+  if (/Mobile|iPhone|Android.*Mobile/i.test(ua)) deviceType = 'mobile';
+  else if (/iPad|Tablet/i.test(ua)) deviceType = 'tablet';
+  else deviceType = 'desktop';
+
+  return { deviceType, browserName, osName };
+}
+
 export async function createSession(
   userId: string,
   req: NextRequest,
@@ -233,10 +278,14 @@ export async function createSession(
   const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
   const ipHash = crypto.createHmac('sha256', AUTH_SECRET).update(clientIp).digest('hex').substring(0, 16);
 
+  const { deviceType, browserName, osName } = parseUserAgentDetails(userAgent);
+
   await query(
-    `INSERT INTO popolive.sessions (user_id, session_token, user_agent, ip_hash, expires_at)
-     VALUES ($1, $2, $3, $4, $5)`,
-    [userId, sessionToken, userAgent, ipHash, expiresAt]
+    `INSERT INTO popolive.sessions (
+      user_id, session_token, user_agent, ip_hash, expires_at,
+      device_type, browser_name, os_name, location, last_active_at, is_revoked
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Pakistan', CURRENT_TIMESTAMP, false)`,
+    [userId, sessionToken, userAgent, ipHash, expiresAt, deviceType, browserName, osName]
   );
 
   return { sessionToken, expiresAt };
@@ -249,15 +298,18 @@ export async function validateSessionToken(sessionToken: string): Promise<AuthUs
     `SELECT u.id, u.poppo_id, u.email, u.phone, u.nickname, u.avatar_url,
             u.gender, u.birthdate, u.is_adult_verified, u.status, u.created_at,
             u.country, u.country_code, u.is_profile_completed,
-            s.expires_at
+            s.expires_at, s.is_revoked
      FROM popolive.sessions s
      JOIN popolive.users u ON s.user_id = u.id
-     WHERE s.session_token = $1 AND s.expires_at > CURRENT_TIMESTAMP AND u.status = 'active'
+     WHERE s.session_token = $1 AND s.expires_at > CURRENT_TIMESTAMP AND s.is_revoked = false AND u.status = 'active'
      LIMIT 1`,
     [sessionToken]
   );
 
   if (rows.length === 0) return null;
+
+  // Touch last_active_at asynchronously
+  query('UPDATE popolive.sessions SET last_active_at = CURRENT_TIMESTAMP WHERE session_token = $1', [sessionToken]).catch(() => {});
 
   const r = rows[0];
   return {
@@ -276,6 +328,49 @@ export async function validateSessionToken(sessionToken: string): Promise<AuthUs
     country_code: r.country_code || 'PK',
     is_profile_completed: Boolean(r.is_profile_completed),
   };
+}
+
+export async function getUserActiveSessions(
+  userId: string,
+  currentSessionToken: string
+): Promise<SessionInfo[]> {
+  const rows = await query(
+    `SELECT id, session_token, device_type, browser_name, os_name, location, ip_hash,
+            created_at, last_active_at, expires_at
+     FROM popolive.sessions
+     WHERE user_id = $1 AND is_revoked = false AND expires_at > CURRENT_TIMESTAMP
+     ORDER BY last_active_at DESC`,
+    [userId]
+  );
+
+  return rows.map((r: any) => ({
+    id: r.id,
+    isCurrent: r.session_token === currentSessionToken,
+    deviceType: r.device_type || 'desktop',
+    browserName: r.browser_name || 'Chrome',
+    osName: r.os_name || 'Windows',
+    location: r.location || 'Pakistan',
+    ipMasked: r.ip_hash ? `192.168.***.${r.ip_hash.substring(0, 3)}` : '127.0.0.1',
+    createdAt: r.created_at ? r.created_at.toISOString() : '',
+    lastActiveAt: r.last_active_at ? r.last_active_at.toISOString() : '',
+    expiresAt: r.expires_at ? r.expires_at.toISOString() : '',
+  }));
+}
+
+export async function revokeSpecificSession(userId: string, targetSessionId: string): Promise<boolean> {
+  const res = await query(
+    `DELETE FROM popolive.sessions WHERE id = $1 AND user_id = $2 RETURNING id`,
+    [targetSessionId, userId]
+  );
+  return res.length > 0;
+}
+
+export async function revokeAllOtherSessions(userId: string, currentSessionToken: string): Promise<number> {
+  const res = await query(
+    `DELETE FROM popolive.sessions WHERE user_id = $1 AND session_token != $2 RETURNING id`,
+    [userId, currentSessionToken]
+  );
+  return res.length;
 }
 
 export async function getAuthenticatedUser(req: NextRequest): Promise<AuthUser | null> {
