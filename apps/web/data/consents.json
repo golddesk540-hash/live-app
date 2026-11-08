@@ -298,5 +298,17 @@
     "language": "en",
     "ipHash": "87e6331ac4bd914f",
     "userAgent": "node"
+  },
+  {
+    "consentId": "cs_1794138883384_144cf85d",
+    "anonymousSessionId": "sess_a5miy9ofh5_1794138883380",
+    "termsVersion": "v4.2.0",
+    "privacyVersion": "v4.2.0",
+    "status": "accepted",
+    "acceptedAt": "2026-11-08T11:54:43.384Z",
+    "isAdultConfirmed": true,
+    "language": "en",
+    "ipHash": "87e6331ac4bd914f",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Antigravity/2.26.0 Chrome/152.0.7977.130 Electron/44.4.3 Safari/537.36"
   }
 ]
