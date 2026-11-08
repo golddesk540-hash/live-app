@@ -3,7 +3,23 @@ const path = require('path');
 const { Pool } = require('pg');
 
 async function main() {
-  const connectionString = process.env.DATABASE_URL || 'postgresql://nordleads:local-platform-password@127.0.0.1:55432/nordleads?schema=popolive';
+  let envDbUrl = process.env.DATABASE_URL;
+  if (!envDbUrl) {
+    const envLocal = path.join(__dirname, '..', '..', '.env.local');
+    const envProd = path.join(__dirname, '..', '..', '.env.production');
+    const envFile = fs.existsSync(envLocal) ? envLocal : (fs.existsSync(envProd) ? envProd : null);
+    if (envFile) {
+      const lines = fs.readFileSync(envFile, 'utf8').split('\n');
+      for (const line of lines) {
+        if (line.startsWith('DATABASE_URL=')) {
+          envDbUrl = line.substring('DATABASE_URL='.length).trim();
+          break;
+        }
+      }
+    }
+  }
+  const defaultLocalUrl = 'postgresql://nordleads:local-platform-password@127.0.0.1:55432/nordleads?schema=popolive';
+  const connectionString = envDbUrl || defaultLocalUrl;
   const pool = new Pool({ connectionString });
 
   console.log('Connecting to PostgreSQL to apply Migration 010...');
