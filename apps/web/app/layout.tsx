@@ -3,8 +3,9 @@ import './globals.css';
 import { LanguageProvider } from '@/lib/languageContext';
 
 export const metadata: Metadata = {
-  title: 'Popo Live — Live Streaming & Social Entertainment Hub',
-  description: 'Official Popo Live platform: Interactive live streaming, 9-seat voice lounges, and PK battles.',
+  title: 'Poppo Live — Live Streaming & Social Entertainment Hub',
+  description:
+    'Poppo Live official platform: Live broadcasting, 9-seat party audio lounges, PK battles, and global creator community.',
 };
 
 export default function RootLayout({
@@ -13,8 +14,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-popo-dark-950 text-popo-text-primary antialiased selection:bg-popo-pink selection:text-white">
+    <html lang="en">
+      <body className="bg-white text-gray-900 antialiased selection:bg-[#5653FE] selection:text-white">
         <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>

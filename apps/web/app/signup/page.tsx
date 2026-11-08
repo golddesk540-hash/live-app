@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { PoppoLogo } from '@/components/poppo/PoppoLogo';
 import { useLanguage } from '@/lib/languageContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -155,13 +156,7 @@ export default function SignupPage() {
         <div className="rounded-3xl bg-gradient-to-b from-[#171722] to-[#12121A] border border-white/15 p-6 sm:p-10 shadow-2xl shadow-purple-950/40 flex flex-col gap-6 text-center">
           {/* Brand Logo & Heading */}
           <div className="flex flex-col items-center gap-3">
-            <Link href="/" className="group">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-popo-pink via-purple-600 to-indigo-500 p-[2.5px] shadow-lg shadow-popo-pink/30 transition-transform duration-300 group-hover:scale-105">
-                <div className="w-full h-full bg-[#0B0E17] rounded-[13px] flex items-center justify-center font-black text-2xl text-popo-pink">
-                  P
-                </div>
-              </div>
-            </Link>
+            <PoppoLogo size="lg" isDark={true} />
             <div>
               <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                 {isUr ? 'اپنا پوپو لائیو اکاؤنٹ بنائیں' : 'Create Your Popo Live Account'}

@@ -2,601 +2,402 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Navbar } from '@/components/homepage/Navbar';
-import { Footer } from '@/components/homepage/Footer';
-import { AuthModal } from '@/components/homepage/AuthModal';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Dropdown } from '@/components/ui/Dropdown';
+import { PoppoHeader } from '@/components/poppo/PoppoHeader';
+import { PoppoFooter } from '@/components/poppo/PoppoFooter';
+import { useLanguage } from '@/lib/languageContext';
 import {
   Mail,
   Send,
-  Headphones,
-  Wrench,
+  HelpCircle,
   Briefcase,
   Users,
+  Compass,
+  CheckCircle2,
+  Sparkles,
   ShieldCheck,
-  CheckCircle,
-  AlertCircle,
-  ChevronDown,
-  HelpCircle,
+  Smartphone,
+  ChevronRight,
   ArrowRight,
   MessageSquare,
-  Globe,
-  Radio,
-  Coins,
-  Wallet,
-  ShieldAlert,
-  Loader2,
-  ExternalLink,
+  Clock,
+  Headphones
 } from 'lucide-react';
-import { useLanguage } from '@/lib/languageContext';
-import { cn } from '@/lib/utils';
 
-export default function ContactPage() {
+export default function ContactUsPage() {
   const { lang, toggleLang, isUr } = useLanguage();
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-
-  // Form State (6 Fields per Prompt 07)
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [subject, setSubject] = useState('');
-  const [inquiryType, setInquiryType] = useState('general');
-  const [userId, setUserId] = useState('');
-  const [message, setMessage] = useState('');
-
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
-
-  // FAQ Accordion State
-  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
-
-  const inquiryOptions = [
-    { value: 'general', label: isUr ? 'عام سپورٹ' : 'General Support' },
-    { value: 'tech', label: isUr ? 'تکنیکی سپورٹ' : 'Technical Support' },
-    { value: 'account', label: isUr ? 'اکاؤنٹ کے مسائل' : 'Account Issues' },
-    { value: 'agency', label: isUr ? 'ایجنسی انکوائری' : 'Agency Inquiry' },
-    { value: 'business', label: isUr ? 'بزنس پارٹنرشپ' : 'Business Partnership' },
-    { value: 'other', label: isUr ? 'دیگر معاملات' : 'Other' },
-  ];
-
-  const validate = () => {
-    const errs: { [key: string]: string } = {};
-    if (!fullName.trim()) errs.fullName = isUr ? 'پورا نام درج کرنا لازمی ہے' : 'Full Name is required';
-    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      errs.email = isUr ? 'درست ای میل پتہ درج کریں' : 'Valid email address is required';
-    }
-    if (!subject.trim()) errs.subject = isUr ? 'موضوع درج کرنا لازمی ہے' : 'Subject is required';
-    if (!message.trim() || message.trim().length < 10) {
-      errs.message = isUr ? 'پیغام کم از کم ۱۰ حروف پر مشتمل ہونا چاہیے' : 'Message must be at least 10 characters long';
-    }
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    poppoId: '',
+    category: 'business',
+    subject: '',
+    message: '',
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
-
-    setIsSubmitting(true);
-    // Simulate frontend validation & response delay
+    setFormSubmitted(true);
     setTimeout(() => {
-      setIsSubmitting(false);
-      setIsSubmitted(true);
-      setFullName('');
-      setEmail('');
-      setSubject('');
-      setUserId('');
-      setMessage('');
-    }, 1000);
+      setFormSubmitted(false);
+      setFormData({ name: '', email: '', poppoId: '', category: 'business', subject: '', message: '' });
+    }, 4000);
   };
-
-  // 4 Information Cards (Prompt 07 Section 3)
-  const contactCards = [
-    {
-      id: 'general',
-      icon: <Headphones className="w-6 h-6 text-popo-pink" />,
-      title: isUr ? 'عام سپورٹ' : 'General Support',
-      desc: isUr ? 'عام سوالات، اکاؤنٹ اور ایپ گائیڈ کے لیے ہم سے رابطہ کریں۔' : 'Contact us for general questions and platform assistance.',
-      channel: 'support@popolive.com',
-      badge: 'Placeholder',
-    },
-    {
-      id: 'tech',
-      icon: <Wrench className="w-6 h-6 text-purple-400" />,
-      title: isUr ? 'تکنیکی سپورٹ' : 'Technical Support',
-      desc: isUr ? 'اسٹریمنگ میں رکاوٹ اور اکاؤنٹ لاگ ان مسائل کا فوری حل۔' : 'Get help with technical issues and account problems.',
-      channel: 'tech@popolive.com',
-      badge: 'Placeholder',
-    },
-    {
-      id: 'business',
-      icon: <Briefcase className="w-6 h-6 text-amber-400" />,
-      title: isUr ? 'بزنس انکوائریز' : 'Business Inquiries',
-      desc: isUr ? 'اسپانسرشپ، کمرشل پارٹنرشپ اور برانڈ تعاون کے لیے رابطہ۔' : 'Contact our team for business and partnership inquiries.',
-      channel: 'business@popolive.com',
-      badge: 'Placeholder',
-    },
-    {
-      id: 'agency',
-      icon: <Users className="w-6 h-6 text-popo-cyan" />,
-      title: isUr ? 'ایجنسی سپورٹ' : 'Agency Support',
-      desc: isUr ? 'ایجنسی رجسٹریشن اور ٹیلنٹ مینیجرز کی معاونت کا سرشار ڈیسک۔' : 'Get assistance with agency registration and creator management.',
-      channel: 'agency@popolive.com',
-      badge: 'Placeholder',
-    },
-  ];
-
-  // Support Topics (Prompt 07 Section 5) - only linking to existing pages
-  const supportTopics = [
-    {
-      icon: <ShieldCheck className="w-5 h-5 text-popo-pink" />,
-      title: isUr ? 'اکاؤنٹ اور لاگ ان' : 'Account and Login',
-      desc: isUr ? 'اکاؤنٹ بنانے اور سیکیورٹی پن کے مسائل' : 'Sign up, login gates, and security settings.',
-      link: '/login',
-    },
-    {
-      icon: <Radio className="w-5 h-5 text-purple-400" />,
-      title: isUr ? 'لائیو اسٹریمنگ مسائل' : 'Live Streaming Issues',
-      desc: isUr ? 'براڈکاسٹ کوالٹی اور لیول ۵ ویلتھ گیٹ' : 'Broadcaster rules, audio quality, and wealth gates.',
-      link: '/safety',
-    },
-    {
-      icon: <Coins className="w-5 h-5 text-amber-400" />,
-      title: isUr ? 'کوائنز اور تحائف' : 'Coins and Gifts',
-      desc: isUr ? 'کوائن ریچارج اور ورچوئل تحائف کے ضوابط' : 'Coin balance, 3D animated gifts, and gifting rules.',
-      link: '/terms',
-    },
-    {
-      icon: <Wallet className="w-5 h-5 text-emerald-400" />,
-      title: isUr ? 'والٹ اور ادائیگیاں' : 'Wallet and Payments',
-      desc: isUr ? '۷۰ فیصد ہوسٹ پوائنٹ شیئر اور کیش آؤٹ' : 'Host points ledger, 70% share, and cashout policies.',
-      link: '/terms',
-    },
-    {
-      icon: <Users className="w-5 h-5 text-popo-cyan" />,
-      title: isUr ? 'ایجنسی رجسٹریشن' : 'Agency Registration',
-      desc: isUr ? 'پارٹنر ایجنسی بنیں اور ٹیم مینیج کریں' : 'Join as an authorized talent agency partner.',
-      link: '/agency',
-    },
-    {
-      icon: <ShieldAlert className="w-5 h-5 text-red-400" />,
-      title: isUr ? 'حفاظت اور رپورٹنگ' : 'Safety and Reporting',
-      desc: isUr ? 'ہراسانی کی شکایت اور ۱۸+ اصول' : 'User block tools, abuse reporting, and guidelines.',
-      link: '/community-guidelines',
-    },
-  ];
-
-  // FAQ Items (Prompt 07 Section 6)
-  const faqs = [
-    {
-      q: isUr ? 'میں پوپو لائیو سپورٹ سے کیسے رابطہ کر سکتا ہوں؟' : 'How can I contact Popo Live support?',
-      a: isUr
-        ? 'آپ اس پیج پر موجود رابطہ فارم کے ذریعے یا support@popolive.com پر براہ راست ای میل بھیج کر رابطہ کر سکتے ہیں۔ ہماری کسٹمر سپورٹ ٹیم ۲۴ گھنٹوں کے اندر جواب دیتی ہے۔'
-        : 'You can contact Popo Live support using the contact form on this page or by emailing support@popolive.com. Our global desk responds within 24 business hours.',
-    },
-    {
-      q: isUr ? 'میں کسی مسئلے یا نامناسب رویے کی شکایت کیسے درج کروں؟' : 'How can I report a problem or policy violation?',
-      a: isUr
-        ? 'لائیو روم کے دوران آپ صارف کی پروفائل پر جا کر "رپورٹ" کے بٹن پر کلک کر سکتے ہیں۔ سنگین معاملات کے لیے ہمارے سیفٹی فارم کا انتخاب کریں یا ہماری کمیونٹی گائیڈ لائنز کا جائزہ لیں۔'
-        : 'In any active live room or party lounge, tap the user avatar and select "Report". For critical safety escalations, choose "Safety & Abuse Reports" on our contact form.',
-    },
-    {
-      q: isUr ? 'میں اپنے اکاؤنٹ کی سیکیورٹی کے لیے مدد کیسے حاصل کروں؟' : 'How can I get help with my account?',
-      a: isUr
-        ? 'اکاؤنٹ کے تصدیقی مسائل کے لیے ہمارے رابطہ فارم میں اپنا رجسٹریشن ای میل اور یوزر آئی ڈی درج کریں تاکہ ہماری تکنیکی ٹیم آپ کی فوری تصدیق کر سکے۔'
-        : 'For account recovery or password verification, submit an inquiry selecting "Account Issues" and include your User ID for expedited verification.',
-    },
-    {
-      q: isUr ? 'میں ایجنسی پروگرام کے لیے کیسے درخواست دے سکتا ہوں؟' : 'How can I apply for an agency?',
-      a: isUr
-        ? 'ہماری آفیشل ایجنسی پیج (/agency) پر جائیں اور "Apply for Agency" فارم پُر کریں یا ہماری ایجنسی سپورٹ ٹیم سے agency@popolive.com پر رابطہ کریں۔'
-        : 'Visit our dedicated Agency portal (/agency) and submit the partner application form, or email our talent desk directly at agency@popolive.com.',
-    },
-    {
-      q: isUr ? 'میں پلیٹ فارم کے باضابطہ قوانین اور پالیسیاں کہاں دیکھ سکتا ہوں؟' : 'Where can I find platform policies?',
-      a: isUr
-        ? 'تمام پالیسیاں ہمارے فوٹر میں موجود لنکس کے ذریعے دستیاب ہیں جن میں استعمال کی شرائط (/terms)، پرائیویسی پالیسی (/privacy)، اور کمیونٹی گائیڈ لائنز (/community-guidelines) شامل ہیں۔'
-        : 'All legal charters are available via the website footer, including Terms of Service (/terms), Privacy Policy (/privacy), Community Guidelines (/community-guidelines), Safety (/safety), and Cookies (/cookies).',
-    },
-  ];
 
   return (
     <div
       dir={isUr ? 'rtl' : 'ltr'}
-      className={`min-h-screen bg-[#0B0E17] text-popo-text-primary overflow-x-hidden selection:bg-popo-pink selection:text-white ${
+      className={`min-h-screen bg-white text-gray-900 selection:bg-[#5653FE] selection:text-white ${
         isUr ? 'font-urdu' : 'font-sans'
       }`}
     >
-      {/* 1. Header (Navbar with Contact active) */}
-      <Navbar
-        lang={lang}
-        onToggleLang={toggleLang}
-        onOpenLogin={() => setIsLoginModalOpen(true)}
-      />
+      <PoppoHeader />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 flex flex-col gap-16">
-        {/* Demo Status Notice */}
-        <div className="flex items-center gap-2 p-3.5 rounded-2xl bg-[#131A2B]/80 border border-white/10 text-xs text-popo-text-secondary">
-          <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-          <span>
-            {isUr
-              ? 'وضاحت: تمام فون نمبرز، پتے اور ای میلز فرضی پلیس ہولڈرز ہیں۔ فارم فرنٹ اینڈ ویلیڈیشن موڈ میں فعال ہے۔'
-              : 'Notice: Contact channels shown are labeled placeholders until official client credentials are provided. Form is active in frontend validation mode; messages will be routed to PostgreSQL upon Phase 2 API connection.'}
-          </span>
-        </div>
-
-        {/* =====================================================================
-            2. CONTACT HERO SECTION (06_contact_us.png)
-        ===================================================================== */}
-        <div className={`flex flex-col gap-4 max-w-3xl ${isUr ? 'text-right ml-auto' : 'text-left'}`}>
-          <div className={`inline-flex items-center gap-2 ${isUr ? 'self-end' : 'self-start'}`}>
-            <span className="text-xs font-bold uppercase tracking-widest text-popo-pink flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-popo-pink/10 border border-popo-pink/20">
-              <MessageSquare className="w-3.5 h-3.5" />
-              {isUr ? 'رابطہ کریں' : 'Contact Popo Live'}
+      <main className="overflow-hidden">
+        {/* 1. HERO SECTION (03_about_and_contact_page.png) */}
+        <section className="pt-16 sm:pt-24 pb-16 bg-gradient-to-b from-purple-50/40 via-white to-white text-center">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <span className="text-xs font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
+              {isUr ? 'پوپو لائیو کسٹمر و کاروباری رابطہ' : 'Official Poppo Live Contact Desk'}
             </span>
-          </div>
-
-          <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
-            {isUr ? 'پوپو لائیو سے رابطہ کریں' : 'Contact Popo Live'}
-          </h1>
-
-          <p className="text-base sm:text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-popo-pink via-purple-300 to-amber-300">
-            {isUr ? 'ہم آپ کی مدد کے لیے حاضر ہیں' : 'We Are Here to Help You.'}
-          </p>
-
-          <p className="text-sm sm:text-base text-popo-text-secondary leading-relaxed">
-            {isUr
-              ? 'کیا آپ کا کوئی سوال ہے، مدد درکار ہے یا پوپو لائیو کے ساتھ کام کرنا چاہتے ہیں؟ ہمیں میسج بھیجیں اور ہماری ٹیم خوشی سے آپ کی معاونت کرے گی۔'
-              : 'Have a question, need support or want to work with Popo Live? Send us a message and our team will be happy to assist you.'}
-          </p>
-        </div>
-
-        {/* =====================================================================
-            3. CONTACT INFORMATION CARDS (4 Cards)
-        ===================================================================== */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {contactCards.map((card) => (
-            <div
-              key={card.id}
-              className={cn(
-                'p-6 rounded-3xl bg-[#131A2B]/80 border border-white/10 hover:border-popo-pink/40 transition-all duration-300 flex flex-col justify-between gap-4 group shadow-xl hover:-translate-y-1',
-                isUr ? 'text-right' : 'text-left'
-              )}
-            >
-              <div>
-                <div className={`w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-4 group-hover:bg-popo-pink/15 group-hover:border-popo-pink/30 transition-colors ${isUr ? 'ml-auto' : ''}`}>
-                  {card.icon}
-                </div>
-                <h3 className="text-base font-bold text-white mb-1.5 group-hover:text-popo-pink transition-colors">
-                  {card.title}
-                </h3>
-                <p className="text-xs text-popo-text-secondary leading-relaxed">
-                  {card.desc}
-                </p>
-              </div>
-
-              <div className="pt-3 border-t border-white/5 flex items-center justify-between">
-                <span className="text-xs font-mono text-popo-cyan truncate">
-                  {card.channel}
-                </span>
-                <span className="text-[10px] text-popo-text-muted px-2 py-0.5 rounded-full bg-black/40 border border-white/10">
-                  {card.badge}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* =====================================================================
-            4. CONTACT FORM & DIRECT CHANNELS (06_contact_us.png)
-        ===================================================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-          {/* Left Column: Direct Channels & Visual (06_contact_us.png) */}
-          <div className={`lg:col-span-5 flex flex-col gap-6 ${isUr ? 'text-right' : 'text-left'}`}>
-            <h2 className="text-2xl font-bold text-white">
-              {isUr ? 'براہِ راست روابط اور اوقات' : 'Direct Support Channels'}
-            </h2>
-            <p className="text-xs sm:text-sm text-popo-text-secondary leading-relaxed">
+            <h1 className="text-4xl sm:text-6xl font-black text-gray-950 mt-4 tracking-tight uppercase">
+              {isUr ? 'ہم سے رابطہ کریں' : 'GET IN TOUCH WITH US'}
+            </h1>
+            <p className="mt-4 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
               {isUr
-                ? 'فارم پُر کریں یا نیچے دیے گئے آفیشل سپورٹ چینلز کے ذریعے فوری رابطہ کریں۔'
-                : 'Fill out the form or reach out through our dedicated communication channels below.'}
+                ? 'چاہے آپ ایجنسی بنانا چاہتے ہوں، پلیٹ فارم کے حوالے سے سوال ہو، یا فوری کسٹمر سپورٹ درکار ہو، ہماری ٹیم 24 گھنٹے آپ کی خدمت کے لیے تیار ہے۔'
+                : "Whether you're looking to collaborate, have a question, or need support, we're here to help you every step of the way."}
             </p>
 
-            {/* Direct Channels (Matching 06_contact_us.png) */}
-            <div className="flex flex-col gap-3 p-6 rounded-3xl bg-[#131A2B]/60 border border-white/10">
-              <div className={cn('flex items-center gap-3 text-sm text-white', isUr && 'flex-row-reverse')}>
-                <div className="w-9 h-9 rounded-full bg-popo-pink/15 border border-popo-pink/30 flex items-center justify-center text-popo-pink shrink-0">
-                  <Mail className="w-4 h-4" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[11px] text-popo-text-muted">Official Email</span>
-                  <span className="font-semibold text-white">support@popolive.com</span>
-                </div>
-              </div>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+              <a
+                href="#business-desk"
+                className="px-7 py-3 rounded-full bg-[#5653FE] hover:bg-[#433ffd] text-white font-bold text-sm shadow-md transition-all hover:scale-105"
+              >
+                {isUr ? 'کاروباری تعاون' : 'Collaborate'}
+              </a>
+              <a
+                href="#ticket-flow"
+                className="px-7 py-3 rounded-full bg-white hover:bg-gray-50 text-gray-800 border border-gray-300 font-bold text-sm shadow-xs transition-all hover:scale-105"
+              >
+                {isUr ? 'مدد حاصل کریں' : 'Get Help'}
+              </a>
+            </div>
+          </div>
+        </section>
 
-              <div className={cn('flex items-center gap-3 text-sm text-white', isUr && 'flex-row-reverse')}>
-                <div className="w-9 h-9 rounded-full bg-popo-pink/15 border border-popo-pink/30 flex items-center justify-center text-popo-pink shrink-0">
-                  <Send className="w-4 h-4" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[11px] text-popo-text-muted">Telegram Handle</span>
-                  <span className="font-semibold text-white">@popolive</span>
-                </div>
-              </div>
+        {/* 2. PANORAMIC CREATORS & GLOBAL COMMUNITY BANNER (03_about_and_contact_page.png) */}
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+          <div className="relative w-full aspect-[21/9] sm:aspect-[24/9] rounded-3xl overflow-hidden shadow-2xl border border-gray-150">
+            <img
+              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1600&auto=format&fit=crop&q=80"
+              alt="Poppo Live Global Support Network"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6 sm:p-10 text-white">
+              <span className="text-xs font-bold uppercase tracking-wider text-purple-300">
+                Poppo Live Global Operations
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-black mt-1">
+                {isUr ? '24/7 کسٹمر سپورٹ اور ایجنسی کوآپریشن نیٹ ورک' : 'Global Creator Operations & Support Network'}
+              </h2>
+            </div>
+          </div>
+        </section>
 
-              <div className={cn('flex items-center gap-3 text-sm text-white', isUr && 'flex-row-reverse')}>
-                <div className="w-9 h-9 rounded-full bg-popo-pink/15 border border-popo-pink/30 flex items-center justify-center text-popo-pink shrink-0">
-                  <Globe className="w-4 h-4" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[11px] text-popo-text-muted">Global Operations</span>
-                  <span className="font-semibold text-white">Global Support (Online 24/7)</span>
-                </div>
-              </div>
+        {/* 3. QUICK SUPPORT IN-APP TICKET SYSTEM (03_about_and_contact_page.png) */}
+        <section id="ticket-flow" className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-gradient-to-br from-purple-50 via-indigo-50/40 to-white rounded-3xl border border-purple-100 p-8 sm:p-12 lg:p-16">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                
+                {/* Left: 3 Steps */}
+                <div className="lg:col-span-7 space-y-6">
+                  <span className="text-xs font-bold text-[#5653FE] uppercase tracking-wider bg-white px-3 py-1 rounded-full border border-purple-200 shadow-xs">
+                    {isUr ? 'فوری سپورٹ سینٹر' : 'Need Quick Support?'}
+                  </span>
+                  <h2 className="text-3xl sm:text-5xl font-black text-gray-950 tracking-tight">
+                    {isUr ? 'ان-ایپ ٹکٹ کے ذریعے تیز ترین حل' : 'Get Direct In-App Assistance'}
+                  </h2>
+                  <p className="text-base text-gray-600 leading-relaxed">
+                    {isUr
+                      ? 'پوپو لائیو ایپ میں فوری کسٹمر سروس ٹکٹ جمع کرائیں اور ہماری تصدیق شدہ سپورٹ ٹیم سے چند منٹوں میں جواب حاصل کریں۔'
+                      : 'For immediate assistance regarding live stream verification, coin top-ups, or security issues, submit a ticket directly within the Poppo Live mobile app.'}
+                  </p>
 
-              {/* Bottom Reference Tag */}
-              <div className="pt-2 text-center mt-2 border-t border-white/5">
-                <span className="inline-block px-4 py-1 rounded-full bg-[#8E0B3E] text-white text-[10px] font-bold tracking-wider">
-                  06. Contact Us
-                </span>
+                  <div className="space-y-4 pt-2">
+                    <div className="flex items-start gap-4">
+                      <div className="w-8 h-8 rounded-full bg-[#5653FE] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                        1
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-gray-900">
+                          {isUr ? 'پوپو لائیو ایپ میں "Me" ٹیب کھولیں' : 'Open the Poppo App and go to "Me"'}
+                        </h4>
+                        <p className="text-xs text-gray-500">
+                          {isUr ? 'اپنے اکاؤنٹ کے مرکزی ڈیش بورڈ پر جائیں۔' : 'Access your personal user center in the bottom navigation.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-4">
+                      <div className="w-8 h-8 rounded-full bg-[#5653FE] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                        2
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-gray-900">
+                          {isUr ? '"Customer Service" یا "Feedback" منتخب کریں' : 'Select "Customer Service" / "Feedback"'}
+                        </h4>
+                        <p className="text-xs text-gray-500">
+                          {isUr ? 'ہیلپ سینٹر کا آئیکون منتخب کریں۔' : 'Tap the official help icon to initiate your inquiry.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-4">
+                      <div className="w-8 h-8 rounded-full bg-[#5653FE] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                        3
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-gray-900">
+                          {isUr ? 'اپنا سوال یا مسئلہ بھیجیں' : 'Describe your request and tap Submit'}
+                        </h4>
+                        <p className="text-xs text-gray-500">
+                          {isUr ? 'ہماری ٹیم چند منٹوں میں جواب دیتی ہے۔' : 'Our automated ticketing queue routes your issue to specialists.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <Link
+                      href="/download"
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#5653FE] hover:bg-[#433ffd] text-white font-bold text-sm shadow-md transition-all hover:scale-105"
+                    >
+                      <Smartphone className="w-4 h-4" />
+                      <span>{isUr ? 'ایپ حاصل کریں اور ٹکٹ بھیجیں' : 'Submit Ticket via App'}</span>
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Right: Phone Mockup */}
+                <div className="lg:col-span-5 flex justify-center">
+                  <div className="w-[280px] sm:w-[310px] aspect-[9/18] rounded-[40px] bg-gray-950 p-3 shadow-2xl border border-gray-200">
+                    <div className="w-full h-full rounded-[30px] overflow-hidden bg-white text-gray-900 p-4 flex flex-col justify-between text-left">
+                      <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                        <span className="text-xs font-bold text-gray-900">Help & Feedback</span>
+                        <span className="text-[10px] text-emerald-500 font-bold">● Online 24/7</span>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-purple-50 border-2 border-[#5653FE] text-center my-auto space-y-1">
+                        <div className="w-9 h-9 rounded-full bg-[#5653FE] text-white flex items-center justify-center mx-auto text-sm">
+                          💬
+                        </div>
+                        <div className="text-xs font-bold text-[#5653FE]">Direct Support Ticket</div>
+                        <div className="text-[9px] text-gray-500">Average response time: &lt; 5 minutes</div>
+                      </div>
+
+                      <div className="space-y-2 text-[11px] text-gray-600">
+                        <div className="p-2 bg-gray-50 rounded-lg">
+                          <span className="font-semibold text-gray-900">FAQ: </span>
+                          <span>How to become an official host?</span>
+                        </div>
+                        <div className="p-2 bg-gray-50 rounded-lg">
+                          <span className="font-semibold text-gray-900">FAQ: </span>
+                          <span>Coin top-up balance delay?</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
+        </section>
 
-          {/* Right Column: 6-Field Working Form */}
-          <div className="lg:col-span-7 rounded-3xl bg-[#131A2B]/90 border border-white/10 p-6 sm:p-10 shadow-2xl relative">
-            {isSubmitted ? (
-              <div className="py-12 flex flex-col items-center text-center gap-4 animate-in zoom-in-95 duration-200">
-                <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center shadow-lg">
-                  <CheckCircle className="w-8 h-8" />
+        {/* 4. BUSINESS COOPERATION & INQUIRIES DESK (03_about_and_contact_page.png) */}
+        <section id="business-desk" className="py-20 bg-[#F8F9FA] border-t border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-14">
+              <span className="text-xs font-bold text-[#5653FE] uppercase tracking-wider bg-purple-50 px-3 py-1 rounded-full border border-purple-100">
+                {isUr ? 'رابطہ چینلز' : "We'd Love To Hear From You"}
+              </span>
+              <h2 className="text-3xl sm:text-5xl font-black text-gray-950 mt-3 tracking-tight">
+                {isUr ? 'ہم آپ سے سننا پسند کریں گے' : "Official Contact Channels"}
+              </h2>
+              <p className="text-gray-600 mt-3 text-sm sm:text-base">
+                {isUr
+                  ? 'کاروباری اشتراک، ایجنسی پارٹنرشپ یا دیگر استفسارات کے لیے متعلقہ ڈیسک سے رابطہ کریں۔'
+                  : 'Reach out directly to our verified corporate departments.'}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-16">
+              {/* Business Card */}
+              <div className="bg-white rounded-3xl p-8 sm:p-10 border border-gray-200 shadow-sm hover:border-[#5653FE]/40 hover:shadow-xl transition-all">
+                <div className="w-14 h-14 rounded-2xl bg-purple-100 text-[#5653FE] flex items-center justify-center mb-6">
+                  <Briefcase className="w-7 h-7" />
                 </div>
-                <h3 className="text-xl font-bold text-white">
-                  {isUr ? 'آپ کا پیغام موصول ہو گیا ہے!' : 'Message Received!'}
+                <h3 className="text-2xl font-black text-gray-950 mb-2">
+                  {isUr ? 'کاروباری اشتراک' : 'Business Cooperation'}
                 </h3>
-                <p className="text-xs sm:text-sm text-popo-text-secondary max-w-md leading-relaxed">
+                <p className="text-sm text-gray-600 leading-relaxed mb-6">
                   {isUr
-                    ? 'شکریہ! آپ کا پیغام ہماری ڈیمو سپورٹ قطار میں درج کر لیا گیا ہے۔ ہماری ٹیم جلد جواب دے گی۔'
-                    : 'Thank you! Your inquiry has been verified and queued for review. In live production, responses are delivered to your email within 24 hours.'}
+                    ? 'ایجنسی رجسٹریشن، سٹریمر ریکروٹمنٹ، برانڈ تعاون اور کمرشل معاہدات کے لیے رابطہ کریں۔'
+                    : 'For talent agencies, creator recruitment, influencer contracts, brand advertising, and official sponsorships.'}
                 </p>
-                <Button variant="secondary" size="sm" onClick={() => setIsSubmitted(false)} className="mt-2">
-                  {isUr ? 'ایک اور پیغام بھیجیں' : 'Send Another Message'}
-                </Button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                {/* 1. Full Name & 2. Email Address */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input
-                    label={isUr ? 'پورا نام *' : 'Full Name *'}
-                    placeholder={isUr ? 'مثال: علی احمد' : 'e.g. John Doe'}
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    error={errors.fullName}
-                  />
-                  <Input
-                    label={isUr ? 'ای میل ایڈریس *' : 'Email Address *'}
-                    placeholder="name@example.com"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    error={errors.email}
-                  />
-                </div>
-
-                {/* 3. Subject & 4. Inquiry Type */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input
-                    label={isUr ? 'موضوع *' : 'Subject *'}
-                    placeholder={isUr ? 'پیغام کا عنوان' : 'Brief subject summary'}
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    error={errors.subject}
-                  />
-                  <Dropdown
-                    label={isUr ? 'انکوائری کی قسم' : 'Inquiry Type'}
-                    options={inquiryOptions}
-                    value={inquiryType}
-                    onChange={setInquiryType}
-                  />
-                </div>
-
-                {/* 5. User ID (Optional) */}
-                <div>
-                  <Input
-                    label={isUr ? 'یوزر آئی ڈی (اختیاری)' : 'User ID (Optional)'}
-                    placeholder={isUr ? 'مثال: 948201' : 'e.g. 948201 (optional)'}
-                    value={userId}
-                    onChange={(e) => setUserId(e.target.value)}
-                  />
-                </div>
-
-                {/* 6. Message Field */}
-                <div className="flex flex-col gap-1.5 text-left">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-popo-text-secondary">
-                    {isUr ? 'پیغام *' : 'Message *'}
-                  </label>
-                  <textarea
-                    rows={5}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder={isUr ? 'اپنا پیغام یہاں تفصیل سے درج کریں...' : 'How can we assist you? Describe your question or proposal in detail...'}
-                    className={`w-full bg-[#0B0E17] text-popo-text-primary placeholder:text-popo-text-muted text-sm rounded-xl p-4 transition-all duration-200 border border-white/10 outline-none focus:border-popo-pink focus:ring-2 focus:ring-popo-pink/20 resize-none ${
-                      errors.message ? 'border-red-500' : ''
-                    }`}
-                  />
-                  {errors.message && (
-                    <span className="text-xs font-medium text-popo-state-error">{errors.message}</span>
-                  )}
-                </div>
-
-                {/* Submit Action */}
-                <div className="pt-2 flex justify-end">
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="md"
-                    disabled={isSubmitting}
-                    className="w-full sm:w-auto px-8 shadow-glow-pink font-bold"
-                    leftIcon={isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  >
-                    {isSubmitting
-                      ? isUr
-                        ? 'بھیجا جا رہا ہے...'
-                        : 'Submitting...'
-                      : isUr
-                      ? 'پیغام بھیجیں'
-                      : 'Send Message'}
-                  </Button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-
-        {/* =====================================================================
-            5. SUPPORT TOPICS SECTION (Prompt 07 Section 5)
-        ===================================================================== */}
-        <section className="py-6 border-t border-white/5">
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="text-xs font-bold uppercase tracking-widest text-popo-cyan px-3.5 py-1.5 rounded-full bg-popo-cyan/10 border border-popo-cyan/20">
-              {isUr ? 'ہم آپ کی مدد کیسے کر سکتے ہیں؟' : 'Support Topics'}
-            </span>
-            <h2 className={cn('text-2xl sm:text-3xl font-extrabold text-white mt-3', isUr && 'font-urdu')}>
-              {isUr ? 'ہم آپ کی مدد کیسے کر سکتے ہیں؟' : 'How Can We Help You?'}
-            </h2>
-            <p className="text-xs sm:text-sm text-popo-text-secondary mt-2">
-              {isUr ? 'براہ راست مدد اور معلومات کے لیے موضوع کا انتخاب کریں' : 'Select a topic below for quick access to guidelines, account tools, and rules.'}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {supportTopics.map((topic, i) => (
-              <Link
-                key={i}
-                href={topic.link}
-                className={cn(
-                  'p-6 rounded-2xl bg-[#131A2B]/60 border border-white/10 hover:border-popo-pink/40 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group shadow-lg',
-                  isUr ? 'text-right' : 'text-left'
-                )}
-              >
-                <div>
-                  <div className={`w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-3 group-hover:bg-popo-pink/15 group-hover:border-popo-pink/30 transition-colors ${isUr ? 'ml-auto' : ''}`}>
-                    {topic.icon}
+                <div className="p-4 rounded-2xl bg-gray-50 border border-gray-150 flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] text-gray-400 font-bold uppercase">Official Email</div>
+                    <div className="text-sm font-bold text-[#5653FE]">business@poppolive.com</div>
                   </div>
-                  <h3 className="text-base font-bold text-white mb-1 group-hover:text-popo-pink transition-colors">
-                    {topic.title}
-                  </h3>
-                  <p className="text-xs text-popo-text-secondary leading-relaxed">
-                    {topic.desc}
+                  <a
+                    href="mailto:business@poppolive.com"
+                    className="px-4 py-1.5 rounded-full bg-[#5653FE] text-white text-xs font-bold hover:bg-[#433ffd]"
+                  >
+                    Send Email
+                  </a>
+                </div>
+              </div>
+
+              {/* Inquiries Card */}
+              <div className="bg-white rounded-3xl p-8 sm:p-10 border border-gray-200 shadow-sm hover:border-[#5653FE]/40 hover:shadow-xl transition-all">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mb-6">
+                  <Mail className="w-7 h-7" />
+                </div>
+                <h3 className="text-2xl font-black text-gray-950 mb-2">
+                  {isUr ? 'دیگر استفسارات' : 'Other Inquiries'}
+                </h3>
+                <p className="text-sm text-gray-600 leading-relaxed mb-6">
+                  {isUr
+                    ? 'پلیٹ فارم فیڈ بیک، قانونی معاملات، ڈیٹا پروٹیکشن، کاپی رائٹ نوٹسز اور عام معلومات کے لیے رابطہ کریں۔'
+                    : 'For general user support, bug reports, legal notices, and compliance inquiries.'}
+                </p>
+                <div className="p-4 rounded-2xl bg-gray-50 border border-gray-150 flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] text-gray-400 font-bold uppercase">Official Email</div>
+                    <div className="text-sm font-bold text-gray-900">support@poppolive.com</div>
+                  </div>
+                  <a
+                    href="mailto:support@poppolive.com"
+                    className="px-4 py-1.5 rounded-full bg-gray-900 text-white text-xs font-bold hover:bg-gray-800"
+                  >
+                    Send Email
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Direct Form */}
+            <div className="max-w-3xl mx-auto bg-white rounded-3xl p-8 sm:p-10 border border-gray-200 shadow-sm">
+              <h3 className="text-xl font-bold text-gray-950 mb-2 text-center">
+                {isUr ? 'آن لائن پیغام بھیجیں' : 'Send A Message Online'}
+              </h3>
+              <p className="text-xs text-gray-500 text-center mb-8">
+                {isUr ? 'ہماری ٹیم 24 گھنٹوں کے اندر جواب دیتی ہے۔' : 'Our team responds to all formal submissions within 24 business hours.'}
+              </p>
+
+              {formSubmitted ? (
+                <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center space-y-2">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+                  <h4 className="text-base font-bold text-emerald-800">
+                    {isUr ? 'پیغام کامیابی سے موصول ہو گیا!' : 'Message Received Successfully!'}
+                  </h4>
+                  <p className="text-xs text-emerald-700">
+                    {isUr ? 'ہماری ٹیم جلد آپ سے رابطہ کرے گی۔' : 'Thank you. A support representative will get back to your email shortly.'}
                   </p>
                 </div>
-                <div className={`pt-3 border-t border-white/5 flex items-center gap-1.5 text-xs font-bold text-popo-cyan group-hover:text-popo-pink transition-colors ${isUr ? 'justify-end' : 'justify-start'}`}>
-                  <span>{isUr ? 'مزید معلومات' : 'Explore'}</span>
-                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* =====================================================================
-            6. FAQ ACCORDION SECTION (Prompt 07 Section 6)
-        ===================================================================== */}
-        <section className="py-6 border-t border-white/5">
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="text-xs font-bold uppercase tracking-widest text-purple-400 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20">
-              FAQ
-            </span>
-            <h2 className={cn('text-2xl sm:text-3xl font-extrabold text-white mt-3', isUr && 'font-urdu')}>
-              {isUr ? 'اکثر پوچھے جانے والے سوالات' : 'Frequently Asked Questions'}
-            </h2>
-            <p className="text-xs sm:text-sm text-popo-text-secondary mt-2">
-              {isUr ? 'پوپو لائیو کے حوالے سے عام سوالات اور ان کے جوابات' : 'Quick answers to common questions about platform access, creator tools, and safety.'}
-            </p>
-          </div>
-
-          <div className="max-w-3xl mx-auto flex flex-col gap-3">
-            {faqs.map((faq, idx) => {
-              const isOpen = openFaqIndex === idx;
-              return (
-                <div
-                  key={idx}
-                  className="rounded-2xl bg-[#131A2B]/80 border border-white/10 overflow-hidden transition-colors"
-                >
-                  <button
-                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                    className={cn(
-                      'w-full p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base text-white hover:text-popo-pink transition-colors',
-                      isUr && 'text-right flex-row-reverse'
-                    )}
-                  >
-                    <span>{faq.q}</span>
-                    <ChevronDown
-                      className={cn(
-                        'w-4 h-4 text-popo-text-muted transition-transform duration-200 shrink-0',
-                        isOpen && 'rotate-180 text-popo-pink'
-                      )}
-                    />
-                  </button>
-                  {isOpen && (
-                    <div className={cn('px-5 pb-5 pt-1 text-xs sm:text-sm text-popo-text-secondary leading-relaxed border-t border-white/5', isUr && 'text-right')}>
-                      {faq.a}
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        {isUr ? 'پورا نام' : 'Full Name'} *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="John Doe"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#5653FE] focus:ring-2 focus:ring-[#5653FE]/20 outline-none text-sm"
+                      />
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        {isUr ? 'ای میل ایڈریس' : 'Email Address'} *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="john@example.com"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#5653FE] focus:ring-2 focus:ring-[#5653FE]/20 outline-none text-sm"
+                      />
+                    </div>
+                  </div>
 
-        {/* =====================================================================
-            7. BUSINESS INQUIRY SECTION (Prompt 07 Section 7)
-        ===================================================================== */}
-        <section className="p-8 sm:p-12 rounded-3xl bg-gradient-to-r from-popo-pink/15 via-[#131A2B] to-popo-cyan/15 border border-white/10 shadow-2xl relative overflow-hidden">
-          <div className="max-w-3xl mx-auto text-center flex flex-col items-center gap-5">
-            <h2 className={cn('text-2xl sm:text-4xl font-black text-white', isUr && 'font-urdu')}>
-              {isUr ? 'پوپو لائیو کے ساتھ کام کریں' : 'Work With Popo Live'}
-            </h2>
-            <p className="text-sm sm:text-base text-popo-text-secondary leading-relaxed max-w-xl">
-              {isUr
-                ? 'کیا آپ پوپو لائیو کے ساتھ کام کرنے میں دلچسپی رکھتے ہیں؟ کاروباری اور شراکت داری کی گفتگو کے لیے ہماری ٹیم سے رابطہ کریں۔'
-                : 'Interested in working with Popo Live? Contact our team for business, sponsorship, and talent partnership discussions.'}
-            </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        {isUr ? 'پوپو لائیو یوزر آئی ڈی' : 'Poppo Live User ID'}
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.poppoId}
+                        onChange={(e) => setFormData({ ...formData, poppoId: e.target.value })}
+                        placeholder="e.g. 8892104"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#5653FE] focus:ring-2 focus:ring-[#5653FE]/20 outline-none text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 mb-1">
+                        {isUr ? 'شعبہ' : 'Inquiry Category'} *
+                      </label>
+                      <select
+                        value={formData.category}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#5653FE] focus:ring-2 focus:ring-[#5653FE]/20 outline-none text-sm bg-white"
+                      >
+                        <option value="business">Business / Agency Partnership</option>
+                        <option value="recharge">Coin Top-Up Assistance</option>
+                        <option value="compliance">Compliance & Child Protection</option>
+                        <option value="other">General Support</option>
+                      </select>
+                    </div>
+                  </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-              <Button
-                variant="primary"
-                size="md"
-                onClick={() => {
-                  setInquiryType('business');
-                  setSubject('Business Partnership Inquiry');
-                  const formEl = document.querySelector('form');
-                  formEl?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="shadow-glow-pink font-bold"
-              >
-                {isUr ? 'کاروباری انکوائری' : 'Business Inquiry'}
-              </Button>
-              <Link href="/agency">
-                <Button variant="secondary" size="md" rightIcon={<ArrowRight className="w-4 h-4 text-popo-pink" />}>
-                  {isUr ? 'ایجنسی انکوائری' : 'Agency Inquiry'}
-                </Button>
-              </Link>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {isUr ? 'پیغام' : 'Message'} *
+                    </label>
+                    <textarea
+                      required
+                      rows={4}
+                      value={formData.message}
+                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                      placeholder="Please write your detailed inquiry here..."
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#5653FE] focus:ring-2 focus:ring-[#5653FE]/20 outline-none text-sm"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-3 rounded-full bg-[#5653FE] hover:bg-[#433ffd] text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>{isUr ? 'پیغام روانہ کریں' : 'Send Message'}</span>
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         </section>
       </main>
 
-      {/* 8. Footer (Reused existing footer) */}
-      <Footer lang={lang} />
-
-      <AuthModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-        lang={lang}
-      />
+      <PoppoFooter />
     </div>
   );
 }

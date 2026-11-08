@@ -2,11 +2,10 @@ import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { Navbar } from '@/components/homepage/Navbar';
-import { Footer } from '@/components/homepage/Footer';
-import { Button } from '@/components/ui/Button';
+import { PoppoHeader } from '@/components/poppo/PoppoHeader';
+import { PoppoFooter } from '@/components/poppo/PoppoFooter';
 import { allNewsArticles, Article } from '@/lib/newsData';
-import { ArrowLeft, Calendar, Clock, Tag, Share2, Sparkles, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Tag, Share2, Sparkles, ShieldCheck } from 'lucide-react';
 
 interface Props {
   params: {
@@ -22,10 +21,10 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const article = allNewsArticles.find((a) => a.slug === params.slug);
-  if (!article) return { title: 'Article Not Found — Popo Live' };
+  if (!article) return { title: 'Article Not Found — Poppo Live' };
 
   return {
-    title: `${article.title} — Popo Live News`,
+    title: `${article.title} — Poppo Live Official News`,
     description: article.description,
   };
 }
@@ -37,65 +36,53 @@ export default function ArticleDetailPage({ params }: Props) {
     notFound();
   }
 
-  // Related articles in same or other categories
   const relatedArticles = allNewsArticles
     .filter((a) => a.slug !== article.slug)
-    .slice(0, 3);
+    .slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-[#0B0E17] text-popo-text-primary overflow-x-hidden selection:bg-popo-pink selection:text-white font-sans">
-      <Navbar />
+    <div className="min-h-screen bg-white text-gray-900 selection:bg-[#5653FE] selection:text-white font-sans">
+      <PoppoHeader />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 flex flex-col gap-8">
-        {/* Breadcrumb & Back to News Button */}
-        <div className="flex items-center justify-between">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        {/* Breadcrumb Back Link */}
+        <div className="mb-6">
           <Link
             href="/news"
-            className="inline-flex items-center gap-2 text-xs font-bold text-popo-text-secondary hover:text-white group px-3.5 py-2 rounded-full bg-[#131A2B] border border-white/10 hover:border-popo-pink/40 transition-all"
+            className="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-[#5653FE] transition-colors"
           >
-            <ArrowLeft className="w-4 h-4 text-popo-pink group-hover:-translate-x-1 transition-transform" />
-            <span>Back to All News</span>
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to News Center</span>
           </Link>
-
-          <span className="text-xs text-popo-text-muted hidden sm:inline">
-            Popo Live News Editorial
-          </span>
-        </div>
-
-        {/* Demo Notice */}
-        <div className="flex items-center gap-2 p-3 rounded-2xl bg-[#131A2B]/80 border border-white/10 text-xs text-popo-text-secondary">
-          <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-          <span>Notice: This is a verified sample news article for platform UI/UX preview purposes.</span>
         </div>
 
         {/* Article Header */}
-        <header className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-popo-pink text-white shadow-glow-pink">
+        <div className="space-y-4 mb-8">
+          <div className="flex items-center gap-3">
+            <span className="px-3 py-1 rounded-full bg-purple-50 text-[#5653FE] text-xs font-bold border border-purple-100">
               {article.category}
             </span>
-            <div className="flex items-center gap-1.5 text-xs text-popo-text-secondary">
-              <Calendar className="w-3.5 h-3.5 text-popo-cyan" />
+            <div className="flex items-center gap-1.5 text-xs text-gray-400">
+              <Calendar className="w-3.5 h-3.5" />
               <span>{article.date}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-popo-text-muted">
+            <div className="flex items-center gap-1.5 text-xs text-gray-400">
               <Clock className="w-3.5 h-3.5" />
               <span>{article.readTime}</span>
             </div>
           </div>
 
-          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-gray-950 tracking-tight leading-tight">
             {article.title}
           </h1>
 
-          <p className="text-base sm:text-lg text-popo-text-secondary leading-relaxed border-l-2 border-popo-pink pl-4 italic">
+          <p className="text-base sm:text-lg text-gray-600 leading-relaxed font-normal">
             {article.description}
           </p>
-        </header>
+        </div>
 
-        {/* Featured Image */}
-        <div className="relative aspect-[16/9] rounded-3xl overflow-hidden bg-[#131A2B] border border-white/10 shadow-2xl">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+        {/* Featured Cover Image */}
+        <div className="relative aspect-[16/9] w-full rounded-3xl overflow-hidden shadow-lg border border-gray-150 mb-10">
           <img
             src={article.image}
             alt={article.title}
@@ -103,71 +90,42 @@ export default function ArticleDetailPage({ params }: Props) {
           />
         </div>
 
-        {/* Article Full Content */}
-        <article className="flex flex-col gap-6 text-sm sm:text-base text-popo-text-secondary leading-relaxed pt-4 border-b border-white/10 pb-10">
+        {/* Article Body */}
+        <div className="prose prose-lg max-w-none text-gray-700 space-y-6 text-base leading-relaxed border-b border-gray-150 pb-12">
           {article.content.map((paragraph, index) => (
-            <p key={index} className="whitespace-pre-line text-white/90 leading-loose">
+            <p key={index} className="text-gray-700">
               {paragraph}
             </p>
           ))}
-        </article>
-
-        {/* Share & Call to Action */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 rounded-2xl bg-[#131A2B]/60 border border-white/10">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-amber-400" />
-            <span className="text-sm font-bold text-white">Share this announcement:</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {['Twitter/X', 'Telegram', 'Facebook', 'WhatsApp'].map((platform) => (
-              <span
-                key={platform}
-                className="px-3 py-1 rounded-full text-xs font-semibold bg-white/5 hover:bg-popo-pink hover:text-white border border-white/10 transition-colors cursor-pointer"
-              >
-                {platform}
-              </span>
-            ))}
-          </div>
         </div>
 
-        {/* Related Articles Section */}
-        <section className="flex flex-col gap-6 pt-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl sm:text-2xl font-bold text-white">Related Announcements</h2>
-            <Link href="/news" className="text-xs font-bold text-popo-pink hover:underline">
-              View All
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Related Articles */}
+        <div className="pt-12">
+          <h3 className="text-xl font-bold text-gray-950 mb-6">Related News & Announcements</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {relatedArticles.map((rel) => (
               <Link
                 key={rel.slug}
                 href={`/news/${rel.slug}`}
-                className="group flex flex-col rounded-2xl overflow-hidden bg-[#131A2B]/80 border border-white/10 hover:border-popo-pink/40 transition-all p-4 shadow-lg hover:-translate-y-1"
+                className="group p-5 rounded-2xl border border-gray-200 hover:border-[#5653FE]/50 hover:shadow-md transition-all flex flex-col justify-between"
               >
-                <div className="relative aspect-[16/10] rounded-xl overflow-hidden mb-3 bg-black/40">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={rel.image}
-                    alt={rel.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-black/70 backdrop-blur-sm text-white">
-                    {rel.category}
-                  </span>
+                <div>
+                  <span className="text-[11px] font-bold text-[#5653FE] uppercase">{rel.category}</span>
+                  <h4 className="text-sm font-bold text-gray-900 group-hover:text-[#5653FE] transition-colors mt-1 line-clamp-2">
+                    {rel.title}
+                  </h4>
                 </div>
-                <span className="text-[11px] text-popo-text-muted mb-1">{rel.date}</span>
-                <h3 className="text-sm font-bold text-white group-hover:text-popo-pink transition-colors line-clamp-2">
-                  {rel.title}
-                </h3>
+                <div className="text-[11px] text-gray-400 mt-4 flex items-center justify-between">
+                  <span>{rel.date}</span>
+                  <span className="text-[#5653FE] font-bold group-hover:translate-x-1 transition-transform">Read →</span>
+                </div>
               </Link>
             ))}
           </div>
-        </section>
+        </div>
       </main>
 
-      <Footer />
+      <PoppoFooter />
     </div>
   );
 }

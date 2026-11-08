@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Navbar } from '@/components/homepage/Navbar';
-import { Footer } from '@/components/homepage/Footer';
+import { PoppoHeader } from '@/components/poppo/PoppoHeader';
+import { PoppoFooter } from '@/components/poppo/PoppoFooter';
 import { AuthModal } from '@/components/homepage/AuthModal';
 import { Button } from '@/components/ui/Button';
 import { QrCodePlaceholder } from '@/components/download/QrCodePlaceholder';
@@ -439,11 +439,7 @@ export default function DownloadAppPage() {
       }`}
     >
       {/* 1. Website Header */}
-      <Navbar
-        lang={lang}
-        onToggleLang={toggleLang}
-        onOpenLogin={() => setIsLoginModalOpen(true)}
-      />
+      <PoppoHeader />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16 flex flex-col gap-24 overflow-x-hidden">
         {/* Staging Placeholder Alert */}
@@ -944,7 +940,7 @@ export default function DownloadAppPage() {
       </main>
 
       {/* 10. Website Footer */}
-      <Footer lang={lang} />
+      <PoppoFooter />
 
       <AuthModal
         isOpen={isLoginModalOpen}
