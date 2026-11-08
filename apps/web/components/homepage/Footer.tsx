@@ -136,11 +136,13 @@ export const Footer: React.FC<FooterProps> = ({ lang: propLang }) => {
                 openSections.legal ? 'block' : 'hidden md:flex'
               }`}
             >
-              <li><Link href="/terms" className="hover:text-white transition-colors block py-1">{isUr ? 'استعمال کی شرائط (Terms)' : 'Terms of Service'}</Link></li>
-              <li><Link href="/privacy" className="hover:text-white transition-colors block py-1">{isUr ? 'پرائیویسی پالیسی (Privacy)' : 'Privacy Policy'}</Link></li>
-              <li><Link href="/community-guidelines" className="hover:text-white transition-colors block py-1">{isUr ? 'کمیونٹی گائیڈ لائنز' : 'Community Guidelines'}</Link></li>
+              <li><Link href="/policies" className="text-popo-pink hover:underline font-bold block py-1">{isUr ? 'تمام پالیسیوں کا مرکز' : 'Policies Hub'}</Link></li>
+              <li><Link href="/policies/terms" className="hover:text-white transition-colors block py-1">{isUr ? 'استعمال کی شرائط (Terms)' : 'Terms of Service'}</Link></li>
+              <li><Link href="/policies/privacy" className="hover:text-white transition-colors block py-1">{isUr ? 'پرائیویسی پالیسی (Privacy)' : 'Privacy Policy'}</Link></li>
+              <li><Link href="/policies/community-guidelines" className="hover:text-white transition-colors block py-1">{isUr ? 'کمیونٹی گائیڈ لائنز' : 'Community Guidelines'}</Link></li>
+              <li><Link href="/policies/refunds" className="hover:text-white transition-colors block py-1">{isUr ? 'ریفنڈ و ورچوئل کوائنز' : 'Refund & Virtual Items'}</Link></li>
+              <li><Link href="/policies/cookies" className="hover:text-white transition-colors block py-1">{isUr ? 'کوکی پالیسی' : 'Cookie Policy'}</Link></li>
               <li><Link href="/safety" className="hover:text-white transition-colors block py-1">{isUr ? 'سیفٹی اور پروٹیکشن' : 'Safety Policy (18+)'}</Link></li>
-              <li><Link href="/cookies" className="hover:text-white transition-colors block py-1">{isUr ? 'کوکی پالیسی' : 'Cookie Policy'}</Link></li>
               <li><Link href="/about" className="hover:text-white transition-colors block py-1">{isUr ? 'ہمارے متعلق' : 'About Popo Live'}</Link></li>
               <li><Link href="/contact" className="hover:text-white transition-colors block py-1">{isUr ? 'سپورٹ ڈیسک' : 'Contact Support'}</Link></li>
             </ul>
