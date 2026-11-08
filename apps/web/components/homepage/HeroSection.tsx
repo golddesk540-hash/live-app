@@ -67,18 +67,16 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ lang }) => {
 
             {/* CTAs */}
             <div className={`flex flex-wrap items-center justify-center gap-4 pt-2 ${isUr ? 'lg:justify-end' : 'lg:justify-start'}`}>
-              <Button
-                variant="primary"
-                size="lg"
-                onClick={() => {
-                  const el = document.getElementById('download');
-                  el?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                leftIcon={<Download className="w-5 h-5" />}
-                className="text-base px-7 shadow-glow-pink"
-              >
-                {t.ctaPrimary}
-              </Button>
+              <a href="/download">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  leftIcon={<Download className="w-5 h-5" />}
+                  className="text-base px-7 shadow-glow-pink"
+                >
+                  {t.ctaPrimary}
+                </Button>
+              </a>
 
               <Button
                 variant="secondary"

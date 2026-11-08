@@ -101,33 +101,26 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           {/* Login Button */}
-          {onOpenLogin && (
+          <Link href="/login">
             <Button
               variant="secondary"
               size="sm"
-              onClick={onOpenLogin}
               leftIcon={<LogIn className="w-3.5 h-3.5" />}
             >
               {t.login}
             </Button>
-          )}
+          </Link>
 
           {/* Download App Button */}
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => {
-              if (pathname === '/') {
-                const el = document.getElementById('download');
-                el?.scrollIntoView({ behavior: 'smooth' });
-              } else {
-                window.location.href = '/#download';
-              }
-            }}
-            leftIcon={<Download className="w-3.5 h-3.5" />}
-          >
-            {t.download}
-          </Button>
+          <Link href="/download">
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<Download className="w-3.5 h-3.5" />}
+            >
+              {t.download}
+            </Button>
+          </Link>
         </div>
 
         {/* Mobile Hamburger Button */}
@@ -180,37 +173,26 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
 
           <div className="flex flex-col gap-2.5 pt-4 border-t border-white/10">
-            {onOpenLogin && (
+            <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
               <Button
                 variant="secondary"
                 size="md"
                 className="w-full"
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  onOpenLogin();
-                }}
                 leftIcon={<LogIn className="w-4 h-4" />}
               >
                 {t.login}
               </Button>
-            )}
-            <Button
-              variant="primary"
-              size="md"
-              className="w-full"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                if (pathname === '/') {
-                  const el = document.getElementById('download');
-                  el?.scrollIntoView({ behavior: 'smooth' });
-                } else {
-                  window.location.href = '/#download';
-                }
-              }}
-              leftIcon={<Download className="w-4 h-4" />}
-            >
-              {t.download}
-            </Button>
+            </Link>
+            <Link href="/download" onClick={() => setIsMobileMenuOpen(false)}>
+              <Button
+                variant="primary"
+                size="md"
+                className="w-full"
+                leftIcon={<Download className="w-4 h-4" />}
+              >
+                {t.download}
+              </Button>
+            </Link>
           </div>
         </div>
       )}

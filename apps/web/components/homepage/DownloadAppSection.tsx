@@ -40,8 +40,8 @@ export const DownloadAppSection: React.FC<DownloadAppSectionProps> = ({ lang }) 
               {/* Official Store Buttons */}
               <div className={`flex flex-wrap items-center gap-4 pt-2 ${isUr ? 'justify-end' : 'justify-start'}`}>
                 {/* Google Play Store Badge */}
-                <button
-                  type="button"
+                <a
+                  href="/download#android-section"
                   className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-black/60 hover:bg-black/80 border border-white/15 hover:border-white/30 text-white transition-all select-none group shadow-lg"
                 >
                   <svg className="w-7 h-7 shrink-0 transition-transform group-hover:scale-105" viewBox="0 0 24 24">
@@ -70,11 +70,11 @@ export const DownloadAppSection: React.FC<DownloadAppSectionProps> = ({ lang }) 
                       Google Play
                     </span>
                   </div>
-                </button>
+                </a>
 
                 {/* Apple App Store Badge */}
-                <button
-                  type="button"
+                <a
+                  href="/download#ios-section"
                   className="flex items-center gap-3 px-5 py-3 rounded-2xl bg-black/60 hover:bg-black/80 border border-white/15 hover:border-white/30 text-white transition-all select-none group shadow-lg"
                 >
                   <svg className="w-7 h-7 fill-white shrink-0 transition-transform group-hover:scale-105" viewBox="0 0 24 24">
@@ -88,7 +88,7 @@ export const DownloadAppSection: React.FC<DownloadAppSectionProps> = ({ lang }) 
                       App Store
                     </span>
                   </div>
-                </button>
+                </a>
               </div>
 
               {/* Age & Store Safety Footnote */}
