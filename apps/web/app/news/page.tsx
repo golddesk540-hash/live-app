@@ -103,8 +103,10 @@ Tournament Rules:
   },
 ];
 
+import { useLanguage } from '@/lib/languageContext';
+
 export default function NewsPage() {
-  const [lang, setLang] = useState<'en' | 'ur'>('en');
+  const { lang, toggleLang, isUr } = useLanguage();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
   const [selectedArticle, setSelectedArticle] = useState<NewsItem | null>(null);
@@ -120,8 +122,6 @@ export default function NewsPage() {
   const featuredArticle = mockNewsData.find((item) => item.featured) || mockNewsData[0];
   const listArticles = filteredNews.filter((item) => item.id !== featuredArticle.id || activeCategory !== 'All');
 
-  const isUr = lang === 'ur';
-
   return (
     <div
       dir={isUr ? 'rtl' : 'ltr'}
@@ -131,7 +131,7 @@ export default function NewsPage() {
     >
       <Navbar
         lang={lang}
-        onToggleLang={() => setLang((prev) => (prev === 'en' ? 'ur' : 'en'))}
+        onToggleLang={toggleLang}
         onOpenLogin={() => setIsLoginModalOpen(true)}
       />
 

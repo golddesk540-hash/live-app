@@ -14,26 +14,23 @@ import {
   Footer,
   AuthModal,
 } from '@/components/homepage';
+import { useLanguage } from '@/lib/languageContext';
 
 export default function HomePage() {
-  const [lang, setLang] = useState<'en' | 'ur'>('en');
+  const { lang, toggleLang, isUr } = useLanguage();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-
-  const toggleLanguage = () => {
-    setLang((prev) => (prev === 'en' ? 'ur' : 'en'));
-  };
 
   return (
     <div
-      dir={lang === 'ur' ? 'rtl' : 'ltr'}
+      dir={isUr ? 'rtl' : 'ltr'}
       className={`min-h-screen bg-popo-dark-950 text-popo-text-primary overflow-x-hidden selection:bg-popo-pink selection:text-white ${
-        lang === 'ur' ? 'font-urdu' : 'font-sans'
+        isUr ? 'font-urdu' : 'font-sans'
       }`}
     >
       {/* 1. Header / Navigation */}
       <Navbar
         lang={lang}
-        onToggleLang={toggleLanguage}
+        onToggleLang={toggleLang}
         onOpenLogin={() => setIsLoginModalOpen(true)}
       />
 

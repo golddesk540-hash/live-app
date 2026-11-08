@@ -21,10 +21,11 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 
+import { useLanguage } from '@/lib/languageContext';
+
 export default function AboutPage() {
-  const [lang, setLang] = useState<'en' | 'ur'>('en');
+  const { lang, toggleLang, isUr } = useLanguage();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const isUr = lang === 'ur';
 
   const pillars = [
     {
@@ -101,7 +102,7 @@ export default function AboutPage() {
     >
       <Navbar
         lang={lang}
-        onToggleLang={() => setLang((prev) => (prev === 'en' ? 'ur' : 'en'))}
+        onToggleLang={toggleLang}
         onOpenLogin={() => setIsLoginModalOpen(true)}
       />
 

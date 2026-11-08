@@ -6,16 +6,25 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Globe, Download, LogIn, Menu, X, Sparkles } from 'lucide-react';
 import { content } from './content';
+import { useLanguage } from '@/lib/languageContext';
 
 export interface NavbarProps {
-  lang: 'en' | 'ur';
-  onToggleLang: () => void;
-  onOpenLogin: () => void;
+  lang?: 'en' | 'ur';
+  onToggleLang?: () => void;
+  onOpenLogin?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ lang, onToggleLang, onOpenLogin }) => {
+export const Navbar: React.FC<NavbarProps> = ({
+  lang: propLang,
+  onToggleLang: propToggle,
+  onOpenLogin,
+}) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { lang: contextLang, toggleLang: contextToggle } = useLanguage();
+
+  const lang = propLang || contextLang || 'en';
+  const onToggle = propToggle || contextToggle;
   const t = content[lang].nav;
   const isUr = lang === 'ur';
 
@@ -83,7 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({ lang, onToggleLang, onOpenLogin 
           {/* Language Switcher */}
           <button
             type="button"
-            onClick={onToggleLang}
+            onClick={onToggle}
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-popo-dark-850 hover:bg-popo-dark-800 text-xs font-bold text-popo-text-secondary hover:text-white border border-white/10 transition-all select-none active:scale-95"
             aria-label="Switch Language"
           >
@@ -92,14 +101,16 @@ export const Navbar: React.FC<NavbarProps> = ({ lang, onToggleLang, onOpenLogin 
           </button>
 
           {/* Login Button */}
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onOpenLogin}
-            leftIcon={<LogIn className="w-3.5 h-3.5" />}
-          >
-            {t.login}
-          </Button>
+          {onOpenLogin && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onOpenLogin}
+              leftIcon={<LogIn className="w-3.5 h-3.5" />}
+            >
+              {t.login}
+            </Button>
+          )}
 
           {/* Download App Button */}
           <Button
@@ -123,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({ lang, onToggleLang, onOpenLogin 
         <div className="flex sm:hidden items-center gap-2">
           <button
             type="button"
-            onClick={onToggleLang}
+            onClick={onToggle}
             className="p-2 rounded-xl bg-popo-dark-850 text-popo-cyan border border-white/10 text-xs font-bold"
           >
             {t.language}
@@ -169,18 +180,20 @@ export const Navbar: React.FC<NavbarProps> = ({ lang, onToggleLang, onOpenLogin 
           </nav>
 
           <div className="flex flex-col gap-2.5 pt-4 border-t border-white/10">
-            <Button
-              variant="secondary"
-              size="md"
-              className="w-full"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                onOpenLogin();
-              }}
-              leftIcon={<LogIn className="w-4 h-4" />}
-            >
-              {t.login}
-            </Button>
+            {onOpenLogin && (
+              <Button
+                variant="secondary"
+                size="md"
+                className="w-full"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  onOpenLogin();
+                }}
+                leftIcon={<LogIn className="w-4 h-4" />}
+              >
+                {t.login}
+              </Button>
+            )}
             <Button
               variant="primary"
               size="md"

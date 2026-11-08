@@ -23,10 +23,11 @@ import {
   CheckCircle,
 } from 'lucide-react';
 
+import { useLanguage } from '@/lib/languageContext';
+
 export default function AgencyPage() {
-  const [lang, setLang] = useState<'en' | 'ur'>('en');
+  const { lang, toggleLang, isUr } = useLanguage();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const isUr = lang === 'ur';
 
   // Form State
   const [agencyName, setAgencyName] = useState('');
@@ -156,7 +157,7 @@ export default function AgencyPage() {
     >
       <Navbar
         lang={lang}
-        onToggleLang={() => setLang((prev) => (prev === 'en' ? 'ur' : 'en'))}
+        onToggleLang={toggleLang}
         onOpenLogin={() => setIsLoginModalOpen(true)}
       />
 

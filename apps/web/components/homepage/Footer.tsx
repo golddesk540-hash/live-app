@@ -4,12 +4,15 @@ import React from 'react';
 import Link from 'next/link';
 import { content } from './content';
 import { ShieldCheck, Heart } from 'lucide-react';
+import { useLanguage } from '@/lib/languageContext';
 
 export interface FooterProps {
-  lang: 'en' | 'ur';
+  lang?: 'en' | 'ur';
 }
 
-export const Footer: React.FC<FooterProps> = ({ lang }) => {
+export const Footer: React.FC<FooterProps> = ({ lang: propLang }) => {
+  const { lang: contextLang } = useLanguage();
+  const lang = propLang || contextLang || 'en';
   const t = content[lang].footer;
   const isUr = lang === 'ur';
 
@@ -69,8 +72,8 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
           <div className={`flex flex-col gap-3 ${isUr ? 'text-right' : 'text-left'}`}>
             <h4 className="text-sm font-bold text-white uppercase tracking-wider">{t.creators}</h4>
             <ul className="flex flex-col gap-2 text-xs">
-              <li><Link href="/agency" className="hover:text-white transition-colors">{isUr ? 'ایجنسی پارٹنرشپ' : 'Agency Portal'}</Link></li>
-              <li><Link href="/agency#apply" className="hover:text-white transition-colors">{isUr ? 'ہوسٹ رجسٹریشن' : 'Become a Host'}</Link></li>
+              <li><Link href="/agency" className="hover:text-white transition-colors">{isUr ? 'ایجنسی پورٹل' : 'Agency Portal'}</Link></li>
+              <li><Link href="/agency#apply-form" className="hover:text-white transition-colors">{isUr ? 'ہوسٹ رجسٹریشن' : 'Become a Host'}</Link></li>
               <li><Link href="/contact" className="hover:text-white transition-colors">{isUr ? 'کوائن سیلرز رابطہ' : 'Authorized Coin Resellers'}</Link></li>
               <li><Link href="/news" className="hover:text-white transition-colors">{isUr ? 'کمیونٹی ایونٹس' : 'Leaderboards & Events'}</Link></li>
             </ul>
@@ -80,12 +83,13 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
           <div className={`flex flex-col gap-3 ${isUr ? 'text-right' : 'text-left'}`}>
             <h4 className="text-sm font-bold text-white uppercase tracking-wider">{t.legal}</h4>
             <ul className="flex flex-col gap-2 text-xs">
-              <li><Link href="/about" className="hover:text-white transition-colors">{isUr ? 'ہمارے متعلق' : 'About Us'}</Link></li>
-              <li><Link href="/contact" className="hover:text-white transition-colors">{isUr ? 'رابطہ کریں' : 'Contact Us'}</Link></li>
-              <li><span className="hover:text-white transition-colors cursor-pointer">{isUr ? 'استعمال کی شرائط' : 'Terms of Service (Draft)'}</span></li>
-              <li><span className="hover:text-white transition-colors cursor-pointer">{isUr ? 'پرائیویسی پالیسی' : 'Privacy Policy (Draft)'}</span></li>
-              <li><span className="hover:text-white transition-colors cursor-pointer">{isUr ? 'کمیونٹی گائیڈ لائنز' : 'Community Guidelines (Draft)'}</span></li>
-              <li><span className="hover:text-white transition-colors cursor-pointer">{isUr ? 'چائلڈ سیفٹی چارٹر' : 'Child Safety & Protection'}</span></li>
+              <li><Link href="/terms" className="hover:text-white transition-colors">{isUr ? 'استعمال کی شرائط (Terms)' : 'Terms of Service'}</Link></li>
+              <li><Link href="/privacy" className="hover:text-white transition-colors">{isUr ? 'پرائیویسی پالیسی (Privacy)' : 'Privacy Policy'}</Link></li>
+              <li><Link href="/community-guidelines" className="hover:text-white transition-colors">{isUr ? 'کمیونٹی گائیڈ لائنز' : 'Community Guidelines'}</Link></li>
+              <li><Link href="/safety" className="hover:text-white transition-colors">{isUr ? 'سیفٹی اور پروٹیکشن' : 'Safety Policy (18+)'}</Link></li>
+              <li><Link href="/cookies" className="hover:text-white transition-colors">{isUr ? 'کوکی پالیسی' : 'Cookie Policy'}</Link></li>
+              <li><Link href="/about" className="hover:text-white transition-colors">{isUr ? 'ہمارے متعلق' : 'About Popo Live'}</Link></li>
+              <li><Link href="/contact" className="hover:text-white transition-colors">{isUr ? 'سپورٹ ڈیسک' : 'Contact Support'}</Link></li>
             </ul>
           </div>
         </div>
