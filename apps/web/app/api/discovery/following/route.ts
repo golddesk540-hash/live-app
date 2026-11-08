@@ -30,6 +30,15 @@ export async function GET(req: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
     const offset = (page - 1) * limit;
+    const country = searchParams.get('country')?.trim().toUpperCase();
+
+    let whereClause = 'uf.follower_id = $1';
+    const params: any[] = [viewer.id];
+
+    if (country && country !== 'ALL') {
+      params.push(country);
+      whereClause += ` AND (u.country_code = $${params.length} OR lr.country_code = $${params.length})`;
+    }
 
     // Fetch followed creators with their live status
     const followedSql = `
@@ -57,9 +66,9 @@ export async function GET(req: NextRequest) {
       FROM popolive.user_follows uf
       JOIN popolive.users u ON uf.following_id = u.id
       LEFT JOIN popolive.live_rooms lr ON (lr.host_id = u.id AND lr.is_live = true AND lr.status = 'live')
-      WHERE uf.follower_id = $1
+      WHERE ${whereClause}
       ORDER BY (CASE WHEN lr.is_live = true THEN 1 ELSE 2 END) ASC, lr.viewer_count DESC NULLS LAST, u.nickname ASC
-      LIMIT $2 OFFSET $3
+      LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
 
     const countSql = `
@@ -69,12 +78,12 @@ export async function GET(req: NextRequest) {
       FROM popolive.user_follows uf
       JOIN popolive.users u ON uf.following_id = u.id
       LEFT JOIN popolive.live_rooms lr ON (lr.host_id = u.id AND lr.is_live = true AND lr.status = 'live')
-      WHERE uf.follower_id = $1
+      WHERE ${whereClause}
     `;
 
     const [rows, countRes] = await Promise.all([
-      query<any>(followedSql, [viewer.id, limit, offset]),
-      query<any>(countSql, [viewer.id]),
+      query<any>(followedSql, [...params, limit, offset]),
+      query<any>(countSql, params),
     ]);
 
     const totalFollowed = countRes[0]?.total_followed || 0;

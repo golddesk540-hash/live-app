@@ -5,6 +5,12 @@ import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useLanguage } from '@/lib/languageContext';
 import {
+  COUNTRIES_LIST,
+  POPULAR_COUNTRY_SHORTCUTS,
+  getCountryFlag,
+  getCountryName,
+} from '@/lib/countries';
+import {
   Search,
   Coins,
   Download,
@@ -21,6 +27,7 @@ import {
   ArrowLeft,
   Sparkles,
   ChevronRight,
+  ChevronDown,
   LogOut,
   Settings,
   Shield,
@@ -35,6 +42,8 @@ import {
   Clock,
   LogIn,
   UserPlus,
+  Globe,
+  Filter,
 } from 'lucide-react';
 
 export type DiscoveryTab = 'explore' | 'following' | 'new' | 'pk';
@@ -187,6 +196,12 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
   const [isPending, startTransition] = useTransition();
 
   const [activeTab, setActiveTab] = useState<DiscoveryTab>(initialTab);
+  const [selectedCountry, setSelectedCountry] = useState<string>(
+    searchParams.get('country')?.toUpperCase() || 'ALL'
+  );
+  const [showCountryModal, setShowCountryModal] = useState(false);
+  const [countryModalSearch, setCountryModalSearch] = useState('');
+
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -220,6 +235,16 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
     else if (pathname.includes('/live/explore') || pathname === '/live') setActiveTab('explore');
   }, [pathname]);
 
+  // Sync selectedCountry with URL search parameters
+  useEffect(() => {
+    const urlCountry = searchParams.get('country')?.toUpperCase();
+    if (urlCountry && urlCountry !== selectedCountry) {
+      setSelectedCountry(urlCountry);
+    } else if (!urlCountry && selectedCountry !== 'ALL') {
+      setSelectedCountry('ALL');
+    }
+  }, [searchParams]);
+
   // Check auth session once
   useEffect(() => {
     let isMounted = true;
@@ -241,35 +266,38 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
     return () => { isMounted = false; };
   }, [isAuthChecked]);
 
-  // Tab data fetching
+  // Tab & Country data fetching
   useEffect(() => {
     let isMounted = true;
 
     async function loadTabData() {
       setLoading(true);
       try {
+        const countryParam = selectedCountry && selectedCountry !== 'ALL' ? `&country=${selectedCountry}` : '';
+
         if (activeTab === 'explore') {
-          const url = `/api/discovery/explore?q=${encodeURIComponent(searchQuery)}`;
+          const url = `/api/discovery/explore?q=${encodeURIComponent(searchQuery)}${countryParam}`;
           const res = await fetch(url);
           if (res.ok) {
             const data = await res.json();
             if (isMounted) setExploreRooms(data.rooms || []);
           }
         } else if (activeTab === 'following') {
-          const res = await fetch('/api/discovery/following');
+          const url = `/api/discovery/following?${countryParam ? countryParam.substring(1) : ''}`;
+          const res = await fetch(url);
           if (res.ok) {
             const data = await res.json();
             if (isMounted) setFollowingData(data);
           }
         } else if (activeTab === 'new') {
-          const url = `/api/discovery/new?filter=${newFilter}`;
+          const url = `/api/discovery/new?filter=${newFilter}${countryParam}`;
           const res = await fetch(url);
           if (res.ok) {
             const data = await res.json();
             if (isMounted) setNewCreators(data.creators || []);
           }
         } else if (activeTab === 'pk') {
-          const url = `/api/discovery/pk?status=${pkStatusFilter}`;
+          const url = `/api/discovery/pk?status=${pkStatusFilter}${countryParam}`;
           const res = await fetch(url);
           if (res.ok) {
             const data = await res.json();
@@ -288,13 +316,26 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
 
     loadTabData();
     return () => { isMounted = false; };
-  }, [activeTab, searchQuery, newFilter, pkStatusFilter]);
+  }, [activeTab, searchQuery, selectedCountry, newFilter, pkStatusFilter]);
 
   const handleTabChange = (tab: DiscoveryTab) => {
     if (tab === activeTab) return;
     setActiveTab(tab);
     startTransition(() => {
-      router.push(`/live/${tab}`, { scroll: false });
+      const countryQuery = selectedCountry !== 'ALL' ? `?country=${selectedCountry}` : '';
+      router.push(`/live/${tab}${countryQuery}`, { scroll: false });
+    });
+  };
+
+  const handleCountrySelect = (code: string) => {
+    const cleanCode = code.toUpperCase();
+    setSelectedCountry(cleanCode);
+    setShowCountryModal(false);
+    setCountryModalSearch('');
+
+    startTransition(() => {
+      const countryQuery = cleanCode !== 'ALL' ? `?country=${cleanCode}` : '';
+      router.replace(`/live/${activeTab}${countryQuery}`, { scroll: false });
     });
   };
 
@@ -316,17 +357,27 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
     { id: 'pk', label_en: 'PK', label_ur: 'پی کے' },
   ];
 
+  // Filtered country list for modal
+  const filteredModalCountries = COUNTRIES_LIST.filter(
+    (c) =>
+      c.name.toLowerCase().includes(countryModalSearch.toLowerCase()) ||
+      c.code.toLowerCase().includes(countryModalSearch.toLowerCase())
+  );
+
+  const isCustomCountrySelected =
+    selectedCountry !== 'ALL' &&
+    !POPULAR_COUNTRY_SHORTCUTS.some((p) => p.code === selectedCountry);
+
   return (
     <div
       className="min-h-screen bg-[#080915] text-white flex flex-col font-sans selection:bg-[#FF2E74] selection:text-white pb-20 lg:pb-0"
       dir={isUr ? 'rtl' : 'ltr'}
     >
-      {/* 1. TOP HEADER (Responsive Desktop & Mobile matching 03_02 reference) */}
+      {/* 1. TOP HEADER (Responsive Desktop & Mobile) */}
       <header className="sticky top-0 z-40 bg-[#0c0e1e]/90 backdrop-blur-xl border-b border-white/10 h-14 sm:h-16 px-4 sm:px-8 flex items-center justify-between gap-4">
         
         {/* Brand Logo & Back navigation on Mobile */}
         <div className="flex items-center gap-3 shrink-0">
-          {/* Mobile Back Button */}
           <button
             onClick={() => router.back()}
             aria-label="Back"
@@ -336,7 +387,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           </button>
 
           <Link href="/" className="flex items-center gap-2.5 group">
-            {/* Popo Live Iconic Gradient Circle Logo */}
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-[#FF2E74] via-[#A855F7] to-[#3B82F6] p-[2px] shadow-lg shadow-pink-500/20 group-hover:scale-105 transition-transform">
               <div className="w-full h-full bg-[#120B24] rounded-full flex items-center justify-center font-black text-xs sm:text-sm text-transparent bg-clip-text bg-gradient-to-tr from-[#FF2E74] to-yellow-300">
                 P
@@ -372,7 +422,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
 
         {/* Right Action Icons & User Dropdown */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Mobile Search Button */}
           <button
             onClick={() => setShowSearchModal(true)}
             aria-label="Search"
@@ -381,7 +430,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
             <Search className="w-4 h-4" />
           </button>
 
-          {/* Get Coins Shortcut */}
           <Link
             href="/recharge"
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/10 to-yellow-500/10 hover:from-amber-500/20 hover:to-yellow-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold transition-all"
@@ -390,7 +438,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
             <span>{isUr ? 'کوائنز لیں' : 'Get Coins'}</span>
           </Link>
 
-          {/* Get App Button */}
           <Link
             href="/download"
             className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-semibold transition-colors"
@@ -399,7 +446,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
             <span>{isUr ? 'ایپ حاصل کریں' : 'Get App'}</span>
           </Link>
 
-          {/* Language Switcher */}
           <button
             onClick={toggleLang}
             className="px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-bold text-white/80 transition-colors"
@@ -407,7 +453,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
             {isUr ? 'English' : 'اردو'}
           </button>
 
-          {/* User Account State */}
           {user ? (
             <div className="relative">
               <button
@@ -424,7 +469,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                 </span>
               </button>
 
-              {/* User Dropdown Menu */}
               {showUserMenu && (
                 <div
                   className={`absolute ${isUr ? 'left-0' : 'right-0'} mt-2 w-56 rounded-2xl bg-[#121324] border border-white/10 shadow-2xl p-2 z-50 text-xs space-y-1`}
@@ -504,11 +548,10 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
       {/* 2. BODY LAYOUT: DESKTOP SIDEBAR + MAIN CONTENT */}
       <div className="flex-1 max-w-7xl w-full mx-auto flex">
         
-        {/* DESKTOP SIDEBAR NAVIGATION */}
+        {/* DESKTOP SIDEBAR */}
         <aside className="w-64 shrink-0 hidden lg:flex flex-col justify-between py-6 px-4 border-r border-white/10 space-y-6">
           <div className="space-y-4">
             
-            {/* Download CTA Card */}
             <Link
               href="/download"
               className="w-full py-3 px-4 bg-gradient-to-r from-[#FF2E74] to-[#A855F7] hover:brightness-110 text-white rounded-2xl text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-pink-500/20 transition-all"
@@ -517,17 +560,16 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
               <span>{isUr ? 'پوپو لائیو ایپ ڈاؤن لوڈ کریں' : 'Download Popo Live App'}</span>
             </Link>
 
-            {/* Main Navigation List */}
             <div className="space-y-1">
               <span className="text-[11px] font-bold text-white/40 uppercase tracking-wider px-3 block mb-2">
                 {isUr ? 'نیویگیشن' : 'Discovery'}
               </span>
 
               {[
-                { id: 'explore', label_en: 'Explore', label_ur: 'دریافت', icon: Compass, href: '/live/explore', count: 'HOT' },
-                { id: 'following', label_en: 'Following', label_ur: 'فالوئنگ', icon: Heart, href: '/live/following', count: null },
-                { id: 'new', label_en: 'New Streamers', label_ur: 'نئے براڈکاسٹرز', icon: Sparkles, href: '/live/new', count: 'NEW' },
-                { id: 'pk', label_en: 'PK Battles', label_ur: 'پی کے مقابلے', icon: Swords, href: '/live/pk', count: 'LIVE' },
+                { id: 'explore', label_en: 'Explore', label_ur: 'دریافت', icon: Compass, count: 'HOT' },
+                { id: 'following', label_en: 'Following', label_ur: 'فالوئنگ', icon: Heart, count: null },
+                { id: 'new', label_en: 'New Streamers', label_ur: 'نئے براڈکاسٹرز', icon: Sparkles, count: 'NEW' },
+                { id: 'pk', label_en: 'PK Battles', label_ur: 'پی کے مقابلے', icon: Swords, count: 'LIVE' },
               ].map((item) => {
                 const isSelected = activeTab === item.id;
                 const IconComponent = item.icon;
@@ -558,7 +600,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
               })}
             </div>
 
-            {/* Quick Platform Shortcuts */}
             <div className="space-y-1 pt-2 border-t border-white/5">
               <span className="text-[11px] font-bold text-white/40 uppercase tracking-wider px-3 block mb-2">
                 {isUr ? 'پلیٹ فارم' : 'Platform'}
@@ -582,7 +623,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
 
           </div>
 
-          {/* Sidebar Bottom Banner Card */}
           <div className="p-4 rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-950/40 to-pink-900/20 border border-white/10 text-center space-y-2">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#FF2E74] to-[#A855F7] flex items-center justify-center mx-auto text-white shadow-lg shadow-pink-500/30">
               <Radio className="w-5 h-5 animate-pulse" />
@@ -603,7 +643,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 flex flex-col min-w-0 px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5">
           
-          {/* 3. TABS ROW (Pill style matching 03_02_explore_follow_new_pk_tabs.png) */}
+          {/* 3. TABS ROW (Pill style matching 03_02 reference) */}
           <div className="flex items-center justify-between pb-1">
             <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar py-1">
               {tabs.map((tab) => {
@@ -634,28 +674,90 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           </div>
 
           {/* ========================================================================= */}
+          {/* 4. COUNTRY FILTERS BAR (1:1 with 03_03_country_filters.png) */}
+          {/* ========================================================================= */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs">
+            {POPULAR_COUNTRY_SHORTCUTS.map((c) => {
+              const isSelected = selectedCountry === c.code;
+              return (
+                <button
+                  key={c.code}
+                  type="button"
+                  onClick={() => handleCountrySelect(c.code)}
+                  className={`px-3.5 py-1.5 rounded-full font-bold flex items-center gap-1.5 flex-shrink-0 transition-all ${
+                    isSelected
+                      ? 'bg-white/20 text-white border border-pink-500 shadow-md shadow-pink-500/20'
+                      : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/5'
+                  }`}
+                >
+                  <span className="text-sm leading-none">{c.flag}</span>
+                  <span>{c.name}</span>
+                </button>
+              );
+            })}
+
+            {/* Custom Country Pill if selected from More Countries */}
+            {isCustomCountrySelected && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-500/20 border border-pink-500 text-white font-bold flex-shrink-0 shadow-md">
+                <span className="text-sm leading-none">{getCountryFlag(selectedCountry)}</span>
+                <span>{getCountryName(selectedCountry)}</span>
+                <button
+                  onClick={() => handleCountrySelect('ALL')}
+                  className="hover:bg-white/20 rounded-full p-0.5 ml-0.5 text-white/70 hover:text-white"
+                  title="Clear country filter"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+
+            {/* More Countries Dropdown Trigger (Matching 03_03) */}
+            <button
+              type="button"
+              onClick={() => setShowCountryModal(true)}
+              className="px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 font-bold flex items-center gap-1.5 flex-shrink-0 transition-colors"
+            >
+              <Globe className="w-3.5 h-3.5 text-pink-400" />
+              <span>More Countries</span>
+              <ChevronDown className="w-3 h-3 text-white/50" />
+            </button>
+          </div>
+
+          {/* ========================================================================= */}
           {/* TAB 1: EXPLORE DISCOVERY TAB */}
           {/* ========================================================================= */}
           {activeTab === 'explore' && (
             <div className="space-y-4">
               {loading && exploreRooms.length === 0 ? (
-                /* Shimmer Skeletons */
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                   {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                     <div key={i} className="aspect-[3/4] rounded-2xl bg-white/5 animate-pulse border border-white/5" />
                   ))}
                 </div>
               ) : exploreRooms.length === 0 ? (
-                /* Empty state */
                 <div className="p-12 text-center rounded-3xl bg-white/[0.02] border border-white/5 space-y-3">
                   <Radio className="w-10 h-10 text-white/30 mx-auto" />
-                  <h3 className="text-sm font-bold text-white">No active live streams right now</h3>
+                  <h3 className="text-sm font-bold text-white">
+                    {selectedCountry !== 'ALL'
+                      ? `No live streams from ${getCountryName(selectedCountry)} right now`
+                      : 'No active live streams right now'}
+                  </h3>
                   <p className="text-xs text-white/50 max-w-sm mx-auto">
-                    Check back in a few moments or explore new broadcasters!
+                    {selectedCountry !== 'ALL'
+                      ? 'Try switching to Popular to see live creators broadcasting worldwide.'
+                      : 'Check back in a few moments or explore new broadcasters!'}
                   </p>
+                  {selectedCountry !== 'ALL' && (
+                    <button
+                      type="button"
+                      onClick={() => handleCountrySelect('ALL')}
+                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-bold shadow-md hover:brightness-110"
+                    >
+                      View Popular Worldwide (🔥)
+                    </button>
+                  )}
                 </div>
               ) : (
-                /* Room Cards Grid (1:1 match with 03_02_explore_follow_new_pk_tabs.png) */
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                   {exploreRooms.map((room) => (
                     <Link
@@ -663,14 +765,11 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                       href={`/live/room/${room.roomId}`}
                       className="group relative rounded-2xl sm:rounded-3xl overflow-hidden aspect-[3/4] bg-[#120e26] border border-white/10 shadow-lg hover:shadow-pink-500/20 hover:border-pink-500/50 transition-all transform hover:-translate-y-1 block"
                     >
-                      {/* Stream cover image */}
                       <img
                         src={room.coverUrl}
                         alt={room.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-
-                      {/* Dark overlay gradient */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
 
                       {/* TOP-LEFT: Pink LIVE Badge */}
@@ -678,7 +777,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                         <span>LIVE</span>
                       </div>
 
-                      {/* TOP-RIGHT: PK tag if battle active */}
+                      {/* TOP-RIGHT: PK tag */}
                       {room.isPk && (
                         <div className="absolute top-2.5 right-2.5 z-10 px-2 py-0.5 rounded-md bg-purple-600/90 text-white text-[9px] font-black flex items-center gap-1 shadow-md">
                           <Swords className="w-2.5 h-2.5" />
@@ -688,20 +787,17 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
 
                       {/* BOTTOM OVERLAY INFO (Flag + Viewers on Left, Diamonds/Coins on Right) */}
                       <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10 flex items-center justify-between text-xs text-white">
-                        {/* Left: Flag + Viewers */}
                         <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10">
                           <span className="text-sm leading-none">{room.flagEmoji}</span>
                           <span className="font-extrabold text-xs tracking-tight">{room.viewersFormatted}</span>
                         </div>
 
-                        {/* Right: Coins / Points */}
                         <div className="flex items-center gap-1 bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-white/10 text-amber-300 font-bold text-xs">
                           <span>💎</span>
                           <span>{room.coinsFormatted}</span>
                         </div>
                       </div>
 
-                      {/* Hover details badge (Host name + title) */}
                       <div className="absolute bottom-10 left-2.5 right-2.5 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                         <p className="text-[11px] font-bold text-white truncate drop-shadow">{room.host.nickname}</p>
                         <p className="text-[10px] text-zinc-300 truncate">{room.title}</p>
@@ -718,7 +814,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           {/* ========================================================================= */}
           {activeTab === 'following' && (
             <div className="space-y-6">
-              {/* If User is Guest -> Show Login Requirement Banner */}
               {!user && (
                 <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-purple-950/60 via-indigo-950/40 to-pink-950/60 border border-pink-500/30 text-center space-y-4 shadow-xl">
                   <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center mx-auto text-white shadow-lg shadow-pink-500/30">
@@ -753,15 +848,16 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                 </div>
               )}
 
-              {/* Logged-In User Followed Content */}
               {user && (
                 <div className="space-y-6">
-                  {/* Live Followed Streamers */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <h3 className="text-xs font-black uppercase tracking-wider text-pink-400 flex items-center gap-1.5">
                         <Radio className="w-3.5 h-3.5" />
-                        <span>LIVE NOW ({followingData?.liveRooms?.length || 0})</span>
+                        <span>
+                          LIVE NOW ({followingData?.liveRooms?.length || 0})
+                          {selectedCountry !== 'ALL' && ` • ${getCountryName(selectedCountry)}`}
+                        </span>
                       </h3>
                     </div>
 
@@ -786,8 +882,20 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                         ))}
                       </div>
                     ) : (
-                      <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/5 text-center text-xs text-white/50">
-                        None of your followed creators are currently live.
+                      <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/5 text-center text-xs text-white/50 space-y-2">
+                        <p>
+                          {selectedCountry !== 'ALL'
+                            ? `None of your followed creators from ${getCountryName(selectedCountry)} are currently live.`
+                            : 'None of your followed creators are currently live.'}
+                        </p>
+                        {selectedCountry !== 'ALL' && (
+                          <button
+                            onClick={() => handleCountrySelect('ALL')}
+                            className="px-3 py-1 rounded-full bg-white/10 text-white font-semibold text-[11px] hover:bg-white/20"
+                          >
+                            Show All Countries
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -825,7 +933,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                 </div>
               )}
 
-              {/* Recommended Streamers if 0 follows or guest */}
               {followingData?.suggestedHosts && followingData.suggestedHosts.length > 0 && (
                 <div className="space-y-3 pt-4 border-t border-white/5">
                   <h3 className="text-xs font-black uppercase tracking-wider text-white/60">
@@ -857,7 +964,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           {/* ========================================================================= */}
           {activeTab === 'new' && (
             <div className="space-y-4">
-              {/* Sub-Filters: All, Live Now, Verified */}
               <div className="flex items-center gap-2">
                 {[
                   { id: 'all', label: 'All New Creators' },
@@ -887,7 +993,11 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
               ) : newCreators.length === 0 ? (
                 <div className="p-12 text-center rounded-3xl bg-white/[0.02] border border-white/5 space-y-2">
                   <Sparkles className="w-8 h-8 text-white/30 mx-auto" />
-                  <p className="text-xs text-white/50">No new creators match the selected filter.</p>
+                  <p className="text-xs text-white/50">
+                    {selectedCountry !== 'ALL'
+                      ? `No new creators registered in ${getCountryName(selectedCountry)} for this filter.`
+                      : 'No new creators match the selected filter.'}
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
@@ -896,7 +1006,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                       key={creator.id}
                       className="p-3.5 rounded-2xl bg-[#121324] border border-white/10 hover:border-pink-500/40 transition-all flex flex-col justify-between space-y-3"
                     >
-                      {/* Top: Avatar + Country */}
                       <div className="flex items-start justify-between">
                         <div className="relative">
                           <img
@@ -919,14 +1028,12 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                         )}
                       </div>
 
-                      {/* Middle: Nickname & Poppo ID */}
                       <div className="space-y-0.5">
                         <p className="text-xs font-bold text-white truncate">{creator.nickname}</p>
                         <p className="text-[10px] text-zinc-400">ID: {creator.poppoId}</p>
                         <p className="text-[10px] text-zinc-500">{creator.country}</p>
                       </div>
 
-                      {/* Bottom Action: View Profile or Watch Live */}
                       <div className="flex items-center gap-1.5 pt-1">
                         {creator.isLive && creator.liveRoom ? (
                           <Link
@@ -956,7 +1063,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           {/* ========================================================================= */}
           {activeTab === 'pk' && (
             <div className="space-y-4">
-              {/* PK Status Filter Tabs */}
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
                 {[
                   { id: 'all', label: `All PK (${pkCounts.total})` },
@@ -987,17 +1093,19 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
               ) : pkBattles.length === 0 ? (
                 <div className="p-12 text-center rounded-3xl bg-white/[0.02] border border-white/5 space-y-2">
                   <Swords className="w-8 h-8 text-white/30 mx-auto" />
-                  <p className="text-xs text-white/50">No PK battles found under &quot;{pkStatusFilter}&quot;.</p>
+                  <p className="text-xs text-white/50">
+                    {selectedCountry !== 'ALL'
+                      ? `No PK battles found for ${getCountryName(selectedCountry)}.`
+                      : `No PK battles found under "${pkStatusFilter}".`}
+                  </p>
                 </div>
               ) : (
-                /* Dual-Host PK Battle Cards */
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {pkBattles.map((b) => (
                     <div
                       key={b.id}
                       className="relative p-4 rounded-3xl bg-gradient-to-br from-[#121324] via-[#170e2b] to-[#121324] border border-purple-500/20 hover:border-pink-500/40 shadow-xl transition-all space-y-4"
                     >
-                      {/* Top Header: Title & Status Badge */}
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-white truncate max-w-[200px]">
                           {b.title}
@@ -1017,7 +1125,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                         </span>
                       </div>
 
-                      {/* Main Dual Matchup: Host A VS Host B */}
                       <div className="flex items-center justify-between gap-3">
                         {/* Host A */}
                         <div className="flex-1 flex flex-col items-center text-center space-y-1">
@@ -1060,7 +1167,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                         </div>
                       </div>
 
-                      {/* Score Comparison Meter */}
                       <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden flex">
                         <div
                           className="bg-gradient-to-r from-pink-500 to-rose-500 h-full"
@@ -1071,7 +1177,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                         <div className="bg-gradient-to-r from-blue-500 to-cyan-400 flex-1 h-full" />
                       </div>
 
-                      {/* Watch Action Button */}
                       {b.status === 'active' && b.roomId ? (
                         <Link
                           href={`/live/room/${b.roomId}`}
@@ -1095,9 +1200,145 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
         </main>
       </div>
 
-      {/* 4. MOBILE BOTTOM NAVIGATION (Explore, Following, Center Pink Camera, Messages, Me) */}
+      {/* 5. SELECT COUNTRY MODAL (1:1 PIXEL MATCH TO 03_03_country_filters.png) */}
+      {showCountryModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+          <div
+            className="w-full sm:max-w-md max-h-[85vh] sm:max-h-[75vh] bg-[#121326] rounded-t-3xl sm:rounded-3xl border border-white/10 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-6 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 pt-5 pb-3">
+              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                Select Country
+              </h2>
+              <button
+                onClick={() => setShowCountryModal(false)}
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Search Input Box (Matching 03_03) */}
+            <div className="px-5 pb-3">
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <input
+                  type="text"
+                  autoFocus
+                  value={countryModalSearch}
+                  onChange={(e) => setCountryModalSearch(e.target.value)}
+                  placeholder="Search country"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white/5 hover:bg-white/[0.08] focus:bg-[#1a1b32] text-sm text-white placeholder-white/35 border border-white/10 focus:border-[#FF2E74] outline-none transition-all"
+                />
+                {countryModalSearch && (
+                  <button
+                    onClick={() => setCountryModalSearch('')}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Scrollable Country List with Radio Indicators */}
+            <div className="flex-1 overflow-y-auto px-3 py-1 space-y-1 divide-y divide-white/[0.03]">
+              
+              {/* Option 1: All Countries / Popular */}
+              {(!countryModalSearch || 'all countries popular worldwide'.includes(countryModalSearch.toLowerCase())) && (
+                <button
+                  type="button"
+                  onClick={() => handleCountrySelect('ALL')}
+                  className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all ${
+                    selectedCountry === 'ALL'
+                      ? 'bg-white/10 text-white'
+                      : 'hover:bg-white/5 text-white/80'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {/* All Countries ring icon */}
+                    <div className="w-6 h-6 rounded-full border-2 border-[#FF2E74] flex items-center justify-center">
+                      <span className="text-[10px] leading-none">🔥</span>
+                    </div>
+                    <span className="text-sm font-bold">All Countries</span>
+                  </div>
+
+                  {/* Radio selection circle */}
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                      selectedCountry === 'ALL'
+                        ? 'border-[#FF2E74] bg-[#FF2E74]'
+                        : 'border-zinc-600'
+                    }`}
+                  >
+                    {selectedCountry === 'ALL' && (
+                      <div className="w-2 h-2 rounded-full bg-white shadow-sm" />
+                    )}
+                  </div>
+                </button>
+              )}
+
+              {/* Specific Countries List */}
+              {filteredModalCountries.map((c) => {
+                const isSelected = selectedCountry === c.code;
+                return (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => handleCountrySelect(c.code)}
+                    className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all ${
+                      isSelected ? 'bg-white/10 text-white' : 'hover:bg-white/5 text-white/80'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl leading-none">{c.flag}</span>
+                      <span className="text-sm font-semibold text-white/90">{c.name}</span>
+                    </div>
+
+                    {/* Radio circle button (matching 03_03 reference) */}
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        isSelected ? 'border-[#FF2E74] bg-[#FF2E74]' : 'border-zinc-600'
+                      }`}
+                    >
+                      {isSelected && (
+                        <div className="w-2 h-2 rounded-full bg-white shadow-sm" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+
+              {filteredModalCountries.length === 0 && (
+                <div className="py-8 text-center text-xs text-white/40">
+                  No countries match &quot;{countryModalSearch}&quot;
+                </div>
+              )}
+            </div>
+
+            {/* Bottom Clear Filter footer */}
+            <div className="p-3 border-t border-white/5 flex items-center justify-between text-xs px-5 bg-black/20">
+              <span className="text-white/40">
+                Current: <strong className="text-white">{getCountryName(selectedCountry)}</strong>
+              </span>
+              {selectedCountry !== 'ALL' && (
+                <button
+                  onClick={() => handleCountrySelect('ALL')}
+                  className="text-pink-400 hover:text-pink-300 font-bold"
+                >
+                  Clear Selection
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. MOBILE BOTTOM NAVIGATION */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0c0e1e]/95 backdrop-blur-xl border-t border-white/10 h-16 px-4 flex items-center justify-around">
-        {/* Explore */}
         <button
           onClick={() => handleTabChange('explore')}
           className={`flex flex-col items-center gap-1 transition-colors ${
@@ -1110,7 +1351,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           <span className="text-[10px] font-bold">{isUr ? 'دریافت' : 'Explore'}</span>
         </button>
 
-        {/* Following */}
         <button
           onClick={() => handleTabChange('following')}
           className={`flex flex-col items-center gap-1 transition-colors ${
@@ -1123,7 +1363,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           <span className="text-[10px] font-bold">{isUr ? 'فالو' : 'Follow'}</span>
         </button>
 
-        {/* Center Pink Elevated Camera / Go Live Button */}
         <Link
           href="/download"
           className="relative -top-4 w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#FF2E74] to-[#A855F7] flex items-center justify-center text-white shadow-xl shadow-pink-500/40 active:scale-95 transition-transform"
@@ -1131,7 +1370,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           <Camera className="w-6 h-6" />
         </Link>
 
-        {/* Messages */}
         <Link
           href="/help"
           className="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-colors"
@@ -1142,7 +1380,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           <span className="text-[10px] font-semibold">{isUr ? 'پیغامات' : 'Messages'}</span>
         </Link>
 
-        {/* Me / Profile */}
         <Link
           href={user ? '/profile' : '/login'}
           className="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-colors"

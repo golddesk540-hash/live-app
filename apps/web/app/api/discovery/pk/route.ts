@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
     const offset = (page - 1) * limit;
 
     const statusFilter = searchParams.get('status')?.trim().toLowerCase(); // 'all', 'active', 'upcoming', 'completed'
+    const country = searchParams.get('country')?.trim().toUpperCase();
 
     let whereConditions: string[] = [];
     let params: any[] = [];
@@ -27,18 +28,27 @@ export async function GET(req: NextRequest) {
       whereConditions.push(`pk.status = $${params.length}`);
     }
 
+    if (country && country !== 'ALL') {
+      params.push(country);
+      whereConditions.push(`(uA.country_code = $${params.length} OR uB.country_code = $${params.length} OR lr.country_code = $${params.length})`);
+    }
+
     const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
 
     // Status counts
     const statusCountsSql = `
       SELECT 
-        COUNT(CASE WHEN status = 'active' THEN 1 END)::int AS active_count,
-        COUNT(CASE WHEN status = 'upcoming' THEN 1 END)::int AS upcoming_count,
-        COUNT(CASE WHEN status = 'completed' THEN 1 END)::int AS completed_count,
+        COUNT(CASE WHEN pk.status = 'active' THEN 1 END)::int AS active_count,
+        COUNT(CASE WHEN pk.status = 'upcoming' THEN 1 END)::int AS upcoming_count,
+        COUNT(CASE WHEN pk.status = 'completed' THEN 1 END)::int AS completed_count,
         COUNT(*)::int AS total_count
-      FROM popolive.pk_activities
+      FROM popolive.pk_activities pk
+      JOIN popolive.users uA ON pk.host_a_id = uA.id
+      JOIN popolive.users uB ON pk.host_b_id = uB.id
+      LEFT JOIN popolive.live_rooms lr ON pk.room_id = lr.id
+      ${whereClause}
     `;
-    const countRes = await query<any>(statusCountsSql);
+    const countRes = await query<any>(statusCountsSql, params);
     const counts = countRes[0] || { active_count: 0, upcoming_count: 0, completed_count: 0, total_count: 0 };
 
     // Paginated battles query

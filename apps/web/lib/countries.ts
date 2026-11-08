@@ -7,14 +7,17 @@ export interface CountryItem {
 
 export const COUNTRIES_LIST: CountryItem[] = [
   { code: 'PK', name: 'Pakistan', flag: '🇵🇰', phoneCode: '+92' },
+  { code: 'PH', name: 'Philippines', flag: '🇵🇭', phoneCode: '+63' },
+  { code: 'NP', name: 'Nepal', flag: '🇳🇵', phoneCode: '+977' },
+  { code: 'IN', name: 'India', flag: '🇮🇳', phoneCode: '+91' },
+  { code: 'BD', name: 'Bangladesh', flag: '🇧🇩', phoneCode: '+880' },
   { code: 'AE', name: 'United Arab Emirates', flag: '🇦🇪', phoneCode: '+971' },
   { code: 'SA', name: 'Saudi Arabia', flag: '🇸🇦', phoneCode: '+966' },
   { code: 'US', name: 'United States', flag: '🇺🇸', phoneCode: '+1' },
   { code: 'GB', name: 'United Kingdom', flag: '🇬🇧', phoneCode: '+44' },
   { code: 'TR', name: 'Turkey', flag: '🇹🇷', phoneCode: '+90' },
-  { code: 'BD', name: 'Bangladesh', flag: '🇧🇩', phoneCode: '+880' },
   { code: 'ID', name: 'Indonesia', flag: '🇮🇩', phoneCode: '+62' },
-  { code: 'IN', name: 'India', flag: '🇮🇳', phoneCode: '+91' },
+  { code: 'MY', name: 'Malaysia', flag: '🇲🇾', phoneCode: '+60' },
   { code: 'CA', name: 'Canada', flag: '🇨🇦', phoneCode: '+1' },
   { code: 'AU', name: 'Australia', flag: '🇦🇺', phoneCode: '+61' },
   { code: 'DE', name: 'Germany', flag: '🇩🇪', phoneCode: '+49' },
@@ -22,8 +25,6 @@ export const COUNTRIES_LIST: CountryItem[] = [
   { code: 'IT', name: 'Italy', flag: '🇮🇹', phoneCode: '+39' },
   { code: 'ES', name: 'Spain', flag: '🇪🇸', phoneCode: '+34' },
   { code: 'BR', name: 'Brazil', flag: '🇧🇷', phoneCode: '+55' },
-  { code: 'PH', name: 'Philippines', flag: '🇵🇭', phoneCode: '+63' },
-  { code: 'MY', name: 'Malaysia', flag: '🇲🇾', phoneCode: '+60' },
   { code: 'EG', name: 'Egypt', flag: '🇪🇬', phoneCode: '+20' },
   { code: 'QA', name: 'Qatar', flag: '🇶🇦', phoneCode: '+974' },
   { code: 'KW', name: 'Kuwait', flag: '🇰🇼', phoneCode: '+965' },
@@ -43,12 +44,36 @@ export const COUNTRIES_LIST: CountryItem[] = [
   { code: 'MX', name: 'Mexico', flag: '🇲🇽', phoneCode: '+52' },
 ];
 
+export const POPULAR_COUNTRY_SHORTCUTS = [
+  { code: 'ALL', name: 'Popular', flag: '🔥' },
+  { code: 'PH', name: 'Philippines', flag: '🇵🇭' },
+  { code: 'NP', name: 'Nepal', flag: '🇳🇵' },
+  { code: 'IN', name: 'India', flag: '🇮🇳' },
+  { code: 'PK', name: 'Pakistan', flag: '🇵🇰' },
+  { code: 'BD', name: 'Bangladesh', flag: '🇧🇩' },
+];
+
 export function getCountryFlag(codeOrName?: string | null): string {
   if (!codeOrName) return '🇵🇰';
   const clean = codeOrName.trim().toUpperCase();
+  if (clean === 'ALL' || clean === 'POPULAR') return '🔥';
   const match = COUNTRIES_LIST.find(
     (c) => c.code.toUpperCase() === clean || c.name.toUpperCase() === clean
   );
   return match ? match.flag : '🌐';
 }
 
+export function getCountryName(code?: string | null): string {
+  if (!code) return 'Worldwide';
+  const clean = code.trim().toUpperCase();
+  if (clean === 'ALL' || clean === 'POPULAR') return 'Popular';
+  const match = COUNTRIES_LIST.find((c) => c.code.toUpperCase() === clean);
+  return match ? match.name : clean;
+}
+
+export function isValidCountryCode(code?: string | null): boolean {
+  if (!code) return false;
+  const clean = code.trim().toUpperCase();
+  if (clean === 'ALL' || clean === 'POPULAR') return true;
+  return COUNTRIES_LIST.some((c) => c.code.toUpperCase() === clean);
+}
