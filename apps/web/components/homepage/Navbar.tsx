@@ -123,30 +123,46 @@ export const Navbar: React.FC<NavbarProps> = ({
           </Link>
         </div>
 
-        {/* Mobile Hamburger Button */}
+        {/* Mobile Header Actions (Prompt 04: Popo Live logo, Download button, Mobile menu icon) */}
         <div className="flex sm:hidden items-center gap-2">
-          <button
-            type="button"
-            onClick={onToggle}
-            className="p-2 rounded-xl bg-popo-dark-850 text-popo-cyan border border-white/10 text-xs font-bold"
-          >
-            {t.language}
-          </button>
+          <Link href="/download">
+            <Button
+              variant="primary"
+              size="xs"
+              className="text-xs px-3 h-8 font-bold shadow-glow-pink"
+            >
+              {t.download}
+            </Button>
+          </Link>
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-xl bg-popo-dark-850 text-white border border-white/10"
+            className="p-2 rounded-xl bg-popo-dark-850 text-white border border-white/10 hover:border-white/20 active:scale-95 transition-all"
             aria-label="Toggle mobile menu"
           >
-            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {isMobileMenuOpen ? <X className="w-5 h-5 text-popo-pink" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
       {/* Mobile Drawer Menu */}
       {isMobileMenuOpen && (
-        <div className="sm:hidden bg-popo-dark-900/98 border-b border-white/10 px-5 py-6 flex flex-col gap-4 animate-in slide-in-from-top-2 duration-200">
-          <nav className="flex flex-col gap-3">
+        <div className="sm:hidden bg-[#0B0E17]/98 backdrop-blur-2xl border-b border-white/10 px-5 py-6 flex flex-col gap-4 animate-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <span className="text-xs font-bold uppercase tracking-wider text-popo-text-secondary">
+              Navigation Menu
+            </span>
+            <button
+              type="button"
+              onClick={onToggle}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-popo-dark-850 border border-white/10 text-xs font-bold text-popo-cyan hover:text-white"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>{t.language}</span>
+            </button>
+          </div>
+
+          <nav className="flex flex-col gap-1">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -154,8 +170,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   key={link.label}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`text-base font-semibold py-1 ${
-                    isActive ? 'text-popo-pink font-bold' : 'text-popo-text-secondary hover:text-white'
+                  className={`text-base font-semibold py-2 px-3 rounded-xl transition-colors ${
+                    isActive
+                      ? 'bg-popo-pink/15 text-popo-pink font-bold border border-popo-pink/30'
+                      : 'text-popo-text-secondary hover:text-white hover:bg-white/5'
                   }`}
                 >
                   {link.label}
@@ -165,19 +183,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             <Link
               href="/design-system"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm font-semibold text-popo-cyan py-1 flex items-center gap-2"
+              className="text-sm font-semibold text-popo-cyan py-2 px-3 rounded-xl hover:bg-white/5 flex items-center gap-2"
             >
               <Sparkles className="w-4 h-4" />
               <span>Design System Preview</span>
             </Link>
           </nav>
 
-          <div className="flex flex-col gap-2.5 pt-4 border-t border-white/10">
+          <div className="flex flex-col gap-2.5 pt-3 border-t border-white/10">
             <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
               <Button
                 variant="secondary"
                 size="md"
-                className="w-full"
+                className="w-full h-11"
                 leftIcon={<LogIn className="w-4 h-4" />}
               >
                 {t.login}
@@ -187,7 +205,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Button
                 variant="primary"
                 size="md"
-                className="w-full"
+                className="w-full h-11 shadow-glow-pink"
                 leftIcon={<Download className="w-4 h-4" />}
               >
                 {t.download}

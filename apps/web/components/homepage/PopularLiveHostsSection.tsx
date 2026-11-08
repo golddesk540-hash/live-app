@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Radio, Eye } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
 
 export interface PopularLiveHostsProps {
@@ -76,12 +75,12 @@ export const PopularLiveHostsSection: React.FC<PopularLiveHostsProps> = ({ lang 
   ];
 
   return (
-    <section className="py-16 bg-[#0B0E17] relative">
+    <section className="py-12 sm:py-16 bg-[#0B0E17] relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header with Carousel Arrows */}
-        <div className="flex items-center justify-between mb-8">
+        {/* Section Header with Carousel Arrows (Arrows hidden on mobile where swipe is used) */}
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
           <div>
-            <h2 className={cn('text-2xl sm:text-3xl font-bold text-white', isUr && 'font-urdu')}>
+            <h2 className={cn('text-xl sm:text-3xl font-bold text-white', isUr && 'font-urdu')}>
               {isUr ? 'مقبول لائیو ہوسٹس' : 'Popular Live Hosts'}
             </h2>
             <p className="text-xs sm:text-sm text-popo-text-secondary mt-1">
@@ -91,8 +90,8 @@ export const PopularLiveHostsSection: React.FC<PopularLiveHostsProps> = ({ lang 
             </p>
           </div>
 
-          {/* Navigation Controls */}
-          <div className="flex items-center gap-2">
+          {/* Desktop Navigation Controls */}
+          <div className="hidden sm:flex items-center gap-2">
             <button
               onClick={handlePrev}
               className="w-10 h-10 rounded-full bg-[#131A2B] hover:bg-popo-pink/20 text-white/80 hover:text-white border border-white/10 flex items-center justify-center transition-all active:scale-95"
@@ -110,8 +109,52 @@ export const PopularLiveHostsSection: React.FC<PopularLiveHostsProps> = ({ lang 
           </div>
         </div>
 
-        {/* 3 Host Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Mobile Horizontal Swipe (03_homepage_mobile.png) */}
+        <div className="flex sm:hidden overflow-x-auto snap-x snap-mandatory gap-3 pb-3 -mx-4 px-4 no-scrollbar">
+          {sampleHosts.map((host) => (
+            <div
+              key={host.id}
+              className="group relative min-w-[220px] max-w-[240px] aspect-[3/4] snap-center rounded-2xl overflow-hidden bg-[#131A2B] border border-white/10 shadow-lg shrink-0"
+            >
+              {/* Host Portrait */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={host.avatar}
+                alt={host.name}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/60 pointer-events-none" />
+
+              {/* Top Badges */}
+              <div className="absolute top-3 inset-x-3 flex items-center justify-between z-10">
+                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-popo-pink text-white text-[11px] font-black shadow-glow-pink">
+                  <Radio className="w-3 h-3 animate-pulse" />
+                  LIVE
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-semibold border border-white/15">
+                  {host.country}
+                </span>
+              </div>
+
+              {/* Bottom Info */}
+              <div className="absolute bottom-3 inset-x-3 z-10 flex items-end justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-white leading-tight">
+                    {host.name}
+                  </h3>
+                  <span className="text-[11px] text-popo-text-secondary">{host.category}</span>
+                </div>
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-white text-[11px] font-bold border border-white/15">
+                  <Eye className="w-3 h-3 text-popo-pink" />
+                  <span>{host.viewers}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop 3 Host Cards Grid */}
+        <div className="hidden sm:grid sm:grid-cols-3 gap-6">
           {visibleHosts.map((host) => (
             <div
               key={host.id}
