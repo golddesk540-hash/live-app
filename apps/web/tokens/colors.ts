@@ -42,8 +42,8 @@ export const colors = {
   },
   // Dark Neutral Surfaces
   background: {
-    main: '#0B0B10',         // Pitch Obsidian
-    surface: '#111118',      // Elevated Navigation & Headers
+    main: '#0B0E17',         // Main Dark Navy Obsidian (Ref: 01_design_system.png)
+    surface: '#131A2B',      // Elevated Navigation & Input Fields (Ref: 01_design_system.png)
     card: '#171722',         // Card Background
     cardHover: '#1F1F2E',    // Hover Card Background
     modal: '#1B1B27',        // Dialog & Bottom Sheet Surface

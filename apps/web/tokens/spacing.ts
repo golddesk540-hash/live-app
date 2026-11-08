@@ -50,3 +50,41 @@ export const zIndex = {
   popover: 60,
   toast: 70,
 } as const;
+
+export const breakpoints = {
+  mobile: '375px',
+  sm: '640px',
+  tablet: '768px',
+  desktop: '1024px',
+  wide: '1280px',
+  ultra: '1536px',
+} as const;
+
+export const layout = {
+  container: {
+    mobile: '100%',
+    tablet: '720px',
+    desktop: '1280px',
+    wide: '1440px',
+  },
+  pageSpacing: {
+    mobile: '1rem',      // 16px
+    tablet: '1.5rem',    // 24px
+    desktop: '2rem',     // 32px
+  },
+  sectionSpacing: {
+    mobile: '3rem',      // 48px
+    tablet: '4rem',      // 64px
+    desktop: '5rem',     // 80px
+  },
+  cardSpacing: {
+    sm: '0.75rem',       // 12px
+    md: '1rem',          // 16px
+    lg: '1.5rem',        // 24px
+  },
+  grid: {
+    mobile: 'repeat(1, minmax(0, 1fr))',
+    tablet: 'repeat(2, minmax(0, 1fr))',
+    desktop: 'repeat(4, minmax(0, 1fr))',
+  },
+} as const;

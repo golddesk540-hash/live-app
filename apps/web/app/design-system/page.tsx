@@ -26,6 +26,7 @@ import { PartyRoomCard } from '@/components/references/PartyRoomCard';
 import { NineSeatPartyPreview } from '@/components/references/NineSeatPartyPreview';
 import { LiveRoomOverlay } from '@/components/references/LiveRoomOverlay';
 import { UserProfileCard } from '@/components/references/UserProfileCard';
+import { DesignSystemReferenceCard } from '@/components/references/DesignSystemReferenceCard';
 
 import {
   Palette,
@@ -135,36 +136,69 @@ export default function DesignSystemPage() {
         ===================================================================== */}
         {activeTab === 'overview' && (
           <section className="flex flex-col gap-8 animate-in fade-in duration-300">
-            {/* Identity Hero */}
-            <div className="relative rounded-3xl bg-gradient-to-br from-popo-dark-900 via-popo-dark-850 to-popo-dark-900 p-8 border border-white/10 shadow-2xl overflow-hidden">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-popo-pink/15 blur-3xl rounded-full pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-96 h-96 bg-popo-purple/15 blur-3xl rounded-full pointer-events-none" />
+            {/* Direct Reference Image Comparison & Identity Hero */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* Identity Narrative */}
+              <div className="lg:col-span-7 relative rounded-3xl bg-gradient-to-br from-popo-dark-900 via-popo-dark-850 to-popo-dark-900 p-8 border border-white/10 shadow-2xl overflow-hidden h-full flex flex-col justify-between">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-popo-pink/15 blur-3xl rounded-full pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-popo-purple/15 blur-3xl rounded-full pointer-events-none" />
 
-              <div className="relative z-10 max-w-3xl flex flex-col gap-4">
-                <span className="text-xs font-bold uppercase tracking-widest text-popo-pink flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4" /> 1. Brand Identity & Visual Language
-                </span>
-                <h2 className="text-2xl md:text-4xl font-black text-white tracking-tight">
-                  Electric, Engaging & High-Contrast Nightlife Entertainment
-                </h2>
-                <p className="text-sm md:text-base text-popo-text-secondary leading-relaxed">
-                  Popo Live is engineered for real-time engagement. The visual language blends deep obsidian surfaces with electric neon pinks, cyber cyans, and imperial gold gradients, replicating the high-energy atmosphere of Poppo Live while delivering modern component reusability.
-                </p>
+                <div className="relative z-10 flex flex-col gap-4">
+                  <span className="text-xs font-bold uppercase tracking-widest text-popo-pink flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4" /> 1. Brand Identity & Visual Language
+                  </span>
+                  <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+                    Popo Live Design System Foundation
+                  </h2>
+                  <p className="text-sm md:text-base text-popo-text-secondary leading-relaxed">
+                    Popo Live is built on a high-contrast dark obsidian foundation accented with electric neon pink (`#FF1A6C`), vibrant purple (`#7038FF`), and deep slate surfaces (`#131A2B`). Every component is designed strictly following the 01_design_system.png specification.
+                  </p>
 
-                <div className="flex flex-wrap gap-3 mt-2">
-                  <div className="flex items-center gap-2 bg-black/40 border border-white/10 px-3 py-1.5 rounded-full text-xs text-white">
-                    <Shield className="w-3.5 h-3.5 text-popo-cyan" />
-                    <span>Single Shared Backend Rule</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-black/40 border border-white/10 px-3 py-1.5 rounded-full text-xs text-white">
-                    <Crown className="w-3.5 h-3.5 text-amber-400" />
-                    <span>70% Host Gift Share</span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-black/40 border border-white/10 px-3 py-1.5 rounded-full text-xs text-white">
-                    <Users className="w-3.5 h-3.5 text-popo-purple-light" />
-                    <span>9-Seat Party Grids</span>
+                  <div className="grid grid-cols-2 gap-3 mt-2">
+                    <div className="p-3 rounded-xl bg-black/40 border border-white/10 flex flex-col gap-1">
+                      <span className="text-[11px] text-popo-text-muted">Primary Accent</span>
+                      <span className="text-sm font-bold text-popo-pink">#FF1A6C (Neon Pink)</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-black/40 border border-white/10 flex flex-col gap-1">
+                      <span className="text-[11px] text-popo-text-muted">Secondary Accent</span>
+                      <span className="text-sm font-bold text-purple-400">#7038FF (Purple)</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-black/40 border border-white/10 flex flex-col gap-1">
+                      <span className="text-[11px] text-popo-text-muted">Main Background</span>
+                      <span className="text-sm font-bold text-white">#0B0E17 (Dark Navy)</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-black/40 border border-white/10 flex flex-col gap-1">
+                      <span className="text-[11px] text-popo-text-muted">Surface Containers</span>
+                      <span className="text-sm font-bold text-white">#131A2B (Slate Navy)</span>
+                    </div>
                   </div>
                 </div>
+
+                <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t border-white/10 relative z-10">
+                  <div className="flex items-center gap-1.5 bg-black/40 border border-white/10 px-3 py-1.5 rounded-full text-xs text-white">
+                    <Shield className="w-3.5 h-3.5 text-popo-cyan" />
+                    <span>Single Shared Backend</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-black/40 border border-white/10 px-3 py-1.5 rounded-full text-xs text-white">
+                    <Crown className="w-3.5 h-3.5 text-amber-400" />
+                    <span>70% Host Share</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-black/40 border border-white/10 px-3 py-1.5 rounded-full text-xs text-white">
+                    <Users className="w-3.5 h-3.5 text-popo-purple-light" />
+                    <span>9-Seat Rooms</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Direct 01_design_system.png Interactive Component */}
+              <div className="lg:col-span-5 flex flex-col items-center">
+                <div className="w-full flex items-center justify-between mb-3 px-1">
+                  <span className="text-xs font-bold text-popo-pink uppercase tracking-wider flex items-center gap-1.5">
+                    <Sliders className="w-3.5 h-3.5" /> 01_design_system.png Live Replica
+                  </span>
+                  <span className="text-[11px] text-popo-text-muted">Pixel-Precise Matching</span>
+                </div>
+                <DesignSystemReferenceCard />
               </div>
             </div>
 

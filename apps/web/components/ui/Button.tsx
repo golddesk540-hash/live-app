@@ -30,11 +30,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary:
-        'bg-gradient-to-r from-popo-pink to-[#FF5E3A] text-white hover:opacity-95 shadow-glow-pink focus-visible:ring-popo-pink border border-white/10',
+        'bg-popo-pink hover:bg-popo-pink-hover text-white shadow-glow-pink focus-visible:ring-popo-pink border border-transparent',
       secondary:
-        'bg-popo-dark-850 hover:bg-popo-dark-800 text-popo-text-primary border border-white/10 hover:border-white/20 focus-visible:ring-white/20',
+        'bg-transparent hover:bg-popo-pink/15 text-white border-2 border-popo-pink focus-visible:ring-popo-pink',
       outline:
-        'bg-transparent border border-popo-pink text-popo-pink hover:bg-popo-pink/10 focus-visible:ring-popo-pink',
+        'bg-transparent border border-white/20 text-popo-text-secondary hover:text-white hover:border-white/40 focus-visible:ring-white/20',
       ghost:
         'bg-transparent hover:bg-white/5 text-popo-text-secondary hover:text-white focus-visible:ring-white/10',
       vip:

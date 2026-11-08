@@ -11,3 +11,4 @@ export * from './Dropdown';
 export * from './StatusIndicator';
 export * from './LoadingState';
 export * from './EmptyState';
+export * from './LanguageSelector';

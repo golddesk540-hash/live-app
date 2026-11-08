@@ -3,8 +3,46 @@
 @tailwind utilities;
 
 :root {
-  --background: #0B0B10;
+  --background: #0B0E17;
   --foreground: #FFFFFF;
+
+  /* Brand Colors from Design System */
+  --popo-pink: #FF1A6C;
+  --popo-pink-hover: #E0125C;
+  --popo-purple: #7038FF;
+  --popo-purple-dark: #4C1D95;
+
+  /* Backgrounds & Surfaces */
+  --popo-bg-main: #0B0E17;
+  --popo-bg-surface: #131A2B;
+  --popo-bg-card: #171722;
+  --popo-bg-card-hover: #1F1F2E;
+
+  /* Borders & Dividers */
+  --popo-border: rgba(255, 255, 255, 0.08);
+  --popo-border-strong: #2C2C3E;
+
+  /* Typography Colors */
+  --popo-text-primary: #FFFFFF;
+  --popo-text-secondary: #A1A1B2;
+  --popo-text-muted: #68687A;
+
+  /* State & Economy */
+  --popo-live: #FF2B44;
+  --popo-gold: #FFB800;
+  --popo-cyan: #00E5FF;
+  --popo-success: #10B981;
+  --popo-warning: #F59E0B;
+  --popo-error: #EF4444;
+
+  /* Shared Radii */
+  --radius-pill: 9999px;
+  --radius-card: 16px;
+  --radius-input: 12px;
+
+  /* Glow Effects */
+  --glow-pink: 0 0 24px -2px rgba(255, 26, 108, 0.45);
+  --glow-purple: 0 0 24px -2px rgba(112, 56, 255, 0.35);
 }
 
 body {
