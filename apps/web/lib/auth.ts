@@ -19,6 +19,9 @@ export interface AuthUser {
   country: string | null;
   country_code: string | null;
   is_profile_completed: boolean;
+  bio?: string;
+  host_level?: number;
+  wealth_level?: number;
 }
 
 export interface SessionData {
@@ -298,6 +301,9 @@ export async function validateSessionToken(sessionToken: string): Promise<AuthUs
     `SELECT u.id, u.poppo_id, u.email, u.phone, u.nickname, u.avatar_url,
             u.gender, u.birthdate, u.is_adult_verified, u.status, u.created_at,
             u.country, u.country_code, u.is_profile_completed,
+            COALESCE(u.bio, '') as bio,
+            COALESCE(u.host_level, 1) as host_level,
+            COALESCE(u.wealth_level, 1) as wealth_level,
             s.expires_at, s.is_revoked
      FROM popolive.sessions s
      JOIN popolive.users u ON s.user_id = u.id
@@ -327,6 +333,9 @@ export async function validateSessionToken(sessionToken: string): Promise<AuthUs
     country: r.country || 'Pakistan',
     country_code: r.country_code || 'PK',
     is_profile_completed: Boolean(r.is_profile_completed),
+    bio: r.bio || '',
+    host_level: Number(r.host_level) || 1,
+    wealth_level: Number(r.wealth_level) || 1,
   };
 }
 

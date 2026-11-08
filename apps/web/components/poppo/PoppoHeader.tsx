@@ -17,6 +17,20 @@ export const PoppoHeader: React.FC<PoppoHeaderProps> = ({ onOpenLogin }) => {
   const [isPoliciesOpen, setIsPoliciesOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ nickname: string; avatarUrl: string } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/session')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.authenticated && d.user) {
+          setCurrentUser(d.user);
+        } else {
+          setCurrentUser(null);
+        }
+      })
+      .catch(() => {});
+  }, [pathname]);
 
   const policiesRef = useRef<HTMLDivElement>(null);
   const langRef = useRef<HTMLDivElement>(null);
@@ -174,8 +188,23 @@ export const PoppoHeader: React.FC<PoppoHeaderProps> = ({ onOpenLogin }) => {
             )}
           </div>
 
-          {/* Log in Button */}
-          {onOpenLogin ? (
+          {/* Log in or Profile Button */}
+          {currentUser ? (
+            <Link
+              href="/profile"
+              className="flex items-center gap-2 pl-1.5 pr-4 py-1 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-800 text-xs font-bold transition-all shadow-sm"
+            >
+              <div className="w-6 h-6 rounded-full overflow-hidden bg-gray-200 border border-[#5653FE]/40">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={currentUser.avatarUrl || '/avatars/default.png'}
+                  alt={currentUser.nickname}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <span className="max-w-[120px] truncate">{currentUser.nickname}</span>
+            </Link>
+          ) : onOpenLogin ? (
             <button
               type="button"
               onClick={onOpenLogin}
@@ -195,12 +224,29 @@ export const PoppoHeader: React.FC<PoppoHeaderProps> = ({ onOpenLogin }) => {
 
         {/* Mobile Menu Button */}
         <div className="lg:hidden flex items-center gap-2">
-          <Link
-            href="/login"
-            className="px-3.5 py-1.5 rounded-full bg-[#5653FE] text-white font-bold text-xs"
-          >
-            {isUr ? 'لاگ ان' : 'Log in'}
-          </Link>
+          {currentUser ? (
+            <Link
+              href="/profile"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-100 text-gray-800 font-bold text-xs"
+            >
+              <div className="w-5 h-5 rounded-full overflow-hidden bg-gray-200">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={currentUser.avatarUrl || '/avatars/default.png'}
+                  alt={currentUser.nickname}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <span className="max-w-[70px] truncate">{currentUser.nickname}</span>
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="px-3.5 py-1.5 rounded-full bg-[#5653FE] text-white font-bold text-xs"
+            >
+              {isUr ? 'لاگ ان' : 'Log in'}
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -215,6 +261,30 @@ export const PoppoHeader: React.FC<PoppoHeaderProps> = ({ onOpenLogin }) => {
       {/* Mobile Drawer Menu */}
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white border-b border-gray-100 px-4 pt-2 pb-6 flex flex-col gap-3 animate-in slide-in-from-top-4 duration-200 shadow-xl">
+          {currentUser && (
+            <Link
+              href="/profile"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="py-2.5 px-3 rounded-xl bg-indigo-50/60 border border-indigo-100 flex items-center justify-between transition-colors"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 border border-[#5653FE]/50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={currentUser.avatarUrl || '/avatars/default.png'}
+                    alt={currentUser.nickname}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-gray-900">{currentUser.nickname}</p>
+                  <p className="text-[10px] text-[#5653FE] font-medium">{isUr ? 'میری پروفائل دیکھیں' : 'View My Profile'}</p>
+                </div>
+              </div>
+              <ChevronDown className="w-4 h-4 text-[#5653FE] -rotate-90" />
+            </Link>
+          )}
+
           <Link
             href="/"
             onClick={() => setIsMobileMenuOpen(false)}
