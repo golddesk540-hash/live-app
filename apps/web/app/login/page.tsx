@@ -1,56 +1,107 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
-import { PoppoLogo } from '@/components/poppo/PoppoLogo';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useLanguage } from '@/lib/languageContext';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import {
   ArrowLeft,
-  ShieldCheck,
-  Smartphone,
   Mail,
-  AlertCircle,
-  Globe,
+  Smartphone,
   Lock,
   Eye,
   EyeOff,
   CheckCircle,
   Loader2,
   RefreshCw,
-  UserPlus,
-  LogIn,
+  AlertCircle,
+  Info,
 } from 'lucide-react';
 
-export default function LoginPage() {
-  const { lang, toggleLang, isUr } = useLanguage();
-  const [activeMethod, setActiveMethod] = useState<'social' | 'email' | 'phone'>('social');
+interface ProviderConfig {
+  configured: boolean;
+  name: string;
+  requiredEnv: string[];
+  callbackUrl: string;
+}
 
-  // Email form state
+function LoginContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { lang, setLang, isUr } = useLanguage();
+
+  // Mode: 'overview' matches 02_02_login_system.png exactly, 'email', 'phone', or 'signup'
+  const [activeView, setActiveView] = useState<'overview' | 'email' | 'phone' | 'signup'>('overview');
+
+  // Providers availability from backend
+  const [providers, setProviders] = useState<{
+    [key: string]: ProviderConfig;
+  }>({
+    google: { configured: false, name: 'Google', requiredEnv: ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'], callbackUrl: '/api/auth/callback/google' },
+    facebook: { configured: false, name: 'Facebook', requiredEnv: ['FACEBOOK_APP_ID', 'FACEBOOK_APP_SECRET'], callbackUrl: '/api/auth/callback/facebook' },
+    apple: { configured: false, name: 'Apple', requiredEnv: ['APPLE_CLIENT_ID', 'APPLE_TEAM_ID', 'APPLE_KEY_ID'], callbackUrl: '/api/auth/callback/apple' },
+  });
+
+  // Modal for unconfigured social providers
+  const [unconfiguredProviderModal, setUnconfiguredProviderModal] = useState<ProviderConfig | null>(null);
+
+  // General error or notification from URL
+  const [urlMessage, setUrlMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Email login form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [emailErrors, setEmailErrors] = useState<{ [key: string]: string }>({});
   const [isEmailSubmitting, setIsEmailSubmitting] = useState(false);
-  const [emailSuccess, setEmailSuccess] = useState(false);
 
-  // Phone form state
+  // Phone login form state
   const [countryCode, setCountryCode] = useState('+92');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
-  const [countdown, setCountdown] = useState(59);
+  const [countdown, setCountdown] = useState(60);
   const [isCountingDown, setIsCountingDown] = useState(false);
-  const [phoneError, setPhoneError] = useState('');
-  const [isOtpSubmitting, setIsOtpSubmitting] = useState(false);
-  const [phoneSuccess, setPhoneSuccess] = useState(false);
+  const [isOtpSending, setIsOtpSending] = useState(false);
+  const [isOtpVerifying, setIsOtpVerifying] = useState(false);
 
-  // Info notification state for social buttons
-  const [socialNotice, setSocialNotice] = useState<string | null>(null);
+  // Sign up form state
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [signupNickname, setSignupNickname] = useState('');
+  const [signupAdultConfirmed, setSignupAdultConfirmed] = useState(false);
+  const [isSignupSubmitting, setIsSignupSubmitting] = useState(false);
 
-  // Countdown timer effect
+  // Check URL params on mount
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam === 'terms_required') {
+      setUrlMessage(
+        isUr
+          ? 'پہلے سروس کی شرائط اور پرائیویسی پالیسی کو قبول کرنا ضروری ہے۔'
+          : 'You must accept the Terms of Service and Privacy Policy before logging in.'
+      );
+    } else if (errorParam === 'provider_unconfigured') {
+      const p = searchParams.get('provider') || 'OAuth';
+      setUrlMessage(`${p} OAuth requires credentials in .env.local.`);
+    } else if (errorParam) {
+      setUrlMessage(decodeURIComponent(errorParam));
+    }
+
+    // Fetch active provider statuses
+    fetch('/api/auth/providers')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.social) {
+          setProviders(data.social);
+        }
+      })
+      .catch((err) => console.error('Error loading auth providers:', err));
+  }, [searchParams, isUr]);
+
+  // Countdown timer for Phone OTP
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (isCountingDown && countdown > 0) {
@@ -62,100 +113,239 @@ export default function LoginPage() {
   }, [isCountingDown, countdown]);
 
   const countryCodes = [
-    { code: '+92', name: '🇵🇰 Pakistan (+92)' },
-    { code: '+971', name: '🇦🇪 UAE (+971)' },
-    { code: '+966', name: '🇸🇦 Saudi Arabia (+966)' },
-    { code: '+90', name: '🇹🇷 Turkey (+90)' },
-    { code: '+44', name: '🇬🇧 United Kingdom (+44)' },
-    { code: '+1', name: '🇺🇸 United States (+1)' },
-    { code: '+880', name: '🇧🇩 Bangladesh (+880)' },
-    { code: '+62', name: '🇮🇩 Indonesia (+62)' },
+    { code: '+92', flag: '🇵🇰', name: 'Pakistan (+92)' },
+    { code: '+971', flag: '🇦🇪', name: 'UAE (+971)' },
+    { code: '+966', flag: '🇸🇦', name: 'Saudi Arabia (+966)' },
+    { code: '+1', flag: '🇺🇸', name: 'USA / Canada (+1)' },
+    { code: '+44', flag: '🇬🇧', name: 'UK (+44)' },
+    { code: '+90', flag: '🇹🇷', name: 'Turkey (+90)' },
+    { code: '+880', flag: '🇧🇩', name: 'Bangladesh (+880)' },
+    { code: '+62', flag: '🇮🇩', name: 'Indonesia (+62)' },
+    { code: '+91', flag: '🇮🇳', name: 'India (+91)' },
   ];
 
-  const handleSocialClick = (provider: string) => {
-    setSocialNotice(
-      isUr
-        ? `فیز ۲ نوٹس: ${provider} تصدیق فیز ۲ (اکاؤنٹس اور پروفائلز) میں فعال کی جائے گی۔ ابھی یہ صرف فرنٹ اینڈ پریویو ہے۔`
-        : `Phase 2 Notice: ${provider} sign-in will be connected during Phase 2 (Accounts & Profiles). This is an active frontend demonstration.`
-    );
+  // Social Login Click Handler
+  const handleSocialClick = (providerKey: 'google' | 'facebook' | 'apple') => {
+    setErrorMessage(null);
+    const provider = providers[providerKey];
+
+    if (provider && provider.configured) {
+      window.location.href = `/api/auth/${providerKey}`;
+    } else {
+      setUnconfiguredProviderModal(
+        provider || {
+          configured: false,
+          name: providerKey.toUpperCase(),
+          requiredEnv: [`${providerKey.toUpperCase()}_CLIENT_ID`],
+          callbackUrl: `/api/auth/callback/${providerKey}`,
+        }
+      );
+    }
   };
 
-  const handleEmailSubmit = (e: React.FormEvent) => {
+  // Handle Email & Password Login
+  const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const errs: { [key: string]: string } = {};
+    setErrorMessage(null);
+    setSuccessMessage(null);
 
-    if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email)) {
-      errs.email = isUr ? 'درست ای میل ایڈریس درج کریں' : 'Valid email address is required';
-    }
-    if (!password || password.length < 6) {
-      errs.password = isUr ? 'پاس ورڈ کم از کم ۶ حروف کا ہونا چاہیے' : 'Password must be at least 6 characters';
-    }
-
-    setEmailErrors(errs);
-    if (Object.keys(errs).length > 0) return;
-
-    setIsEmailSubmitting(true);
-    setTimeout(() => {
-      setIsEmailSubmitting(false);
-      setEmailSuccess(true);
-    }, 1200);
-  };
-
-  const handleSendOtp = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!phoneNumber.trim() || phoneNumber.trim().length < 7) {
-      setPhoneError(isUr ? 'درست موبائل نمبر درج کریں' : 'Please enter a valid phone number');
+    if (!email.trim()) {
+      setErrorMessage(isUr ? 'براہ کرم اپنا ای میل ایڈریس درج کریں۔' : 'Please enter your email address.');
       return;
     }
-    setPhoneError('');
-    setOtpSent(true);
-    setIsCountingDown(true);
-    setCountdown(59);
+    if (!password) {
+      setErrorMessage(isUr ? 'براہ کرم اپنا پاس ورڈ درج کریں۔' : 'Please enter your password.');
+      return;
+    }
+
+    setIsEmailSubmitting(true);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: email, password, rememberMe }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Authentication failed');
+      }
+
+      setSuccessMessage(
+        isUr
+          ? `خوش آمدید ${data.user.nickname}! لاگ ان کامیاب۔`
+          : `Welcome back, ${data.user.nickname}! Redirecting...`
+      );
+      setTimeout(() => {
+        router.push('/');
+      }, 900);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setIsEmailSubmitting(false);
+    }
   };
 
+  // Handle Send Phone OTP
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+
+    const cleanNumber = phoneNumber.replace(/[\s-]/g, '');
+    if (!cleanNumber || cleanNumber.length < 6) {
+      setErrorMessage(isUr ? 'براہ کرم درست فون نمبر درج کریں۔' : 'Please enter a valid mobile number.');
+      return;
+    }
+
+    const fullPhone = `${countryCode}${cleanNumber}`;
+    setIsOtpSending(true);
+
+    try {
+      const res = await fetch('/api/auth/phone/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: fullPhone }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to send verification code');
+      }
+
+      setOtpSent(true);
+      setIsCountingDown(true);
+      setCountdown(60);
+      setSuccessMessage(
+        isUr
+          ? `تصدیقی کوڈ ${fullPhone} پر بھیج دیا گیا ہے!`
+          : `Verification code sent to ${fullPhone}`
+      );
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to send OTP.');
+    } finally {
+      setIsOtpSending(false);
+    }
+  };
+
+  // Handle OTP digit changes
   const handleOtpChange = (index: number, val: string) => {
     if (val.length > 1) val = val[val.length - 1];
     const newOtp = [...otpCode];
     newOtp[index] = val;
     setOtpCode(newOtp);
 
-    // Auto-focus next input
     if (val && index < 5) {
-      const nextInput = document.getElementById(`otp-input-${index + 1}`);
+      const nextInput = document.getElementById(`login-otp-${index + 1}`);
       nextInput?.focus();
     }
   };
 
-  const handleVerifyOtp = (e: React.FormEvent) => {
+  // Handle Verify Phone OTP
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const entered = otpCode.join('');
-    if (entered.length < 6) {
-      setPhoneError(isUr ? 'مکمل ۶ ہندسوں کا کوڈ درج کریں' : 'Please enter all 6 digits of the code');
+    setErrorMessage(null);
+
+    const enteredOtp = otpCode.join('');
+    if (enteredOtp.length < 6) {
+      setErrorMessage(isUr ? 'براہ کرم مکمل ۶ ہندسوں کا کوڈ درج کریں۔' : 'Please enter all 6 digits of the code.');
       return;
     }
-    setPhoneError('');
-    setIsOtpSubmitting(true);
-    setTimeout(() => {
-      setIsOtpSubmitting(false);
-      setPhoneSuccess(true);
-    }, 1200);
+
+    const fullPhone = `${countryCode}${phoneNumber.replace(/[\s-]/g, '')}`;
+    setIsOtpVerifying(true);
+
+    try {
+      const res = await fetch('/api/auth/phone/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: fullPhone, otp: enteredOtp, rememberMe }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Invalid or expired verification code');
+      }
+
+      setSuccessMessage(
+        isUr
+          ? `کامیابی! خوش آمدید ${data.user.nickname}`
+          : `Success! Welcome to Popo Live, ${data.user.nickname}`
+      );
+      setTimeout(() => {
+        router.push('/');
+      }, 900);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'OTP verification failed.');
+    } finally {
+      setIsOtpVerifying(false);
+    }
+  };
+
+  // Handle Register New Account
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+
+    if (!signupEmail.trim() || !/^\S+@\S+\.\S+$/.test(signupEmail)) {
+      setErrorMessage(isUr ? 'درست ای میل ایڈریس درج کریں۔' : 'Please provide a valid email address.');
+      return;
+    }
+    if (!signupPassword || signupPassword.length < 8) {
+      setErrorMessage(isUr ? 'پاس ورڈ کم از کم ۸ حروف پر مشتمل ہونا چاہیے۔' : 'Password must be at least 8 characters long.');
+      return;
+    }
+    if (!signupAdultConfirmed) {
+      setErrorMessage(isUr ? 'پوپو لائیو استعمال کرنے کے لیے آپ کی عمر کم از کم ۱۸ سال ہونی چاہیے۔' : 'You must confirm that you are at least 18 years of age.');
+      return;
+    }
+
+    setIsSignupSubmitting(true);
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: signupEmail,
+          password: signupPassword,
+          nickname: signupNickname,
+          isAdultConfirmed: true,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to create account');
+      }
+
+      setSuccessMessage(
+        isUr
+          ? `اکاؤنٹ بن گیا! پوپو آئی ڈی: ${data.user.poppoId}`
+          : `Account created successfully! Your Poppo ID: ${data.user.poppoId}`
+      );
+      setTimeout(() => {
+        router.push('/');
+      }, 900);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Registration failed.');
+    } finally {
+      setIsSignupSubmitting(false);
+    }
   };
 
   return (
     <div
       dir={isUr ? 'rtl' : 'ltr'}
-      className={`min-h-screen bg-[#0B0E17] text-white flex flex-col justify-between selection:bg-popo-pink selection:text-white relative overflow-hidden ${
-        isUr ? 'font-urdu' : 'font-sans'
-      }`}
+      className="min-h-screen bg-[#07040E] text-white flex flex-col justify-between selection:bg-[#FF1A6C] selection:text-white relative overflow-hidden"
     >
-      {/* Background ambient lighting */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-gradient-to-tr from-popo-pink/20 via-purple-600/20 to-indigo-600/15 blur-[140px] rounded-full pointer-events-none" />
+      {/* Ambient glowing atmosphere matching 02_02_login_system.png */}
+      <div className="fixed top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] sm:w-[700px] h-[550px] sm:h-[700px] bg-gradient-to-tr from-purple-800/25 via-[#FF1A6C]/20 to-transparent rounded-full blur-[130px] pointer-events-none" />
+      <div className="fixed bottom-10 right-10 w-[350px] h-[350px] bg-pink-600/15 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Top Header Bar */}
-      <header className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 flex items-center justify-between z-10">
+      <header className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-5 flex items-center justify-between z-10">
         <Link
           href="/"
-          className={`flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-white transition-colors bg-[#171722] px-4 py-2 rounded-full border border-white/10 ${
+          className={`flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-white/10 ${
             isUr ? 'flex-row-reverse' : ''
           }`}
         >
@@ -163,108 +353,134 @@ export default function LoginPage() {
           <span>{isUr ? 'ہوم پیج پر واپس جائیں' : 'Back to Home'}</span>
         </Link>
 
-        {/* Language Switcher */}
-        <button
-          type="button"
-          onClick={toggleLang}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#171722] hover:bg-[#20202F] text-xs font-bold text-gray-300 hover:text-white border border-white/10 transition-colors"
-        >
-          <Globe className="w-3.5 h-3.5 text-cyan-400" />
-          <span>{lang === 'en' ? 'اردو' : 'English'}</span>
-        </button>
+        {/* Working Language selector */}
+        <div className="flex items-center bg-white/10 rounded-full p-0.5 border border-white/10">
+          <button
+            type="button"
+            onClick={() => setLang('en')}
+            className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+              !isUr
+                ? 'bg-gradient-to-r from-[#FF1A6C] to-[#E0125C] text-white shadow-sm'
+                : 'text-gray-300 hover:text-white'
+            }`}
+          >
+            EN
+          </button>
+          <button
+            type="button"
+            onClick={() => setLang('ur')}
+            className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+              isUr
+                ? 'bg-gradient-to-r from-[#FF1A6C] to-[#E0125C] text-white shadow-sm'
+                : 'text-gray-300 hover:text-white'
+            }`}
+          >
+            اردو
+          </button>
+        </div>
       </header>
 
-      {/* Main Login Card Center */}
-      <main className="max-w-md mx-auto w-full px-4 py-8 z-10">
-        <div className="rounded-3xl bg-gradient-to-b from-[#171722] to-[#12121A] border border-white/15 p-6 sm:p-8 shadow-2xl shadow-purple-950/40 flex flex-col gap-6 text-center">
-          {/* Brand Logo & Main Headings */}
-          <div className="flex flex-col items-center gap-3">
-            <PoppoLogo size="lg" isDark={true} />
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                {isUr ? 'پوپو لائیو میں خوش آمدید' : 'Welcome to Popo Live'}
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-400 mt-1 font-medium">
-                {isUr ? 'جڑیں، لائیو اسٹریم کریں اور لطف اندوز ہوں' : 'Connect, Stream and Enjoy Together.'}
-              </p>
+      {/* Main Authentication Center Screen */}
+      <main className="max-w-[430px] mx-auto w-full px-4 py-6 z-10 my-auto">
+        <div className="relative rounded-[32px] sm:rounded-[36px] bg-gradient-to-b from-[#140C29] via-[#0E091E] to-[#0A0614] border border-[#2D1B4E]/90 p-6 sm:p-8 shadow-[0_20px_70px_rgba(0,0,0,0.85),0_0_35px_rgba(168,85,247,0.18)] flex flex-col gap-5 text-center overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          {/* Subtle top edge glow */}
+          <div className="absolute top-0 left-10 right-10 h-[2px] bg-gradient-to-r from-transparent via-[#FF1A6C] to-transparent opacity-80" />
+
+          {/* Back button within modal if inside sub-forms */}
+          {activeView !== 'overview' && (
+            <button
+              type="button"
+              onClick={() => {
+                setActiveView('overview');
+                setErrorMessage(null);
+                setSuccessMessage(null);
+              }}
+              className="self-start -mb-2 flex items-center gap-1.5 text-xs text-purple-300 hover:text-white transition-colors"
+            >
+              <ArrowLeft className={`w-3.5 h-3.5 ${isUr ? 'rotate-180' : ''}`} />
+              <span>{isUr ? 'لاگ ان کے اختیارات' : 'All Sign-In Options'}</span>
+            </button>
+          )}
+
+          {/* Logo & Header (Directly from 02_02_login_system.png) */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="relative mb-1">
+              <div className="absolute inset-0 bg-[#FF1A6C] blur-md opacity-60 rounded-full" />
+              <svg
+                className="relative w-12 h-12 text-[#FF1A6C]"
+                viewBox="0 0 100 100"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M50 82C50 82 18 58 18 36C18 24 28 16 40 16C46 16 50 19 50 19C50 19 54 16 60 16C72 16 82 24 82 36C82 58 50 82 50 82Z"
+                  stroke="url(#loginHeartGrad)"
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M38 42C44 50 56 50 62 42"
+                  stroke="url(#loginHeartGrad)"
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                />
+                <defs>
+                  <linearGradient id="loginHeartGrad" x1="18" y1="16" x2="82" y2="82" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#FF2E93" />
+                    <stop offset="1" stopColor="#E0125C" />
+                  </linearGradient>
+                </defs>
+              </svg>
             </div>
+
+            <h2 className="text-sm font-bold tracking-wide text-gray-300 uppercase">
+              Popo Live
+            </h2>
+
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+              {activeView === 'signup'
+                ? isUr ? 'نیا اکاؤنٹ بنائیں' : 'Create Popo Account'
+                : isUr ? 'پوپو لائیو میں خوش آمدید' : 'Welcome to Popo Live'}
+            </h1>
+
+            <p className="text-xs text-[#B3A8C7] leading-relaxed">
+              {isUr ? 'جڑیں، اسٹریم کریں اور سب کے ساتھ لطف اندوز ہوں' : 'Connect, Stream and Enjoy Together.'}
+            </p>
           </div>
 
-          {/* Staging Demo Mode Alert */}
-          <div className="rounded-2xl bg-amber-500/10 border border-amber-500/25 p-3 flex items-start gap-2.5 text-left">
-            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            <div className={`text-xs text-amber-200/90 leading-relaxed ${isUr ? 'text-right' : 'text-left'}`}>
-              <span className="font-bold block text-amber-400">
-                {isUr ? 'فیز ۱ UI پریویو — فیز ۲ اتھینٹیکیشن' : 'Phase 1 UI Preview — Phase 2 Authentication'}
-              </span>
-              <span>
-                {isUr
-                  ? 'یہ فرنٹ اینڈ انٹری پوائنٹ ہے۔ اصل OAuth فراہم کنندگان اور JWT سیشنز فیز ۲ میں منسلک ہوں گے۔'
-                  : 'This is the visual authentication gateway. OAuth providers, SMS OTP and database credentials will connect in Phase 2.'}
-              </span>
-            </div>
-          </div>
-
-          {socialNotice && (
-            <div className="p-3 rounded-xl bg-popo-pink/15 border border-popo-pink/30 text-xs text-white animate-in fade-in duration-200">
-              {socialNotice}
+          {/* Feedback Alerts */}
+          {urlMessage && (
+            <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs text-left flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{urlMessage}</span>
             </div>
           )}
 
-          {/* Login Methods Switcher (5 Methods) */}
-          <div className="flex p-1 bg-[#0B0E17] rounded-xl border border-white/10">
-            <button
-              type="button"
-              onClick={() => {
-                setActiveMethod('social');
-                setSocialNotice(null);
-              }}
-              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${
-                activeMethod === 'social'
-                  ? 'bg-popo-pink text-white shadow-sm font-bold'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              {isUr ? 'سوشل لاگ ان' : 'Social'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveMethod('email');
-                setSocialNotice(null);
-              }}
-              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${
-                activeMethod === 'email'
-                  ? 'bg-popo-pink text-white shadow-sm font-bold'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              {isUr ? 'ای میل' : 'Email'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveMethod('phone');
-                setSocialNotice(null);
-              }}
-              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-colors ${
-                activeMethod === 'phone'
-                  ? 'bg-popo-pink text-white shadow-sm font-bold'
-                  : 'text-gray-400 hover:text-white'
-              }`}
-            >
-              {isUr ? 'فون نمبر' : 'Phone'}
-            </button>
-          </div>
+          {errorMessage && (
+            <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs text-left flex items-start gap-2 animate-shake">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
 
-          {/* METHOD 1, 2, 3: SOCIAL LOGIN OPTIONS */}
-          {activeMethod === 'social' && (
-            <div className="flex flex-col gap-3">
+          {successMessage && (
+            <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs text-left flex items-start gap-2 animate-in zoom-in-95">
+              <CheckCircle className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" />
+              <span>{successMessage}</span>
+            </div>
+          )}
+
+          {/* ============================================================ */}
+          {/* VIEW 1: OVERVIEW (MATCHES 02_02_login_system.png 100%)       */}
+          {/* ============================================================ */}
+          {activeView === 'overview' && (
+            <div className="flex flex-col gap-3 my-1">
               {/* 1. Continue with Google */}
               <button
                 type="button"
-                onClick={() => handleSocialClick('Google')}
-                className="flex items-center justify-center gap-3 w-full py-3 px-4 rounded-2xl bg-white hover:bg-neutral-100 text-neutral-900 font-bold text-sm transition-all shadow-md select-none active:scale-[0.99] cursor-pointer"
+                onClick={() => handleSocialClick('google')}
+                className="flex items-center justify-center gap-3 w-full py-3.5 px-5 rounded-2xl bg-[#1C1333] hover:bg-[#251A43] border border-white/10 hover:border-purple-400/40 text-white font-bold text-xs sm:text-sm transition-all transform active:scale-[0.99] shadow-md"
               >
                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" />
@@ -278,10 +494,10 @@ export default function LoginPage() {
               {/* 2. Continue with Facebook */}
               <button
                 type="button"
-                onClick={() => handleSocialClick('Facebook')}
-                className="flex items-center justify-center gap-3 w-full py-3 px-4 rounded-2xl bg-[#1877F2] hover:bg-[#166FE5] text-white font-bold text-sm transition-all shadow-md select-none active:scale-[0.99] cursor-pointer"
+                onClick={() => handleSocialClick('facebook')}
+                className="flex items-center justify-center gap-3 w-full py-3.5 px-5 rounded-2xl bg-[#1C1333] hover:bg-[#251A43] border border-white/10 hover:border-purple-400/40 text-white font-bold text-xs sm:text-sm transition-all transform active:scale-[0.99] shadow-md"
               >
-                <svg className="w-4 h-4 fill-white shrink-0" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 fill-[#1877F2] shrink-0" viewBox="0 0 24 24">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                 </svg>
                 <span>{isUr ? 'فیس بک کے ساتھ جاری رکھیں' : 'Continue with Facebook'}</span>
@@ -290,183 +506,189 @@ export default function LoginPage() {
               {/* 3. Continue with Apple */}
               <button
                 type="button"
-                onClick={() => handleSocialClick('Apple')}
-                className="flex items-center justify-center gap-3 w-full py-3 px-4 rounded-2xl bg-black hover:bg-neutral-900 text-white font-bold text-sm border border-white/20 transition-all shadow-md select-none active:scale-[0.99] cursor-pointer"
+                onClick={() => handleSocialClick('apple')}
+                className="flex items-center justify-center gap-3 w-full py-3.5 px-5 rounded-2xl bg-[#1C1333] hover:bg-[#251A43] border border-white/10 hover:border-purple-400/40 text-white font-bold text-xs sm:text-sm transition-all transform active:scale-[0.99] shadow-md"
               >
                 <svg className="w-4 h-4 fill-white shrink-0" viewBox="0 0 24 24">
                   <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.47c.64-.78 1.08-1.87.96-2.97-1 .04-2.14.64-2.81 1.42-.58.68-1.09 1.78-.96 2.85 1.12.09 2.19-.55 2.81-1.3" />
                 </svg>
                 <span>{isUr ? 'ایپل کے ساتھ جاری رکھیں' : 'Continue with Apple'}</span>
               </button>
+
+              {/* Divider "Or" */}
+              <div className="relative my-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10" />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="bg-[#0E091E] px-3 text-gray-500 font-medium">Or</span>
+                </div>
+              </div>
+
+              {/* 4. Login with Email */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveView('email');
+                  setErrorMessage(null);
+                }}
+                className="flex items-center justify-center gap-3 w-full py-3.5 px-5 rounded-2xl bg-[#1C1333] hover:bg-[#251A43] border border-white/10 hover:border-pink-500/40 text-white font-bold text-xs sm:text-sm transition-all transform active:scale-[0.99] shadow-md"
+              >
+                <Mail className="w-4 h-4 text-purple-300" />
+                <span>{isUr ? 'ای میل کے ذریعے لاگ ان کریں' : 'Login with Email'}</span>
+              </button>
+
+              {/* 5. Login with Phone */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveView('phone');
+                  setErrorMessage(null);
+                }}
+                className="flex items-center justify-center gap-3 w-full py-3.5 px-5 rounded-2xl bg-[#1C1333] hover:bg-[#251A43] border border-white/10 hover:border-pink-500/40 text-white font-bold text-xs sm:text-sm transition-all transform active:scale-[0.99] shadow-md"
+              >
+                <Smartphone className="w-4 h-4 text-pink-400" />
+                <span>{isUr ? 'فون نمبر کے ذریعے لاگ ان کریں' : 'Login with Phone'}</span>
+              </button>
             </div>
           )}
 
-          {/* METHOD 5: EMAIL LOGIN FORM */}
-          {activeMethod === 'email' && (
-            <div>
-              {emailSuccess ? (
-                <div className="py-6 flex flex-col items-center gap-3 animate-in zoom-in-95">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6" />
-                  </div>
-                  <h3 className="font-bold text-white text-base">
-                    {isUr ? 'لاگ ان ٹیسٹ کامیاب!' : 'Demo Login Verified!'}
-                  </h3>
-                  <p className="text-xs text-gray-400">
-                    {isUr
-                      ? 'تصدیق مکمل ہو چکی ہے۔ فیز ۲ میں مستقل سیشن قائم ہوگا۔'
-                      : 'Validation passed in demo mode. Persistent sessions will initialize in Phase 2.'}
-                  </p>
-                  <Button variant="secondary" size="sm" onClick={() => setEmailSuccess(false)} className="mt-2">
-                    {isUr ? 'دوبارہ کوشش کریں' : 'Try Again'}
-                  </Button>
-                </div>
-              ) : (
-                <form onSubmit={handleEmailSubmit} className="flex flex-col gap-4 text-left">
-                  <Input
-                    label={isUr ? 'ای میل ایڈریس *' : 'Email Address *'}
+          {/* ============================================================ */}
+          {/* VIEW 2: EMAIL LOGIN FORM                                     */}
+          {/* ============================================================ */}
+          {activeView === 'email' && (
+            <form onSubmit={handleEmailLogin} className="flex flex-col gap-4 text-left">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-300">
+                  {isUr ? 'ای میل ایڈریس' : 'Email Address'}
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5 pointer-events-none" />
+                  <input
                     type="email"
-                    placeholder="name@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    error={emailErrors.email}
-                    leftIcon={<Mail className="w-4 h-4" />}
+                    placeholder="name@example.com"
+                    required
+                    className="w-full bg-[#18102E] border border-white/10 rounded-xl pl-10 pr-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#FF1A6C] focus:ring-1 focus:ring-[#FF1A6C] transition-all"
                   />
+                </div>
+              </div>
 
-                  <div className="flex flex-col gap-1.5 text-left">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-popo-text-secondary">
-                      {isUr ? 'پاس ورڈ *' : 'Password *'}
-                    </label>
-                    <div className="relative flex items-center">
-                      <div className="absolute left-3.5 text-gray-400 pointer-events-none">
-                        <Lock className="w-4 h-4" />
-                      </div>
-                      <input
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className={`w-full bg-popo-dark-850 text-white placeholder:text-gray-500 text-sm rounded-xl pl-10 pr-10 py-2.5 transition-all duration-200 border border-white/10 outline-none focus:border-popo-pink focus:ring-2 focus:ring-popo-pink/20 ${
-                          emailErrors.password ? 'border-red-500 focus:border-red-500' : ''
-                        }`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3.5 text-gray-400 hover:text-white transition-colors"
-                      >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                    {emailErrors.password && (
-                      <span className="text-xs font-medium text-red-400">{emailErrors.password}</span>
-                    )}
-                  </div>
-
-                  {/* Remember Me & Forgot Password */}
-                  <div className="flex items-center justify-between text-xs pt-1">
-                    <label className="flex items-center gap-2 cursor-pointer select-none text-gray-300">
-                      <input
-                        type="checkbox"
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
-                        className="w-4 h-4 rounded border-white/20 bg-black/40 text-popo-pink focus:ring-popo-pink/20"
-                      />
-                      <span>{isUr ? 'مجھے یاد رکھیں' : 'Remember Me'}</span>
-                    </label>
-
-                    <Link
-                      href="/forgot-password"
-                      className="text-popo-pink hover:underline font-semibold"
-                    >
-                      {isUr ? 'پاس ورڈ بھول گئے؟' : 'Forgot Password?'}
-                    </Link>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="md"
-                    disabled={isEmailSubmitting}
-                    className="w-full mt-2 font-bold shadow-lg shadow-popo-pink/25"
-                    leftIcon={isEmailSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-300">
+                  {isUr ? 'پاس ورڈ' : 'Password'}
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5 pointer-events-none" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    className="w-full bg-[#18102E] border border-white/10 rounded-xl pl-10 pr-10 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#FF1A6C] focus:ring-1 focus:ring-[#FF1A6C] transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-3 text-gray-400 hover:text-white"
                   >
-                    {isEmailSubmitting
-                      ? isUr ? 'تصدیق ہو رہی ہے...' : 'Signing In...'
-                      : isUr ? 'لاگ ان کریں' : 'Log In with Email'}
-                  </Button>
-                </form>
-              )}
-            </div>
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-xs pt-1">
+                <label className="flex items-center gap-2 cursor-pointer select-none text-gray-300">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 rounded border-white/20 bg-black/40 text-[#FF1A6C] focus:ring-[#FF1A6C]"
+                  />
+                  <span>{isUr ? 'مجھے یاد رکھیں' : 'Remember Me'}</span>
+                </label>
+
+                <Link
+                  href="/forgot-password"
+                  className="text-[#FF4A8B] hover:underline font-semibold"
+                >
+                  {isUr ? 'پاس ورڈ بھول گئے؟' : 'Forgot Password?'}
+                </Link>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isEmailSubmitting}
+                className="w-full mt-2 py-3.5 px-6 rounded-full font-bold text-sm tracking-wide text-white bg-gradient-to-r from-[#FF1A6C] via-[#FF2E80] to-[#E0125C] shadow-[0_8px_25px_rgba(255,26,108,0.4)] hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+              >
+                {isEmailSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>{isUr ? 'لاگ ان ہو رہا ہے...' : 'Signing In...'}</span>
+                  </>
+                ) : (
+                  <span>{isUr ? 'لاگ ان کریں' : 'Log In with Email'}</span>
+                )}
+              </button>
+            </form>
           )}
 
-          {/* METHOD 4: PHONE NUMBER LOGIN WITH OTP SIMULATION */}
-          {activeMethod === 'phone' && (
-            <div>
-              {phoneSuccess ? (
-                <div className="py-6 flex flex-col items-center gap-3 animate-in zoom-in-95">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6" />
-                  </div>
-                  <h3 className="font-bold text-white text-base">
-                    {isUr ? 'او ٹی پی تصدیق کامیاب!' : 'Phone OTP Verified!'}
-                  </h3>
-                  <p className="text-xs text-gray-400">
-                    {isUr
-                      ? 'فون نمبر کی جانچ مکمل ہو چکی ہے۔ فیز ۲ میں ایس ایم ایس گیٹ وے منسلک ہوگا۔'
-                      : 'Validation complete in demo mode. Real SMS OTP gateway connects in Phase 2.'}
-                  </p>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      setPhoneSuccess(false);
-                      setOtpSent(false);
-                      setOtpCode(['', '', '', '', '', '']);
-                    }}
-                    className="mt-2"
-                  >
-                    {isUr ? 'دوبارہ کوشش کریں' : 'Reset Demo'}
-                  </Button>
-                </div>
-              ) : !otpSent ? (
-                <form onSubmit={handleSendOtp} className="flex flex-col gap-4 text-left">
+          {/* ============================================================ */}
+          {/* VIEW 3: PHONE & OTP LOGIN FORM                               */}
+          {/* ============================================================ */}
+          {activeView === 'phone' && (
+            <div className="text-left">
+              {!otpSent ? (
+                <form onSubmit={handleSendOtp} className="flex flex-col gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold uppercase tracking-wider text-popo-text-secondary">
-                      {isUr ? 'ملک کا کوڈ اور فون نمبر *' : 'Phone Number *'}
+                    <label className="text-xs font-semibold text-gray-300">
+                      {isUr ? 'موبائل فون نمبر' : 'Mobile Phone Number'}
                     </label>
-                    <div className="grid grid-cols-12 gap-2">
+                    <div className="flex gap-2">
                       <select
                         value={countryCode}
                         onChange={(e) => setCountryCode(e.target.value)}
-                        className="col-span-5 bg-popo-dark-850 text-white text-xs rounded-xl px-2.5 py-2.5 border border-white/10 outline-none focus:border-popo-pink"
+                        className="w-32 bg-[#18102E] text-white text-xs rounded-xl px-2.5 py-2.5 border border-white/10 outline-none focus:border-[#FF1A6C]"
                       >
                         {countryCodes.map((c) => (
-                          <option key={c.code} value={c.code} className="bg-[#171722] text-white">
-                            {c.name}
+                          <option key={c.code} value={c.code} className="bg-[#120B24] text-white">
+                            {c.flag} {c.code}
                           </option>
                         ))}
                       </select>
                       <input
                         type="tel"
-                        placeholder="300 1234567"
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
-                        className="col-span-7 bg-popo-dark-850 text-white placeholder:text-gray-500 text-sm rounded-xl px-3 py-2.5 border border-white/10 outline-none focus:border-popo-pink"
+                        placeholder="300 1234567"
+                        required
+                        className="flex-1 bg-[#18102E] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#FF1A6C] focus:ring-1 focus:ring-[#FF1A6C]"
                       />
                     </div>
-                    {phoneError && <span className="text-xs font-medium text-red-400">{phoneError}</span>}
                   </div>
 
-                  <Button
+                  <p className="text-[11px] text-gray-400">
+                    {isUr
+                      ? 'ہم آپ کے فون پر ۶ ہندسوں کا ون ٹائم تصدیقی کوڈ بھیجیں گے۔'
+                      : 'We will send a 6-digit one-time verification code to your phone.'}
+                  </p>
+
+                  <button
                     type="submit"
-                    variant="primary"
-                    size="md"
-                    className="w-full mt-2 font-bold shadow-lg shadow-popo-pink/25"
-                    leftIcon={<Smartphone className="w-4 h-4" />}
+                    disabled={isOtpSending}
+                    className="w-full mt-2 py-3.5 px-6 rounded-full font-bold text-sm text-white bg-gradient-to-r from-[#FF1A6C] via-[#FF2E80] to-[#E0125C] shadow-[0_8px_25px_rgba(255,26,108,0.4)] hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
                   >
-                    {isUr ? 'او ٹی پی کوڈ بھیجیں' : 'Send Verification OTP'}
-                  </Button>
+                    {isOtpSending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>{isUr ? 'کوڈ بھیجا جا رہا ہے...' : 'Sending Code...'}</span>
+                      </>
+                    ) : (
+                      <span>{isUr ? 'او ٹی پی کوڈ حاصل کریں' : 'Send Verification OTP'}</span>
+                    )}
+                  </button>
                 </form>
               ) : (
                 <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4 text-center">
@@ -475,24 +697,21 @@ export default function LoginPage() {
                     <strong className="text-white font-mono">{countryCode} {phoneNumber}</strong>
                   </div>
 
-                  {/* 6-Digit OTP Input Boxes */}
+                  {/* 6-Digit OTP inputs */}
                   <div className="flex items-center justify-center gap-2 my-2" dir="ltr">
                     {otpCode.map((digit, idx) => (
                       <input
                         key={idx}
-                        id={`otp-input-${idx}`}
+                        id={`login-otp-${idx}`}
                         type="text"
                         maxLength={1}
                         value={digit}
                         onChange={(e) => handleOtpChange(idx, e.target.value)}
-                        className="w-10 h-12 text-center text-lg font-bold font-mono bg-popo-dark-850 text-white rounded-xl border border-white/15 focus:border-popo-pink focus:ring-2 focus:ring-popo-pink/20 outline-none"
+                        className="w-10 h-12 text-center text-lg font-bold font-mono bg-[#18102E] text-white rounded-xl border border-white/15 focus:border-[#FF1A6C] focus:ring-2 focus:ring-[#FF1A6C]/30 outline-none"
                       />
                     ))}
                   </div>
 
-                  {phoneError && <span className="text-xs font-medium text-red-400">{phoneError}</span>}
-
-                  {/* Countdown & Resend Option */}
                   <div className="flex items-center justify-between text-xs text-gray-400 px-1">
                     <span>
                       {isCountingDown ? (
@@ -504,87 +723,228 @@ export default function LoginPage() {
                     <button
                       type="button"
                       disabled={isCountingDown}
-                      onClick={() => {
-                        setIsCountingDown(true);
-                        setCountdown(59);
-                      }}
-                      className="text-popo-pink hover:underline disabled:text-gray-600 disabled:no-underline font-semibold flex items-center gap-1"
+                      onClick={handleSendOtp}
+                      className="text-[#FF4A8B] hover:underline disabled:text-gray-600 disabled:no-underline font-semibold flex items-center gap-1"
                     >
                       <RefreshCw className="w-3 h-3" />
-                      <span>{isUr ? 'دوبارہ کوڈ بھیجیں' : 'Resend OTP'}</span>
+                      <span>{isUr ? 'دوبارہ کوڈ بھیجیں' : 'Resend Code'}</span>
                     </button>
                   </div>
 
-                  <Button
+                  <button
                     type="submit"
-                    variant="primary"
-                    size="md"
-                    disabled={isOtpSubmitting}
-                    className="w-full mt-2 font-bold shadow-lg shadow-popo-pink/25"
-                    leftIcon={isOtpSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                    disabled={isOtpVerifying}
+                    className="w-full mt-2 py-3.5 px-6 rounded-full font-bold text-sm text-white bg-gradient-to-r from-[#FF1A6C] via-[#FF2E80] to-[#E0125C] shadow-[0_8px_25px_rgba(255,26,108,0.4)] hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
                   >
-                    {isOtpSubmitting
-                      ? isUr ? 'تصدیق ہو رہی ہے...' : 'Verifying OTP...'
-                      : isUr ? 'او ٹی پی تصدیق کریں' : 'Verify & Sign In'}
-                  </Button>
+                    {isOtpVerifying ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>{isUr ? 'تصدیق ہو رہی ہے...' : 'Verifying...'}</span>
+                      </>
+                    ) : (
+                      <span>{isUr ? 'تصدیق کریں اور لاگ ان ہوں' : 'Verify & Sign In'}</span>
+                    )}
+                  </button>
                 </form>
               )}
             </div>
           )}
 
-          {/* Don't have an account? Signup link */}
-          <div className="flex items-center justify-center gap-1.5 text-xs text-gray-300 pt-2 border-t border-white/10">
-            <span>{isUr ? 'پوپو لائیو پر نئے ہیں؟' : 'Don\'t have an account?'}</span>
-            <Link
-              href="/signup"
-              className="text-popo-pink font-bold hover:underline flex items-center gap-1"
-            >
-              <span>{isUr ? 'نیا اکاؤنٹ بنائیں' : 'Sign Up Free'}</span>
-              <UserPlus className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+          {/* ============================================================ */}
+          {/* VIEW 4: SIGN UP / REGISTRATION FORM                          */}
+          {/* ============================================================ */}
+          {activeView === 'signup' && (
+            <form onSubmit={handleSignup} className="flex flex-col gap-4 text-left">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-300">
+                  {isUr ? 'ای میل ایڈریس *' : 'Email Address *'}
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5 pointer-events-none" />
+                  <input
+                    type="email"
+                    value={signupEmail}
+                    onChange={(e) => setSignupEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    required
+                    className="w-full bg-[#18102E] border border-white/10 rounded-xl pl-10 pr-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#FF1A6C]"
+                  />
+                </div>
+              </div>
 
-          {/* Legal Agreement & 18+ Notice Footer */}
-          <div className="flex flex-col gap-2 pt-2 text-xs text-gray-400 leading-relaxed">
-            <div className="flex items-center justify-center gap-1.5 text-emerald-400 font-semibold text-[11px]">
-              <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-              <span>{isUr ? 'صرف ۱۸ سال اور زائد عمر کے لیے' : 'Strict 18+ Age Gate & Safe Social Network'}</span>
-            </div>
-            <p className="text-[11px] text-gray-400">
-              {isUr ? (
-                <>
-                  جاری رکھ کر آپ پوپو لائیو کے{' '}
-                  <Link href="/policies/terms" className="text-white hover:underline font-bold">
-                    استعمال کی شرائط
-                  </Link>{' '}
-                  اور{' '}
-                  <Link href="/policies/privacy" className="text-white hover:underline font-bold">
-                    پرائیویسی پالیسی
-                  </Link>{' '}
-                  سے اتفاق کرتے ہیں۔
-                </>
-              ) : (
-                <>
-                  By continuing, you agree to Popo Live{' '}
-                  <Link href="/policies/terms" className="text-white hover:underline font-bold">
-                    Terms of Service
-                  </Link>{' '}
-                  and{' '}
-                  <Link href="/policies/privacy" className="text-white hover:underline font-bold">
-                    Privacy Policy
-                  </Link>
-                  .
-                </>
-              )}
-            </p>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-300">
+                  {isUr ? 'نک نیم (اختیاری)' : 'Nickname (Optional)'}
+                </label>
+                <input
+                  type="text"
+                  value={signupNickname}
+                  onChange={(e) => setSignupNickname(e.target.value)}
+                  placeholder="e.g. StarCreator"
+                  className="w-full bg-[#18102E] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#FF1A6C]"
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-gray-300">
+                  {isUr ? 'پاس ورڈ (کم از کم ۸ حروف) *' : 'Password (Min 8 chars) *'}
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5 pointer-events-none" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={signupPassword}
+                    onChange={(e) => setSignupPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    minLength={8}
+                    className="w-full bg-[#18102E] border border-white/10 rounded-xl pl-10 pr-10 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#FF1A6C]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-3 text-gray-400 hover:text-white"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Age Confirmation Requirement Checkbox */}
+              <label className="flex items-start gap-2.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 cursor-pointer text-xs text-amber-200">
+                <input
+                  type="checkbox"
+                  checked={signupAdultConfirmed}
+                  onChange={(e) => setSignupAdultConfirmed(e.target.checked)}
+                  className="w-4 h-4 mt-0.5 rounded border-amber-500/40 bg-black/40 text-amber-500 focus:ring-amber-500"
+                />
+                <span>
+                  {isUr
+                    ? 'میں تصدیق کرتا ہوں کہ میری عمر ۱۸ سال یا اس سے زیادہ ہے۔'
+                    : 'I confirm that I am at least 18 years of age to use Popo Live.'}
+                </span>
+              </label>
+
+              <button
+                type="submit"
+                disabled={isSignupSubmitting}
+                className="w-full mt-2 py-3.5 px-6 rounded-full font-bold text-sm tracking-wide text-white bg-gradient-to-r from-[#FF1A6C] via-[#FF2E80] to-[#E0125C] shadow-[0_8px_25px_rgba(255,26,108,0.4)] hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+              >
+                {isSignupSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>{isUr ? 'اکاؤنٹ بن رہا ہے...' : 'Creating Account...'}</span>
+                  </>
+                ) : (
+                  <span>{isUr ? 'اکاؤنٹ رجسٹر کریں' : 'Register Account'}</span>
+                )}
+              </button>
+            </form>
+          )}
+
+          {/* Don't have an account? Sign Up footer (Direct from 02_02_login_system.png) */}
+          <div className="pt-2 border-t border-white/10 flex items-center justify-center gap-1.5 text-xs text-gray-400">
+            {activeView === 'signup' ? (
+              <>
+                <span>{isUr ? 'پہلے سے اکاؤنٹ موجود ہے؟' : 'Already have an account?'}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveView('overview');
+                    setErrorMessage(null);
+                  }}
+                  className="text-[#FF1A6C] font-bold hover:underline"
+                >
+                  {isUr ? 'لاگ ان کریں' : 'Log In'}
+                </button>
+              </>
+            ) : (
+              <>
+                <span>{isUr ? 'اکاؤنٹ موجود نہیں ہے؟' : "Don't have an account?"}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveView('signup');
+                    setErrorMessage(null);
+                  }}
+                  className="text-[#FF1A6C] font-bold hover:underline"
+                >
+                  {isUr ? 'سائن اپ کریں' : 'Sign Up'}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </main>
 
       {/* Footer copyright */}
-      <footer className="max-w-7xl mx-auto w-full px-4 py-6 text-center text-xs text-gray-400 z-10">
-        <span>© 2026 Popo Live Global Inc. All rights reserved.</span>
+      <footer className="max-w-7xl mx-auto w-full px-4 py-5 text-center text-xs text-gray-500 z-10">
+        <span>© 2026 Popo Live Global Inc. All rights reserved. Strict 18+ Entertainment Platform.</span>
       </footer>
+
+      {/* ============================================================ */}
+      {/* MODAL: UNCONFIGURED OAUTH PROVIDER CREDENTIALS NOTICE        */}
+      {/* ============================================================ */}
+      {unconfiguredProviderModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+        >
+          <div className="relative w-full max-w-md bg-[#130B26] border border-purple-500/40 rounded-3xl p-6 shadow-2xl text-white">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto mb-4">
+              <Info className="w-6 h-6" />
+            </div>
+
+            <h3 className="text-lg font-bold text-center text-white mb-2">
+              {unconfiguredProviderModal.name} OAuth Configuration
+            </h3>
+
+            <p className="text-xs text-gray-300 leading-relaxed text-center mb-4">
+              {isUr
+                ? `سوشل لاگ ان محفوظ طریقے سے کنفیگر ہے۔ ${unconfiguredProviderModal.name} لاگ ان کو چالو کرنے کے لیے .env.local فائل میں ڈویلپر کریڈینشلز درج کریں۔`
+                : `OAuth handler is built and secured. To initiate live sign-in with ${unconfiguredProviderModal.name}, provide your credentials in .env.local:`}
+            </p>
+
+            <div className="bg-[#0A0614] rounded-xl p-3 border border-white/10 text-xs font-mono space-y-1.5 text-left mb-4">
+              {unconfiguredProviderModal.requiredEnv.map((envVar) => (
+                <div key={envVar} className="text-pink-400">
+                  {envVar}=your_{envVar.toLowerCase()}
+                </div>
+              ))}
+              <div className="text-gray-500 pt-1 text-[11px]">
+                # Callback URL: {unconfiguredProviderModal.callbackUrl}
+              </div>
+            </div>
+
+            <p className="text-[11px] text-gray-400 text-center mb-5">
+              Email and Phone OTP logins are currently active and ready for use!
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setUnconfiguredProviderModal(null)}
+              className="w-full py-3 px-5 rounded-full bg-gradient-to-r from-[#FF1A6C] to-[#E0125C] text-white font-bold text-xs sm:text-sm shadow-md"
+            >
+              {isUr ? 'سمجھ گیا / بند کریں' : 'Understood, Close'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#07040E] flex items-center justify-center text-white">
+          <Loader2 className="w-8 h-8 animate-spin text-[#FF1A6C]" />
+        </div>
+      }
+    >
+      <LoginContent />
+    </Suspense>
   );
 }

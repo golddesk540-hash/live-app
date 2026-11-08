@@ -3,80 +3,85 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useLanguage } from '@/lib/languageContext';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import {
   ArrowLeft,
   Mail,
   Smartphone,
-  AlertCircle,
-  Globe,
   CheckCircle,
   Loader2,
   KeyRound,
   LogIn,
   RefreshCw,
+  AlertCircle,
+  ExternalLink,
 } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
-  const { lang, toggleLang, isUr } = useLanguage();
+  const { lang, setLang, isUr } = useLanguage();
   const [resetMethod, setResetMethod] = useState<'email' | 'phone'>('email');
 
   const [identifier, setIdentifier] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [devResetUrl, setDevResetUrl] = useState<string | null>(null);
 
-  const validate = () => {
-    if (!identifier.trim()) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    const trimmed = identifier.trim();
+    if (!trimmed) {
       setError(
         resetMethod === 'email'
           ? isUr ? 'ای میل ایڈریس درج کریں' : 'Please enter your email address'
           : isUr ? 'فون نمبر درج کریں' : 'Please enter your phone number'
       );
-      return false;
+      return;
     }
 
-    if (resetMethod === 'email' && !/^\S+@\S+\.\S+$/.test(identifier)) {
+    if (resetMethod === 'email' && !/^\S+@\S+\.\S+$/.test(trimmed)) {
       setError(isUr ? 'درست ای میل درج کریں' : 'Please enter a valid email address');
-      return false;
+      return;
     }
-
-    if (resetMethod === 'phone' && identifier.trim().length < 7) {
-      setError(isUr ? 'درست فون نمبر درج کریں' : 'Please enter a valid phone number');
-      return false;
-    }
-
-    setError('');
-    return true;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: trimmed }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to dispatch password recovery');
+      }
+
       setIsSuccess(true);
-    }, 1200);
+      if (data.devResetUrl) {
+        setDevResetUrl(data.devResetUrl);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error processing request.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div
       dir={isUr ? 'rtl' : 'ltr'}
-      className={`min-h-screen bg-[#0B0E17] text-white flex flex-col justify-between selection:bg-popo-pink selection:text-white relative overflow-hidden ${
-        isUr ? 'font-urdu' : 'font-sans'
-      }`}
+      className="min-h-screen bg-[#07040E] text-white flex flex-col justify-between selection:bg-[#FF1A6C] selection:text-white relative overflow-hidden"
     >
       {/* Background ambient lighting */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-gradient-to-tr from-pink-600/20 via-purple-600/20 to-indigo-600/15 blur-[140px] rounded-full pointer-events-none" />
+      <div className="fixed top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] sm:w-[650px] h-[550px] sm:h-[650px] bg-gradient-to-tr from-purple-800/20 via-[#FF1A6C]/20 to-transparent rounded-full blur-[130px] pointer-events-none" />
 
       {/* Top Header Bar */}
-      <header className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 flex items-center justify-between z-10">
+      <header className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-5 flex items-center justify-between z-10">
         <Link
           href="/login"
-          className={`flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-white transition-colors bg-[#171722] px-4 py-2 rounded-full border border-white/10 ${
+          className={`flex items-center gap-2 text-xs font-semibold text-gray-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-white/10 ${
             isUr ? 'flex-row-reverse' : ''
           }`}
         >
@@ -84,104 +89,133 @@ export default function ForgotPasswordPage() {
           <span>{isUr ? 'لاگ ان پر واپس جائیں' : 'Back to Log In'}</span>
         </Link>
 
-        {/* Language Switcher */}
-        <button
-          type="button"
-          onClick={toggleLang}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#171722] hover:bg-[#20202F] text-xs font-bold text-gray-300 hover:text-white border border-white/10 transition-colors"
-        >
-          <Globe className="w-3.5 h-3.5 text-cyan-400" />
-          <span>{lang === 'en' ? 'اردو' : 'English'}</span>
-        </button>
+        {/* Working Language selector */}
+        <div className="flex items-center bg-white/10 rounded-full p-0.5 border border-white/10">
+          <button
+            type="button"
+            onClick={() => setLang('en')}
+            className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+              !isUr
+                ? 'bg-gradient-to-r from-[#FF1A6C] to-[#E0125C] text-white shadow-sm'
+                : 'text-gray-300 hover:text-white'
+            }`}
+          >
+            EN
+          </button>
+          <button
+            type="button"
+            onClick={() => setLang('ur')}
+            className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
+              isUr
+                ? 'bg-gradient-to-r from-[#FF1A6C] to-[#E0125C] text-white shadow-sm'
+                : 'text-gray-300 hover:text-white'
+            }`}
+          >
+            اردو
+          </button>
+        </div>
       </header>
 
       {/* Main Card Center */}
-      <main className="max-w-md mx-auto w-full px-4 py-8 z-10">
-        <div className="rounded-3xl bg-gradient-to-b from-[#171722] to-[#12121A] border border-white/15 p-6 sm:p-8 shadow-2xl shadow-purple-950/40 flex flex-col gap-6 text-center">
-          {/* Logo & Headings */}
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-popo-pink via-purple-600 to-indigo-500 p-[2.5px] shadow-lg shadow-popo-pink/30 flex items-center justify-center">
-              <div className="w-full h-full bg-[#0B0E17] rounded-[13px] flex items-center justify-center text-popo-pink">
+      <main className="max-w-[430px] mx-auto w-full px-4 py-6 z-10 my-auto">
+        <div className="relative rounded-[32px] sm:rounded-[36px] bg-gradient-to-b from-[#140C29] via-[#0E091E] to-[#0A0614] border border-[#2D1B4E]/90 p-6 sm:p-8 shadow-[0_20px_70px_rgba(0,0,0,0.85),0_0_35px_rgba(168,85,247,0.18)] flex flex-col gap-5 text-center overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="absolute top-0 left-10 right-10 h-[2px] bg-gradient-to-r from-transparent via-[#FF1A6C] to-transparent opacity-80" />
+
+          {/* Icon & Title */}
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#FF1A6C] to-purple-600 p-[2px] shadow-lg shadow-pink-500/30 flex items-center justify-center">
+              <div className="w-full h-full bg-[#0E091E] rounded-[14px] flex items-center justify-center text-[#FF1A6C]">
                 <KeyRound className="w-6 h-6" />
               </div>
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                {isUr ? 'اپنا پاس ورڈ ری سیٹ کریں' : 'Reset Your Password'}
+              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                {isUr ? 'پاس ورڈ بحال کریں' : 'Reset Your Password'}
               </h1>
-              <p className="text-xs sm:text-sm text-gray-400 mt-1">
+              <p className="text-xs text-[#B3A8C7] mt-1 leading-relaxed">
                 {isUr
-                  ? 'اکاؤنٹ بحالی کا تصدیقی کوڈ حاصل کرنے کے لیے اپنا ای میل یا فون نمبر درج کریں'
-                  : 'Enter your email address or mobile phone number to receive a verification code.'}
+                  ? 'اکاؤنٹ بحالی کی ہدایات حاصل کرنے کے لیے اپنا رجسٹرڈ ای میل یا فون نمبر درج کریں۔'
+                  : 'Enter your registered email or phone to receive secure password recovery instructions.'}
               </p>
             </div>
           </div>
 
-          {/* Staging Demo Alert */}
-          <div className="rounded-2xl bg-amber-500/10 border border-amber-500/25 p-3 flex items-start gap-2.5 text-left">
-            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-            <div className={`text-xs text-amber-200/90 leading-relaxed ${isUr ? 'text-right' : 'text-left'}`}>
-              <span className="font-bold block text-amber-400">
-                {isUr ? 'فیز ۱ پریویو — پاس ورڈ ری سیٹ' : 'Phase 1 UI Preview — Password Reset'}
-              </span>
-              <span>
-                {isUr
-                  ? 'یہ فرنٹ اینڈ فارم ڈیمو ہے۔ اصل ایس ایم ایس او ٹی پی اور ای میل ری سیٹ لنکس فیز ۲ میں فعال ہوں گے۔'
-                  : 'This operates as a verified frontend demonstration. Live SMS gateway and email dispatcher will connect in Phase 2.'}
-              </span>
+          {error && (
+            <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs text-left flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{error}</span>
             </div>
-          </div>
+          )}
 
           {isSuccess ? (
             /* Success Confirmation State */
-            <div className="py-6 flex flex-col items-center gap-4 animate-in zoom-in-95 text-center">
+            <div className="py-3 flex flex-col items-center gap-4 animate-in zoom-in-95 text-center">
               <div className="w-14 h-14 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shadow-lg">
                 <CheckCircle className="w-7 h-7" />
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-xs font-mono font-bold text-popo-pink uppercase">Reset Link Dispatched (Demo)</span>
-                <h3 className="text-lg font-bold text-white">
-                  {isUr ? 'بحالی کا کوڈ ارسال کر دیا گیا!' : 'Recovery Code Dispatched!'}
+                <h3 className="text-base sm:text-lg font-bold text-white">
+                  {isUr ? 'بحالی کی ہدایات ارسال کر دی گئیں!' : 'Instructions Dispatched!'}
                 </h3>
-                <p className="text-xs text-gray-400 leading-relaxed max-w-xs">
+                <p className="text-xs text-gray-300 leading-relaxed">
                   {isUr
-                    ? `ہم نے ${identifier} پر تصدیقی کوڈ بھیج دیا ہے۔ برائے مہربانی اپنا ان باکس چیک کریں۔`
-                    : `We sent instructions to ${identifier}. In production, this delivers a one-time reset link / OTP.`}
+                    ? `اگر ${identifier} سے کوئی اکاؤنٹ منسلک ہے، تو پاس ورڈ ری سیٹ کرنے کی ہدایات روانہ کر دی گئی ہیں۔`
+                    : `If an account is associated with ${identifier}, password recovery instructions have been sent.`}
                 </p>
               </div>
 
+              {/* Development helper link */}
+              {devResetUrl && (
+                <div className="w-full p-3 rounded-xl bg-purple-500/15 border border-purple-500/30 text-xs text-purple-200 flex flex-col gap-2">
+                  <span className="font-semibold text-purple-300">Local Testing Reset Link:</span>
+                  <a
+                    href={devResetUrl}
+                    className="py-2 px-3 rounded-lg bg-gradient-to-r from-[#FF1A6C] to-[#E0125C] text-white font-bold flex items-center justify-center gap-1.5 hover:brightness-110"
+                  >
+                    <span>Click to Open Password Reset Screen</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              )}
+
               <div className="pt-2 flex flex-col gap-2 w-full">
                 <Link href="/login" className="w-full">
-                  <Button variant="primary" size="md" className="w-full font-bold" leftIcon={<LogIn className="w-4 h-4" />}>
-                    {isUr ? 'لاگ ان صفحہ پر جائیں' : 'Back to Log In'}
-                  </Button>
+                  <button
+                    type="button"
+                    className="w-full py-3 rounded-full font-bold text-xs sm:text-sm text-white bg-white/10 hover:bg-white/15 transition-all flex items-center justify-center gap-2"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>{isUr ? 'لاگ ان صفحہ پر جائیں' : 'Back to Log In'}</span>
+                  </button>
                 </Link>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setIsSuccess(false)}
-                  className="w-full bg-white/5 border-white/10"
-                  leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSuccess(false);
+                    setDevResetUrl(null);
+                  }}
+                  className="text-xs text-gray-400 hover:text-white flex items-center justify-center gap-1"
                 >
-                  {isUr ? 'کوئی دوسرا ایڈریس آزمائیں' : 'Try Another Address'}
-                </Button>
+                  <RefreshCw className="w-3 h-3" />
+                  <span>{isUr ? 'کوئی دوسرا ایڈریس آزمائیں' : 'Try Another Address'}</span>
+                </button>
               </div>
             </div>
           ) : (
             /* Reset Form */
             <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
               {/* Method Switcher */}
-              <div className="flex p-1 bg-[#0B0E17] rounded-xl border border-white/10">
+              <div className="flex p-1 bg-[#0A0614] rounded-xl border border-white/10">
                 <button
                   type="button"
                   onClick={() => {
                     setResetMethod('email');
-                    setError('');
+                    setError(null);
                     setIdentifier('');
                   }}
                   className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                     resetMethod === 'email'
-                      ? 'bg-popo-pink text-white shadow-sm font-bold'
+                      ? 'bg-gradient-to-r from-[#FF1A6C] to-[#E0125C] text-white font-bold'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
@@ -191,12 +225,12 @@ export default function ForgotPasswordPage() {
                   type="button"
                   onClick={() => {
                     setResetMethod('phone');
-                    setError('');
+                    setError(null);
                     setIdentifier('');
                   }}
                   className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
                     resetMethod === 'phone'
-                      ? 'bg-popo-pink text-white shadow-sm font-bold'
+                      ? 'bg-gradient-to-r from-[#FF1A6C] to-[#E0125C] text-white font-bold'
                       : 'text-gray-400 hover:text-white'
                   }`}
                 >
@@ -205,58 +239,73 @@ export default function ForgotPasswordPage() {
               </div>
 
               {resetMethod === 'email' ? (
-                <Input
-                  label={isUr ? 'اکاؤنٹ کا ای میل ایڈریس *' : 'Registered Email Address *'}
-                  type="email"
-                  placeholder="name@example.com"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  error={error}
-                  leftIcon={<Mail className="w-4 h-4" />}
-                />
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-gray-300">
+                    {isUr ? 'رجسٹرڈ ای میل ایڈریس' : 'Registered Email Address'}
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5 pointer-events-none" />
+                    <input
+                      type="email"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder="name@example.com"
+                      required
+                      className="w-full bg-[#18102E] border border-white/10 rounded-xl pl-10 pr-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#FF1A6C]"
+                    />
+                  </div>
+                </div>
               ) : (
-                <Input
-                  label={isUr ? 'رجسٹرڈ موبائل نمبر *' : 'Registered Phone Number *'}
-                  type="tel"
-                  placeholder="+92 300 1234567"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  error={error}
-                  leftIcon={<Smartphone className="w-4 h-4" />}
-                />
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-semibold text-gray-300">
+                    {isUr ? 'رجسٹرڈ موبائل نمبر (ملکی کوڈ کے ساتھ)' : 'Registered Phone (with country code)'}
+                  </label>
+                  <div className="relative">
+                    <Smartphone className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5 pointer-events-none" />
+                    <input
+                      type="tel"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder="+92 300 1234567"
+                      required
+                      className="w-full bg-[#18102E] border border-white/10 rounded-xl pl-10 pr-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-500 outline-none focus:border-[#FF1A6C]"
+                    />
+                  </div>
+                </div>
               )}
 
-              <Button
+              <button
                 type="submit"
-                variant="primary"
-                size="md"
                 disabled={isSubmitting}
-                className="w-full mt-2 font-bold shadow-lg shadow-popo-pink/25"
-                leftIcon={isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+                className="w-full mt-2 py-3.5 px-6 rounded-full font-bold text-sm tracking-wide text-white bg-gradient-to-r from-[#FF1A6C] via-[#FF2E80] to-[#E0125C] shadow-[0_8px_25px_rgba(255,26,108,0.4)] hover:brightness-105 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
               >
-                {isSubmitting
-                  ? isUr ? 'کوڈ بھیجا جا رہا ہے...' : 'Sending Recovery Instructions...'
-                  : isUr ? 'بحالی کا لنک بھیجیں' : 'Send Recovery Instructions'}
-              </Button>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>{isUr ? 'درخواست بھیجی جا رہی ہے...' : 'Sending Instructions...'}</span>
+                  </>
+                ) : (
+                  <span>{isUr ? 'بحالی کی ہدایات حاصل کریں' : 'Send Reset Instructions'}</span>
+                )}
+              </button>
             </form>
           )}
 
           {/* Back to Login Link */}
-          <div className="flex items-center justify-center gap-1.5 text-xs text-gray-300 pt-2 border-t border-white/10">
+          <div className="pt-2 border-t border-white/10 flex items-center justify-center gap-1.5 text-xs text-gray-400">
             <span>{isUr ? 'پاس ورڈ یاد آ گیا ہے؟' : 'Remembered your password?'}</span>
             <Link
               href="/login"
-              className="text-popo-pink font-bold hover:underline flex items-center gap-1"
+              className="text-[#FF1A6C] font-bold hover:underline"
             >
-              <span>{isUr ? 'یہاں لاگ ان کریں' : 'Log In Here'}</span>
-              <LogIn className="w-3.5 h-3.5" />
+              {isUr ? 'یہاں لاگ ان کریں' : 'Log In Here'}
             </Link>
           </div>
         </div>
       </main>
 
       {/* Footer copyright */}
-      <footer className="max-w-7xl mx-auto w-full px-4 py-6 text-center text-xs text-gray-400 z-10">
+      <footer className="max-w-7xl mx-auto w-full px-4 py-5 text-center text-xs text-gray-500 z-10">
         <span>© 2026 Popo Live Global Inc. All rights reserved.</span>
       </footer>
     </div>
