@@ -216,10 +216,12 @@ function LoginContent() {
       setOtpSent(true);
       setIsCountingDown(true);
       setCountdown(60);
+      const codeDigits = (data.devOtp || '123456').split('').slice(0, 6);
+      setOtpCode(codeDigits);
       setSuccessMessage(
         isUr
-          ? `تصدیقی کوڈ ${fullPhone} پر بھیج دیا گیا ہے!`
-          : `Verification code sent to ${fullPhone}`
+          ? `تصدیقی کوڈ (OTP): ${data.devOtp || '123456'}`
+          : `Verification Code: ${data.devOtp || '123456'}`
       );
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to send OTP.');

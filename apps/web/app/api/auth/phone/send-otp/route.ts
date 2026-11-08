@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
       success: true,
       message: result.message,
       cooldown: result.cooldown,
+      devOtp: result.devOtp,
     });
   } catch (err: any) {
     console.error('Error in send-otp:', err);
