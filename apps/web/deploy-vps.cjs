@@ -24,6 +24,7 @@ conn.on('ready', () => {
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_022.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_023.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_024.cjs
+    DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_025.cjs
     
     echo "--- 3. Installing dependencies & Rebuilding Next.js on VPS ---"
     npm install
@@ -52,6 +53,10 @@ conn.on('ready', () => {
     curl -s -I http://127.0.0.1:3005/live/cost-guard?preview=demo | head -n 5
     curl -s http://127.0.0.1:3005/api/live/quality/settings?roomId=880219 | head -n 10
     curl -s http://127.0.0.1:3005/api/live/quality/network-stats?roomId=880219 | head -n 10
+    curl -s -I http://127.0.0.1:3005/live/rules?preview=demo | head -n 5
+    curl -s -I http://127.0.0.1:3005/live/host-rules?preview=demo | head -n 5
+    curl -s http://127.0.0.1:3005/api/live/rules | head -n 10
+    curl -s http://127.0.0.1:3005/api/live/rules/status?hostId=8802194 | head -n 10
     echo ""
     echo "🎉 DEPLOYMENT COMPLETE ON CONTABO VPS!"
   `;

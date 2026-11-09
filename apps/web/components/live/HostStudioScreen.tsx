@@ -32,6 +32,7 @@ import {
   Award,
   Flame,
 } from 'lucide-react';
+import HostRulesScreen from './HostRulesScreen';
 
 // Web Audio API Sound Synthesizer for live soundboard triggers
 function playSynthesizedSound(type: string) {
@@ -193,6 +194,8 @@ export default function HostStudioScreen({ initialRoomId }: { initialRoomId?: st
   const [broadcastSummary, setBroadcastSummary] = useState<any | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showConnectionInfo, setShowConnectionInfo] = useState<boolean>(false);
+  const [showRulesGate, setShowRulesGate] = useState<boolean>(false);
+  const [showSafetyReminder, setShowSafetyReminder] = useState<boolean>(true);
   const [floatingHearts, setFloatingHearts] = useState<{ id: number; left: number; emoji: string }[]>([]);
 
   // Quality & Settings
@@ -751,6 +754,39 @@ export default function HostStudioScreen({ initialRoomId }: { initialRoomId?: st
           </div>
         )}
 
+        {/* Live Safety Reminder (Module 4.10 Section 5) */}
+        {showSafetyReminder && (
+          <div
+            data-testid="live-safety-reminder"
+            className="relative z-20 mx-4 mt-2 p-2 px-3 rounded-xl bg-[#121533]/90 backdrop-blur-md border border-[#ff206e]/40 text-white text-[11px] flex items-center justify-between gap-2 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200"
+          >
+            <div className="flex items-center gap-1.5 truncate">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#00e676] flex-shrink-0" />
+              <span className="truncate text-zinc-200">
+                Safety Reminder: Keep live welcoming & strictly follow Host Rules.
+              </span>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowRulesGate(true)}
+                className="text-[10px] text-pink-400 hover:text-pink-300 underline font-semibold"
+              >
+                Rules
+              </button>
+              <button
+                type="button"
+                data-action="dismiss-safety-reminder"
+                onClick={() => setShowSafetyReminder(false)}
+                className="w-4 h-4 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-zinc-400 hover:text-white text-[10px]"
+                title="Dismiss reminder"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Camera Permission Warning Banner if denied */}
         {cameraPermissionError && (
           <div className="relative z-20 mx-4 mt-2 p-2 rounded-xl bg-amber-950/80 backdrop-blur-md border border-amber-500/40 text-amber-200 text-[11px] flex items-center justify-between gap-2">
@@ -1272,6 +1308,21 @@ export default function HostStudioScreen({ initialRoomId }: { initialRoomId?: st
                 <ChevronRight className="w-4 h-4 text-zinc-500" />
               </div>
 
+              {/* Module 4.10: Host Rules on Screen Shortcut */}
+              <div
+                data-action="open-host-rules"
+                onClick={() => {
+                  setActiveDrawer('none');
+                  setShowRulesGate(true);
+                }}
+                className="p-3 rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-between cursor-pointer transition-colors"
+              >
+                <div className="flex items-center gap-2 text-xs font-semibold">
+                  <ShieldCheck className="w-4 h-4 text-pink-400" /> Host Rules on Screen (Module 4.10)
+                </div>
+                <ChevronRight className="w-4 h-4 text-zinc-500" />
+              </div>
+
               <div
                 onClick={() => {
                   setActiveDrawer('none');
@@ -1381,6 +1432,27 @@ export default function HostStudioScreen({ initialRoomId }: { initialRoomId?: st
               >
                 Back to Live Setup
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL: Host Rules on Screen Modal (Module 4.10) */}
+        {showRulesGate && (
+          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 animate-in fade-in duration-200">
+            <div className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-white/10 max-h-[92vh] overflow-y-auto">
+              <button
+                type="button"
+                onClick={() => setShowRulesGate(false)}
+                className="absolute top-3 right-3 z-50 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white flex items-center justify-center text-xs"
+              >
+                ✕
+              </button>
+              <HostRulesScreen
+                isModal={true}
+                roomId={initialRoomId}
+                hostId={sessionData?.agora?.uid?.toString() || '8802194'}
+                onUnderstood={() => setShowRulesGate(false)}
+              />
             </div>
           </div>
         )}

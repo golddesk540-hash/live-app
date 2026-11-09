@@ -25,6 +25,7 @@ import {
   Smile,
   ShieldAlert,
 } from 'lucide-react';
+import HostRulesScreen from './HostRulesScreen';
 
 interface CategoryItem {
   id: string;
@@ -58,6 +59,7 @@ export default function PreLiveTitleCategoryScreen() {
   const [showCategoryDrawer, setShowCategoryDrawer] = useState(false);
   const [showCoverModal, setShowCoverModal] = useState(false);
   const [showStudioModal, setShowStudioModal] = useState(false);
+  const [showRulesModal, setShowRulesModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Cover image upload state
@@ -714,12 +716,45 @@ export default function PreLiveTitleCategoryScreen() {
 
               <button
                 type="button"
+                onClick={() => {
+                  setShowStudioModal(false);
+                  setShowRulesModal(true);
+                }}
+                className="w-full py-2.5 rounded-full bg-white/5 hover:bg-white/10 text-pink-300 hover:text-pink-200 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+              >
+                <ShieldAlert className="w-3.5 h-3.5 text-pink-400" /> Review Host Rules (Module 4.10)
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setShowStudioModal(false)}
                 className="w-full py-2.5 rounded-full bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white text-xs transition-colors"
               >
                 Stay on Pre-Live Screen
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Host Rules on Screen Modal (Module 4.10) */}
+      {showRulesModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl border border-white/10 max-h-[92vh] overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => setShowRulesModal(false)}
+              className="absolute top-3 right-3 z-50 w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-zinc-300 hover:text-white flex items-center justify-center text-xs"
+            >
+              ✕
+            </button>
+            <HostRulesScreen
+              isModal={true}
+              onUnderstood={() => {
+                setShowRulesModal(false);
+                router.push('/live/studio');
+              }}
+            />
           </div>
         </div>
       )}
