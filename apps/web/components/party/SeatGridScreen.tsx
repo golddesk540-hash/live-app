@@ -34,6 +34,7 @@ import {
   SwitchCamera,
   Gift,
   Grid,
+  Palette,
 } from 'lucide-react';
 import {
   PartySeat,
@@ -42,7 +43,11 @@ import {
   PartySeatInvitation,
   PartyMessage,
   PartyAudienceMember,
+  PartyTheme,
+  CANONICAL_PARTY_THEMES,
+  getPartyThemeById,
 } from '@/lib/party';
+import PartyThemesScreen from './PartyThemesScreen';
 
 interface SeatGridScreenProps {
   roomId: string;
@@ -218,6 +223,10 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
   const [isSpeakerOn, setIsSpeakerOn] = useState<boolean>(true);
   const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user');
 
+  // Module 5.6 Party Theme state
+  const [activeTheme, setActiveTheme] = useState<PartyTheme>(CANONICAL_PARTY_THEMES[0]);
+  const [isThemesOpen, setIsThemesOpen] = useState<boolean>(false);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
@@ -279,6 +288,15 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
         if (reqData.success) {
           if (Array.isArray(reqData.requests)) setSeatRequests(reqData.requests);
           if (Array.isArray(reqData.invitations)) setSeatInvitations(reqData.invitations);
+        }
+      }
+
+      // Party Theme
+      const themeRes = await fetch(`/api/party/${roomId}/theme`);
+      if (themeRes.ok) {
+        const themeData = await themeRes.json();
+        if (themeData.success && themeData.theme) {
+          setActiveTheme(themeData.theme);
         }
       }
     } catch (err: any) {
@@ -351,6 +369,15 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
           if (reqData.success) {
             if (Array.isArray(reqData.requests)) setSeatRequests(reqData.requests);
             if (Array.isArray(reqData.invitations)) setSeatInvitations(reqData.invitations);
+          }
+        }
+
+        // Poll Party Theme
+        const themeRes = await fetch(`/api/party/${roomId}/theme`);
+        if (themeRes.ok) {
+          const themeData = await themeRes.json();
+          if (themeData.success && themeData.theme) {
+            setActiveTheme((prev) => (prev.id !== themeData.theme.id ? themeData.theme : prev));
           }
         }
       } catch (e) {
@@ -767,10 +794,23 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
     .map((s) => s.seatNumber);
 
   return (
-    <div className="min-h-screen bg-[#07031b] text-white flex flex-col justify-between max-w-sm sm:max-w-md mx-auto select-none font-sans relative overflow-hidden shadow-2xl border-x border-[#1a123f]">
-      {/* Ambient background glows matching 05_05_audience_and_chat.png */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-80 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-96 h-96 bg-fuchsia-900/20 rounded-full blur-3xl pointer-events-none" />
+    <div
+      className="min-h-screen text-white flex flex-col justify-between max-w-sm sm:max-w-md mx-auto select-none font-sans relative overflow-hidden shadow-2xl border-x border-[#1a123f] transition-all duration-500"
+      style={{
+        background: activeTheme.backgroundGradient,
+      }}
+      data-testid="seat-grid-screen"
+      data-active-theme={activeTheme.id}
+    >
+      {/* Ambient background glows dynamically matching activeTheme.accentColor */}
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full blur-3xl pointer-events-none transition-colors duration-500"
+        style={{ backgroundColor: `${activeTheme.accentColor}25` }}
+      />
+      <div
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full blur-3xl pointer-events-none transition-colors duration-500"
+        style={{ backgroundColor: `${activeTheme.accentColor}20` }}
+      />
 
       {/* TOP STATUS BAR (9:41, Cellular, WiFi, Battery) */}
       <div className="w-full pt-3 px-6 pb-2 flex items-center justify-between text-xs text-white/90 z-20 font-medium">
@@ -809,8 +849,19 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
           </span>
         </div>
 
-        {/* Right Section: Mode Toggle & Audio Cast */}
-        <div className="flex items-center gap-2">
+        {/* Right Section: Themes, Mode Toggle & Audio Cast */}
+        <div className="flex items-center gap-1.5">
+          {/* Party Themes Button matching Module 5.6 */}
+          <button
+            onClick={() => setIsThemesOpen(true)}
+            data-action="open-themes"
+            className="px-2 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-purple-500/30 text-[11px] font-bold text-purple-200 flex items-center gap-1 transition-all active:scale-95"
+            title="Party Themes"
+          >
+            <Palette className="w-3.5 h-3.5 text-pink-400" />
+            <span className="hidden xs:inline">Theme</span>
+          </button>
+
           {/* Quick Toggle between Chat View (05_05) and Grid View (05_04) */}
           <button
             onClick={() => setViewMode((prev) => (prev === 'chat' ? 'grid' : 'chat'))}
@@ -1543,6 +1594,35 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* MODULE 5.6: Party Themes Drawer / Modal */}
+      {isThemesOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col justify-end sm:justify-center animate-fade-in"
+          data-testid="themes-modal-overlay"
+        >
+          <div className="w-full max-w-md mx-auto max-h-[92vh] bg-[#0B081E] rounded-t-3xl sm:rounded-3xl border border-white/15 overflow-y-auto shadow-2xl relative">
+            <button
+              onClick={() => setIsThemesOpen(false)}
+              className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 transition-colors"
+              aria-label="Close Themes"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <PartyThemesScreen
+              roomId={roomId}
+              isHost={true}
+              initialThemeId={activeTheme.id}
+              isModal={true}
+              onThemeApplied={(newTheme) => {
+                setActiveTheme(newTheme);
+                showToast(`Theme "${newTheme.name}" applied to party room!`);
+              }}
+              onClose={() => setIsThemesOpen(false)}
+            />
           </div>
         </div>
       )}

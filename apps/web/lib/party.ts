@@ -298,5 +298,169 @@ export function generateDefaultSeats(
   return seats;
 }
 
+export interface PartyTheme {
+  id: string;
+  name: string;
+  description?: string;
+  thumbnailUrl: string;
+  backgroundGradient: string;
+  cardBg: string;
+  buttonGradient: string;
+  accentColor: string;
+  textColor: string;
+  subtextColor: string;
+  displayOrder: number;
+  isActive: boolean;
+}
+
+export interface PartyThemeState {
+  roomId: string;
+  activeThemeId: string;
+  theme: PartyTheme;
+  updatedBy: string;
+  updatedAt: string;
+}
+
+export interface ApplyPartyThemeDto {
+  themeId: string;
+  userId?: string;
+  isHostAction?: boolean;
+}
+
+export const CANONICAL_PARTY_THEMES: PartyTheme[] = [
+  {
+    id: 'default',
+    name: 'Default',
+    description: 'Canonical deep navy and cosmic purple theme with ambient blue orb',
+    thumbnailUrl: '/assets/party/theme_thumb_default.png',
+    backgroundGradient: 'linear-gradient(180deg, #0b081e 0%, #150f38 45%, #0d0a22 100%)',
+    cardBg: 'rgba(26, 20, 56, 0.75)',
+    buttonGradient: 'linear-gradient(135deg, #7C3AED 0%, #9333EA 100%)',
+    accentColor: '#8B5CF6',
+    textColor: '#FFFFFF',
+    subtextColor: '#A78BFA',
+    displayOrder: 1,
+    isActive: true,
+  },
+  {
+    id: 'galaxy',
+    name: 'Galaxy',
+    description: 'Vibrant cosmic purple nebula with radiating galactic rays',
+    thumbnailUrl: '/assets/party/theme_thumb_galaxy.png',
+    backgroundGradient: 'linear-gradient(180deg, #0a0620 0%, #220d4d 45%, #08031a 100%)',
+    cardBg: 'rgba(38, 16, 77, 0.75)',
+    buttonGradient: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
+    accentColor: '#A855F7',
+    textColor: '#FFFFFF',
+    subtextColor: '#C084FC',
+    displayOrder: 2,
+    isActive: true,
+  },
+  {
+    id: 'neon',
+    name: 'Neon',
+    description: 'Electric hot magenta and neon beams glowing in deep ultraviolet darkness',
+    thumbnailUrl: '/assets/party/theme_thumb_neon.png',
+    backgroundGradient: 'linear-gradient(180deg, #140320 0%, #3a084c 45%, #0f0219 100%)',
+    cardBg: 'rgba(64, 12, 82, 0.75)',
+    buttonGradient: 'linear-gradient(135deg, #D946EF 0%, #EC4899 100%)',
+    accentColor: '#F43F5E',
+    textColor: '#FFFFFF',
+    subtextColor: '#F472B6',
+    displayOrder: 3,
+    isActive: true,
+  },
+  {
+    id: 'cute',
+    name: 'Cute',
+    description: 'Soft glowing peach and warm rose with gentle ambient flares',
+    thumbnailUrl: '/assets/party/theme_thumb_cute.png',
+    backgroundGradient: 'linear-gradient(180deg, #1a0818 0%, #4a193b 45%, #180614 100%)',
+    cardBg: 'rgba(74, 25, 59, 0.75)',
+    buttonGradient: 'linear-gradient(135deg, #FB7185 0%, #F43F5E 100%)',
+    accentColor: '#FB7185',
+    textColor: '#FFFFFF',
+    subtextColor: '#FDA4AF',
+    displayOrder: 4,
+    isActive: true,
+  },
+  {
+    id: 'elegant',
+    name: 'Elegant',
+    description: 'Prestigious champagne gold and bronze orbs with warm luxurious shimmer',
+    thumbnailUrl: '/assets/party/theme_thumb_elegant.png',
+    backgroundGradient: 'linear-gradient(180deg, #150f08 0%, #3b2810 45%, #110c05 100%)',
+    cardBg: 'rgba(59, 40, 16, 0.75)',
+    buttonGradient: 'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)',
+    accentColor: '#FBBF24',
+    textColor: '#FFFFFF',
+    subtextColor: '#FDE68A',
+    displayOrder: 5,
+    isActive: true,
+  },
+  {
+    id: 'party',
+    name: 'Party',
+    description: 'Electric laser party lights with multi-colored violet and cyan beams',
+    thumbnailUrl: '/assets/party/theme_thumb_party.png',
+    backgroundGradient: 'linear-gradient(180deg, #090924 0%, #161b4d 45%, #09091f 100%)',
+    cardBg: 'rgba(22, 27, 77, 0.75)',
+    buttonGradient: 'linear-gradient(135deg, #06B6D4 0%, #8B5CF6 100%)',
+    accentColor: '#38BDF8',
+    textColor: '#FFFFFF',
+    subtextColor: '#7DD3FC',
+    displayOrder: 6,
+    isActive: true,
+  },
+  {
+    id: 'midnight_blue',
+    name: 'Midnight Blue',
+    description: 'Deep oceanic midnight indigo with subtle celestial glow',
+    thumbnailUrl: '/assets/party/theme_thumb_default.png',
+    backgroundGradient: 'linear-gradient(180deg, #060d1f 0%, #0d1e45 45%, #050b1a 100%)',
+    cardBg: 'rgba(13, 30, 69, 0.75)',
+    buttonGradient: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+    accentColor: '#3B82F6',
+    textColor: '#FFFFFF',
+    subtextColor: '#93C5FD',
+    displayOrder: 7,
+    isActive: true,
+  },
+  {
+    id: 'sunset',
+    name: 'Sunset',
+    description: 'Radiant twilight amber, crimson and dusk purple horizon',
+    thumbnailUrl: '/assets/party/theme_thumb_cute.png',
+    backgroundGradient: 'linear-gradient(180deg, #220b16 0%, #521626 45%, #190812 100%)',
+    cardBg: 'rgba(82, 22, 38, 0.75)',
+    buttonGradient: 'linear-gradient(135deg, #F97316 0%, #EF4444 100%)',
+    accentColor: '#FB923C',
+    textColor: '#FFFFFF',
+    subtextColor: '#FED7AA',
+    displayOrder: 8,
+    isActive: true,
+  },
+  {
+    id: 'festival',
+    name: 'Festival',
+    description: 'Carnival festival vibrancy with energetic emerald and gold highlights',
+    thumbnailUrl: '/assets/party/theme_thumb_party.png',
+    backgroundGradient: 'linear-gradient(180deg, #071913 0%, #113c2c 45%, #05140f 100%)',
+    cardBg: 'rgba(17, 60, 44, 0.75)',
+    buttonGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+    accentColor: '#34D399',
+    textColor: '#FFFFFF',
+    subtextColor: '#A7F3D0',
+    displayOrder: 9,
+    isActive: true,
+  },
+];
+
+export function getPartyThemeById(themeId: string): PartyTheme {
+  const found = CANONICAL_PARTY_THEMES.find((t) => t.id === themeId);
+  return found || CANONICAL_PARTY_THEMES[0];
+}
+
+
 
 
