@@ -1,18 +1,23 @@
 const http = require('http');
+const https = require('https');
 
-const BASE_URL = process.env.TEST_URL || 'http://localhost:3000';
+const BASE_URL = (process.env.TEST_URL || 'http://localhost:3000').trim();
 
 function request(method, path, body = null) {
   return new Promise((resolve, reject) => {
     const url = new URL(path, BASE_URL);
+    const isHttps = url.protocol === 'https:';
+    const client = isHttps ? https : http;
+
     const options = {
       hostname: url.hostname,
-      port: url.port || (url.protocol === 'https:' ? 443 : 80),
+      port: url.port || (isHttps ? 443 : 80),
       path: url.pathname + url.search,
       method: method,
       headers: {
         'Content-Type': 'application/json',
       },
+      rejectUnauthorized: false,
     };
 
     if (body) {
@@ -20,7 +25,7 @@ function request(method, path, body = null) {
       options.headers['Content-Length'] = Buffer.byteLength(data);
     }
 
-    const req = http.request(options, (res) => {
+    const req = client.request(options, (res) => {
       let data = '';
       res.on('data', (chunk) => (data += chunk));
       res.on('end', () => {
