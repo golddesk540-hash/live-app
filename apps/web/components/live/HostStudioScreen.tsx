@@ -503,6 +503,9 @@ export default function HostStudioScreen({ initialRoomId }: { initialRoomId?: st
           diamondsEarned: 1540,
         });
       }
+
+      // Navigate to Module 4.8 official End Screen
+      router.push(`/live/end-screen?roomId=${sessionData?.room?.roomNumber || '880219'}`);
     } catch (err) {
       setBroadcastSummary({
         durationFormatted: formatTimer(elapsedSeconds),
@@ -511,6 +514,7 @@ export default function HostStudioScreen({ initialRoomId }: { initialRoomId?: st
         totalGifts: 320,
         diamondsEarned: 1540,
       });
+      router.push(`/live/end-screen?roomId=${sessionData?.room?.roomNumber || '880219'}`);
     } finally {
       setIsEnding(false);
       setShowEndConfirm(false);

@@ -273,9 +273,19 @@ export default function WebWatchStudioScreen({ defaultMode }: WebWatchStudioProp
       const data = await res.json();
       if (data.success) {
         triggerToast(nextState ? '🔴 Broadcasting Live to Web & Mobile!' : 'Broadcast ended.');
+        if (!nextState) {
+          setTimeout(() => {
+            router.push(`/live/end-screen?roomId=${roomId}`);
+          }, 800);
+        }
       }
     } catch {
       triggerToast(nextState ? 'Broadcast active (local mode)' : 'Broadcast ended');
+      if (!nextState) {
+        setTimeout(() => {
+          router.push(`/live/end-screen?roomId=${roomId}`);
+        }, 800);
+      }
     }
   };
 
