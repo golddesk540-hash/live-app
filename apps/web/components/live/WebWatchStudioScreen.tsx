@@ -574,10 +574,15 @@ export default function WebWatchStudioScreen({ defaultMode }: WebWatchStudioProp
                     />
                   </div>
 
-                  {/* Stream Stats */}
-                  <span className="hidden md:inline-block text-[11px] text-white/40 font-mono">
-                    1080p 60fps | 24ms
-                  </span>
+                  {/* Stream Stats / Quality & Cost Guard Link (Module 4.9) */}
+                  <Link
+                    href={`/live/quality?roomId=${roomId}`}
+                    title="Stream Quality & Cost Guard Settings (Module 4.9)"
+                    className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 text-[11px] text-white/60 hover:text-white font-mono transition border border-white/5"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    <span>1080p 60fps | 24ms</span>
+                  </Link>
                 </div>
 
                 <div className="flex items-center gap-2">

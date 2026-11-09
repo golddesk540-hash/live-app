@@ -509,15 +509,24 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
               <span className="font-extrabold text-sm tracking-tight text-white">poppo Live</span>
             </div>
 
-            {/* Exit Close Button (X) */}
-            <button
-              type="button"
-              onClick={handleExitRoom}
-              className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/90 hover:text-white active:scale-95 transition-all"
-              title="Close Room"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            {/* Quality & Exit Close Buttons */}
+            <div className="flex items-center gap-1.5">
+              <Link
+                href={`/live/quality?roomId=${roomId}`}
+                className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/90 hover:text-white active:scale-95 transition-all text-xs"
+                title="Quality & Cost Guard"
+              >
+                🛡️
+              </Link>
+              <button
+                type="button"
+                onClick={handleExitRoom}
+                className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/90 hover:text-white active:scale-95 transition-all"
+                title="Close Room"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Host Bar: Host Capsule + Follow Button + Status Pill + Viewers */}

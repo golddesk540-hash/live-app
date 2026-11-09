@@ -1214,6 +1214,18 @@ export default function HostStudioScreen({ initialRoomId }: { initialRoomId?: st
                   />
                 </button>
               </div>
+
+              {/* Module 4.9: Quality & Cost Guard Link */}
+              <Link
+                href={`/live/quality?roomId=${sessionData?.room?.roomNumber || '880219'}`}
+                className="w-full p-3 rounded-2xl bg-gradient-to-r from-purple-900/40 to-pink-900/30 border border-pink-500/30 flex items-center justify-between text-xs font-semibold text-white hover:brightness-110 transition"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🛡️</span>
+                  <span>Quality &amp; Cost Guard (Auto-Adaptive)</span>
+                </div>
+                <span className="text-pink-400 font-bold">Configure →</span>
+              </Link>
             </div>
           </div>
         )}
