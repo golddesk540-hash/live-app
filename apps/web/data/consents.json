@@ -754,5 +754,65 @@
     "language": "en",
     "ipHash": "87e6331ac4bd914f",
     "userAgent": "node"
+  },
+  {
+    "consentId": "cs_1794214455566_c51b5054",
+    "anonymousSessionId": "viewer_test_anon_1794214455559",
+    "termsVersion": "v4.2.0",
+    "privacyVersion": "v4.2.0",
+    "status": "accepted",
+    "acceptedAt": "2026-11-09T08:54:15.565Z",
+    "isAdultConfirmed": true,
+    "language": "en",
+    "ipHash": "87e6331ac4bd914f",
+    "userAgent": "node"
+  },
+  {
+    "consentId": "cs_1794214609399_62af7666",
+    "anonymousSessionId": "viewer_test_anon_1794214609389",
+    "termsVersion": "v4.2.0",
+    "privacyVersion": "v4.2.0",
+    "status": "accepted",
+    "acceptedAt": "2026-11-09T08:56:49.398Z",
+    "isAdultConfirmed": true,
+    "language": "en",
+    "ipHash": "87e6331ac4bd914f",
+    "userAgent": "node"
+  },
+  {
+    "consentId": "cs_1794214643130_fe3225ae",
+    "anonymousSessionId": "viewer_test_anon_1794214643126",
+    "termsVersion": "v4.2.0",
+    "privacyVersion": "v4.2.0",
+    "status": "accepted",
+    "acceptedAt": "2026-11-09T08:57:23.129Z",
+    "isAdultConfirmed": true,
+    "language": "en",
+    "ipHash": "87e6331ac4bd914f",
+    "userAgent": "node"
+  },
+  {
+    "consentId": "cs_1794214692479_9986517f",
+    "anonymousSessionId": "viewer_shot_anon_1794214692398",
+    "termsVersion": "v4.2.0",
+    "privacyVersion": "v4.2.0",
+    "status": "accepted",
+    "acceptedAt": "2026-11-09T08:58:12.479Z",
+    "isAdultConfirmed": true,
+    "language": "en",
+    "ipHash": "87e6331ac4bd914f",
+    "userAgent": "node"
+  },
+  {
+    "consentId": "cs_1794214851476_e679f19b",
+    "anonymousSessionId": "viewer_shot_anon_1794214851363",
+    "termsVersion": "v4.2.0",
+    "privacyVersion": "v4.2.0",
+    "status": "accepted",
+    "acceptedAt": "2026-11-09T09:00:51.475Z",
+    "isAdultConfirmed": true,
+    "language": "en",
+    "ipHash": "87e6331ac4bd914f",
+    "userAgent": "node"
   }
 ]
