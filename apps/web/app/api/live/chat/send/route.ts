@@ -33,12 +33,12 @@ export async function POST(req: NextRequest) {
 
     const {
       roomId = '880219',
-      text,
       senderNickname,
       senderAvatarUrl,
       senderRole = 'viewer',
       emoji,
     } = body;
+    const text = body.text || body.messageText;
 
     // 1. Validation: Empty message rejection
     if (!text || typeof text !== 'string' || text.trim().length === 0) {

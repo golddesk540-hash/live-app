@@ -38,6 +38,10 @@ conn.on('ready', () => {
     curl -s http://127.0.0.1:3005/api/live/chat/messages?preview=demo | head -n 10
     curl -s -I http://127.0.0.1:3005/live/safety?preview=demo | head -n 5
     curl -s http://127.0.0.1:3005/api/live/safety/block | head -n 10
+    curl -s -I http://127.0.0.1:3005/live/web-watch?preview=demo | head -n 5
+    curl -s -I http://127.0.0.1:3005/live/web-studio?preview=demo | head -n 5
+    curl -s http://127.0.0.1:3005/api/live/web-watch/rooms | head -n 10
+    curl -s http://127.0.0.1:3005/api/live/web-watch/session?roomId=880219 | head -n 10
     echo ""
     echo "🎉 DEPLOYMENT COMPLETE ON CONTABO VPS!"
   `;
