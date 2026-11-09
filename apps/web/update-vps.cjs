@@ -34,12 +34,13 @@ async function main() {
   // 1. Pull latest code from GitHub
   await exec('cd /var/www/popo-live && git fetch origin main && git reset --hard origin/main');
 
-  // 1.5. Apply Migration 010, 011, 012, 013 & 014 (Live Rooms, PK, Indexes, Banners, Rankings, Party & Search Seed) on VPS PostgreSQL
+  // 1.5. Apply Migrations (010 to 015) on VPS PostgreSQL
   await exec('cd /var/www/popo-live/apps/web && node data/migrations/apply_010.cjs');
   await exec('cd /var/www/popo-live/apps/web && node data/migrations/apply_011.cjs');
   await exec('cd /var/www/popo-live/apps/web && node data/migrations/apply_012.cjs');
   await exec('cd /var/www/popo-live/apps/web && node data/migrations/apply_013.cjs');
   await exec('cd /var/www/popo-live/apps/web && node data/migrations/apply_014.cjs');
+  await exec('cd /var/www/popo-live/apps/web && node data/migrations/apply_015.cjs');
 
   // 2. Build Next.js
   await exec('cd /var/www/popo-live/apps/web && npm run build');
@@ -53,11 +54,14 @@ async function main() {
   // 5. Verify local response on port 3005
   await exec('curl -I http://127.0.0.1:3005/live/explore');
   await exec('curl -I http://127.0.0.1:3005/live/party');
+  await exec('curl -I http://127.0.0.1:3005/live/following');
   await exec('curl -I http://127.0.0.1:3005/search');
 
   // 6. Verify public HTTPS response
   await exec('curl -I https://kigolive.com/live/explore');
   await exec('curl -I https://kigolive.com/live/party');
+  await exec('curl -I https://kigolive.com/live/following');
+  await exec('curl -I https://kigolive.com/search');
   await exec('curl -I https://kigolive.com/search');
 
   console.log('\n🎉 VPS UPDATE & RELOAD COMPLETED SUCCESSFULLY!');
