@@ -862,6 +862,17 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
             <span className="hidden xs:inline">Theme</span>
           </button>
 
+          {/* Web Party Gateway Button matching Module 5.7 */}
+          <Link
+            href={`/party/web?roomId=${roomId}`}
+            data-action="open-web-party"
+            className="px-2 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-purple-500/30 text-[11px] font-bold text-purple-200 flex items-center gap-1 transition-all active:scale-95"
+            title="Join on Web"
+          >
+            <span>🌐</span>
+            <span className="hidden xs:inline">Web</span>
+          </Link>
+
           {/* Quick Toggle between Chat View (05_05) and Grid View (05_04) */}
           <button
             onClick={() => setViewMode((prev) => (prev === 'chat' ? 'grid' : 'chat'))}

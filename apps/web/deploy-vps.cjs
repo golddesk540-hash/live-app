@@ -82,6 +82,9 @@ conn.on('ready', () => {
     curl -s http://127.0.0.1:3005/api/party/7001/theme | head -n 10
     curl -s -X POST -H "Content-Type: application/json" -d '{"themeId":"galaxy","isHostAction":true,"userId":"host_maria"}' http://127.0.0.1:3005/api/party/7001/theme/apply | head -n 10
     curl -s -I http://127.0.0.1:3005/party/themes?preview=demo | head -n 5
+    curl -s http://127.0.0.1:3005/api/party/7001/web-info | head -n 10
+    curl -s -I http://127.0.0.1:3005/party/web?preview=demo | head -n 5
+    curl -s -I http://127.0.0.1:3005/party/web/7001 | head -n 5
     echo ""
     echo "🎉 DEPLOYMENT COMPLETE ON CONTABO VPS!"
   `;
