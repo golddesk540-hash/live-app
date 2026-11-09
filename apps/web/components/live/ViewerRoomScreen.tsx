@@ -273,6 +273,36 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
     };
   }, [sessionData]);
 
+  // Periodic sync with Module 4.5 Live Chat API
+  useEffect(() => {
+    let isMounted = true;
+    const activeRoomId = roomId || '880219';
+
+    const fetchLiveChat = async () => {
+      try {
+        const res = await fetch(`/api/live/chat/messages?roomId=${encodeURIComponent(activeRoomId)}&limit=12`);
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          if (data.messages && data.messages.length > 0) {
+            setChatMessages(data.messages.map((m: any, idx: number) => ({
+              id: idx + 1,
+              user: m.senderNickname,
+              avatar: m.senderAvatarUrl || '/assets/studio/host_zara_avatar.png',
+              text: m.messageText,
+              emoji: m.emoji,
+            })));
+          }
+        }
+      } catch {}
+    };
+
+    const interval = setInterval(fetchLiveChat, 3500);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [roomId]);
+
   // Handle Follow / Unfollow Host
   const handleToggleFollow = async () => {
     if (!sessionData?.host?.id || followLoading) return;
@@ -298,21 +328,37 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
     }
   };
 
-  // Handle Send Chat (Prepared for Module 4.5)
-  const handleSendChat = (e: React.FormEvent) => {
+  // Handle Send Chat (Integrated with Module 4.5 real-time chat pipeline)
+  const handleSendChat = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputChat.trim()) return;
 
+    const textToSend = inputChat.trim();
     const newMsg = {
       id: Date.now(),
       user: 'You',
       avatar: '/assets/studio/host_zara_avatar.png',
-      text: inputChat.trim(),
+      text: textToSend,
     };
 
     setChatMessages((prev) => [...prev.slice(-15), newMsg]);
     setInputChat('');
     spawnHeart('💬');
+
+    try {
+      await fetch('/api/live/chat/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomId: roomId || '880219',
+          text: textToSend,
+          senderNickname: 'You',
+          senderRole: 'viewer',
+        }),
+      });
+    } catch (err) {
+      console.warn('Live chat send background sync error:', err);
+    }
   };
 
   // Handle Exit Room
@@ -602,8 +648,12 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
             </div>
           </div>
 
-          {/* Live Chat Message Feed (Prepared for Module 4.5) */}
-          <div className="flex flex-col gap-1.5 max-h-40 overflow-y-auto no-scrollbar pt-1">
+          {/* Live Chat Message Feed (Clickable to open Module 4.5 Live Chat Screen) */}
+          <div 
+            onClick={() => router.push(`/live/chat?roomId=${encodeURIComponent(roomId || '880219')}`)}
+            title="Open Module 4.5 Live Chat Screen"
+            className="flex flex-col gap-1.5 max-h-40 overflow-y-auto no-scrollbar pt-1 cursor-pointer group"
+          >
             {chatMessages.map((msg) => (
               <div
                 key={msg.id}
