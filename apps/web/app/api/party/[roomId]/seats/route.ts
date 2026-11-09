@@ -16,7 +16,8 @@ export async function GET(
     try {
       dbSeats = await query(
         `SELECT id, party_id, room_number, seat_number, participant_id, participant_name, 
-                participant_avatar, is_host, is_muted, is_camera_on, status, occupied_at, updated_at
+                participant_avatar, is_host, is_muted, is_camera_on, is_host_muted, is_video_disabled,
+                camera_facing, status, occupied_at, updated_at
          FROM popolive.party_seats
          WHERE room_number = $1
          ORDER BY seat_number ASC`,
@@ -87,6 +88,9 @@ export async function GET(
         isHost: Boolean(row.is_host),
         isMuted: Boolean(row.is_muted),
         isCameraOn: Boolean(row.is_camera_on),
+        isHostMuted: Boolean(row.is_host_muted),
+        isVideoDisabled: Boolean(row.is_video_disabled),
+        cameraFacing: row.camera_facing || 'user',
         status: row.status,
         occupiedAt: row.occupied_at ? new Date(row.occupied_at).toISOString() : null,
         updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),
@@ -110,9 +114,12 @@ export async function GET(
             participantAvatar: i === 1 ? '/assets/studio/host_zara_avatar.png' : null,
             isHost: i === 1,
             isMuted: false,
-            isCameraOn: i === 1,
-            status: i === 1 ? 'occupied' : 'available',
-            occupiedAt: i === 1 ? new Date().toISOString() : null,
+            isCameraOn: i <= 6,
+            isHostMuted: false,
+            isVideoDisabled: false,
+            cameraFacing: 'user',
+            status: i <= 6 ? 'occupied' : 'available',
+            occupiedAt: i <= 6 ? new Date().toISOString() : null,
             updatedAt: new Date().toISOString(),
           });
         }

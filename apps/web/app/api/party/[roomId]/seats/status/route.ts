@@ -12,7 +12,8 @@ export async function GET(
 
     const rows = await query(
       `SELECT seat_number, participant_id, participant_name, participant_avatar,
-              is_host, is_muted, is_camera_on, status, occupied_at, updated_at
+              is_host, is_muted, is_camera_on, is_host_muted, is_video_disabled,
+              camera_facing, status, occupied_at, updated_at
        FROM popolive.party_seats
        WHERE room_number = $1
        ORDER BY seat_number ASC`,

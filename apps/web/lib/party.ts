@@ -52,9 +52,26 @@ export interface PartySeat {
   isHost: boolean;
   isMuted: boolean;
   isCameraOn: boolean;
+  isHostMuted?: boolean;
+  isVideoDisabled?: boolean;
+  cameraFacing?: 'user' | 'environment';
   status: SeatStatus;
   occupiedAt: string | null;
   updatedAt: string;
+}
+
+export interface ToggleSeatMediaDto {
+  seatNumber: number;
+  type: 'mic' | 'camera' | 'facing';
+  enabled?: boolean;
+  facing?: 'user' | 'environment';
+  participantId?: string;
+}
+
+export interface ModerateSeatMediaDto {
+  seatNumber: number;
+  action: 'host_mute' | 'disable_video' | 'kick' | string;
+  isHostAction: boolean;
 }
 
 export interface OccupySeatDto {
@@ -138,10 +155,64 @@ export interface RespondInvitationDto {
 export function generateDefaultSeats(
   roomNumber: string,
   hostName: string = 'Maria Live',
-  hostAvatar: string = '/assets/studio/host_zara_avatar.png'
+  hostAvatar: string = '/assets/party/seat_avatar_1.png'
 ): PartySeat[] {
   const seats: PartySeat[] = [];
   const now = new Date().toISOString();
+
+  // For reference room 7001, seed 6 occupied seats matching 05_04_sound_and_camera_on_a_seat.png
+  if (roomNumber === '7001') {
+    const demoOccupants = [
+      { num: 1, id: 'host_maria_7001', name: 'Maria Live', avatar: '/assets/party/seat_avatar_1.png', isHost: true, isMuted: false, isCameraOn: true },
+      { num: 2, id: 'user_kenji_7001', name: 'Kenji R', avatar: '/assets/party/seat_avatar_2.png', isHost: false, isMuted: false, isCameraOn: true },
+      { num: 3, id: 'user_elena_7001', name: 'Elena V', avatar: '/assets/party/seat_avatar_3.png', isHost: false, isMuted: false, isCameraOn: true },
+      { num: 4, id: 'user_chloe_7001', name: 'Chloe T', avatar: '/assets/party/seat_avatar_4.png', isHost: false, isMuted: false, isCameraOn: true },
+      { num: 5, id: 'user_david_7001', name: 'David K', avatar: '/assets/party/seat_avatar_5.png', isHost: false, isMuted: false, isCameraOn: true },
+      { num: 6, id: 'user_sophia_7001', name: 'Sophia M', avatar: '/assets/party/seat_avatar_6.png', isHost: false, isMuted: false, isCameraOn: true },
+    ];
+
+    for (const occ of demoOccupants) {
+      seats.push({
+        id: `seat-${roomNumber}-${occ.num}`,
+        roomNumber,
+        seatNumber: occ.num,
+        participantId: occ.id,
+        participantName: occ.name,
+        participantAvatar: occ.avatar,
+        isHost: occ.isHost,
+        isMuted: occ.isMuted,
+        isCameraOn: occ.isCameraOn,
+        isHostMuted: false,
+        isVideoDisabled: false,
+        cameraFacing: 'user',
+        status: 'occupied',
+        occupiedAt: now,
+        updatedAt: now,
+      });
+    }
+
+    for (let i = 7; i <= 9; i++) {
+      seats.push({
+        id: `seat-${roomNumber}-${i}`,
+        roomNumber,
+        seatNumber: i,
+        participantId: null,
+        participantName: null,
+        participantAvatar: null,
+        isHost: false,
+        isMuted: false,
+        isCameraOn: false,
+        isHostMuted: false,
+        isVideoDisabled: false,
+        cameraFacing: 'user',
+        status: 'available',
+        occupiedAt: null,
+        updatedAt: now,
+      });
+    }
+
+    return seats;
+  }
 
   // Seat 1: Host Seat
   seats.push({
@@ -154,6 +225,9 @@ export function generateDefaultSeats(
     isHost: true,
     isMuted: false,
     isCameraOn: true,
+    isHostMuted: false,
+    isVideoDisabled: false,
+    cameraFacing: 'user',
     status: 'occupied',
     occupiedAt: now,
     updatedAt: now,
@@ -171,6 +245,9 @@ export function generateDefaultSeats(
       isHost: false,
       isMuted: false,
       isCameraOn: false,
+      isHostMuted: false,
+      isVideoDisabled: false,
+      cameraFacing: 'user',
       status: 'available',
       occupiedAt: null,
       updatedAt: now,
