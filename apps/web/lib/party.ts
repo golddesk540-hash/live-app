@@ -74,6 +74,47 @@ export interface ModerateSeatMediaDto {
   isHostAction: boolean;
 }
 
+export interface PartyAudienceMember {
+  id: string;
+  roomNumber: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  userLevel: number;
+  isActive: boolean;
+  joinedAt: string;
+}
+
+export interface PartyMessage {
+  id: string;
+  roomNumber: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar: string;
+  senderRole: 'host' | 'participant' | 'audience' | 'moderator';
+  seatNumber?: number | null;
+  messageText: string;
+  emoji?: string | null;
+  createdAt: string;
+}
+
+export interface JoinPartyAudienceDto {
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  userLevel?: number;
+}
+
+export interface SendPartyMessageDto {
+  senderId: string;
+  senderName: string;
+  senderAvatar?: string;
+  senderRole?: 'host' | 'participant' | 'audience' | 'moderator';
+  seatNumber?: number | null;
+  messageText: string;
+  emoji?: string;
+}
+
 export interface OccupySeatDto {
   seatNumber: number;
   participantId: string;

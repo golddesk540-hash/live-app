@@ -35,3 +35,6 @@ Thumbs.db
 build/
 ios/Pods/
 android/.gradle/
+
+# Extracted design assets
+Popo_Live_Phase_*/

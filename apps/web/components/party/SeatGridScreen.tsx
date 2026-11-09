@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   ChevronLeft,
+  ChevronRight,
   Crown,
   Users,
   Mic,
@@ -31,13 +32,16 @@ import {
   ShieldAlert,
   ShieldCheck,
   SwitchCamera,
-  RotateCcw,
+  Gift,
+  Grid,
 } from 'lucide-react';
 import {
   PartySeat,
   PartyRoomResponse,
   PartySeatRequest,
   PartySeatInvitation,
+  PartyMessage,
+  PartyAudienceMember,
 } from '@/lib/party';
 
 interface SeatGridScreenProps {
@@ -54,6 +58,148 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // View Mode: 'chat' (Module 5.5 reference 05_05_audience_and_chat.png) or 'grid' (Module 5.4 reference)
+  const [viewMode, setViewMode] = useState<'chat' | 'grid'>('chat');
+
+  // Segmented Tab in Chat view: 'chat' vs 'audience'
+  const [chatTab, setChatTab] = useState<'chat' | 'audience'>('chat');
+
+  // Module 5.5 Chat Messages state
+  const [messages, setMessages] = useState<PartyMessage[]>([
+    {
+      id: 'msg-seed-1',
+      roomNumber: roomId,
+      senderId: 'aud_ali_khan',
+      senderName: 'Ali Khan',
+      senderAvatar: '/assets/party/chat_avatar_ali_khan.png',
+      senderRole: 'audience',
+      messageText: 'Great party! 🎉',
+      emoji: '🎉',
+      createdAt: new Date(Date.now() - 30000).toISOString(),
+    },
+    {
+      id: 'msg-seed-2',
+      roomNumber: roomId,
+      senderId: 'aud_sana',
+      senderName: 'Sana',
+      senderAvatar: '/assets/party/chat_avatar_sana.png',
+      senderRole: 'audience',
+      messageText: 'Can I join a seat? 😀',
+      emoji: '😀',
+      createdAt: new Date(Date.now() - 20000).toISOString(),
+    },
+    {
+      id: 'msg-seed-3',
+      roomNumber: roomId,
+      senderId: 'aud_bilal',
+      senderName: 'Bilal',
+      senderAvatar: '/assets/party/chat_avatar_bilal.png',
+      senderRole: 'audience',
+      messageText: 'Amazing vibes 💜',
+      emoji: '💜',
+      createdAt: new Date(Date.now() - 10000).toISOString(),
+    },
+    {
+      id: 'msg-seed-4',
+      roomNumber: roomId,
+      senderId: 'aud_zoya',
+      senderName: 'Zoya',
+      senderAvatar: '/assets/party/chat_avatar_zoya.png',
+      senderRole: 'audience',
+      messageText: 'Love this room! ❤️',
+      emoji: '❤️',
+      createdAt: new Date(Date.now() - 2000).toISOString(),
+    },
+  ]);
+  const [chatInputText, setChatInputText] = useState<string>('');
+  const [isSendingMessage, setIsSendingMessage] = useState<boolean>(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Module 5.5 Audience state
+  const [audienceCount, setAudienceCount] = useState<number>(256);
+  const [audienceMembers, setAudienceMembers] = useState<PartyAudienceMember[]>([
+    {
+      id: 'aud-1',
+      roomNumber: roomId,
+      userId: 'aud_ali_khan',
+      userName: 'Ali Khan',
+      userAvatar: '/assets/party/chat_avatar_ali_khan.png',
+      userLevel: 5,
+      isActive: true,
+      joinedAt: new Date().toISOString(),
+    },
+    {
+      id: 'aud-2',
+      roomNumber: roomId,
+      userId: 'aud_sana',
+      userName: 'Sana',
+      userAvatar: '/assets/party/chat_avatar_sana.png',
+      userLevel: 4,
+      isActive: true,
+      joinedAt: new Date().toISOString(),
+    },
+    {
+      id: 'aud-3',
+      roomNumber: roomId,
+      userId: 'aud_bilal',
+      userName: 'Bilal',
+      userAvatar: '/assets/party/chat_avatar_bilal.png',
+      userLevel: 7,
+      isActive: true,
+      joinedAt: new Date().toISOString(),
+    },
+    {
+      id: 'aud-4',
+      roomNumber: roomId,
+      userId: 'aud_zoya',
+      userName: 'Zoya',
+      userAvatar: '/assets/party/chat_avatar_zoya.png',
+      userLevel: 6,
+      isActive: true,
+      joinedAt: new Date().toISOString(),
+    },
+    {
+      id: 'aud-5',
+      roomNumber: roomId,
+      userId: 'aud_tariq',
+      userName: 'Tariq Vance',
+      userAvatar: '/assets/chat/avatar_rizwan.png',
+      userLevel: 3,
+      isActive: true,
+      joinedAt: new Date().toISOString(),
+    },
+    {
+      id: 'aud-6',
+      roomNumber: roomId,
+      userId: 'aud_nadia',
+      userName: 'Nadia Khan',
+      userAvatar: '/assets/chat/avatar_sana.png',
+      userLevel: 8,
+      isActive: true,
+      joinedAt: new Date().toISOString(),
+    },
+    {
+      id: 'aud-7',
+      roomNumber: roomId,
+      userId: 'aud_arjun',
+      userName: 'Arjun Verma',
+      userAvatar: '/assets/chat/avatar_bilal.png',
+      userLevel: 2,
+      isActive: true,
+      joinedAt: new Date().toISOString(),
+    },
+    {
+      id: 'aud-8',
+      roomNumber: roomId,
+      userId: 'aud_hina',
+      userName: 'Hina Malik',
+      userAvatar: '/assets/chat/avatar_mehak.png',
+      userLevel: 9,
+      isActive: true,
+      joinedAt: new Date().toISOString(),
+    },
+  ]);
 
   // Selected seat for modal (request, occupy, vacate, media actions)
   const [selectedSeat, setSelectedSeat] = useState<PartySeat | null>(null);
@@ -72,17 +218,6 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
   const [isSpeakerOn, setIsSpeakerOn] = useState<boolean>(true);
   const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user');
 
-  // Audience list
-  const [audienceCount, setAudienceCount] = useState<number>(256);
-  const [eligibleAudience, setEligibleAudience] = useState<
-    Array<{ id: string; name: string; avatar: string }>
-  >([
-    { id: 'user_tariq_01', name: 'Tariq Vance', avatar: '/assets/chat/avatar_rizwan.png' },
-    { id: 'user_nadia_02', name: 'Nadia Khan', avatar: '/assets/chat/avatar_sana.png' },
-    { id: 'user_arjun_03', name: 'Arjun Verma', avatar: '/assets/chat/avatar_bilal.png' },
-    { id: 'user_hina_04', name: 'Hina Malik', avatar: '/assets/chat/avatar_mehak.png' },
-  ]);
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
@@ -90,7 +225,7 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
     }, 3000);
   };
 
-  // 1. Fetch Room and Seats
+  // 1. Fetch Room, Seats, Chat Messages, and Audience
   const fetchRoomData = useCallback(async () => {
     try {
       // Room info
@@ -108,11 +243,31 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
         const seatsData = await seatsRes.json();
         if (seatsData.success && Array.isArray(seatsData.seats)) {
           setSeats(seatsData.seats);
-          // Set host seat mic/camera state if available
           const hostSeat = seatsData.seats.find((s: PartySeat) => s.seatNumber === 1);
           if (hostSeat) {
             setIsMicOn(!hostSeat.isMuted);
             setIsCameraOn(hostSeat.isCameraOn);
+          }
+        }
+      }
+
+      // Chat Messages
+      const chatRes = await fetch(`/api/party/${roomId}/chat/messages`);
+      if (chatRes.ok) {
+        const chatData = await chatRes.json();
+        if (chatData.success && Array.isArray(chatData.messages) && chatData.messages.length > 0) {
+          setMessages(chatData.messages);
+        }
+      }
+
+      // Audience List
+      const audRes = await fetch(`/api/party/${roomId}/audience`);
+      if (audRes.ok) {
+        const audData = await audRes.json();
+        if (audData.success) {
+          if (audData.audienceCount) setAudienceCount(audData.audienceCount);
+          if (Array.isArray(audData.members) && audData.members.length > 0) {
+            setAudienceMembers(audData.members);
           }
         }
       }
@@ -134,17 +289,37 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
     }
   }, [roomId]);
 
-  // 2. Poll for real-time seat status updates every 3 seconds
+  // 2. Real-time background polling every 2.5 seconds
   useEffect(() => {
     fetchRoomData();
     const interval = setInterval(async () => {
       try {
+        // Poll Chat Messages
+        const chatRes = await fetch(`/api/party/${roomId}/chat/messages`);
+        if (chatRes.ok) {
+          const chatData = await chatRes.json();
+          if (chatData.success && Array.isArray(chatData.messages)) {
+            setMessages(chatData.messages);
+          }
+        }
+
+        // Poll Audience
+        const audRes = await fetch(`/api/party/${roomId}/audience`);
+        if (audRes.ok) {
+          const audData = await audRes.json();
+          if (audData.success) {
+            if (audData.audienceCount) setAudienceCount(audData.audienceCount);
+            if (Array.isArray(audData.members)) setAudienceMembers(audData.members);
+          }
+        }
+
+        // Poll Seats Status
         const res = await fetch(`/api/party/${roomId}/seats/status`);
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.seats)) {
-            setSeats((prev) => {
-              return prev.map((s) => {
+            setSeats((prev) =>
+              prev.map((s) => {
                 const updated = data.seats.find((us: any) => us.seat_number === s.seatNumber);
                 if (updated) {
                   return {
@@ -164,12 +339,12 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
                   };
                 }
                 return s;
-              });
-            });
+              })
+            );
           }
         }
 
-        // Requests update
+        // Poll Requests
         const reqRes = await fetch(`/api/party/${roomId}/seats/requests`);
         if (reqRes.ok) {
           const reqData = await reqRes.json();
@@ -179,14 +354,59 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
           }
         }
       } catch (e) {
-        // Silent background polling error
+        // Silent background polling
       }
-    }, 3000);
+    }, 2500);
 
     return () => clearInterval(interval);
   }, [roomId, fetchRoomData]);
 
-  // 3. Module 5.4 Media Controls (Toggle Mic, Toggle Camera, Flip Camera)
+  // Auto-scroll chat to bottom when messages update
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, chatTab]);
+
+  // 3. Send Party Chat Message (Module 5.5)
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = chatInputText.trim();
+    if (!trimmed || isSendingMessage) return;
+
+    if (trimmed.length > 300) {
+      showToast('Message exceeds maximum 300 characters');
+      return;
+    }
+
+    setIsSendingMessage(true);
+    try {
+      const res = await fetch(`/api/party/${roomId}/chat/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          senderId: 'user_viewer_demo',
+          senderName: 'You',
+          senderAvatar: '/assets/studio/user_avatar_default.png',
+          senderRole: 'audience',
+          messageText: trimmed,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success && data.message) {
+        setMessages((prev) => [...prev, data.message]);
+        setChatInputText('');
+        showToast('Message sent');
+      } else {
+        showToast(data.error || 'Failed to send message');
+      }
+    } catch (err: any) {
+      showToast('Network error sending message');
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
+
+  // 4. Media Controls (Toggle Mic, Toggle Camera, Flip Camera)
   const handleToggleMedia = async (
     seatNum: number,
     type: 'mic' | 'camera' | 'facing',
@@ -209,7 +429,6 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
       const data = await res.json();
       if (data.success) {
         showToast(data.message || 'Media updated');
-        // Update local state
         setSeats((prev) =>
           prev.map((s) => {
             if (s.seatNumber === seatNum) {
@@ -256,7 +475,7 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
     }
   };
 
-  // 4. Module 5.4 Host Moderation (Host Mute, Disable Video)
+  // 5. Host Moderation (Host Mute, Disable Video, Kick)
   const handleModerateSeat = async (
     seatNum: number,
     action: 'host_mute' | 'disable_video' | 'kick'
@@ -277,7 +496,6 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
       if (data.success) {
         showToast(data.message || 'Seat moderated successfully');
         if (action === 'kick') {
-          // Vacated
           setSeats((prev) =>
             prev.map((s) =>
               s.seatNumber === seatNum
@@ -322,28 +540,28 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
     }
   };
 
-  // 5. Toggle bottom bar mic button
+  // 6. Toggle bottom bar mic button
   const toggleBottomMic = () => {
     const nextVal = !isMicOn;
     setIsMicOn(nextVal);
     handleToggleMedia(1, 'mic', nextVal);
   };
 
-  // 6. Toggle bottom bar camera button
+  // 7. Toggle bottom bar camera button
   const toggleBottomCamera = () => {
     const nextVal = !isCameraOn;
     setIsCameraOn(nextVal);
     handleToggleMedia(1, 'camera', nextVal);
   };
 
-  // 7. Toggle room speaker sound
+  // 8. Toggle room speaker sound
   const toggleSpeaker = () => {
     const nextVal = !isSpeakerOn;
     setIsSpeakerOn(nextVal);
     showToast(nextVal ? 'Party room sound enabled' : 'Party room sound muted');
   };
 
-  // 8. Handle Request Seat
+  // 9. Handle Request Seat
   const handleRequestSeat = async (seatNumber: number) => {
     setActionLoading(true);
     try {
@@ -373,7 +591,7 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
     }
   };
 
-  // 9. Respond to Request (Host Action)
+  // 10. Respond to Request (Host Action)
   const handleRespondRequest = async (requestId: string, action: 'accept' | 'reject') => {
     setActionLoading(true);
     try {
@@ -397,27 +615,31 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
     }
   };
 
-  // 10. Send Invitation
+  // 11. Send Invitation to Audience member
   const handleSendInvitation = async (
     seatNumber: number,
-    viewer: { id: string; name: string; avatar: string }
+    viewer: { id?: string; userId?: string; name?: string; userName?: string; avatar?: string; userAvatar?: string }
   ) => {
     setActionLoading(true);
+    const targetUserId = viewer.userId || viewer.id || 'aud_user';
+    const targetUserName = viewer.userName || viewer.name || 'Audience Member';
+    const targetAvatar = viewer.userAvatar || viewer.avatar || '/assets/studio/user_avatar_default.png';
+
     try {
       const res = await fetch(`/api/party/${roomId}/seats/invite`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           seatNumber,
-          invitedUserId: viewer.id,
-          invitedUserName: viewer.name,
-          invitedUserAvatar: viewer.avatar,
+          invitedUserId: targetUserId,
+          invitedUserName: targetUserName,
+          invitedUserAvatar: targetAvatar,
         }),
       });
 
       const data = await res.json();
       if (data.success) {
-        showToast(`Invitation sent to ${viewer.name} for Seat #${seatNumber}!`);
+        showToast(`Invitation sent to ${targetUserName} for Seat #${seatNumber}!`);
         fetchRoomData();
       } else {
         showToast(data.error || 'Failed to send invitation');
@@ -429,7 +651,7 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
     }
   };
 
-  // 11. Respond to Invitation (Viewer Action)
+  // 12. Respond to Invitation (Viewer Action)
   const handleRespondInvitation = async (invitationId: string, action: 'accept' | 'decline') => {
     setActionLoading(true);
     try {
@@ -453,7 +675,7 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
     }
   };
 
-  // 12. Occupy Seat directly
+  // 13. Occupy Seat directly
   const handleOccupySeat = async (seatNumber: number) => {
     setActionLoading(true);
     try {
@@ -485,7 +707,7 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
     }
   };
 
-  // 13. Vacate Seat
+  // 14. Vacate Seat
   const handleVacateSeat = async (seatNumber: number) => {
     setActionLoading(true);
     try {
@@ -546,9 +768,9 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
 
   return (
     <div className="min-h-screen bg-[#07031b] text-white flex flex-col justify-between max-w-sm sm:max-w-md mx-auto select-none font-sans relative overflow-hidden shadow-2xl border-x border-[#1a123f]">
-      {/* Ambient background glows matching 05_04_sound_and_camera_on_a_seat.png */}
+      {/* Ambient background glows matching 05_05_audience_and_chat.png */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-80 bg-purple-600/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-96 h-96 bg-indigo-900/25 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-96 h-96 bg-fuchsia-900/20 rounded-full blur-3xl pointer-events-none" />
 
       {/* TOP STATUS BAR (9:41, Cellular, WiFi, Battery) */}
       <div className="w-full pt-3 px-6 pb-2 flex items-center justify-between text-xs text-white/90 z-20 font-medium">
@@ -566,7 +788,7 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
         </div>
       </div>
 
-      {/* TOP HEADER: < Back, Popo Live Branding, Audio Cast Icon */}
+      {/* TOP HEADER: < Back, Popo Live Branding, Audio Cast Icon, View Mode Switch */}
       <header className="px-4 py-2 flex items-center justify-between z-20" data-testid="seat-grid-header">
         {/* Back Button */}
         <Link
@@ -577,7 +799,7 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
           <ChevronLeft className="w-5 h-5" />
         </Link>
 
-        {/* Popo Live Branding */}
+        {/* Popo Live Branding matching 05_05 */}
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-purple-600 via-pink-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-purple-600/40">
             <span className="font-extrabold text-white text-sm tracking-tighter">P</span>
@@ -587,18 +809,41 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
           </span>
         </div>
 
-        {/* Top-Right Action: Screen Share / Audio Cast Icon matching {•} in 05_04 */}
-        <button
-          onClick={() => showToast('Audio cast / streaming mode active')}
-          data-action="cast"
-          className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center transition-all text-white/90"
-          title="Party Cast"
-        >
-          <Cast className="w-4 h-4" />
-        </button>
+        {/* Right Section: Mode Toggle & Audio Cast */}
+        <div className="flex items-center gap-2">
+          {/* Quick Toggle between Chat View (05_05) and Grid View (05_04) */}
+          <button
+            onClick={() => setViewMode((prev) => (prev === 'chat' ? 'grid' : 'chat'))}
+            data-action="toggle-view-mode"
+            className="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-purple-500/30 text-[11px] font-bold text-purple-200 flex items-center gap-1 transition-all active:scale-95"
+            title="Toggle between Chat and 9-Seat Grid"
+          >
+            {viewMode === 'chat' ? (
+              <>
+                <Grid className="w-3.5 h-3.5 text-pink-400" />
+                <span>Seats</span>
+              </>
+            ) : (
+              <>
+                <MessageSquare className="w-3.5 h-3.5 text-pink-400" />
+                <span>Chat</span>
+              </>
+            )}
+          </button>
+
+          {/* Cast Icon matching {•} in 05_05 */}
+          <button
+            onClick={() => showToast('Audio cast active')}
+            data-action="cast"
+            className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 active:scale-95 flex items-center justify-center transition-all text-white/90"
+            title="Party Cast"
+          >
+            <Cast className="w-4 h-4" />
+          </button>
+        </div>
       </header>
 
-      {/* PARTY & HOST INFO BAR (Maria Live, 👑, Party Room, 👥 256) */}
+      {/* PARTY & HOST INFO BAR (Maria Live 👑, Party Room #7001, 👥 256) */}
       <div className="px-4 py-1.5 z-20">
         <div className="bg-[#120a32]/90 border border-[#261759] rounded-2xl px-3 py-2 flex items-center justify-between shadow-lg backdrop-blur-md">
           {/* Host Info */}
@@ -638,428 +883,491 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
             </div>
           </div>
 
-          {/* Audience Count Pill with Incoming Requests indicator */}
+          {/* Audience Count Pill matching 05_05 */}
           <button
-            onClick={() => setIsRequestPanelOpen(!isRequestPanelOpen)}
+            onClick={() => {
+              setViewMode('chat');
+              setChatTab('audience');
+            }}
             className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-900/60 hover:bg-purple-800/80 border border-purple-500/30 text-xs text-purple-200 transition-all cursor-pointer shadow-md"
-            title="Toggle Seat Requests Panel"
+            title="View Audience"
             data-testid="request-panel-toggle"
           >
             <Users className="w-3.5 h-3.5 text-purple-300" />
             <span className="font-semibold text-xs" data-testid="audience-count">
               {audienceCount}
             </span>
-            {seatRequests.length > 0 && (
-              <span className="w-2 h-2 rounded-full bg-pink-500 animate-ping ml-0.5" />
-            )}
           </button>
         </div>
       </div>
 
-      {/* INCOMING INVITATION BANNER (Module 5.3) */}
-      {seatInvitations.length > 0 && (
-        <div
-          data-testid="invitation-banner"
-          className="mx-4 my-1 p-2.5 rounded-2xl bg-gradient-to-r from-purple-900/95 via-pink-950/95 to-purple-900/95 border border-pink-500/50 shadow-xl backdrop-blur-md z-30 flex items-center justify-between animate-in fade-in zoom-in duration-200"
-        >
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-pink-500/20 border border-pink-400/40 flex items-center justify-center">
-              <Sparkles className="w-3.5 h-3.5 text-pink-300" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-white">
-                Host Maria Live invited you to Seat #{seatInvitations[0].seatNumber}!
-              </p>
-              <p className="text-[10px] text-pink-200/80">Invitation expires in 2 minutes</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => handleRespondInvitation(seatInvitations[0].id, 'accept')}
-              data-action="accept-invitation"
-              className="px-2.5 py-1 rounded-xl bg-pink-600 hover:bg-pink-500 text-white font-bold text-xs shadow-md transition-all active:scale-95 flex items-center gap-1"
-            >
-              <Check className="w-3 h-3" /> Accept
-            </button>
-            <button
-              onClick={() => handleRespondInvitation(seatInvitations[0].id, 'decline')}
-              data-action="decline-invitation"
-              className="p-1 rounded-xl bg-white/10 hover:bg-white/20 text-zinc-300"
-              title="Decline"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* MAIN 9-SEAT 3x3 GRID matching 05_04_sound_and_camera_on_a_seat.png */}
-      <main className="px-4 py-2 flex flex-col justify-center z-20" data-testid="nine-seat-grid">
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-          {displaySeats.map((seat) => {
-            const isHostSeat = seat.seatNumber === 1;
-            const isOccupied = seat.status === 'occupied';
-            const hasPendingRequest = seatRequests.some((r) => r.seatNumber === seat.seatNumber);
-
-            // SEAT 1: HOST SEAT WITH GLOWING MAGENTA BORDER AND GOLD CROWN / MIC
-            if (isHostSeat) {
-              return (
-                <div
-                  key={seat.seatNumber}
-                  data-testid="seat-1-host"
-                  data-seat-number="1"
-                  onClick={() => setSelectedSeat(seat)}
-                  className="aspect-square rounded-2xl relative overflow-hidden bg-[#180e3c] border-2 border-fuchsia-500 shadow-xl shadow-fuchsia-600/30 ring-2 ring-fuchsia-500/40 flex flex-col justify-between p-2 cursor-pointer group transition-all"
-                >
-                  {/* Host Camera Feed / Avatar */}
-                  <div className="absolute inset-0 z-0">
-                    <Image
-                      src={seat.participantAvatar || '/assets/party/seat_avatar_1.png'}
-                      alt="Host Maria"
-                      fill
-                      className={`object-cover ${
-                        seat.isCameraOn ? 'opacity-95' : 'opacity-40 grayscale'
-                      } group-hover:scale-105 transition-all duration-300`}
-                      onError={(e) => {
-                        (e.target as any).src = '/assets/party/seat_avatar_1.png';
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-                  </div>
-
-                  {/* Top Overlay: Crown 👑 and Mic Status */}
-                  <div className="relative z-10 flex items-center justify-between w-full">
-                    <span className="text-sm drop-shadow-md" title="Host Crown">
-                      👑
-                    </span>
-                    <div
-                      className={`w-5 h-5 rounded-full flex items-center justify-center text-white shadow-md ${
-                        seat.isMuted
-                          ? 'bg-red-500/90 shadow-red-500/40'
-                          : 'bg-emerald-500/90 shadow-emerald-500/40 ring-1 ring-emerald-300'
-                      }`}
-                      data-testid="host-mic-badge"
-                    >
-                      {seat.isMuted ? <MicOff className="w-2.5 h-2.5" /> : <Mic className="w-2.5 h-2.5" />}
-                    </div>
-                  </div>
-
-                  {/* Bottom Overlay: Host Label + Golden Mic matching 05_04 */}
-                  <div className="relative z-10 flex items-center justify-center gap-1 w-full pb-0.5">
-                    <span className="text-xs font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-wide">
-                      Host
-                    </span>
-                    <span className="text-amber-400 text-xs drop-shadow" title="Golden Microphone">
-                      🎙️
-                    </span>
-                  </div>
-                </div>
-              );
-            }
-
-            // OCCUPIED PARTICIPANT SEATS (Seats 2 to 6 in 05_04)
-            if (isOccupied) {
-              return (
-                <div
-                  key={seat.seatNumber}
-                  data-testid={`seat-${seat.seatNumber}-occupied`}
-                  data-seat-number={seat.seatNumber}
-                  onClick={() => setSelectedSeat(seat)}
-                  className={`aspect-square rounded-2xl relative overflow-hidden bg-[#180e3c] border ${
-                    seat.isCameraOn
-                      ? 'border-purple-400/60 shadow-lg shadow-purple-900/30'
-                      : 'border-zinc-700/60 opacity-80'
-                  } flex flex-col justify-between p-2 cursor-pointer group transition-all`}
-                >
-                  {/* Participant Video / Avatar */}
-                  <div className="absolute inset-0 z-0">
-                    <Image
-                      src={
-                        seat.participantAvatar ||
-                        `/assets/party/seat_avatar_${seat.seatNumber <= 6 ? seat.seatNumber : 2}.png`
-                      }
-                      alt={seat.participantName || `Seat ${seat.seatNumber}`}
-                      fill
-                      className={`object-cover ${
-                        seat.isCameraOn ? 'opacity-95' : 'opacity-40 grayscale'
-                      } group-hover:scale-105 transition-all duration-300`}
-                      onError={(e) => {
-                        (e.target as any).src = `/assets/party/seat_avatar_${seat.seatNumber <= 6 ? seat.seatNumber : 2}.png`;
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
-                  </div>
-
-                  {/* Top Overlay: Seat Number */}
-                  <div className="relative z-10 flex items-center justify-between w-full">
-                    <span className="text-[10px] font-bold text-purple-200/90 px-1.5 py-0.2 rounded-md bg-black/50 backdrop-blur-sm border border-purple-500/30">
-                      #{seat.seatNumber}
-                    </span>
-                    {seat.isVideoDisabled && (
-                      <span className="text-[9px] font-bold text-red-300 px-1 py-0.2 rounded bg-black/60 border border-red-500/40">
-                        Host Blocked
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Bottom Badges matching 05_04: Camera Badge on Left, Mic Badge on Right */}
-                  <div className="relative z-10 flex items-end justify-between w-full">
-                    {/* Left Badge: Camera status or Level badge */}
-                    <div className="flex items-center">
-                      {seat.isCameraOn ? (
-                        <div
-                          className="w-5 h-5 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white shadow-sm"
-                          title="Camera Active"
-                          data-testid={`seat-${seat.seatNumber}-camera-badge`}
-                        >
-                          <Video className="w-2.5 h-2.5" />
-                        </div>
-                      ) : (
-                        <div
-                          className="w-5 h-5 rounded-full bg-red-600/80 backdrop-blur-sm border border-red-400/40 flex items-center justify-center text-white shadow-sm"
-                          title="Camera Disabled"
-                          data-testid={`seat-${seat.seatNumber}-camera-off-badge`}
-                        >
-                          <VideoOff className="w-2.5 h-2.5" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Right Badge: Mic status */}
-                    <div className="flex items-center">
-                      <div
-                        className={`w-5 h-5 rounded-full flex items-center justify-center text-white shadow-md ${
-                          seat.isMuted
-                            ? 'bg-red-500/90 shadow-red-500/30'
-                            : 'bg-emerald-500/90 shadow-emerald-500/30 ring-1 ring-emerald-300 animate-pulse'
-                        }`}
-                        title={seat.isMuted ? 'Muted' : 'Speaking'}
-                        data-testid={`seat-${seat.seatNumber}-mic-badge`}
-                      >
-                        {seat.isMuted ? (
-                          <MicOff className="w-2.5 h-2.5" />
-                        ) : (
-                          <Mic className="w-2.5 h-2.5" />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            }
-
-            // AVAILABLE EMPTY SEATS (Seats 7, 8, 9 in 05_04)
-            return (
-              <div
-                key={seat.seatNumber}
-                data-testid={`seat-${seat.seatNumber}-empty`}
-                data-seat-number={seat.seatNumber}
-                onClick={() => setSelectedSeat(seat)}
-                className={`aspect-square rounded-2xl bg-[#140b32]/85 hover:bg-[#1a0f42] border ${
-                  hasPendingRequest ? 'border-pink-500/80 shadow-pink-500/20' : 'border-[#291759] hover:border-purple-500/50'
-                } shadow-inner shadow-purple-950/60 backdrop-blur-md flex flex-col items-center justify-between p-2 cursor-pointer transition-all group active:scale-95 relative`}
-              >
-                {/* Pending Request Indicator Badge */}
-                {hasPendingRequest && (
-                  <span className="absolute -top-1 -right-1 px-1.5 py-0.2 rounded-full bg-pink-600 border border-pink-300 text-[9px] font-bold text-white shadow-md animate-pulse">
-                    Request
-                  </span>
-                )}
-
-                {/* Seat Number at Top */}
-                <span className="text-xs font-semibold text-purple-300/80 group-hover:text-purple-200">
-                  {seat.seatNumber}
-                </span>
-
-                {/* Circular Purple Button with White Plus in Center matching 05_04 */}
-                <div
-                  className="w-10 h-10 rounded-full bg-[#361e68] group-hover:bg-[#4b2a91] text-purple-200 group-hover:text-white flex items-center justify-center shadow-md shadow-purple-950/70 border border-purple-400/20 group-hover:scale-105 transition-all"
-                  data-action="add-participant"
-                >
-                  <Plus className="w-5 h-5 stroke-[2.5]" />
-                </div>
-
-                {/* Available label */}
-                <span className="text-[10px] text-zinc-500 group-hover:text-purple-300 transition-colors">
-                  {hasPendingRequest ? '1 Pending' : 'Available'}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </main>
-
-      {/* INCOMING SEAT REQUEST & INVITATION PANEL (Module 5.3) */}
-      {isRequestPanelOpen && (
-        <section
-          data-testid="seat-request-panel"
-          className="mx-4 my-2 rounded-2xl bg-[#150c36]/95 border border-[#2d195e] p-3 shadow-2xl backdrop-blur-md z-20 relative animate-in slide-in-from-bottom-2 duration-200"
-        >
-          {/* Header & Tabs */}
-          <div className="flex items-center justify-between mb-2 pb-2 border-b border-purple-900/40">
-            <div className="flex items-center gap-2">
+      {/* VIEW MODE 1: CHAT & AUDIENCE VIEW (STRICT 1:1 RECREATION OF 05_05_audience_and_chat.png) */}
+      {viewMode === 'chat' && (
+        <div className="flex-1 flex flex-col justify-between overflow-hidden z-20" data-testid="chat-audience-view">
+          {/* SEGMENTED PILL TABS: [ Chat ] vs [ Audience (1.2K) ] */}
+          <div className="px-4 pt-2.5 pb-2">
+            <div className="flex items-center gap-3">
+              {/* Tab 1: Chat (Active by default in 05_05) */}
               <button
-                onClick={() => setPanelTab('requests')}
-                data-action="tab-requests"
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-                  panelTab === 'requests'
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
-                    : 'bg-white/5 text-purple-300/70 hover:text-white'
+                onClick={() => setChatTab('chat')}
+                data-testid="tab-chat"
+                data-action="tab-chat"
+                className={`flex-1 py-2.5 rounded-full text-sm font-bold transition-all shadow-md active:scale-98 ${
+                  chatTab === 'chat'
+                    ? 'bg-gradient-to-r from-[#9333ea] via-[#c026d3] to-[#a855f7] text-white shadow-purple-600/40 ring-1 ring-purple-400/50'
+                    : 'bg-[#180e3c]/90 text-purple-300/70 hover:text-white border border-[#2b1765]/60'
                 }`}
               >
-                <span>Seat Requests</span>
-                <span className="px-1.5 py-0.2 rounded-full bg-black/40 text-[10px]" data-testid="request-count-badge">
-                  {seatRequests.length}
-                </span>
+                Chat
               </button>
 
+              {/* Tab 2: Audience (1.2K) */}
               <button
-                onClick={() => setPanelTab('invite')}
-                data-action="tab-invite"
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-                  panelTab === 'invite'
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
-                    : 'bg-white/5 text-purple-300/70 hover:text-white'
+                onClick={() => setChatTab('audience')}
+                data-testid="tab-audience"
+                data-action="tab-audience"
+                className={`flex-1 py-2.5 rounded-full text-sm font-bold transition-all shadow-md active:scale-98 ${
+                  chatTab === 'audience'
+                    ? 'bg-gradient-to-r from-[#9333ea] via-[#c026d3] to-[#a855f7] text-white shadow-purple-600/40 ring-1 ring-purple-400/50'
+                    : 'bg-[#180e3c]/90 text-purple-300/80 hover:text-white border border-[#2b1765]/60'
                 }`}
               >
-                <span>Invite Audience</span>
-                <span className="px-1.5 py-0.2 rounded-full bg-black/40 text-[10px]">
-                  {eligibleAudience.length}
-                </span>
+                Audience (1.2K)
               </button>
             </div>
-
-            <button
-              onClick={() => setIsRequestPanelOpen(false)}
-              className="p-1 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400"
-              title="Close Panel"
-            >
-              <X className="w-4 h-4" />
-            </button>
           </div>
 
-          {/* TAB 1: PENDING SEAT REQUESTS */}
-          {panelTab === 'requests' && (
-            <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-              {seatRequests.length === 0 ? (
-                <div className="py-4 text-center text-xs text-zinc-400">
-                  No pending seat requests at this moment.
+          {/* TAB CONTENT 1: LIVE CHAT STREAM matching 05_05_audience_and_chat.png */}
+          {chatTab === 'chat' && (
+            <div
+              className="flex-1 overflow-y-auto px-4 py-2 space-y-3.5 scroll-smooth"
+              data-testid="party-chat-stream"
+            >
+              {messages.length === 0 ? (
+                <div className="py-12 text-center text-xs text-zinc-400">
+                  No messages yet. Say hello to the party!
                 </div>
               ) : (
-                seatRequests.map((req) => (
+                messages.map((msg, idx) => (
                   <div
-                    key={req.id}
-                    data-testid={`request-item-${req.id}`}
-                    className="flex items-center justify-between p-2 rounded-xl bg-[#20134e]/80 border border-purple-900/40"
+                    key={msg.id || idx}
+                    data-testid={`chat-message-${msg.id || idx}`}
+                    className="flex items-start gap-2.5 animate-in fade-in slide-in-from-bottom-2 duration-150"
                   >
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full overflow-hidden bg-purple-950 border border-purple-500/30">
-                        <Image
-                          src={req.userAvatar || '/assets/studio/user_avatar_default.png'}
-                          alt={req.userName}
-                          width={32}
-                          height={32}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-xs text-white" data-testid="request-user-name">
-                            {req.userName}
-                          </span>
-                          <span className="px-1.5 py-0.2 rounded-md bg-purple-800/80 border border-purple-400/30 text-[10px] font-bold text-purple-200">
-                            Seat #{req.seatNumber}
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-zinc-400 flex items-center gap-1 mt-0.5">
-                          <Clock className="w-2.5 h-2.5 text-pink-400" /> Pending host approval
-                        </span>
-                      </div>
+                    {/* User Avatar */}
+                    <div className="w-9 h-9 rounded-full overflow-hidden bg-purple-950 border border-purple-500/30 shrink-0 shadow-md">
+                      <Image
+                        src={msg.senderAvatar || '/assets/party/chat_avatar_ali_khan.png'}
+                        alt={msg.senderName}
+                        width={36}
+                        height={36}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as any).src = '/assets/party/chat_avatar_ali_khan.png';
+                        }}
+                      />
                     </div>
 
-                    {/* Host Action Buttons */}
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        onClick={() => handleRespondRequest(req.id, 'accept')}
-                        disabled={actionLoading}
-                        data-action="accept-request"
-                        className="py-1 px-3 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs shadow-md active:scale-95 transition-all flex items-center gap-1 disabled:opacity-50"
-                      >
-                        <Check className="w-3.5 h-3.5" /> Accept
-                      </button>
+                    {/* Sender Nickname & Chat Bubble */}
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="text-xs font-semibold text-purple-300/90" data-testid="chat-sender-name">
+                          {msg.senderName}
+                        </span>
+                        {msg.senderRole === 'host' && (
+                          <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-bold">
+                            Host
+                          </span>
+                        )}
+                        {msg.seatNumber && (
+                          <span className="px-1.5 py-0.2 rounded bg-purple-800/60 text-purple-200 text-[9px] font-bold">
+                            Seat #{msg.seatNumber}
+                          </span>
+                        )}
+                      </div>
 
-                      <button
-                        onClick={() => handleRespondRequest(req.id, 'reject')}
-                        disabled={actionLoading}
-                        data-action="reject-request"
-                        className="py-1 px-2.5 rounded-lg bg-white/10 hover:bg-red-500/20 text-zinc-300 hover:text-red-300 border border-white/15 text-xs font-semibold active:scale-95 transition-all disabled:opacity-50"
+                      {/* Bubble with Text & Emoji */}
+                      <div
+                        data-testid="chat-bubble"
+                        className="bg-[#180e3c]/90 border border-[#2d195e]/60 rounded-2xl rounded-tl-sm px-3.5 py-2 shadow-lg backdrop-blur-sm max-w-xs text-xs font-bold text-white tracking-wide"
                       >
-                        Reject
-                      </button>
+                        <span>{msg.messageText}</span>
+                      </div>
                     </div>
                   </div>
                 ))
               )}
+              <div ref={messagesEndRef} />
             </div>
           )}
 
-          {/* TAB 2: INVITE VIEWERS */}
-          {panelTab === 'invite' && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-purple-200 mb-1">
-                <span>Select seat to invite to:</span>
-                <select
-                  value={inviteTargetSeat}
-                  onChange={(e) => setInviteTargetSeat(Number(e.target.value))}
-                  data-testid="invite-seat-selector"
-                  className="bg-[#26165b] border border-purple-500/40 rounded-lg px-2 py-0.5 text-xs text-white focus:outline-none"
-                >
-                  {availableSeatNumbers.length === 0 ? (
-                    <option value="">No available seats</option>
-                  ) : (
-                    availableSeatNumbers.map((num) => (
-                      <option key={num} value={num}>
-                        Seat #{num}
-                      </option>
-                    ))
-                  )}
-                </select>
+          {/* TAB CONTENT 2: AUDIENCE LIST VIEW */}
+          {chatTab === 'audience' && (
+            <div
+              className="flex-1 overflow-y-auto px-4 py-2 space-y-2 scroll-smooth"
+              data-testid="audience-list-view"
+            >
+              <div className="flex items-center justify-between text-xs text-purple-300/80 pb-1 border-b border-purple-900/30">
+                <span>Active Audience Members</span>
+                <span className="font-semibold text-pink-400">{audienceCount} Online</span>
               </div>
 
-              <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
-                {eligibleAudience.map((viewer) => (
-                  <div
-                    key={viewer.id}
-                    data-testid={`audience-row-${viewer.id}`}
-                    className="flex items-center justify-between p-1.5 rounded-xl bg-[#20134e]/80 border border-purple-900/40"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full overflow-hidden bg-purple-950 border border-purple-500/30">
+              {audienceMembers.map((aud) => (
+                <div
+                  key={aud.userId}
+                  data-testid={`audience-member-${aud.userId}`}
+                  className="flex items-center justify-between p-2.5 rounded-2xl bg-[#180e3c]/85 border border-purple-900/40 shadow-md backdrop-blur-sm"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="relative">
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-purple-950 border border-purple-500/30 shadow-md">
                         <Image
-                          src={viewer.avatar}
-                          alt={viewer.name}
-                          width={28}
-                          height={28}
+                          src={aud.userAvatar || '/assets/studio/user_avatar_default.png'}
+                          alt={aud.userName}
+                          width={40}
+                          height={40}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as any).src = '/assets/studio/user_avatar_default.png';
+                          }}
                         />
                       </div>
-                      <span className="text-xs font-medium text-white">{viewer.name}</span>
+                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-[#07031b]" />
                     </div>
 
-                    <button
-                      onClick={() => handleSendInvitation(inviteTargetSeat, viewer)}
-                      disabled={actionLoading || availableSeatNumbers.length === 0}
-                      data-action="send-invitation"
-                      className="py-1 px-3 rounded-lg bg-purple-600 hover:bg-purple-500 active:scale-95 text-white font-bold text-xs transition-all disabled:opacity-50 flex items-center gap-1"
-                    >
-                      <UserPlus className="w-3 h-3" /> Invite
-                    </button>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-xs text-white" data-testid="audience-user-name">
+                          {aud.userName}
+                        </span>
+                        <span className="px-1.5 py-0.2 rounded-md bg-purple-800/80 border border-purple-400/30 text-[9px] font-bold text-purple-200">
+                          Lv.{aud.userLevel || 1}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-zinc-400">Listening to party audio</span>
+                    </div>
                   </div>
-                ))}
-              </div>
+
+                  {/* Invite to Available Seat Button */}
+                  <button
+                    onClick={() => handleSendInvitation(availableSeatNumbers[0] || 2, aud)}
+                    disabled={availableSeatNumbers.length === 0}
+                    data-action="invite-audience-btn"
+                    className="py-1 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 active:scale-95 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1 disabled:opacity-40"
+                  >
+                    <UserPlus className="w-3 h-3" /> Invite
+                  </button>
+                </div>
+              ))}
             </div>
           )}
-        </section>
+
+          {/* BOTTOM MESSAGE INPUT & GIFT BUTTON matching 05_05_audience_and_chat.png */}
+          <div className="px-4 pt-1 pb-3 z-20">
+            <form onSubmit={handleSendMessage} className="flex items-center gap-2.5 max-w-sm mx-auto">
+              {/* Rounded Elongated Input Capsule */}
+              <div className="flex-1 bg-[#1a1042]/95 border border-[#331c77]/70 rounded-full px-4 py-1.5 flex items-center justify-between shadow-xl backdrop-blur-md">
+                <input
+                  type="text"
+                  value={chatInputText}
+                  onChange={(e) => setChatInputText(e.target.value)}
+                  placeholder="Type a message..."
+                  maxLength={300}
+                  data-testid="chat-input"
+                  className="bg-transparent text-white placeholder-purple-300/60 text-xs focus:outline-none w-full pr-2"
+                />
+
+                {/* Send Button inside Input Capsule with Chevron Right (>) */}
+                <button
+                  type="submit"
+                  disabled={!chatInputText.trim() || isSendingMessage}
+                  data-testid="chat-send-btn"
+                  data-action="send-chat"
+                  className="w-7 h-7 rounded-full bg-purple-600 hover:bg-purple-500 active:scale-95 text-white flex items-center justify-center shrink-0 shadow-md transition-all disabled:opacity-40"
+                  title="Send message"
+                >
+                  {isSendingMessage ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+                  )}
+                </button>
+              </div>
+
+              {/* Pink/Magenta Glowing Circular Gift Button matching 05_05 */}
+              <button
+                type="button"
+                onClick={() => showToast('🎁 Gift Shop active in Phase 6!')}
+                data-testid="btn-gift"
+                data-action="open-gift"
+                className="w-11 h-11 rounded-full bg-gradient-to-tr from-fuchsia-600 to-pink-500 hover:from-fuchsia-500 hover:to-pink-400 active:scale-95 text-white flex items-center justify-center shrink-0 shadow-lg shadow-fuchsia-600/40 transition-all border border-pink-300/30"
+                title="Send Gift"
+              >
+                <Gift className="w-5 h-5 text-white" />
+              </button>
+            </form>
+
+            {/* Footer Reference Banner matching 05_05_audience_and_chat.png */}
+            <div className="mt-2 text-center" data-testid="footer-reference-banner">
+              <span className="inline-block px-3 py-1 rounded-full bg-purple-950/80 border border-purple-700/40 text-[11px] font-semibold text-purple-300/90 tracking-wide">
+                05_05 Audience and Chat
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW MODE 2: 9-SEAT GRID VIEW (PRESERVED FROM MODULE 5.4) */}
+      {viewMode === 'grid' && (
+        <div className="flex-1 flex flex-col justify-between overflow-hidden z-20" data-testid="nine-seat-grid-view">
+          {/* MAIN 9-SEAT 3x3 GRID */}
+          <main className="px-4 py-2 flex flex-col justify-center" data-testid="nine-seat-grid">
+            <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+              {displaySeats.map((seat) => {
+                const isHostSeat = seat.seatNumber === 1;
+                const isOccupied = seat.status === 'occupied';
+                const hasPendingRequest = seatRequests.some((r) => r.seatNumber === seat.seatNumber);
+
+                // SEAT 1: HOST SEAT
+                if (isHostSeat) {
+                  return (
+                    <div
+                      key={seat.seatNumber}
+                      data-testid="seat-1-host"
+                      data-seat-number="1"
+                      onClick={() => setSelectedSeat(seat)}
+                      className="aspect-square rounded-2xl relative overflow-hidden bg-[#180e3c] border-2 border-fuchsia-500 shadow-xl shadow-fuchsia-600/30 ring-2 ring-fuchsia-500/40 flex flex-col justify-between p-2 cursor-pointer group transition-all"
+                    >
+                      <div className="absolute inset-0 z-0">
+                        <Image
+                          src={seat.participantAvatar || '/assets/party/seat_avatar_1.png'}
+                          alt="Host Maria"
+                          fill
+                          className={`object-cover ${
+                            seat.isCameraOn ? 'opacity-95' : 'opacity-40 grayscale'
+                          } group-hover:scale-105 transition-all duration-300`}
+                          onError={(e) => {
+                            (e.target as any).src = '/assets/party/seat_avatar_1.png';
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                      </div>
+
+                      <div className="relative z-10 flex items-center justify-between w-full">
+                        <span className="text-sm drop-shadow-md">👑</span>
+                        <div
+                          className={`w-5 h-5 rounded-full flex items-center justify-center text-white shadow-md ${
+                            seat.isMuted
+                              ? 'bg-red-500/90 shadow-red-500/40'
+                              : 'bg-emerald-500/90 shadow-emerald-500/40 ring-1 ring-emerald-300'
+                          }`}
+                          data-testid="host-mic-badge"
+                        >
+                          {seat.isMuted ? <MicOff className="w-2.5 h-2.5" /> : <Mic className="w-2.5 h-2.5" />}
+                        </div>
+                      </div>
+
+                      <div className="relative z-10 flex items-center justify-center gap-1 w-full pb-0.5">
+                        <span className="text-xs font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] tracking-wide">
+                          Host
+                        </span>
+                        <span className="text-amber-400 text-xs drop-shadow">🎙️</span>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // OCCUPIED PARTICIPANT SEATS
+                if (isOccupied) {
+                  return (
+                    <div
+                      key={seat.seatNumber}
+                      data-testid={`seat-${seat.seatNumber}-occupied`}
+                      data-seat-number={seat.seatNumber}
+                      onClick={() => setSelectedSeat(seat)}
+                      className={`aspect-square rounded-2xl relative overflow-hidden bg-[#180e3c] border ${
+                        seat.isCameraOn
+                          ? 'border-purple-400/60 shadow-lg shadow-purple-900/30'
+                          : 'border-zinc-700/60 opacity-80'
+                      } flex flex-col justify-between p-2 cursor-pointer group transition-all`}
+                    >
+                      <div className="absolute inset-0 z-0">
+                        <Image
+                          src={
+                            seat.participantAvatar ||
+                            `/assets/party/seat_avatar_${seat.seatNumber <= 6 ? seat.seatNumber : 2}.png`
+                          }
+                          alt={seat.participantName || `Seat ${seat.seatNumber}`}
+                          fill
+                          className={`object-cover ${
+                            seat.isCameraOn ? 'opacity-95' : 'opacity-40 grayscale'
+                          } group-hover:scale-105 transition-all duration-300`}
+                          onError={(e) => {
+                            (e.target as any).src = `/assets/party/seat_avatar_${seat.seatNumber <= 6 ? seat.seatNumber : 2}.png`;
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
+                      </div>
+
+                      <div className="relative z-10 flex items-center justify-between w-full">
+                        <span className="text-[10px] font-bold text-purple-200/90 px-1.5 py-0.2 rounded-md bg-black/50 backdrop-blur-sm border border-purple-500/30">
+                          #{seat.seatNumber}
+                        </span>
+                      </div>
+
+                      <div className="relative z-10 flex items-end justify-between w-full">
+                        <div className="flex items-center">
+                          {seat.isCameraOn ? (
+                            <div
+                              className="w-5 h-5 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-white shadow-sm"
+                              data-testid={`seat-${seat.seatNumber}-camera-badge`}
+                            >
+                              <Video className="w-2.5 h-2.5" />
+                            </div>
+                          ) : (
+                            <div
+                              className="w-5 h-5 rounded-full bg-red-600/80 backdrop-blur-sm border border-red-400/40 flex items-center justify-center text-white shadow-sm"
+                              data-testid={`seat-${seat.seatNumber}-camera-off-badge`}
+                            >
+                              <VideoOff className="w-2.5 h-2.5" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center">
+                          <div
+                            className={`w-5 h-5 rounded-full flex items-center justify-center text-white shadow-md ${
+                              seat.isMuted
+                                ? 'bg-red-500/90 shadow-red-500/30'
+                                : 'bg-emerald-500/90 shadow-emerald-500/30 ring-1 ring-emerald-300 animate-pulse'
+                            }`}
+                            title={seat.isMuted ? 'Muted' : 'Speaking'}
+                            data-testid={`seat-${seat.seatNumber}-mic-badge`}
+                          >
+                            {seat.isMuted ? <MicOff className="w-2.5 h-2.5" /> : <Mic className="w-2.5 h-2.5" />}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // AVAILABLE EMPTY SEATS
+                return (
+                  <div
+                    key={seat.seatNumber}
+                    data-testid={`seat-${seat.seatNumber}-empty`}
+                    data-seat-number={seat.seatNumber}
+                    onClick={() => setSelectedSeat(seat)}
+                    className="aspect-square rounded-2xl bg-[#140b32]/85 hover:bg-[#1a0f42] border border-[#291759] hover:border-purple-500/50 shadow-inner shadow-purple-950/60 backdrop-blur-md flex flex-col items-center justify-between p-2 cursor-pointer transition-all group active:scale-95 relative"
+                  >
+                    <span className="text-xs font-semibold text-purple-300/80">{seat.seatNumber}</span>
+                    <div
+                      className="w-10 h-10 rounded-full bg-[#361e68] group-hover:bg-[#4b2a91] text-purple-200 group-hover:text-white flex items-center justify-center shadow-md shadow-purple-950/70 border border-purple-400/20 group-hover:scale-105 transition-all"
+                      data-action="add-participant"
+                    >
+                      <Plus className="w-5 h-5 stroke-[2.5]" />
+                    </div>
+                    <span className="text-[10px] text-zinc-500">Available</span>
+                  </div>
+                );
+              })}
+            </div>
+          </main>
+
+          {/* BOTTOM CONTROL BAR IN GRID VIEW (6 Buttons matching 05_04) */}
+          <footer className="px-4 pt-1 pb-3 z-20" data-testid="bottom-control-bar">
+            <div className="flex items-center justify-between gap-2 max-w-sm mx-auto">
+              {/* 1. Mic Button */}
+              <button
+                onClick={toggleBottomMic}
+                data-testid="control-mic"
+                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-95 ${
+                  isMicOn
+                    ? 'bg-[#291b52] hover:bg-[#38256e] text-white border border-purple-600/50 shadow-purple-900/30'
+                    : 'bg-rose-950/80 hover:bg-rose-900 border border-rose-500/50 text-rose-300 shadow-rose-900/30'
+                }`}
+                title={isMicOn ? 'Mute Microphone' : 'Unmute Microphone'}
+              >
+                {isMicOn ? <Mic className="w-5 h-5 text-white" /> : <MicOff className="w-5 h-5 text-rose-300" />}
+              </button>
+
+              {/* 2. Camera Button */}
+              <button
+                onClick={toggleBottomCamera}
+                data-testid="control-camera"
+                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-95 ${
+                  isCameraOn
+                    ? 'bg-[#291b52] hover:bg-[#38256e] text-white border border-purple-600/50 shadow-purple-900/30'
+                    : 'bg-zinc-800 hover:bg-zinc-700 border border-zinc-600/50 text-zinc-400'
+                }`}
+                title={isCameraOn ? 'Turn Video Off' : 'Turn Video On'}
+              >
+                {isCameraOn ? <Video className="w-5 h-5 text-white" /> : <VideoOff className="w-5 h-5 text-zinc-400" />}
+              </button>
+
+              {/* 3. Speaker Button */}
+              <button
+                onClick={toggleSpeaker}
+                data-testid="control-sound"
+                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-95 ${
+                  isSpeakerOn
+                    ? 'bg-[#291b52] hover:bg-[#38256e] text-zinc-200 border border-purple-700/40'
+                    : 'bg-amber-950/80 hover:bg-amber-900 border border-amber-500/40 text-amber-300'
+                }`}
+                title={isSpeakerOn ? 'Mute Room Audio' : 'Unmute Room Audio'}
+              >
+                {isSpeakerOn ? <Volume2 className="w-5 h-5 text-white" /> : <VolumeX className="w-5 h-5 text-amber-300" />}
+              </button>
+
+              {/* 4. Audience Button (Switches to Chat & Audience view) */}
+              <button
+                onClick={() => {
+                  setViewMode('chat');
+                  setChatTab('audience');
+                }}
+                data-testid="control-audience"
+                className="w-11 h-11 rounded-full bg-[#291b52] hover:bg-[#38256e] text-zinc-200 border border-purple-700/40 flex items-center justify-center transition-all shadow-lg active:scale-95 relative"
+                title="Audience & Guests"
+              >
+                <Users className="w-5 h-5 text-zinc-200" />
+                <span className="absolute -top-1 -right-1 px-1 py-0.2 rounded-full bg-pink-500 text-[9px] font-bold text-white">
+                  {audienceCount}
+                </span>
+              </button>
+
+              {/* 5. Chat Button (Switches to Chat view) */}
+              <button
+                onClick={() => {
+                  setViewMode('chat');
+                  setChatTab('chat');
+                }}
+                data-testid="control-chat"
+                className="w-11 h-11 rounded-full bg-[#291b52] hover:bg-[#38256e] text-zinc-200 border border-purple-700/40 flex items-center justify-center transition-all shadow-lg active:scale-95"
+                title="Party Chat"
+              >
+                <MessageSquare className="w-5 h-5 text-zinc-200" />
+              </button>
+
+              {/* 6. More Options Button */}
+              <button
+                onClick={() => showToast('Party Settings & Media Options')}
+                data-testid="control-more"
+                className="w-11 h-11 rounded-full bg-[#291b52] hover:bg-[#38256e] text-zinc-200 border border-purple-700/40 flex items-center justify-center transition-all shadow-lg active:scale-95"
+                title="More Options"
+              >
+                <MoreHorizontal className="w-5 h-5 text-zinc-200" />
+              </button>
+            </div>
+
+            {/* Footer Reference Banner */}
+            <div className="mt-2 text-center" data-testid="footer-reference-banner">
+              <span className="inline-block px-3 py-1 rounded-full bg-purple-950/80 border border-purple-700/40 text-[11px] font-semibold text-purple-300/90 tracking-wide">
+                05_05 Audience and Chat
+              </span>
+            </div>
+          </footer>
+        </div>
       )}
 
       {/* SEAT MODAL: SOUND, CAMERA & HOST MODERATION DRAWER */}
@@ -1073,7 +1381,6 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
             className="w-full max-w-sm bg-[#140b33] border border-purple-500/40 rounded-3xl p-5 shadow-2xl relative animate-in slide-in-from-bottom duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
             <button
               onClick={() => setSelectedSeat(null)}
               className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-zinc-300 flex items-center justify-center transition-colors"
@@ -1081,7 +1388,6 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
               <X className="w-4 h-4" />
             </button>
 
-            {/* Header with Seat Participant Details */}
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-pink-500 p-[2px] flex items-center justify-center overflow-hidden">
                 {selectedSeat.status === 'occupied' && selectedSeat.participantAvatar ? (
@@ -1121,16 +1427,11 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
               </div>
             </div>
 
-            {/* OCCUPIED SEAT CONTROLS (Module 5.4 Sound & Camera) */}
             {selectedSeat.status === 'occupied' ? (
               <div className="space-y-2 mt-4">
-                {/* 1. Participant Self Media Controls */}
                 <div className="grid grid-cols-2 gap-2">
-                  {/* Mic Toggle Button */}
                   <button
-                    onClick={() =>
-                      handleToggleMedia(selectedSeat.seatNumber, 'mic', selectedSeat.isMuted)
-                    }
+                    onClick={() => handleToggleMedia(selectedSeat.seatNumber, 'mic', selectedSeat.isMuted)}
                     disabled={actionLoading}
                     data-action="toggle-seat-mic"
                     className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
@@ -1143,11 +1444,8 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
                     <span>{selectedSeat.isMuted ? 'Unmute Mic' : 'Mute Mic'}</span>
                   </button>
 
-                  {/* Camera Toggle Button */}
                   <button
-                    onClick={() =>
-                      handleToggleMedia(selectedSeat.seatNumber, 'camera', !selectedSeat.isCameraOn)
-                    }
+                    onClick={() => handleToggleMedia(selectedSeat.seatNumber, 'camera', !selectedSeat.isCameraOn)}
                     disabled={actionLoading}
                     data-action="toggle-seat-camera"
                     className={`py-2.5 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
@@ -1161,7 +1459,6 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
                   </button>
                 </div>
 
-                {/* Flip Camera Button */}
                 <button
                   onClick={() =>
                     handleToggleMedia(
@@ -1181,7 +1478,6 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
                   </span>
                 </button>
 
-                {/* 2. Host Moderation Section (for seats 2 to 9) */}
                 {selectedSeat.seatNumber > 1 && (
                   <div className="pt-2 border-t border-purple-900/40 space-y-1.5">
                     <p className="text-[11px] font-bold text-purple-300/90 flex items-center gap-1">
@@ -1189,7 +1485,6 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
                     </p>
 
                     <div className="grid grid-cols-2 gap-2">
-                      {/* Host Mute Participant */}
                       <button
                         onClick={() => handleModerateSeat(selectedSeat.seatNumber, 'host_mute')}
                         disabled={actionLoading || selectedSeat.isMuted}
@@ -1199,7 +1494,6 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
                         <MicOff className="w-3 h-3 text-pink-400" /> Host Mute
                       </button>
 
-                      {/* Disable Participant Video */}
                       <button
                         onClick={() => handleModerateSeat(selectedSeat.seatNumber, 'disable_video')}
                         disabled={actionLoading || !selectedSeat.isCameraOn}
@@ -1210,15 +1504,6 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
                       </button>
                     </div>
 
-                    {/* Security Notice: Host cannot secretly force participant media on */}
-                    <div className="p-2 rounded-xl bg-purple-950/50 border border-purple-800/30 text-[10px] text-zinc-400 leading-snug flex items-start gap-1.5">
-                      <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                      <span>
-                        Host can mute or disable video. Reactivation requires participant consent to protect user privacy.
-                      </span>
-                    </div>
-
-                    {/* Vacate / Kick from Seat */}
                     <button
                       onClick={() => handleVacateSeat(selectedSeat.seatNumber)}
                       disabled={actionLoading}
@@ -1231,7 +1516,6 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
                 )}
               </div>
             ) : (
-              /* AVAILABLE SEAT ACTIONS (Request Seat / Join) */
               <div className="space-y-2 mt-4">
                 <button
                   onClick={() => handleRequestSeat(selectedSeat.seatNumber)}
@@ -1273,95 +1557,6 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
           <span>{toastMessage}</span>
         </div>
       )}
-
-      {/* BOTTOM CONTROL BAR (6 Circular Buttons matching 05_04_sound_and_camera_on_a_seat.png) */}
-      <footer className="px-4 pt-1 pb-3 z-20" data-testid="bottom-control-bar">
-        <div className="flex items-center justify-between gap-2 max-w-sm mx-auto">
-          {/* 1. Mic Button */}
-          <button
-            onClick={toggleBottomMic}
-            data-testid="control-mic"
-            className={`w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-95 ${
-              isMicOn
-                ? 'bg-[#291b52] hover:bg-[#38256e] text-white border border-purple-600/50 shadow-purple-900/30'
-                : 'bg-rose-950/80 hover:bg-rose-900 border border-rose-500/50 text-rose-300 shadow-rose-900/30'
-            }`}
-            title={isMicOn ? 'Mute Microphone' : 'Unmute Microphone'}
-          >
-            {isMicOn ? <Mic className="w-5 h-5 text-white" /> : <MicOff className="w-5 h-5 text-rose-300" />}
-          </button>
-
-          {/* 2. Camera Button */}
-          <button
-            onClick={toggleBottomCamera}
-            data-testid="control-camera"
-            className={`w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-95 ${
-              isCameraOn
-                ? 'bg-[#291b52] hover:bg-[#38256e] text-white border border-purple-600/50 shadow-purple-900/30'
-                : 'bg-zinc-800 hover:bg-zinc-700 border border-zinc-600/50 text-zinc-400'
-            }`}
-            title={isCameraOn ? 'Turn Video Off' : 'Turn Video On'}
-          >
-            {isCameraOn ? <Video className="w-5 h-5 text-white" /> : <VideoOff className="w-5 h-5 text-zinc-400" />}
-          </button>
-
-          {/* 3. Speaker / Audio volume button matching 05_04 */}
-          <button
-            onClick={toggleSpeaker}
-            data-testid="control-sound"
-            className={`w-11 h-11 rounded-full flex items-center justify-center transition-all shadow-lg active:scale-95 ${
-              isSpeakerOn
-                ? 'bg-[#291b52] hover:bg-[#38256e] text-zinc-200 border border-purple-700/40'
-                : 'bg-amber-950/80 hover:bg-amber-900 border border-amber-500/40 text-amber-300'
-            }`}
-            title={isSpeakerOn ? 'Mute Room Audio' : 'Unmute Room Audio'}
-          >
-            {isSpeakerOn ? <Volume2 className="w-5 h-5 text-white" /> : <VolumeX className="w-5 h-5 text-amber-300" />}
-          </button>
-
-          {/* 4. Audience / Guests Button */}
-          <button
-            onClick={() => setIsRequestPanelOpen(!isRequestPanelOpen)}
-            data-testid="control-audience"
-            className="w-11 h-11 rounded-full bg-[#291b52] hover:bg-[#38256e] text-zinc-200 border border-purple-700/40 flex items-center justify-center transition-all shadow-lg active:scale-95 relative"
-            title="Audience & Seat Requests"
-          >
-            <Users className="w-5 h-5 text-zinc-200" />
-            {seatRequests.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-pink-500 text-[10px] font-bold text-white flex items-center justify-center">
-                {seatRequests.length}
-              </span>
-            )}
-          </button>
-
-          {/* 5. Chat Button */}
-          <button
-            onClick={() => showToast('Live Chat connected')}
-            data-testid="control-chat"
-            className="w-11 h-11 rounded-full bg-[#291b52] hover:bg-[#38256e] text-zinc-200 border border-purple-700/40 flex items-center justify-center transition-all shadow-lg active:scale-95"
-            title="Party Chat"
-          >
-            <MessageSquare className="w-5 h-5 text-zinc-200" />
-          </button>
-
-          {/* 6. More Options Button matching ••• in 05_04 */}
-          <button
-            onClick={() => showToast('Party Settings & Media Options')}
-            data-testid="control-more"
-            className="w-11 h-11 rounded-full bg-[#291b52] hover:bg-[#38256e] text-zinc-200 border border-purple-700/40 flex items-center justify-center transition-all shadow-lg active:scale-95"
-            title="More Options"
-          >
-            <MoreHorizontal className="w-5 h-5 text-zinc-200" />
-          </button>
-        </div>
-
-        {/* Footer Reference Banner matching 05_04_sound_and_camera_on_a_seat.png */}
-        <div className="mt-2 text-center" data-testid="footer-reference-banner">
-          <span className="inline-block px-3 py-1 rounded-full bg-purple-950/80 border border-purple-700/40 text-[11px] font-semibold text-purple-300/90 tracking-wide">
-            05_04 Sound and Camera on a Seat
-          </span>
-        </div>
-      </footer>
     </div>
   );
 }
