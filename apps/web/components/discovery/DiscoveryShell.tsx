@@ -526,6 +526,17 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                     <span>{isUr ? 'ویب اکاؤنٹ' : 'Web Account'}</span>
                   </Link>
 
+                  {(user.is_staff || user.role === 'staff' || user.role === 'admin') && (
+                    <Link
+                      href="/staff"
+                      onClick={() => setShowUserMenu(false)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-fuchsia-400 hover:bg-fuchsia-500/10 transition-colors font-bold"
+                    >
+                      <Shield className="w-3.5 h-3.5 text-fuchsia-400" />
+                      <span>{isUr ? 'اسٹاف پریویو' : 'Staff Preview'}</span>
+                    </Link>
+                  )}
+
                   <Link
                     href="/settings"
                     onClick={() => setShowUserMenu(false)}
@@ -645,6 +656,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                 { label_en: 'Agency Portal', label_ur: 'ایجنسی پورٹل', icon: Trophy, href: '/agency' },
                 { label_en: 'Recharge Coins', label_ur: 'کوائنز ریچارج', icon: Coins, href: '/recharge' },
                 { label_en: 'Help & Support', label_ur: 'مدد اور سوالات', icon: HelpCircle, href: '/help' },
+                { label_en: 'Staff Preview', label_ur: 'اسٹاف پریویو', icon: Shield, href: '/staff' },
               ].map((item) => (
                 <Link
                   key={item.href}

@@ -22,6 +22,8 @@ export interface AuthUser {
   bio?: string;
   host_level?: number;
   wealth_level?: number;
+  role?: string;
+  is_staff?: boolean;
 }
 
 export interface SessionData {
@@ -310,6 +312,8 @@ export async function validateSessionToken(sessionToken: string): Promise<AuthUs
             COALESCE(u.bio, '') as bio,
             COALESCE(u.host_level, 1) as host_level,
             COALESCE(u.wealth_level, 1) as wealth_level,
+            COALESCE(u.role, 'user') as role,
+            COALESCE(u.is_staff, false) as is_staff,
             s.expires_at, s.is_revoked
      FROM popolive.sessions s
      JOIN popolive.users u ON s.user_id = u.id
@@ -342,7 +346,17 @@ export async function validateSessionToken(sessionToken: string): Promise<AuthUs
     bio: r.bio || '',
     host_level: Number(r.host_level) || 1,
     wealth_level: Number(r.wealth_level) || 1,
+    role: r.role || 'user',
+    is_staff: Boolean(r.is_staff),
   };
+}
+
+/**
+ * Checks whether an authenticated user has staff or admin clearance.
+ */
+export function isStaffMember(user: AuthUser | null): boolean {
+  if (!user) return false;
+  return Boolean(user.is_staff) || user.role === 'staff' || user.role === 'admin';
 }
 
 export async function getUserActiveSessions(

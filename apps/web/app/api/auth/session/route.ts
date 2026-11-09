@@ -33,6 +33,8 @@ export async function GET(req: NextRequest) {
         birthdate: user.birthdate,
         isAdultVerified: user.is_adult_verified,
         status: user.status,
+        role: user.role || 'user',
+        is_staff: Boolean(user.is_staff),
       },
     });
   } catch (err: any) {
