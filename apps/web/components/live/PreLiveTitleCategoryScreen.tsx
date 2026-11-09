@@ -705,7 +705,7 @@ export default function PreLiveTitleCategoryScreen() {
                 type="button"
                 onClick={() => {
                   setShowStudioModal(false);
-                  router.push('/live/explore');
+                  router.push('/live/studio');
                 }}
                 className="w-full py-3.5 rounded-full bg-gradient-to-r from-[#e91e63] to-[#ff2d55] text-white font-bold text-sm shadow-lg shadow-pink-500/40 hover:brightness-110 active:scale-95 transition-all"
               >

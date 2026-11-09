@@ -18,8 +18,10 @@ conn.on('ready', () => {
     echo "--- 2. Applying Migrations on VPS ---"
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_017.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_018.cjs
+    DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_019.cjs
     
-    echo "--- 3. Rebuilding Next.js on VPS ---"
+    echo "--- 3. Installing dependencies & Rebuilding Next.js on VPS ---"
+    npm install
     npm run build
     
     echo "--- 4. Reloading PM2 process 'popo-live' ---"
@@ -27,8 +29,8 @@ conn.on('ready', () => {
     
     echo "--- 5. Verifying local endpoints on VPS ---"
     sleep 3
-    curl -s -I http://127.0.0.1:3005/live/setup/pre-live | head -n 5
-    curl -s http://127.0.0.1:3005/api/live/pre-live/config?preview=demo | head -n 5
+    curl -s -I http://127.0.0.1:3005/live/studio?preview=demo | head -n 5
+    curl -s http://127.0.0.1:3005/api/live/studio/session?preview=demo | head -n 10
     echo ""
     echo "🎉 DEPLOYMENT COMPLETE ON CONTABO VPS!"
   `;
