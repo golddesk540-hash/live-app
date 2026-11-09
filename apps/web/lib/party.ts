@@ -39,3 +39,81 @@ export interface PartyRoomResponse {
   status: string;
   createdAt: string;
 }
+
+export type SeatStatus = 'available' | 'occupied' | 'locked';
+
+export interface PartySeat {
+  id: string;
+  roomNumber: string;
+  seatNumber: number; // 1 to 9
+  participantId: string | null;
+  participantName: string | null;
+  participantAvatar: string | null;
+  isHost: boolean;
+  isMuted: boolean;
+  isCameraOn: boolean;
+  status: SeatStatus;
+  occupiedAt: string | null;
+  updatedAt: string;
+}
+
+export interface OccupySeatDto {
+  seatNumber: number;
+  participantId: string;
+  participantName: string;
+  participantAvatar?: string;
+  isMuted?: boolean;
+  isCameraOn?: boolean;
+}
+
+export interface VacateSeatDto {
+  seatNumber: number;
+  participantId?: string;
+  isHostAction?: boolean;
+}
+
+export function generateDefaultSeats(
+  roomNumber: string,
+  hostName: string = 'Maria Live',
+  hostAvatar: string = '/assets/studio/host_zara_avatar.png'
+): PartySeat[] {
+  const seats: PartySeat[] = [];
+  const now = new Date().toISOString();
+
+  // Seat 1: Host Seat
+  seats.push({
+    id: `seat-${roomNumber}-1`,
+    roomNumber,
+    seatNumber: 1,
+    participantId: `host-${roomNumber}`,
+    participantName: hostName,
+    participantAvatar: hostAvatar,
+    isHost: true,
+    isMuted: false,
+    isCameraOn: true,
+    status: 'occupied',
+    occupiedAt: now,
+    updatedAt: now,
+  });
+
+  // Seats 2-9: Participant Seats (Available initially)
+  for (let i = 2; i <= 9; i++) {
+    seats.push({
+      id: `seat-${roomNumber}-${i}`,
+      roomNumber,
+      seatNumber: i,
+      participantId: null,
+      participantName: null,
+      participantAvatar: null,
+      isHost: false,
+      isMuted: false,
+      isCameraOn: false,
+      status: 'available',
+      occupiedAt: null,
+      updatedAt: now,
+    });
+  }
+
+  return seats;
+}
+

@@ -96,6 +96,33 @@ export async function POST(req: NextRequest) {
         newPartyId = row.id;
         createdAt = row.created_at;
       }
+
+      // Initialize 9 seats for this party room (Seat 1: Host, Seats 2-9: Available)
+      try {
+        await query(
+          `INSERT INTO popolive.party_seats (party_id, room_number, seat_number, participant_id, participant_name, participant_avatar, is_host, is_muted, is_camera_on, status, occupied_at)
+           VALUES
+             ($1, $2, 1, $3, $4, $5, true, false, true, 'occupied', NOW()),
+             ($1, $2, 2, NULL, NULL, NULL, false, false, false, 'available', NULL),
+             ($1, $2, 3, NULL, NULL, NULL, false, false, false, 'available', NULL),
+             ($1, $2, 4, NULL, NULL, NULL, false, false, false, 'available', NULL),
+             ($1, $2, 5, NULL, NULL, NULL, false, false, false, 'available', NULL),
+             ($1, $2, 6, NULL, NULL, NULL, false, false, false, 'available', NULL),
+             ($1, $2, 7, NULL, NULL, NULL, false, false, false, 'available', NULL),
+             ($1, $2, 8, NULL, NULL, NULL, false, false, false, 'available', NULL),
+             ($1, $2, 9, NULL, NULL, NULL, false, false, false, 'available', NULL)
+           ON CONFLICT (room_number, seat_number) DO NOTHING`,
+          [
+            newPartyId.startsWith('party-') ? null : newPartyId,
+            roomNumber,
+            hostId || 'host_' + roomNumber,
+            hostNickname,
+            hostAvatar,
+          ]
+        );
+      } catch (seatsErr) {
+        console.warn('DB party seats initial insertion note:', seatsErr);
+      }
     } catch (dbErr) {
       console.warn('DB party room insertion note:', dbErr);
     }

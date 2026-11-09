@@ -26,6 +26,8 @@ conn.on('ready', () => {
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_024.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_025.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_026.cjs
+    DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_027.cjs
+    DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node update_room_7001.cjs
     
     echo "--- 3. Installing dependencies & Rebuilding Next.js on VPS ---"
     npm install
@@ -61,6 +63,9 @@ conn.on('ready', () => {
     curl -s -I http://127.0.0.1:3005/party/create?preview=demo | head -n 5
     curl -s http://127.0.0.1:3005/api/party/categories | head -n 10
     curl -s -X POST -H "Content-Type: application/json" -d '{"title":"VPS Deploy Party","categoryId":"chill_chat","roomType":"public"}' http://127.0.0.1:3005/api/party/create?preview=demo | head -n 10
+    curl -s -I http://127.0.0.1:3005/party/room/7001?preview=demo | head -n 5
+    curl -s http://127.0.0.1:3005/api/party/7001/seats | head -n 10
+    curl -s http://127.0.0.1:3005/api/party/7001/seats/status | head -n 10
     echo ""
     echo "🎉 DEPLOYMENT COMPLETE ON CONTABO VPS!"
   `;
