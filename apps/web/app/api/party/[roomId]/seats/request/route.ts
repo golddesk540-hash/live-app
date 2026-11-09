@@ -33,6 +33,59 @@ export async function POST(
       );
     }
 
+    // Module 5.9: Verify room limits and protection settings
+    const roomRows = await query(
+      `SELECT max_seats, allow_join_requests, is_invite_only, is_locked, status FROM popolive.party_rooms WHERE room_number = $1`,
+      [roomId]
+    );
+
+    if (roomRows && roomRows[0]) {
+      const room = roomRows[0];
+      if (room.status === 'closed') {
+        return NextResponse.json(
+          { success: false, error: 'Party room is closed.' },
+          { status: 403 }
+        );
+      }
+      if (room.is_locked) {
+        return NextResponse.json(
+          { success: false, error: 'Room is locked. Seat requests are disabled.' },
+          { status: 403 }
+        );
+      }
+      if (room.allow_join_requests === false) {
+        return NextResponse.json(
+          { success: false, error: 'Seat join requests are disabled by the host.' },
+          { status: 403 }
+        );
+      }
+      if (room.is_invite_only) {
+        return NextResponse.json(
+          { success: false, error: 'Party is Invite Only. Direct seat requests are not allowed.' },
+          { status: 403 }
+        );
+      }
+
+      // Check if all seats are occupied
+      const occupiedRes = await query(
+        `SELECT COUNT(*) as count FROM popolive.party_seats WHERE room_number = $1 AND status = 'occupied'`,
+        [roomId]
+      );
+      const occupiedCount = parseInt(occupiedRes[0]?.count || '1', 10);
+      const maxSeats = room.max_seats || 9;
+      if (occupiedCount >= maxSeats) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Seats Full: All ${maxSeats} participant seats are currently occupied.`,
+            isSeatsFull: true,
+            maxSeats,
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     // 1. Check if the seat is already occupied or locked
     const seatCheck = await query(
       `SELECT seat_number, status, participant_id, participant_name FROM popolive.party_seats 

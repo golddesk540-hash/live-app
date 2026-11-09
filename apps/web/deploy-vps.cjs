@@ -32,6 +32,7 @@ conn.on('ready', () => {
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_030.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_031.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_032.cjs
+    DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_033.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node update_room_7001.cjs
     
     echo "--- 3. Installing dependencies & Rebuilding Next.js on VPS ---"
@@ -90,6 +91,10 @@ conn.on('ready', () => {
     curl -s -I http://127.0.0.1:3005/party/room/7001/order-closing | head -n 5
     curl -s -X POST -H "Content-Type: application/json" -d '{"fromSeat":2,"toSeat":3,"isHostAction":true}' http://127.0.0.1:3005/api/party/7001/seats/reorder | head -n 10
     curl -s http://127.0.0.1:3005/api/party/7001/status | head -n 10
+    curl -s -I http://127.0.0.1:3005/party/limits?preview=demo | head -n 5
+    curl -s -I http://127.0.0.1:3005/party/room/7001/limits | head -n 5
+    curl -s http://127.0.0.1:3005/api/party/7001/limits | head -n 10
+    curl -s -X POST -H "Content-Type: application/json" -d '{"audienceLimit":1000,"joinRequestsEnabled":true,"isHostAction":true}' http://127.0.0.1:3005/api/party/7001/limits | head -n 10
     echo ""
     echo "🎉 DEPLOYMENT COMPLETE ON CONTABO VPS!"
   `;

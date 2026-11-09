@@ -36,6 +36,7 @@ import {
   Grid,
   Palette,
   Settings2,
+  Shield,
 } from 'lucide-react';
 import {
   PartySeat,
@@ -50,6 +51,7 @@ import {
 } from '@/lib/party';
 import PartyThemesScreen from './PartyThemesScreen';
 import OrderAndClosingScreen from './OrderAndClosingScreen';
+import RoomLimitsScreen from './RoomLimitsScreen';
 
 interface SeatGridScreenProps {
   roomId: string;
@@ -232,6 +234,9 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
   // Module 5.8 Order and Closing state
   const [isRoomControlsOpen, setIsRoomControlsOpen] = useState<boolean>(false);
   const [isPartyClosed, setIsPartyClosed] = useState<boolean>(false);
+
+  // Module 5.9 Limits that Protect the Room state
+  const [isLimitsOpen, setIsLimitsOpen] = useState<boolean>(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -888,6 +893,18 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
           >
             <Settings2 className="w-3.5 h-3.5 text-indigo-400" />
             <span className="hidden xs:inline">Controls</span>
+          </button>
+
+          {/* Room Limits Button matching Module 5.9 */}
+          <button
+            onClick={() => setIsLimitsOpen(true)}
+            data-action="open-room-limits"
+            data-testid="header-room-limits-button"
+            className="px-2 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-purple-500/30 text-[11px] font-bold text-purple-200 flex items-center gap-1 transition-all active:scale-95"
+            title="Room Limits & Protection"
+          >
+            <Shield className="w-3.5 h-3.5 text-purple-300" />
+            <span className="hidden xs:inline">Limits</span>
           </button>
 
           {/* Web Party Gateway Button matching Module 5.7 */}
@@ -1721,6 +1738,33 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
             >
               Return to Discovery
             </Link>
+          </div>
+        </div>
+      )}
+
+      {/* MODULE 5.9: Room Limits & Protection Drawer / Modal */}
+      {isLimitsOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col justify-end sm:justify-center animate-fade-in"
+          data-testid="limits-modal-overlay"
+        >
+          <div className="w-full max-w-md mx-auto max-h-[92vh] bg-[#0B081E] rounded-t-3xl sm:rounded-3xl border border-white/15 overflow-y-auto shadow-2xl relative">
+            <button
+              onClick={() => setIsLimitsOpen(false)}
+              className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 transition-colors"
+              aria-label="Close Limits"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <RoomLimitsScreen
+              roomId={roomId}
+              isHost={true}
+              isModal={true}
+              onLimitsUpdated={() => {
+                showToast('Room limits updated successfully!');
+              }}
+              onClose={() => setIsLimitsOpen(false)}
+            />
           </div>
         </div>
       )}

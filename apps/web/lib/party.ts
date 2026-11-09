@@ -508,6 +508,52 @@ export interface PartyReorderLog {
   createdAt: string;
 }
 
+// ============================================================================
+// Module 5.9: Limits that Protect the Room Interfaces & Types
+// Reference: 05_09_limits_that_protect_the_room.png
+// ============================================================================
+
+export interface PartyRoomLimits {
+  roomNumber: string;
+  maxSeats: number;
+  seatsLayout: string;
+  audienceLimit: number;
+  currentAudienceCount: number;
+  occupiedSeatsCount: number;
+  availableSeatsCount: number;
+  joinRequestsEnabled: boolean;
+  inviteOnly: boolean;
+  lockRoom: boolean;
+  isRoomFull: boolean;
+  isSeatsFull: boolean;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export interface UpdatePartyLimitsDto {
+  maxSeats?: number;
+  seatsLayout?: string;
+  audienceLimit?: number;
+  joinRequestsEnabled?: boolean;
+  inviteOnly?: boolean;
+  lockRoom?: boolean;
+  isHostAction?: boolean;
+  updatedBy?: string;
+}
+
+export interface PartyLimitsLog {
+  id: string;
+  roomNumber: string;
+  maxSeats: number;
+  maxAudience: number;
+  allowJoinRequests: boolean;
+  isInviteOnly: boolean;
+  isLocked: boolean;
+  updatedBy: string;
+  createdAt: string;
+}
+
+
 
 
 

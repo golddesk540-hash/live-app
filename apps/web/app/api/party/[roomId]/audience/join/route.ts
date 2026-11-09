@@ -24,6 +24,47 @@ export async function POST(
     const avatar = userAvatar || '/assets/studio/user_avatar_default.png';
     const level = userLevel || 1;
 
+    // Module 5.9: Verify room limits and protection
+    const roomRows = await query(
+      `SELECT max_audience, is_locked, is_invite_only, status FROM popolive.party_rooms WHERE room_number = $1`,
+      [roomId]
+    );
+
+    if (roomRows && roomRows[0]) {
+      const room = roomRows[0];
+      if (room.status === 'closed') {
+        return NextResponse.json(
+          { success: false, error: 'Party room is closed.' },
+          { status: 403 }
+        );
+      }
+      if (room.is_locked) {
+        return NextResponse.json(
+          { success: false, error: 'Room is locked by host. New audience members cannot join.' },
+          { status: 403 }
+        );
+      }
+
+      // Check current audience count vs max_audience
+      const countRes = await query(
+        `SELECT COUNT(*) as count FROM popolive.party_audience WHERE room_number = $1 AND is_active = true`,
+        [roomId]
+      );
+      const activeDbCount = parseInt(countRes[0]?.count || '0', 10);
+      const limit = room.max_audience ?? 1000;
+      if (activeDbCount >= limit) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Room Full: Audience capacity of ${limit} has been reached. Please try again later.`,
+            isRoomFull: true,
+            limit,
+          },
+          { status: 429 }
+        );
+      }
+    }
+
     // Upsert into party_audience
     const res = await query(
       `INSERT INTO popolive.party_audience (room_number, user_id, user_name, user_avatar, user_level, is_active, joined_at, last_heartbeat)
