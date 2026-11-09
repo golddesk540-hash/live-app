@@ -21,7 +21,9 @@ import {
   Copy,
   ChevronLeft,
   Sparkles,
+  Shield,
 } from 'lucide-react';
+import SafetyToolsScreen from './SafetyToolsScreen';
 
 interface ViewerSessionData {
   isDemo?: boolean;
@@ -100,6 +102,26 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showStreamInfo, setShowStreamInfo] = useState<boolean>(false);
+  const [showSafetyTools, setShowSafetyTools] = useState<boolean>(false);
+  const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set());
+  const [mutedUserIds, setMutedUserIds] = useState<Set<string>>(new Set());
+
+  // Load active blocklist & mutes (Module 4.6 Safety Tools)
+  useEffect(() => {
+    fetch('/api/live/safety/block')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.blockedUserIds) setBlockedUserIds(new Set(d.blockedUserIds));
+      })
+      .catch(() => {});
+
+    fetch(`/api/live/safety/mute?roomId=${encodeURIComponent(roomId || '880219')}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.mutedUserIds) setMutedUserIds(new Set(d.mutedUserIds));
+      })
+      .catch(() => {});
+  }, [roomId]);
 
   // Chat Handoff (Prepared for Module 4.5)
   const [chatMessages, setChatMessages] = useState<Array<{ id: number; user: string; avatar: string; text: string; emoji?: string }>>([
@@ -387,6 +409,7 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
 
   // Host and Room details matching 04_04_viewer_room.png
   const host = sessionData?.host || {
+    id: 'demo-host-zara',
     nickname: 'Zara Live',
     poppoId: '8802194',
     avatarUrl: '/assets/studio/host_zara_avatar.png',
@@ -538,8 +561,18 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
               )}
             </button>
 
-            {/* Viewer Count & Room Coins Pill */}
+            {/* Viewer Count & Room Coins Pill & Safety Tools Button */}
             <div className="flex items-center gap-1.5">
+              {/* Safety Tools Shield Trigger (Module 4.6) */}
+              <button
+                type="button"
+                onClick={() => setShowSafetyTools(true)}
+                className="w-7 h-7 rounded-full bg-black/45 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/80 hover:text-pink-400 hover:border-pink-500/40 transition active:scale-95"
+                title="Open Safety Tools (Report, Block, Mute)"
+              >
+                <Shield className="w-3.5 h-3.5" />
+              </button>
+
               {/* Audience Count Pill */}
               <div
                 onClick={() => setShowStreamInfo((prev) => !prev)}
@@ -654,7 +687,9 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
             title="Open Module 4.5 Live Chat Screen"
             className="flex flex-col gap-1.5 max-h-40 overflow-y-auto no-scrollbar pt-1 cursor-pointer group"
           >
-            {chatMessages.map((msg) => (
+            {chatMessages
+              .filter((msg: any) => !blockedUserIds.has(String(msg.user)) && !mutedUserIds.has(String(msg.user)))
+              .map((msg) => (
               <div
                 key={msg.id}
                 className="self-start flex items-center gap-1.5 bg-black/45 backdrop-blur-md border border-white/10 rounded-full pl-1.5 pr-3 py-1 text-xs text-white max-w-[85%] shadow-sm animate-fade-in"
@@ -698,9 +733,9 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
             ) : (
               <button
                 type="button"
-                onClick={() => spawnHeart('💕')}
-                className="absolute right-2 text-zinc-300 hover:text-white"
-                title="Options"
+                onClick={() => setShowSafetyTools(true)}
+                className="absolute right-2 text-zinc-300 hover:text-pink-400 transition"
+                title="Safety Tools (Report, Block, Mute)"
               >
                 <MoreHorizontal className="w-4 h-4" />
               </button>
@@ -755,6 +790,37 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
             <Gift className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Safety Tools Bottom Sheet Modal (Module 4.6) */}
+        {showSafetyTools && (
+          <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm animate-fade-in">
+            <SafetyToolsScreen
+              roomId={sessionData?.room?.roomNumber || roomId || '880219'}
+              hostName={host.nickname}
+              hostAvatar={host.avatarUrl}
+              hostId={host.id}
+              userRole="viewer"
+              onClose={() => setShowSafetyTools(false)}
+              onBlockSuccess={(blockedId) => {
+                setBlockedUserIds((prev) => {
+                  const next = new Set(prev);
+                  next.add(blockedId);
+                  return next;
+                });
+                triggerToast(`${host.nickname} has been blocked.`);
+                setShowSafetyTools(false);
+              }}
+              onMuteSuccess={(mutedId) => {
+                setMutedUserIds((prev) => {
+                  const next = new Set(prev);
+                  next.add(mutedId);
+                  return next;
+                });
+                triggerToast('Participant muted.');
+              }}
+            />
+          </div>
+        )}
 
         {/* Bottom Banner Label (1:1 with 04_04_viewer_room.png) */}
         <div className="w-full py-2 bg-[#12132b] text-center border-t border-purple-900/40">

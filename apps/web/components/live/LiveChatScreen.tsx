@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
+import SafetyToolsScreen from './SafetyToolsScreen';
 
 interface ChatMessage {
   id: string;
@@ -58,6 +59,26 @@ export default function LiveChatScreen() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [giftEffect, setGiftEffect] = useState<string | null>(null);
+  const [showSafetyTools, setShowSafetyTools] = useState<boolean>(false);
+  const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set());
+  const [mutedUserIds, setMutedUserIds] = useState<Set<string>>(new Set());
+
+  // Load active blocklist & mutes (Module 4.6 Safety Tools)
+  useEffect(() => {
+    fetch('/api/live/safety/block')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.blockedUserIds) setBlockedUserIds(new Set(d.blockedUserIds));
+      })
+      .catch(() => {});
+
+    fetch(`/api/live/safety/mute?roomId=${encodeURIComponent(roomId)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.mutedUserIds) setMutedUserIds(new Set(d.mutedUserIds));
+      })
+      .catch(() => {});
+  }, [roomId]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastFetchedTimeRef = useRef<string | null>(null);
@@ -245,17 +266,29 @@ export default function LiveChatScreen() {
             </span>
           </div>
 
-          {/* Right Action: Scan/Frame Icon */}
-          <button
-            onClick={() => router.push(`/live/room/${roomId}`)}
-            title="Return to stream video view"
-            aria-label="View room video"
-            className="w-9 h-9 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition active:scale-95"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2m8-16h2a2 2 0 012 2v2m-2 12h2a2 2 0 002-2v-2" />
-            </svg>
-          </button>
+          {/* Right Actions: Safety Tools Shield & Scan/Frame Icon */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setShowSafetyTools(true)}
+              title="Open Safety Tools (Report, Block, Mute)"
+              aria-label="Safety Tools"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white/80 hover:text-pink-400 hover:bg-white/10 transition active:scale-95"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </button>
+            <button
+              onClick={() => router.push(`/live/room/${roomId}`)}
+              title="Return to stream video view"
+              aria-label="View room video"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 transition active:scale-95"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V6a2 2 0 012-2h2M4 16v2a2 2 0 002 2h2m8-16h2a2 2 0 012 2v2m-2 12h2a2 2 0 002-2v-2" />
+              </svg>
+            </button>
+          </div>
         </header>
 
         {/* Tab Segmented Control */}
@@ -313,7 +346,9 @@ export default function LiveChatScreen() {
           {/* TAB 1: CHAT FEED */}
           {activeTab === 'chat' && (
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3.5 custom-scrollbar">
-              {messages.map((msg) => (
+              {messages
+                .filter((msg) => !blockedUserIds.has(String(msg.senderNickname)) && !mutedUserIds.has(String(msg.senderNickname)))
+                .map((msg) => (
                 <div key={msg.id} className="flex items-start gap-2.5 group">
                   {/* Sender Avatar */}
                   <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-white/10 bg-slate-800">
@@ -512,6 +547,35 @@ export default function LiveChatScreen() {
             </form>
           </div>
         </div>
+
+        {/* Safety Tools Bottom Sheet Modal (Module 4.6) */}
+        {showSafetyTools && (
+          <div className="absolute inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm animate-fade-in">
+            <SafetyToolsScreen
+              roomId={roomId}
+              hostName="Zara Live"
+              hostAvatar="/assets/studio/host_zara_avatar.png"
+              hostId="demo-host-zara"
+              userRole="viewer"
+              onClose={() => setShowSafetyTools(false)}
+              onBlockSuccess={(blockedId) => {
+                setBlockedUserIds((prev) => {
+                  const next = new Set(prev);
+                  next.add(blockedId);
+                  return next;
+                });
+                setShowSafetyTools(false);
+              }}
+              onMuteSuccess={(mutedId) => {
+                setMutedUserIds((prev) => {
+                  const next = new Set(prev);
+                  next.add(mutedId);
+                  return next;
+                });
+              }}
+            />
+          </div>
+        )}
 
         {/* Bottom Banner matching reference: "4.5 Live Chat" */}
         <div className="h-9 bg-[#1a163a] border-t border-white/5 flex items-center justify-center">
