@@ -55,14 +55,18 @@ async function main() {
   await exec('curl -I http://127.0.0.1:3005/live/explore');
   await exec('curl -I http://127.0.0.1:3005/live/party');
   await exec('curl -I http://127.0.0.1:3005/live/following');
+  await exec('curl -I http://127.0.0.1:3005/live/near');
+  await exec('curl -I http://127.0.0.1:3005/near');
   await exec('curl -I http://127.0.0.1:3005/search');
 
   // 6. Verify public HTTPS response
   await exec('curl -I https://kigolive.com/live/explore');
   await exec('curl -I https://kigolive.com/live/party');
   await exec('curl -I https://kigolive.com/live/following');
+  await exec('curl -I https://kigolive.com/live/near');
+  await exec('curl -I https://kigolive.com/near');
   await exec('curl -I https://kigolive.com/search');
-  await exec('curl -I https://kigolive.com/search');
+  await exec('curl -s https://kigolive.com/api/discovery/near');
 
   console.log('\n🎉 VPS UPDATE & RELOAD COMPLETED SUCCESSFULLY!');
   conn.end();
