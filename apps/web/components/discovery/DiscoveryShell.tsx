@@ -45,15 +45,18 @@ import {
   Globe,
   Filter,
   RefreshCw,
+  MapPin,
 } from 'lucide-react';
 import LiveRoomCard from './LiveRoomCard';
 import PartyRoomCard, { PartyRoomItem } from './PartyRoomCard';
 import FollowingUserCard, { FollowedUserItem } from './FollowingUserCard';
+import NearScreen from './NearScreen';
 import DiscoveryBannerCarousel from './DiscoveryBannerCarousel';
 import RankDoorSection from './RankDoorSection';
 import RankingPreviewSection from './RankingPreviewSection';
+import { NEAR_FEATURE_ENABLED } from '@/lib/featureFlags';
 
-export type DiscoveryTab = 'explore' | 'following' | 'new' | 'pk' | 'party';
+export type DiscoveryTab = 'explore' | 'following' | 'new' | 'pk' | 'party' | 'near';
 
 interface RoomItem {
   roomId: string;
@@ -246,6 +249,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
     else if (pathname.includes('/live/new')) setActiveTab('new');
     else if (pathname.includes('/live/pk')) setActiveTab('pk');
     else if (pathname.includes('/live/party') || pathname === '/party') setActiveTab('party');
+    else if (pathname.includes('/live/near') || pathname === '/near') setActiveTab('near');
     else if (pathname.includes('/live/explore') || pathname === '/live') setActiveTab('explore');
   }, [pathname]);
 
@@ -597,6 +601,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                 { id: 'following', label_en: 'Following', label_ur: 'فالوئنگ', icon: Heart, count: null },
                 { id: 'new', label_en: 'New Streamers', label_ur: 'نئے براڈکاسٹرز', icon: Sparkles, count: 'NEW' },
                 { id: 'pk', label_en: 'PK Battles', label_ur: 'پی کے مقابلے', icon: Swords, count: 'LIVE' },
+                { id: 'near', label_en: 'Near (Location)', label_ur: 'قریبی براڈکاسٹرز', icon: MapPin, count: 'OFF' },
               ].map((item) => {
                 const isSelected = activeTab === item.id;
                 const IconComponent = item.icon;
@@ -617,7 +622,11 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                     </div>
                     {item.count && (
                       <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
-                        item.count === 'HOT' ? 'bg-[#FF2E74] text-white' : 'bg-purple-500/20 text-purple-300'
+                        item.count === 'HOT'
+                          ? 'bg-[#FF2E74] text-white'
+                          : item.count === 'OFF'
+                          ? 'bg-zinc-800 text-zinc-400 border border-zinc-700/60'
+                          : 'bg-purple-500/20 text-purple-300'
                       }`}>
                         {item.count}
                       </span>
@@ -670,7 +679,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 flex flex-col min-w-0 px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5">
           
-          {/* 3. TABS ROW (Matching 03_06 3-tab bar on Party, or 5-tab row on Discovery) */}
+          {/* 3. TABS ROW (Matching 03_06 3-tab bar on Party, hidden on Near to match 03_09, or standard row) */}
           {activeTab === 'party' ? (
             <div className="flex items-center justify-center gap-8 sm:gap-14 py-2 sm:py-3 border-b border-white/5">
               <button
@@ -695,7 +704,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                 PK
               </button>
             </div>
-          ) : (
+          ) : activeTab === 'near' ? null : (
             <div className="flex items-center justify-between pb-1">
               <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar py-1">
                 {tabs.map((tab) => {
@@ -727,9 +736,9 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           )}
 
           {/* ========================================================================= */}
-          {/* 4. COUNTRY FILTERS BAR (Only on Explore/New/PK tabs, hidden on Party and Following to match 03_06 & 03_08 1:1) */}
+          {/* 4. COUNTRY FILTERS BAR (Only on Explore/New/PK tabs, hidden on Party, Following and Near to match 03_06, 03_08 & 03_09 1:1) */}
           {/* ========================================================================= */}
-          {activeTab !== 'party' && activeTab !== 'following' && (
+          {activeTab !== 'party' && activeTab !== 'following' && activeTab !== 'near' && (
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs">
               {POPULAR_COUNTRY_SHORTCUTS.map((c) => {
                 const isSelected = selectedCountry === c.code;
@@ -1283,6 +1292,15 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 6: NEAR (DEFAULT OFF) — STRICT MATCH TO 03_09_near_default_off.png */}
+          {/* ========================================================================= */}
+          {activeTab === 'near' && (
+            <div className="w-full flex justify-center py-2">
+              <NearScreen onBack={() => handleTabChange('explore')} />
             </div>
           )}
 
