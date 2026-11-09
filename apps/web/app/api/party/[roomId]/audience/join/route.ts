@@ -24,9 +24,9 @@ export async function POST(
     const avatar = userAvatar || '/assets/studio/user_avatar_default.png';
     const level = userLevel || 1;
 
-    // Module 5.9: Verify room limits and protection
+    // Module 5.9 & 5.10: Verify room limits and protection
     const roomRows = await query(
-      `SELECT max_audience, is_locked, is_invite_only, status FROM popolive.party_rooms WHERE room_number = $1`,
+      `SELECT max_audience, is_locked, is_invite_only, status, active_rules_version FROM popolive.party_rooms WHERE room_number = $1`,
       [roomId]
     );
 
@@ -43,6 +43,34 @@ export async function POST(
           { success: false, error: 'Room is locked by host. New audience members cannot join.' },
           { status: 403 }
         );
+      }
+
+      // Module 5.10: Check Party Rules Acceptance
+      const activeVersion = room.active_rules_version || 'v1.0';
+      if ((body as any).acceptedRules) {
+        await query(
+          `INSERT INTO popolive.party_rule_acceptances (user_id, room_number, policy_version, is_accepted, accepted_at)
+           VALUES ($1, $2, $3, TRUE, NOW())
+           ON CONFLICT (user_id, room_number, policy_version) DO UPDATE SET is_accepted = TRUE, accepted_at = NOW()`,
+          [userId, roomId, activeVersion]
+        );
+      } else if ((body as any).requireRulesCheck) {
+        const accCheck = await query(
+          `SELECT id FROM popolive.party_rule_acceptances 
+           WHERE room_number = $1 AND user_id = $2 AND policy_version = $3 AND is_accepted = TRUE`,
+          [roomId, userId, activeVersion]
+        );
+        if (!accCheck || accCheck.length === 0) {
+          return NextResponse.json(
+            {
+              success: false,
+              code: 'RULES_ACCEPTANCE_REQUIRED',
+              error: 'You must accept the Party Rules before joining this room.',
+              policyVersion: activeVersion,
+            },
+            { status: 403 }
+          );
+        }
       }
 
       // Check current audience count vs max_audience

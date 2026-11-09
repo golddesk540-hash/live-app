@@ -37,6 +37,7 @@ import {
   Palette,
   Settings2,
   Shield,
+  FileText,
 } from 'lucide-react';
 import {
   PartySeat,
@@ -52,6 +53,7 @@ import {
 import PartyThemesScreen from './PartyThemesScreen';
 import OrderAndClosingScreen from './OrderAndClosingScreen';
 import RoomLimitsScreen from './RoomLimitsScreen';
+import PartyRulesScreen from './PartyRulesScreen';
 
 interface SeatGridScreenProps {
   roomId: string;
@@ -237,6 +239,9 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
 
   // Module 5.9 Limits that Protect the Room state
   const [isLimitsOpen, setIsLimitsOpen] = useState<boolean>(false);
+
+  // Module 5.10 Party Rules state
+  const [isRulesOpen, setIsRulesOpen] = useState<boolean>(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -905,6 +910,18 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
           >
             <Shield className="w-3.5 h-3.5 text-purple-300" />
             <span className="hidden xs:inline">Limits</span>
+          </button>
+
+          {/* Party Rules Button matching Module 5.10 */}
+          <button
+            onClick={() => setIsRulesOpen(true)}
+            data-action="open-party-rules"
+            data-testid="header-party-rules-button"
+            className="px-2 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-purple-500/30 text-[11px] font-bold text-purple-200 flex items-center gap-1 transition-all active:scale-95"
+            title="Party Rules & Guidelines"
+          >
+            <FileText className="w-3.5 h-3.5 text-purple-300" />
+            <span className="hidden xs:inline">Rules</span>
           </button>
 
           {/* Web Party Gateway Button matching Module 5.7 */}
@@ -1764,6 +1781,36 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
                 showToast('Room limits updated successfully!');
               }}
               onClose={() => setIsLimitsOpen(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* MODULE 5.10: Party Rules Modal Drawer */}
+      {isRulesOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col justify-end sm:justify-center animate-fade-in"
+          data-testid="rules-modal-overlay"
+        >
+          <div className="w-full max-w-md mx-auto max-h-[92vh] bg-[#0B081E] rounded-t-3xl sm:rounded-3xl border border-white/15 overflow-y-auto shadow-2xl relative">
+            <button
+              onClick={() => setIsRulesOpen(false)}
+              className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 transition-colors"
+              aria-label="Close Rules"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <PartyRulesScreen
+              roomId={roomId}
+              userId="host_maria_7001"
+              userName={room?.hostNickname || 'Maria Live'}
+              isHost={true}
+              isModal={true}
+              onClose={() => setIsRulesOpen(false)}
+              onAccept={() => {
+                showToast('Party rules accepted successfully!');
+                setIsRulesOpen(false);
+              }}
             />
           </div>
         </div>

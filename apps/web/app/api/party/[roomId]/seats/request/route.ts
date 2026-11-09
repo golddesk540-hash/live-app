@@ -33,9 +33,9 @@ export async function POST(
       );
     }
 
-    // Module 5.9: Verify room limits and protection settings
+    // Module 5.9 & 5.10: Verify room limits and protection settings
     const roomRows = await query(
-      `SELECT max_seats, allow_join_requests, is_invite_only, is_locked, status FROM popolive.party_rooms WHERE room_number = $1`,
+      `SELECT max_seats, allow_join_requests, is_invite_only, is_locked, status, active_rules_version FROM popolive.party_rooms WHERE room_number = $1`,
       [roomId]
     );
 
@@ -64,6 +64,34 @@ export async function POST(
           { success: false, error: 'Party is Invite Only. Direct seat requests are not allowed.' },
           { status: 403 }
         );
+      }
+
+      // Module 5.10: Check Party Rules Acceptance
+      const activeRulesVersion = room.active_rules_version || 'v1.0';
+      if (body.acceptedRules) {
+        await query(
+          `INSERT INTO popolive.party_rule_acceptances (user_id, room_number, policy_version, is_accepted, accepted_at)
+           VALUES ($1, $2, $3, TRUE, NOW())
+           ON CONFLICT (user_id, room_number, policy_version) DO UPDATE SET is_accepted = TRUE, accepted_at = NOW()`,
+          [userId, roomId, activeRulesVersion]
+        );
+      } else if (body.requireRulesCheck) {
+        const accCheck = await query(
+          `SELECT id FROM popolive.party_rule_acceptances 
+           WHERE room_number = $1 AND user_id = $2 AND policy_version = $3 AND is_accepted = TRUE`,
+          [roomId, userId, activeRulesVersion]
+        );
+        if (!accCheck || accCheck.length === 0) {
+          return NextResponse.json(
+            {
+              success: false,
+              code: 'RULES_ACCEPTANCE_REQUIRED',
+              error: 'You must accept the Party Rules before requesting a seat.',
+              policyVersion: activeRulesVersion,
+            },
+            { status: 403 }
+          );
+        }
       }
 
       // Check if all seats are occupied

@@ -553,6 +553,76 @@ export interface PartyLimitsLog {
   createdAt: string;
 }
 
+// ============================================================================
+// Module 5.10: Party Rules Interfaces & Types
+// Reference: 05_10_party_rules.png
+// ============================================================================
+
+export interface PartyRule {
+  id: string;
+  partyId?: string | null;
+  title: string;
+  description: string;
+  category: 'respect' | 'safety' | 'content' | 'anti-spam' | 'guidelines' | 'custom' | string;
+  icon: 'respect' | 'hate_speech' | 'inappropriate' | 'spam' | 'guidelines' | 'privacy' | 'impersonation' | 'moderation' | 'media' | 'age_safety' | 'custom' | string;
+  isMandatory: boolean;
+  isActive: boolean;
+  displayOrder: number;
+  policyVersion: string;
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PartyRuleAcceptance {
+  id: string;
+  userId: string;
+  roomNumber: string;
+  policyVersion: string;
+  isAccepted: boolean;
+  acceptedAt: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+export interface PartyRulesStatusResponse {
+  success: boolean;
+  roomNumber: string;
+  policyVersion: string;
+  hasAccepted: boolean;
+  acceptedAt?: string | null;
+  rules: PartyRule[];
+  mandatoryCount: number;
+  customCount: number;
+  isHost?: boolean;
+}
+
+export interface AcceptPartyRulesDto {
+  userId: string;
+  policyVersion?: string;
+  roomNumber: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+export interface CreatePartyRuleDto {
+  title: string;
+  description?: string;
+  category?: string;
+  icon?: string;
+  isHostAction?: boolean;
+  hostId?: string;
+}
+
+export interface ReportPartyRuleViolationDto {
+  roomNumber: string;
+  reporterId: string;
+  reportedUserId: string;
+  ruleId: string;
+  reason?: string;
+}
+
+
 
 
 
