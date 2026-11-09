@@ -46,11 +46,12 @@ import {
   Filter,
 } from 'lucide-react';
 import LiveRoomCard from './LiveRoomCard';
+import PartyRoomCard, { PartyRoomItem } from './PartyRoomCard';
 import DiscoveryBannerCarousel from './DiscoveryBannerCarousel';
 import RankDoorSection from './RankDoorSection';
 import RankingPreviewSection from './RankingPreviewSection';
 
-export type DiscoveryTab = 'explore' | 'following' | 'new' | 'pk';
+export type DiscoveryTab = 'explore' | 'following' | 'new' | 'pk' | 'party';
 
 interface RoomItem {
   roomId: string;
@@ -218,6 +219,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
   const [followingData, setFollowingData] = useState<FollowingFeedData | null>(null);
   const [newCreators, setNewCreators] = useState<NewCreatorItem[]>([]);
   const [pkBattles, setPkBattles] = useState<PkBattleItem[]>([]);
+  const [partyRooms, setPartyRooms] = useState<PartyRoomItem[]>([]);
   const [pkCounts, setPkCounts] = useState<{ active: number; upcoming: number; completed: number; total: number }>({
     active: 0,
     upcoming: 0,
@@ -239,6 +241,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
     if (pathname.includes('/live/following')) setActiveTab('following');
     else if (pathname.includes('/live/new')) setActiveTab('new');
     else if (pathname.includes('/live/pk')) setActiveTab('pk');
+    else if (pathname.includes('/live/party') || pathname === '/party') setActiveTab('party');
     else if (pathname.includes('/live/explore') || pathname === '/live') setActiveTab('explore');
   }, [pathname]);
 
@@ -313,6 +316,13 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
               if (data.counts) setPkCounts(data.counts);
             }
           }
+        } else if (activeTab === 'party') {
+          const url = `/api/discovery/party?q=${encodeURIComponent(searchQuery)}${countryParam}`;
+          const res = await fetch(url);
+          if (res.ok) {
+            const data = await res.json();
+            if (isMounted) setPartyRooms(data.rooms || []);
+          }
         }
       } catch (err) {
         console.error('Error fetching discovery tab data:', err);
@@ -359,6 +369,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
 
   const tabs: { id: DiscoveryTab; label_en: string; label_ur: string }[] = [
     { id: 'explore', label_en: 'Explore', label_ur: 'دریافت' },
+    { id: 'party', label_en: 'Party', label_ur: 'پارٹی' },
     { id: 'following', label_en: 'Follow', label_ur: 'فالو' },
     { id: 'new', label_en: 'New', label_ur: 'نئے' },
     { id: 'pk', label_en: 'PK', label_ur: 'پی کے' },
@@ -574,6 +585,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
 
               {[
                 { id: 'explore', label_en: 'Explore', label_ur: 'دریافت', icon: Compass, count: 'HOT' },
+                { id: 'party', label_en: 'Party Rooms', label_ur: 'پارٹی رومز', icon: Users, count: '9 SEATS' },
                 { id: 'following', label_en: 'Following', label_ur: 'فالوئنگ', icon: Heart, count: null },
                 { id: 'new', label_en: 'New Streamers', label_ur: 'نئے براڈکاسٹرز', icon: Sparkles, count: 'NEW' },
                 { id: 'pk', label_en: 'PK Battles', label_ur: 'پی کے مقابلے', icon: Swords, count: 'LIVE' },
@@ -650,85 +662,113 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 flex flex-col min-w-0 px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5">
           
-          {/* 3. TABS ROW (Pill style matching 03_02 reference) */}
-          <div className="flex items-center justify-between pb-1">
-            <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar py-1">
-              {tabs.map((tab) => {
-                const isSelected = activeTab === tab.id;
+          {/* 3. TABS ROW (Matching 03_06 3-tab bar on Party, or 5-tab row on Discovery) */}
+          {activeTab === 'party' ? (
+            <div className="flex items-center justify-center gap-8 sm:gap-14 py-2 sm:py-3 border-b border-white/5">
+              <button
+                type="button"
+                onClick={() => handleTabChange('explore')}
+                className="text-sm sm:text-base font-semibold text-zinc-400 hover:text-white transition-colors px-3 py-1 cursor-pointer"
+              >
+                Live
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTabChange('party')}
+                className="px-6 sm:px-8 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-fuchsia-700 via-fuchsia-600 to-pink-600 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-fuchsia-900/50 ring-1 ring-fuchsia-400/30 transition-transform active:scale-95 cursor-pointer"
+              >
+                Party
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTabChange('pk')}
+                className="text-sm sm:text-base font-semibold text-zinc-400 hover:text-white transition-colors px-3 py-1 cursor-pointer"
+              >
+                PK
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between pb-1">
+              <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar py-1">
+                {tabs.map((tab) => {
+                  const isSelected = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                        isSelected
+                          ? 'bg-gradient-to-r from-[#C2185B] via-[#D81B60] to-[#9C27B0] text-white shadow-lg shadow-pink-500/30 ring-1 ring-pink-400/30'
+                          : 'text-white/60 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <span>{isUr ? tab.label_ur : tab.label_en}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {loading && (
+                <div className="flex items-center gap-1.5 text-xs text-pink-400">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span className="hidden sm:inline">{isUr ? 'لوڈ ہو رہا ہے...' : 'Updating...'}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* 4. COUNTRY FILTERS BAR (Only on Explore/Follow/New/PK tabs, hidden on Party to match 03_06 1:1) */}
+          {/* ========================================================================= */}
+          {activeTab !== 'party' && (
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs">
+              {POPULAR_COUNTRY_SHORTCUTS.map((c) => {
+                const isSelected = selectedCountry === c.code;
                 return (
                   <button
-                    key={tab.id}
+                    key={c.code}
                     type="button"
-                    onClick={() => handleTabChange(tab.id)}
-                    className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                    onClick={() => handleCountrySelect(c.code)}
+                    className={`px-3.5 py-1.5 rounded-full font-bold flex items-center gap-1.5 flex-shrink-0 transition-all ${
                       isSelected
-                        ? 'bg-gradient-to-r from-[#C2185B] via-[#D81B60] to-[#9C27B0] text-white shadow-lg shadow-pink-500/30 ring-1 ring-pink-400/30'
-                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                        ? 'bg-white/20 text-white border border-pink-500 shadow-md shadow-pink-500/20'
+                        : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/5'
                     }`}
                   >
-                    <span>{isUr ? tab.label_ur : tab.label_en}</span>
+                    <span className="text-sm leading-none">{c.flag}</span>
+                    <span>{c.name}</span>
                   </button>
                 );
               })}
+
+              {/* Custom Country Pill if selected from More Countries */}
+              {isCustomCountrySelected && (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-500/20 border border-pink-500 text-white font-bold flex-shrink-0 shadow-md">
+                  <span className="text-sm leading-none">{getCountryFlag(selectedCountry)}</span>
+                  <span>{getCountryName(selectedCountry)}</span>
+                  <button
+                    onClick={() => handleCountrySelect('ALL')}
+                    className="hover:bg-white/20 rounded-full p-0.5 ml-0.5 text-white/70 hover:text-white"
+                    title="Clear country filter"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+
+              {/* More Countries Dropdown Trigger (Matching 03_03) */}
+              <button
+                type="button"
+                onClick={() => setShowCountryModal(true)}
+                className="px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 font-bold flex items-center gap-1.5 flex-shrink-0 transition-colors"
+              >
+                <Globe className="w-3.5 h-3.5 text-pink-400" />
+                <span>More Countries</span>
+                <ChevronDown className="w-3 h-3 text-white/50" />
+              </button>
             </div>
-
-            {loading && (
-              <div className="flex items-center gap-1.5 text-xs text-pink-400">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span className="hidden sm:inline">{isUr ? 'لوڈ ہو رہا ہے...' : 'Updating...'}</span>
-              </div>
-            )}
-          </div>
-
-          {/* ========================================================================= */}
-          {/* 4. COUNTRY FILTERS BAR (1:1 with 03_03_country_filters.png) */}
-          {/* ========================================================================= */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs">
-            {POPULAR_COUNTRY_SHORTCUTS.map((c) => {
-              const isSelected = selectedCountry === c.code;
-              return (
-                <button
-                  key={c.code}
-                  type="button"
-                  onClick={() => handleCountrySelect(c.code)}
-                  className={`px-3.5 py-1.5 rounded-full font-bold flex items-center gap-1.5 flex-shrink-0 transition-all ${
-                    isSelected
-                      ? 'bg-white/20 text-white border border-pink-500 shadow-md shadow-pink-500/20'
-                      : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/5'
-                  }`}
-                >
-                  <span className="text-sm leading-none">{c.flag}</span>
-                  <span>{c.name}</span>
-                </button>
-              );
-            })}
-
-            {/* Custom Country Pill if selected from More Countries */}
-            {isCustomCountrySelected && (
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-500/20 border border-pink-500 text-white font-bold flex-shrink-0 shadow-md">
-                <span className="text-sm leading-none">{getCountryFlag(selectedCountry)}</span>
-                <span>{getCountryName(selectedCountry)}</span>
-                <button
-                  onClick={() => handleCountrySelect('ALL')}
-                  className="hover:bg-white/20 rounded-full p-0.5 ml-0.5 text-white/70 hover:text-white"
-                  title="Clear country filter"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            )}
-
-            {/* More Countries Dropdown Trigger (Matching 03_03) */}
-            <button
-              type="button"
-              onClick={() => setShowCountryModal(true)}
-              className="px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 font-bold flex items-center gap-1.5 flex-shrink-0 transition-colors"
-            >
-              <Globe className="w-3.5 h-3.5 text-pink-400" />
-              <span>More Countries</span>
-              <ChevronDown className="w-3 h-3 text-white/50" />
-            </button>
-          </div>
+          )}
 
           {/* ========================================================================= */}
           {/* TAB 1: EXPLORE DISCOVERY TAB */}
@@ -1151,6 +1191,89 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                         </div>
                       )}
                     </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 5: PARTY DISCOVERY LIST (1:1 PIXEL MATCH TO 03_06_party_discovery_list.png) */}
+          {/* ========================================================================= */}
+          {activeTab === 'party' && (
+            <div className="w-full max-w-md mx-auto sm:max-w-xl md:max-w-2xl space-y-4 pb-8">
+              {/* Header Status & Quick Refresh */}
+              <div className="flex items-center justify-between px-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-white/80">Voice Party Rooms</span>
+                  <span className="px-2 py-0.5 rounded-full bg-fuchsia-600/30 text-fuchsia-300 text-[10px] font-black border border-fuchsia-500/30">
+                    9 SEATS
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoading(true);
+                    fetch(`/api/discovery/party?q=${encodeURIComponent(searchQuery)}`)
+                      .then((r) => r.json())
+                      .then((d) => setPartyRooms(d.rooms || []))
+                      .catch((err) => console.error('Party refresh error:', err))
+                      .finally(() => setLoading(false));
+                  }}
+                  className="flex items-center gap-1.5 text-xs text-fuchsia-400 hover:text-fuchsia-300 transition-colors font-semibold cursor-pointer"
+                >
+                  <Sparkles className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </button>
+              </div>
+
+              {/* Loading Skeleton */}
+              {loading && partyRooms.length === 0 ? (
+                <div className="space-y-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between w-full px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-2xl bg-[#14172f]/60 border border-white/5 animate-pulse"
+                    >
+                      <div className="flex items-center gap-3.5 sm:gap-4">
+                        <div className="w-[78px] h-[54px] sm:w-[84px] sm:h-[58px] rounded-xl bg-white/10 shrink-0" />
+                        <div className="space-y-2">
+                          <div className="w-36 h-4 bg-white/10 rounded" />
+                          <div className="w-20 h-3 bg-white/10 rounded" />
+                        </div>
+                      </div>
+                      <div className="w-5 h-5 rounded bg-white/10 shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              ) : partyRooms.length === 0 ? (
+                /* Empty State */
+                <div className="p-10 text-center rounded-3xl bg-white/[0.02] border border-white/5 space-y-3">
+                  <Users className="w-10 h-10 text-white/30 mx-auto" />
+                  <h3 className="text-sm font-bold text-white">No active party rooms found</h3>
+                  <p className="text-xs text-white/50 max-w-sm mx-auto">
+                    Party rooms allow up to 9 participants to chat, play music, and hang out together.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoading(true);
+                      fetch('/api/discovery/party')
+                        .then((r) => r.json())
+                        .then((d) => setPartyRooms(d.rooms || []))
+                        .finally(() => setLoading(false));
+                    }}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-fuchsia-600 to-pink-500 text-white text-xs font-bold shadow-md hover:brightness-110 cursor-pointer"
+                  >
+                    Reload Party Rooms
+                  </button>
+                </div>
+              ) : (
+                /* Vertical Party Rooms Stack (1:1 with 03_06 reference) */
+                <div className="space-y-3 sm:space-y-3.5">
+                  {partyRooms.map((room) => (
+                    <PartyRoomCard key={room.id} room={room} />
                   ))}
                 </div>
               )}
