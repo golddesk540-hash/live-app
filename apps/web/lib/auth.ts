@@ -24,6 +24,9 @@ export interface AuthUser {
   wealth_level?: number;
   role?: string;
   is_staff?: boolean;
+  is_face_verified?: boolean;
+  live_cover_url?: string | null;
+  go_live_eligible?: boolean;
 }
 
 export interface SessionData {
@@ -314,6 +317,9 @@ export async function validateSessionToken(sessionToken: string): Promise<AuthUs
             COALESCE(u.wealth_level, 1) as wealth_level,
             COALESCE(u.role, 'user') as role,
             COALESCE(u.is_staff, false) as is_staff,
+            COALESCE(u.is_face_verified, false) as is_face_verified,
+            u.live_cover_url,
+            COALESCE(u.go_live_eligible, false) as go_live_eligible,
             s.expires_at, s.is_revoked
      FROM popolive.sessions s
      JOIN popolive.users u ON s.user_id = u.id
@@ -348,6 +354,9 @@ export async function validateSessionToken(sessionToken: string): Promise<AuthUs
     wealth_level: Number(r.wealth_level) || 1,
     role: r.role || 'user',
     is_staff: Boolean(r.is_staff),
+    is_face_verified: Boolean(r.is_face_verified),
+    live_cover_url: r.live_cover_url || null,
+    go_live_eligible: Boolean(r.go_live_eligible),
   };
 }
 

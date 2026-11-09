@@ -680,10 +680,10 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
               Go live with one click. Gain fans and monetize your talent.
             </p>
             <Link
-              href="/download"
-              className="inline-block px-4 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold transition-colors"
+              href="/live/setup"
+              className="inline-block px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#e91e63] to-[#ff2d55] text-white text-[11px] font-bold shadow-md shadow-pink-500/30 hover:brightness-110 transition-all"
             >
-              Get Studio App
+              Go Live Setup
             </Link>
           </div>
         </aside>
@@ -1483,7 +1483,8 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
         </button>
 
         <Link
-          href="/download"
+          href="/live/setup"
+          aria-label="Go Live"
           className="relative -top-4 w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#FF2E74] to-[#A855F7] flex items-center justify-center text-white shadow-xl shadow-pink-500/40 active:scale-95 transition-transform"
         >
           <Camera className="w-6 h-6" />

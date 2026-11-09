@@ -35,6 +35,10 @@ export async function GET(req: NextRequest) {
         status: user.status,
         role: user.role || 'user',
         is_staff: Boolean(user.is_staff),
+        wealthLevel: user.wealth_level || 1,
+        isFaceVerified: Boolean(user.is_face_verified),
+        liveCoverUrl: user.live_cover_url || null,
+        goLiveEligible: Boolean(user.go_live_eligible),
       },
     });
   } catch (err: any) {
