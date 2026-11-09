@@ -461,6 +461,54 @@ export function getPartyThemeById(themeId: string): PartyTheme {
   return found || CANONICAL_PARTY_THEMES[0];
 }
 
+// ============================================================================
+// Module 5.8: Order and Closing Interfaces & Types
+// Reference: 05_08_order_and_closing.png
+// ============================================================================
+
+export interface ReorderSeatsDto {
+  fromSeat: number; // 2..9 (Seat 1 is protected host seat)
+  toSeat: number;   // 2..9
+  reorderedBy?: string;
+  isHostAction: boolean;
+}
+
+export interface TransferHostDto {
+  targetSeatNumber: number; // 2..9
+  newHostId?: string;
+  isHostAction: boolean;
+}
+
+export interface ClosePartyDto {
+  reason?: string;
+  isHostAction: boolean;
+  closedBy?: string;
+}
+
+export interface PartyStatusResponse {
+  roomNumber: string;
+  status: 'active' | 'closing' | 'closed';
+  isLive: boolean;
+  closedAt?: string | null;
+  closedBy?: string | null;
+  reason?: string | null;
+  peakAudience?: number;
+  durationSeconds?: number;
+  totalParticipants?: number;
+}
+
+export interface PartyReorderLog {
+  id: string;
+  roomNumber: string;
+  reorderedBy: string;
+  fromSeat: number;
+  toSeat: number;
+  participantId: string;
+  actionType: 'swap' | 'move';
+  createdAt: string;
+}
+
+
 
 
 

@@ -35,6 +35,7 @@ import {
   Gift,
   Grid,
   Palette,
+  Settings2,
 } from 'lucide-react';
 import {
   PartySeat,
@@ -48,6 +49,7 @@ import {
   getPartyThemeById,
 } from '@/lib/party';
 import PartyThemesScreen from './PartyThemesScreen';
+import OrderAndClosingScreen from './OrderAndClosingScreen';
 
 interface SeatGridScreenProps {
   roomId: string;
@@ -227,6 +229,10 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
   const [activeTheme, setActiveTheme] = useState<PartyTheme>(CANONICAL_PARTY_THEMES[0]);
   const [isThemesOpen, setIsThemesOpen] = useState<boolean>(false);
 
+  // Module 5.8 Order and Closing state
+  const [isRoomControlsOpen, setIsRoomControlsOpen] = useState<boolean>(false);
+  const [isPartyClosed, setIsPartyClosed] = useState<boolean>(false);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => {
@@ -378,6 +384,16 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
           const themeData = await themeRes.json();
           if (themeData.success && themeData.theme) {
             setActiveTheme((prev) => (prev.id !== themeData.theme.id ? themeData.theme : prev));
+          }
+        }
+
+        // Poll Party Room Status (Module 5.8: Detect if room has closed)
+        const statusRes = await fetch(`/api/party/${roomId}/status`);
+        if (statusRes.ok) {
+          const statusData = await statusRes.json();
+          if (statusData.success && statusData.isClosed) {
+            setIsPartyClosed(true);
+            setIsRoomControlsOpen(false);
           }
         }
       } catch (e) {
@@ -860,6 +876,18 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
           >
             <Palette className="w-3.5 h-3.5 text-pink-400" />
             <span className="hidden xs:inline">Theme</span>
+          </button>
+
+          {/* Room Controls Button matching Module 5.8 */}
+          <button
+            onClick={() => setIsRoomControlsOpen(true)}
+            data-action="open-room-controls"
+            data-testid="header-room-controls-button"
+            className="px-2 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-purple-500/30 text-[11px] font-bold text-purple-200 flex items-center gap-1 transition-all active:scale-95"
+            title="Room Controls (Order & Closing)"
+          >
+            <Settings2 className="w-3.5 h-3.5 text-indigo-400" />
+            <span className="hidden xs:inline">Controls</span>
           </button>
 
           {/* Web Party Gateway Button matching Module 5.7 */}
@@ -1411,12 +1439,13 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
                 <MessageSquare className="w-5 h-5 text-zinc-200" />
               </button>
 
-              {/* 6. More Options Button */}
+              {/* 6. More Options / Room Controls Button */}
               <button
-                onClick={() => showToast('Party Settings & Media Options')}
+                onClick={() => setIsRoomControlsOpen(true)}
                 data-testid="control-more"
+                data-action="open-room-controls-bottom"
                 className="w-11 h-11 rounded-full bg-[#291b52] hover:bg-[#38256e] text-zinc-200 border border-purple-700/40 flex items-center justify-center transition-all shadow-lg active:scale-95"
-                title="More Options"
+                title="Room Controls (Order & Closing)"
               >
                 <MoreHorizontal className="w-5 h-5 text-zinc-200" />
               </button>
@@ -1634,6 +1663,64 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
               }}
               onClose={() => setIsThemesOpen(false)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* MODULE 5.8: Room Controls & Closing Modal */}
+      {isRoomControlsOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col justify-end sm:justify-center animate-fade-in"
+          data-testid="room-controls-modal-overlay"
+        >
+          <div className="w-full max-w-md mx-auto max-h-[92vh] bg-[#0B081E] rounded-t-3xl sm:rounded-3xl border border-white/15 overflow-y-auto shadow-2xl relative">
+            <button
+              onClick={() => setIsRoomControlsOpen(false)}
+              className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 transition-colors"
+              aria-label="Close Room Controls"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <OrderAndClosingScreen
+              roomId={roomId}
+              isHost={true}
+              isModal={true}
+              initialSeats={seats}
+              onSeatsUpdated={(updatedSeats) => {
+                setSeats(updatedSeats);
+                fetchRoomData();
+              }}
+              onPartyClosed={() => {
+                setIsRoomControlsOpen(false);
+                setIsPartyClosed(true);
+              }}
+              onClose={() => setIsRoomControlsOpen(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* MODULE 5.8: Party Closed Modal Overlay for all Viewers */}
+      {isPartyClosed && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-lg flex items-center justify-center p-4 animate-in fade-in"
+          data-testid="party-closed-overlay"
+        >
+          <div className="w-full max-w-sm rounded-3xl p-6 bg-[#160e32] border border-purple-500/30 text-center shadow-2xl">
+            <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center shadow-[0_0_20px_rgba(168,85,247,0.3)]">
+              <Sparkles className="w-7 h-7 text-purple-300" />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-1.5" data-testid="party-closed-heading">Party Ended</h3>
+            <p className="text-xs text-zinc-300 mb-6 leading-relaxed">
+              The host has ended this party session. All seats and audio channels are now closed.
+            </p>
+            <Link
+              href="/party"
+              data-testid="btn-closed-return-home"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-sm font-bold text-white shadow-lg block text-center transition-all"
+            >
+              Return to Discovery
+            </Link>
           </div>
         </div>
       )}

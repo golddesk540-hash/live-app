@@ -34,6 +34,27 @@ export async function query<T = any>(text: string, params?: any[]): Promise<T[]>
   }
 }
 
+export async function withTransaction<T>(
+  callback: (client: { query: (text: string, params?: any[]) => Promise<any> }) => Promise<T>
+): Promise<T> {
+  const p = getDbPool();
+  const client = await p.connect();
+  try {
+    await client.query('SET search_path TO popolive, public;');
+    await client.query('BEGIN');
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    try {
+      await client.query('ROLLBACK');
+    } catch {}
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
 export async function runMigrations(): Promise<void> {
   const p = getDbPool();
   const client = await p.connect();
