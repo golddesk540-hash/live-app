@@ -44,9 +44,11 @@ import {
   UserPlus,
   Globe,
   Filter,
+  RefreshCw,
 } from 'lucide-react';
 import LiveRoomCard from './LiveRoomCard';
 import PartyRoomCard, { PartyRoomItem } from './PartyRoomCard';
+import FollowingUserCard, { FollowedUserItem } from './FollowingUserCard';
 import DiscoveryBannerCarousel from './DiscoveryBannerCarousel';
 import RankDoorSection from './RankDoorSection';
 import RankingPreviewSection from './RankingPreviewSection';
@@ -161,6 +163,8 @@ interface PkBattleItem {
 interface FollowingFeedData {
   authenticated: boolean;
   message?: string;
+  isDemo?: boolean;
+  users?: FollowedUserItem[];
   liveRooms: RoomItem[];
   offlineUsers: Array<{
     userId: string;
@@ -369,8 +373,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
 
   const tabs: { id: DiscoveryTab; label_en: string; label_ur: string }[] = [
     { id: 'explore', label_en: 'Explore', label_ur: 'دریافت' },
-    { id: 'party', label_en: 'Party', label_ur: 'پارٹی' },
-    { id: 'following', label_en: 'Follow', label_ur: 'فالو' },
+    { id: 'following', label_en: 'Following', label_ur: 'فالوئنگ' },
     { id: 'new', label_en: 'New', label_ur: 'نئے' },
     { id: 'pk', label_en: 'PK', label_ur: 'پی کے' },
   ];
@@ -724,9 +727,9 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           )}
 
           {/* ========================================================================= */}
-          {/* 4. COUNTRY FILTERS BAR (Only on Explore/Follow/New/PK tabs, hidden on Party to match 03_06 1:1) */}
+          {/* 4. COUNTRY FILTERS BAR (Only on Explore/New/PK tabs, hidden on Party and Following to match 03_06 & 03_08 1:1) */}
           {/* ========================================================================= */}
-          {activeTab !== 'party' && (
+          {activeTab !== 'party' && activeTab !== 'following' && (
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs">
               {POPULAR_COUNTRY_SHORTCUTS.map((c) => {
                 const isSelected = selectedCountry === c.code;
@@ -829,135 +832,133 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           )}
 
           {/* ========================================================================= */}
-          {/* TAB 2: FOLLOWING DISCOVERY TAB */}
+          {/* TAB 2: FOLLOWING DISCOVERY TAB (STRICT REFERENCE IMAGE 03_08 IMPLEMENTATION) */}
           {/* ========================================================================= */}
           {activeTab === 'following' && (
-            <div className="space-y-6">
-              {!user && (
-                <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-purple-950/60 via-indigo-950/40 to-pink-950/60 border border-pink-500/30 text-center space-y-4 shadow-xl">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center mx-auto text-white shadow-lg shadow-pink-500/30">
-                    <Heart className="w-6 h-6 fill-white" />
+            <div className="w-full max-w-2xl mx-auto space-y-3 py-1">
+              {/* Header Status Bar & Quick Refresh */}
+              <div className="flex items-center justify-between px-2 pt-1 pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black uppercase tracking-wider text-pink-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-pink-500 animate-ping inline-block" />
+                    <span>{isUr ? 'فالو کردہ براڈکاسٹرز' : 'Followed Broadcasters'}</span>
+                  </span>
+                  {followingData?.users && followingData.users.length > 0 && (
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30">
+                      {followingData.users.length} {isUr ? 'فالوئنگ' : 'FOLLOWING'}
+                    </span>
+                  )}
+                  {followingData?.isDemo && (
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-white/70">
+                      Preview
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setLoading(true);
+                    try {
+                      const res = await fetch('/api/discovery/following');
+                      if (res.ok) setFollowingData(await res.json());
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  className="flex items-center gap-1 text-[11px] font-semibold text-white/50 hover:text-white transition-colors px-2.5 py-1 rounded-lg hover:bg-white/5 cursor-pointer"
+                  title="Refresh followed broadcasters"
+                >
+                  <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin text-pink-400' : ''}`} />
+                  <span>{isUr ? 'تازہ کریں' : 'Refresh'}</span>
+                </button>
+              </div>
+
+              {/* 1. LOADING SKELETON STATE */}
+              {loading && (!followingData?.users || followingData.users.length === 0) ? (
+                <div className="space-y-3 p-1">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between py-4 px-3 rounded-2xl bg-white/[0.02] border border-white/5 animate-pulse"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-full bg-white/10 ring-2 ring-pink-500/30" />
+                        <div className="space-y-2">
+                          <div className="w-28 h-4 rounded-md bg-white/10" />
+                          <div className="w-20 h-3 rounded-md bg-white/5" />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-14 h-7 rounded-full bg-white/10" />
+                        <div className="w-8 h-8 rounded-full bg-white/5" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : followingData?.users && followingData.users.length > 0 ? (
+                /* 2. NORMAL STATE: VERTICAL LIST STRICTLY MATCHING 03_08_following.png */
+                <div className="divide-y divide-white/[0.05] bg-white/[0.015] rounded-3xl border border-white/[0.06] p-1.5 sm:p-2.5 backdrop-blur-sm shadow-xl shadow-black/30">
+                  {followingData.users.map((followedUser) => (
+                    <FollowingUserCard
+                      key={followedUser.id || followedUser.userId}
+                      user={followedUser}
+                    />
+                  ))}
+                </div>
+              ) : (
+                /* 3. EMPTY STATE: WHEN USER FOLLOWS NO ONE */
+                <div className="p-12 text-center rounded-3xl bg-white/[0.02] border border-white/5 space-y-4 my-4">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-pink-500/20 to-purple-600/20 border border-pink-500/30 flex items-center justify-center mx-auto text-pink-400 shadow-lg shadow-pink-500/10">
+                    <Heart className="w-6 h-6 fill-pink-500/30 text-pink-400" />
                   </div>
-                  <div className="max-w-md mx-auto space-y-1">
-                    <h3 className="text-base sm:text-lg font-black text-white">
-                      {isUr ? 'اپنے پسندیدہ اسٹریمرز کی لائیو فیڈ دیکھیں' : 'Log In to Follow Your Favorite Creators'}
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-white">
+                      {isUr ? 'آپ فی الحال کسی براڈکاسٹر کو فالو نہیں کر رہے' : 'You are not following any broadcasters yet'}
                     </h3>
-                    <p className="text-xs text-white/60">
+                    <p className="text-xs text-white/50 max-w-sm mx-auto">
                       {isUr
-                        ? 'جب آپ لاگ ان ہوں گے تو آپ کے فالو کردہ تمام براڈکاسٹرز کی لائیو اطلاعات اور فیڈ یہاں نظر آئے گی۔'
-                        : 'Sign in to see when streamers you follow go live, receive instant broadcast alerts, and chat live.'}
+                        ? 'مشہور لائیو براڈکاسٹرز کو فالو کریں تاکہ جب وہ لائیو آئیں تو آپ کو فوراً اطلاع ملے!'
+                        : 'Follow live streamers to get instant notifications and watch their broadcasts right here!'}
                     </p>
                   </div>
-                  <div className="flex items-center justify-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleTabChange('explore')}
+                    className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 active:scale-95 text-white text-xs font-bold shadow-lg shadow-pink-500/25 transition-all inline-flex items-center gap-2 cursor-pointer"
+                  >
+                    <Compass className="w-4 h-4" />
+                    <span>{isUr ? 'براڈکاسٹرز دریافت کریں' : 'Explore Broadcasters'}</span>
+                  </button>
+                </div>
+              )}
+
+              {/* GUEST BANNER (If not authenticated, informative sign-in prompt below the list) */}
+              {!user && (
+                <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-pink-950/40 border border-pink-500/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-lg">
+                  <div className="space-y-0.5">
+                    <p className="text-xs sm:text-sm font-bold text-white">
+                      {isUr ? 'اپنے اکاؤنٹ میں لاگ ان کریں' : 'Sign in to customize your followed feed'}
+                    </p>
+                    <p className="text-[11px] text-white/60">
+                      {isUr
+                        ? 'اپنے پسندیدہ براڈکاسٹرز کی اطلاعات حاصل کرنے کے لیے سائن ان کریں۔'
+                        : 'Follow broadcasters, receive real-time push alerts, and join live chats.'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
                     <Link
                       href="/login?redirect=/live/following"
-                      className="px-5 py-2 rounded-full bg-gradient-to-r from-[#FF2E74] to-[#C2185B] text-white text-xs font-bold shadow-lg shadow-pink-500/25 hover:brightness-110 flex items-center gap-1.5"
+                      className="px-4 py-1.5 rounded-full bg-[#FF2E74] hover:bg-[#ff1a66] text-white text-xs font-bold transition-all shadow-md shadow-pink-500/20 cursor-pointer"
                     >
-                      <LogIn className="w-3.5 h-3.5" />
-                      <span>{isUr ? 'لاگ ان کریں' : 'Log In'}</span>
+                      {isUr ? 'لاگ ان' : 'Log In'}
                     </Link>
                     <Link
                       href="/register"
-                      className="px-5 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/15 flex items-center gap-1.5"
+                      className="px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all border border-white/10 cursor-pointer"
                     >
-                      <UserPlus className="w-3.5 h-3.5" />
-                      <span>{isUr ? 'اکاؤنٹ بنائیں' : 'Sign Up'}</span>
+                      {isUr ? 'رجسٹر' : 'Sign Up'}
                     </Link>
-                  </div>
-                </div>
-              )}
-
-              {user && (
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-black uppercase tracking-wider text-pink-400 flex items-center gap-1.5">
-                        <Radio className="w-3.5 h-3.5" />
-                        <span>
-                          LIVE NOW ({followingData?.liveRooms?.length || 0})
-                          {selectedCountry !== 'ALL' && ` • ${getCountryName(selectedCountry)}`}
-                        </span>
-                      </h3>
-                    </div>
-
-                    {followingData?.liveRooms && followingData.liveRooms.length > 0 ? (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
-                        {followingData.liveRooms.map((room) => (
-                          <LiveRoomCard key={room.roomId} room={room} />
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="p-8 rounded-2xl bg-white/[0.02] border border-white/5 text-center text-xs text-white/50 space-y-2">
-                        <p>
-                          {selectedCountry !== 'ALL'
-                            ? `None of your followed creators from ${getCountryName(selectedCountry)} are currently live.`
-                            : 'None of your followed creators are currently live.'}
-                        </p>
-                        {selectedCountry !== 'ALL' && (
-                          <button
-                            onClick={() => handleCountrySelect('ALL')}
-                            className="px-3 py-1 rounded-full bg-white/10 text-white font-semibold text-[11px] hover:bg-white/20"
-                          >
-                            Show All Countries
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Offline Followed Creators List */}
-                  {followingData?.offlineUsers && followingData.offlineUsers.length > 0 && (
-                    <div className="space-y-3 pt-4 border-t border-white/5">
-                      <h3 className="text-xs font-black uppercase tracking-wider text-white/60">
-                        OFFLINE CREATORS ({followingData.offlineUsers.length})
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                        {followingData.offlineUsers.map((u) => (
-                          <div
-                            key={u.userId}
-                            className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition-colors"
-                          >
-                            <Link href={`/profile/${u.userId}`} className="flex items-center gap-2.5 min-w-0">
-                              <img src={u.avatarUrl} alt={u.nickname} className="w-9 h-9 rounded-full object-cover ring-1 ring-white/20" />
-                              <div className="min-w-0">
-                                <p className="text-xs font-bold text-white truncate">{u.nickname}</p>
-                                <p className="text-[10px] text-zinc-400">ID: {u.poppoId} • {u.flagEmoji}</p>
-                              </div>
-                            </Link>
-                            <Link
-                              href={`/profile/${u.userId}`}
-                              className="px-3 py-1 rounded-full bg-white/5 hover:bg-white/10 text-white/80 text-[11px] font-semibold border border-white/10"
-                            >
-                              Profile
-                            </Link>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {followingData?.suggestedHosts && followingData.suggestedHosts.length > 0 && (
-                <div className="space-y-3 pt-4 border-t border-white/5">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-white/60">
-                    POPULAR CREATORS TO FOLLOW
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-                    {followingData.suggestedHosts.map((rec) => (
-                      <Link
-                        key={rec.roomId}
-                        href={`/live/room/${rec.roomId}`}
-                        className="group flex flex-col items-center p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 transition-all text-center"
-                      >
-                        <div className="relative mb-2">
-                          <img src={rec.host.avatarUrl} alt={rec.host.nickname} className="w-14 h-14 rounded-full object-cover ring-2 ring-pink-500/50 group-hover:scale-105 transition-transform" />
-                          <span className="absolute -bottom-1 -right-1 text-xs">{rec.flagEmoji}</span>
-                        </div>
-                        <p className="text-xs font-bold text-white truncate max-w-full">{rec.host.nickname}</p>
-                        <p className="text-[10px] text-pink-400 font-semibold">{rec.viewersFormatted} watching</p>
-                      </Link>
-                    ))}
                   </div>
                 </div>
               )}
