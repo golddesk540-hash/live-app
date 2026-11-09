@@ -424,6 +424,11 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.trim()) {
+                  router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                }
+              }}
               placeholder={isUr ? 'لائیو براڈکاسٹ، آئی ڈی یا اسٹریمر تلاش کریں...' : 'Search streamers, live rooms, user ID...'}
               className={`w-full ${isUr ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 bg-white/5 hover:bg-white/[0.08] focus:bg-[#15132d] rounded-full text-xs sm:text-sm text-white placeholder-white/35 border border-white/10 focus:border-[#FF2E74] outline-none transition-all`}
             />
@@ -440,13 +445,13 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
 
         {/* Right Action Icons & User Dropdown */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            onClick={() => setShowSearchModal(true)}
+          <Link
+            href="/search"
             aria-label="Search"
             className="md:hidden w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/80 transition-colors"
           >
             <Search className="w-4 h-4" />
-          </button>
+          </Link>
 
           <Link
             href="/recharge"

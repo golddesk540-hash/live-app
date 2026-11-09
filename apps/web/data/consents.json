@@ -454,5 +454,17 @@
     "language": "en",
     "ipHash": "87e6331ac4bd914f",
     "userAgent": "node"
+  },
+  {
+    "consentId": "cs_1794198288984_dcee2b22",
+    "anonymousSessionId": "search_shot_anon_1794198288935",
+    "termsVersion": "v4.2.0",
+    "privacyVersion": "v4.2.0",
+    "status": "accepted",
+    "acceptedAt": "2026-11-09T04:24:48.984Z",
+    "isAdultConfirmed": true,
+    "language": "en",
+    "ipHash": "87e6331ac4bd914f",
+    "userAgent": "node"
   }
 ]
