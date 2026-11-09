@@ -72,6 +72,69 @@ export interface VacateSeatDto {
   isHostAction?: boolean;
 }
 
+export type SeatInteractionStatus =
+  | 'pending'
+  | 'accepted'
+  | 'rejected'
+  | 'declined'
+  | 'cancelled'
+  | 'expired';
+
+export interface PartySeatRequest {
+  id: string;
+  partyId?: string;
+  roomNumber: string;
+  seatNumber: number;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  status: SeatInteractionStatus;
+  createdAt: string;
+  respondedAt?: string;
+  expiresAt: string;
+}
+
+export interface PartySeatInvitation {
+  id: string;
+  partyId?: string;
+  roomNumber: string;
+  seatNumber: number;
+  hostId: string;
+  invitedUserId: string;
+  invitedUserName: string;
+  invitedUserAvatar?: string;
+  status: SeatInteractionStatus;
+  createdAt: string;
+  respondedAt?: string;
+  expiresAt: string;
+}
+
+export interface RequestSeatDto {
+  seatNumber: number;
+  userId?: string;
+  userName?: string;
+  userAvatar?: string;
+}
+
+export interface RespondSeatRequestDto {
+  requestId: string;
+  action: 'accept' | 'reject';
+  isHostAction?: boolean;
+}
+
+export interface InviteViewerDto {
+  seatNumber: number;
+  invitedUserId: string;
+  invitedUserName: string;
+  invitedUserAvatar?: string;
+}
+
+export interface RespondInvitationDto {
+  invitationId: string;
+  action: 'accept' | 'decline';
+  userId?: string;
+}
+
 export function generateDefaultSeats(
   roomNumber: string,
   hostName: string = 'Maria Live',
@@ -116,4 +179,6 @@ export function generateDefaultSeats(
 
   return seats;
 }
+
+
 

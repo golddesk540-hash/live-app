@@ -3,8 +3,8 @@ import { Metadata } from 'next';
 import SeatGridScreen from '@/components/party/SeatGridScreen';
 
 export const metadata: Metadata = {
-  title: '05_02 Seat Grid | Popo Live',
-  description: 'Official Popo Live Nine-Seat Party Room matching 05_02_seat_grid.png',
+  title: '05_03 Taking a Seat (Request / Invite) | Popo Live',
+  description: 'Official Popo Live Taking a Seat (Request / Invite) matching 05_03_taking_a_seat_request_invite.png',
 };
 
 async function getPartyRoom(roomId: string) {
