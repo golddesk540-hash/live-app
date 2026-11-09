@@ -1,6 +1,8 @@
 const { Pool } = require('pg');
 const pool = new Pool({
-  connectionString: 'postgresql://nordleads:local-platform-password@127.0.0.1:55432/nordleads?schema=popolive'
+  connectionString:
+    process.env.DATABASE_URL ||
+    'postgresql://nordleads:local-platform-password@127.0.0.1:55432/nordleads?schema=popolive',
 });
 
 async function run() {
