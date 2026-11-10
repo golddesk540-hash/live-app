@@ -78,7 +78,47 @@ export async function GET(
                   })}\n\n`
                 )
               );
+              controller.enqueue(
+                encoder.encode(
+                  `event: pk:battle_ended\ndata: ${JSON.stringify({
+                    battleId,
+                    endedAt: new Date().toISOString(),
+                  })}\n\n`
+                )
+              );
             }
+          }
+
+          // 3. Check for official calculated result
+          const resultRows = await query(
+            `SELECT * FROM popolive.pk_battle_results WHERE battle_id = $1`,
+            [battleId]
+          );
+
+          if (resultRows.length > 0) {
+            const resData = resultRows[0];
+            controller.enqueue(
+              encoder.encode(
+                `event: pk:result_calculated\ndata: ${JSON.stringify({
+                  battleId,
+                  resultType: resData.result_type,
+                  winnerHostId: resData.winner_host_id,
+                  winnerNickname: resData.winner_nickname,
+                  winnerScore: resData.winner_score,
+                  loserNickname: resData.loser_nickname,
+                  loserScore: resData.loser_score,
+                  scoreDiff: resData.score_diff,
+                })}\n\n`
+              )
+            );
+            controller.enqueue(
+              encoder.encode(
+                `event: pk:result_broadcast\ndata: ${JSON.stringify({
+                  battleId,
+                  status: 'finalized',
+                })}\n\n`
+              )
+            );
           }
 
           // 3. Check for new score events

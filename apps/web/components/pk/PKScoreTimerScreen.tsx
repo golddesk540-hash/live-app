@@ -26,6 +26,7 @@ import {
   determinePKTimerState,
   calculatePKScoreRatios,
 } from '@/lib/pk';
+import PKResultScreen from '@/components/pk/PKResultScreen';
 
 interface FloatingDelta {
   id: string;
@@ -103,6 +104,7 @@ export default function PKScoreTimerScreen({
   const [selectedSideForGift, setSelectedSideForGift] = useState<'host_a' | 'host_b'>('host_a');
   const [isSendingScore, setIsSendingScore] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showResultModal, setShowResultModal] = useState(false);
 
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const isRtl = lang === 'ur';
@@ -195,6 +197,18 @@ export default function PKScoreTimerScreen({
               triggerScoreDelta(payload.event.hostSide, payload.event.points);
             }
           }
+        } catch (e) {}
+      });
+
+      eventSource.addEventListener('pk:result_calculated', (event: any) => {
+        try {
+          setShowResultModal(true);
+        } catch (e) {}
+      });
+
+      eventSource.addEventListener('pk:battle_ended', () => {
+        try {
+          setShowResultModal(true);
         } catch (e) {}
       });
     } catch (e) {}
@@ -499,7 +513,16 @@ export default function PKScoreTimerScreen({
           <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1.5px] bg-gradient-to-b from-transparent via-white/40 to-transparent z-20 pointer-events-none" />
 
           {/* BATTLE TIMER CAPSULE PILL (Centered Over Top Border) */}
-          <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30">
+          <div
+            onClick={() => {
+              if (isExpired || remainingSeconds === 0) {
+                setShowResultModal(true);
+              }
+            }}
+            className={`absolute top-2 left-1/2 -translate-x-1/2 z-30 ${
+              isExpired || remainingSeconds === 0 ? 'cursor-pointer' : ''
+            }`}
+          >
             <div
               className={`flex items-center shadow-[0_4px_16px_rgba(0,0,0,0.6)] rounded-full overflow-hidden border ${
                 isUrgent
@@ -756,6 +779,17 @@ export default function PKScoreTimerScreen({
                 : 'Server-authoritative scoring with deduplication.'}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* RESULT MODAL (Module 6.4: PK Battle Result) */}
+      {showResultModal && (
+        <div className="absolute inset-0 z-50 animate-fade-in bg-black">
+          <PKResultScreen
+            battleId={battleId}
+            onClose={() => setShowResultModal(false)}
+            initialLanguage={lang}
+          />
         </div>
       )}
     </div>

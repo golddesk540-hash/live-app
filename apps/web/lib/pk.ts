@@ -283,4 +283,112 @@ export function calculatePKScoreRatios(scoreA: number, scoreB: number): { ratioA
   };
 }
 
+// ============================================================================
+// Module 6.4: PK Battle Results and Winner Declaration
+// Reference: 06_04_result.png
+// ============================================================================
+
+export type PKResultType = 'winner_declared' | 'draw' | 'cancelled';
+
+export interface PKBattleResult {
+  id: string;
+  battleId: string;
+  battleType: PKBattleTypeId;
+  hostAId: string;
+  hostANickname: string;
+  hostAAvatar: string;
+  hostAScore: number;
+  hostBId: string;
+  hostBNickname: string;
+  hostBAvatar: string;
+  hostBScore: number;
+  resultType: PKResultType;
+  winnerHostId: string | null;
+  winnerNickname: string | null;
+  winnerAvatar: string | null;
+  winnerScore: number | null;
+  loserHostId: string | null;
+  loserNickname: string | null;
+  loserAvatar: string | null;
+  loserScore: number | null;
+  scoreDiff: number;
+  durationSeconds: number;
+  startedAt: string;
+  endedAt: string;
+  createdAt: string;
+}
+
+export interface PKBattleHistoryItem {
+  battleId: string;
+  opponentId: string;
+  opponentName: string;
+  opponentAvatar: string;
+  myScore: number;
+  opponentScore: number;
+  outcome: 'win' | 'loss' | 'draw';
+  battleDate: string;
+  durationFormatted: string;
+}
+
+export function calculatePKBattleWinner(
+  scoreA: number,
+  scoreB: number,
+  hostA: { id: string; nickname: string; avatarUrl: string },
+  hostB: { id: string; nickname: string; avatarUrl: string }
+): {
+  resultType: PKResultType;
+  winnerHostId: string | null;
+  winnerNickname: string | null;
+  winnerAvatar: string | null;
+  winnerScore: number | null;
+  loserHostId: string | null;
+  loserNickname: string | null;
+  loserAvatar: string | null;
+  loserScore: number | null;
+  scoreDiff: number;
+} {
+  const diff = Math.abs(scoreA - scoreB);
+  if (scoreA > scoreB) {
+    return {
+      resultType: 'winner_declared',
+      winnerHostId: hostA.id,
+      winnerNickname: hostA.nickname,
+      winnerAvatar: hostA.avatarUrl,
+      winnerScore: scoreA,
+      loserHostId: hostB.id,
+      loserNickname: hostB.nickname,
+      loserAvatar: hostB.avatarUrl,
+      loserScore: scoreB,
+      scoreDiff: diff,
+    };
+  } else if (scoreB > scoreA) {
+    return {
+      resultType: 'winner_declared',
+      winnerHostId: hostB.id,
+      winnerNickname: hostB.nickname,
+      winnerAvatar: hostB.avatarUrl,
+      winnerScore: scoreB,
+      loserHostId: hostA.id,
+      loserNickname: hostA.nickname,
+      loserAvatar: hostA.avatarUrl,
+      loserScore: scoreA,
+      scoreDiff: diff,
+    };
+  } else {
+    return {
+      resultType: 'draw',
+      winnerHostId: null,
+      winnerNickname: null,
+      winnerAvatar: null,
+      winnerScore: null,
+      loserHostId: null,
+      loserNickname: null,
+      loserAvatar: null,
+      loserScore: null,
+      scoreDiff: 0,
+    };
+  }
+}
+
+
 
