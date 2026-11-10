@@ -690,6 +690,141 @@ export interface SendPKReactionDto {
   userAvatar?: string;
 }
 
+// ============================================================================
+// Module 6.9: PK Battle Fair Play & Anti-Cheat Security System
+// Reference: 06_09_fair_play_basics.png
+// ============================================================================
+
+export interface PKFairPlayRule {
+  id: 'no_fake_traffic' | 'no_gift_abuse' | 'no_multi_account_pk' | 'report_violations';
+  title: string;
+  titleUr: string;
+  summary: string;
+  summaryUr: string;
+  description: string;
+  displayOrder: number;
+  iconName: string;
+  isActive: boolean;
+}
+
+export const CANONICAL_FAIR_PLAY_RULES: PKFairPlayRule[] = [
+  {
+    id: 'no_fake_traffic',
+    title: 'No fake traffic',
+    titleUr: 'جعلی ٹریفک کی ممانعت',
+    summary: 'Simulated viewer traffic, bot views, or spoofed devices are strictly prohibited.',
+    summaryUr: 'جعلی ناظرین، بوٹ ٹریفک، یا مصنوعی ڈیوائسز کا استعمال سختی سے ممنوع ہے۔',
+    description: 'Any form of artificial audience inflation, automated viewer emulation, headless browser spam, or spoofed IP clusters will lead to battle cancellation and host disqualification.',
+    displayOrder: 1,
+    iconName: 'users',
+    isActive: true,
+  },
+  {
+    id: 'no_gift_abuse',
+    title: 'No gift abuse',
+    titleUr: 'تحائف کے غلط استعمال پر پابندی',
+    summary: 'Self-gifting, chargeback rings, or wallet fraud strictly violate platform integrity.',
+    summaryUr: 'سیلف گفٹنگ، چارج بیک یا بٹوے کا فراڈ پلیٹ فارم کے اصولوں کی خلاف ورزی ہے۔',
+    description: 'Popo Live prohibits all circular gift-swapping rings, unauthorized payment laundering, or self-tipping between alt accounts. Legitimate audience appreciation is required.',
+    displayOrder: 2,
+    iconName: 'gift',
+    isActive: true,
+  },
+  {
+    id: 'no_multi_account_pk',
+    title: 'No multi-account PK',
+    titleUr: 'ملٹی اکاؤنٹ پی کے ممنوع',
+    summary: 'Operating both competing host accounts in a battle is strictly forbidden.',
+    summaryUr: 'ایک ہی مقابلے میں دونوں مد مقابل اکاؤنٹس چلانا مکمل طور پر ممنوع ہے۔',
+    description: 'Hosts are not permitted to match against their own sub-accounts, farm victory boosts dishonestly, or coordinate staged win-loss streaks across device farms.',
+    displayOrder: 3,
+    iconName: 'user-x',
+    isActive: true,
+  },
+  {
+    id: 'report_violations',
+    title: 'Report violations',
+    titleUr: 'خلاف ورزی کی اطلاع دیں',
+    summary: 'Real-time reporting of suspicious actions with 24/7 moderation audit review.',
+    summaryUr: 'مشکوک سرگرمیوں کی فوری اطلاع 24 گھنٹے فعال ٹیم کو دیں۔',
+    description: 'Viewers and hosts can immediately flag suspected score tampering, cheating, invitation harassment, or bot activity. Every report is audited with cryptographic score validation.',
+    displayOrder: 4,
+    iconName: 'flag',
+    isActive: true,
+  },
+];
+
+export type PKAbuseReportCategory =
+  | 'fake_traffic'
+  | 'gift_abuse'
+  | 'multi_account'
+  | 'score_manipulation'
+  | 'cheating'
+  | 'invitation_abuse'
+  | 'spam'
+  | 'suspicious_behavior'
+  | 'other';
+
+export type PKAbuseReportStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed';
+
+export interface PKAbuseReport {
+  id: string;
+  battleId?: string | null;
+  reporterId: string;
+  reporterName: string;
+  reportedUserId: string;
+  reportedUserName: string;
+  category: PKAbuseReportCategory;
+  description: string;
+  status: PKAbuseReportStatus;
+  reviewNotes?: string | null;
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+  createdAt: string;
+}
+
+export type PKSecuritySeverity = 'low' | 'medium' | 'high' | 'critical';
+
+export interface PKSecurityEvent {
+  id: string;
+  userId: string;
+  battleId: string;
+  eventType: string;
+  severity: PKSecuritySeverity;
+  reason: string;
+  detectionSource: string;
+  metadata?: Record<string, any>;
+  status: 'logged' | 'flagged' | 'reviewed' | 'resolved';
+  createdAt: string;
+}
+
+export interface PKSecurityAuditLog {
+  id: string;
+  action: string;
+  targetId?: string;
+  adminId: string;
+  adminName: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface PKScoreValidationDto {
+  battleId: string;
+  userId: string;
+  source: 'client' | 'backend_service' | 'payment_gateway';
+  attemptedScoreA?: number;
+  attemptedScoreB?: number;
+  idempotencyKey?: string;
+}
+
+export interface PKTimerValidationDto {
+  battleId: string;
+  userId: string;
+  clientRemainingSeconds: number;
+  source: 'client' | 'backend_authoritative';
+}
+
+
 
 
 
