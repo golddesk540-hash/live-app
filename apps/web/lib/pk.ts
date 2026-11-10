@@ -542,6 +542,88 @@ export function formatBoostTime(seconds: number): string {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
+// ============================================================================
+// Module 6.7: PK Activity Slot System
+// Reference: 06_07_activity_slot.png
+// ============================================================================
+
+export type PKActivityType = 'featured' | 'daily' | 'special' | 'challenge' | 'campaign';
+
+export type PKActivityStatus = 'draft' | 'scheduled' | 'active' | 'paused' | 'completed' | 'cancelled';
+
+export interface PKActivitySlot {
+  id: string;
+  title: string;
+  titleUr: string;
+  subtitle: string;
+  subtitleUr: string;
+  description: string;
+  descriptionUr: string;
+  activityType: PKActivityType;
+  bannerUrl?: string | null;
+  thumbnailUrl?: string | null;
+  targetBattles: number;
+  currentBattles: number;
+  rewardPoints: number;
+  rewardCoins: number;
+  status: PKActivityStatus;
+  startsAt: string;
+  endsAt: string;
+  remainingSeconds: number;
+  formattedCountdown: string;
+  displayOrder: number;
+  isVisible: boolean;
+  linkedBattleIds: string[];
+  participatingHostIds: string[];
+  progressPercentage: number;
+  isCompleted: boolean;
+  isExpired: boolean;
+}
+
+export interface PKActivityAuditLog {
+  id: string;
+  activityId: string;
+  action: string;
+  adminId: string;
+  previousStatus?: string | null;
+  newStatus?: string | null;
+  details?: any;
+  createdAt: string;
+}
+
+export interface PKActivityUserProgress {
+  id: string;
+  userId: string;
+  activityId: string;
+  completedBattles: number;
+  targetBattles: number;
+  isRewardClaimed: boolean;
+  claimedAt?: string | null;
+  updatedAt: string;
+}
+
+/**
+ * Format activity countdown into authoritative Days / Hours / Minutes / Seconds
+ */
+export function formatActivityCountdown(seconds: number, isUrdu: boolean = false): string {
+  if (isNaN(seconds) || seconds <= 0) {
+    return isUrdu ? 'ختم ہو چکا' : 'Ended';
+  }
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+
+  if (days > 0) {
+    return isUrdu ? `${days} دن ${hours} گھنٹے` : `${days}d ${hours}h`;
+  }
+  if (hours > 0) {
+    return isUrdu ? `${hours} گھنٹے ${minutes} منٹ` : `${hours}h ${minutes}m`;
+  }
+  return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
+
 
 
 

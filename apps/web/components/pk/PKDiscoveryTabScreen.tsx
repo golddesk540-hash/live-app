@@ -18,6 +18,7 @@ import {
   UserPlus,
   Radio,
   CheckCircle2,
+  ChevronRight,
 } from 'lucide-react';
 import {
   PKDiscoveryTab,
@@ -55,6 +56,7 @@ export default function PKDiscoveryTabScreen({
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [invitedHostId, setInvitedHostId] = useState<string | null>(null);
+  const [featuredActivity, setFeaturedActivity] = useState<any | null>(null);
 
   const isRtl = lang === 'ur';
 
@@ -76,6 +78,15 @@ export default function PKDiscoveryTabScreen({
         setHosts(data.hosts || []);
         if (data.counts) setCounts(data.counts);
       }
+
+      // Fetch official active PK Activity Slot for Discovery banner
+      try {
+        const actRes = await fetch('/api/pk/activities?status=active&type=daily');
+        const actData = await actRes.json();
+        if (actData.success && actData.activities?.length > 0) {
+          setFeaturedActivity(actData.activities[0]);
+        }
+      } catch {}
     } catch (err) {
       console.error('Failed to load PK discovery data:', err);
     } finally {
@@ -289,6 +300,47 @@ export default function PKDiscoveryTabScreen({
 
       {/* CONTENT LIST AREA */}
       <div className="relative z-20 flex-1 px-4 py-3 space-y-3 overflow-y-auto">
+        {/* Module 6.7: PK Activity Slot Feature Banner */}
+        {featuredActivity && !searchQuery && (
+          <Link
+            href="/pk/activity-slot"
+            className="block group relative bg-gradient-to-r from-[#200d3d] via-[#1a0c33] to-[#250f44] border border-[#3d1d68] hover:border-[#ff2d78] rounded-2xl p-3 shadow-xl transition-all overflow-hidden"
+          >
+            <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-[#ff2d78]/15 rounded-full blur-xl pointer-events-none" />
+            <div className="relative flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 p-0.5 flex items-center justify-center flex-shrink-0 shadow-md">
+                  <div className="w-full h-full rounded-[10px] bg-[#220738] flex items-center justify-center">
+                    <Trophy className="w-6 h-6 text-yellow-400 fill-yellow-400" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-black text-white">
+                      {isRtl ? featuredActivity.titleUr : featuredActivity.title}
+                    </span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-[#ff2d78]/20 text-[#ff2d78]">
+                      +50 Pts
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-white/70 font-semibold truncate">
+                    {isRtl ? featuredActivity.subtitleUr : featuredActivity.subtitle}
+                  </p>
+                  <p className="text-[10px] text-white/50">
+                    {isRtl
+                      ? `${featuredActivity.targetBattles} / ${featuredActivity.currentBattles} مقابلے مکمل`
+                      : `${featuredActivity.currentBattles} / ${featuredActivity.targetBattles} Battles`}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#ff2d78] to-[#ec4899] text-white text-[11px] font-black shadow-md flex-shrink-0">
+                <span>{isRtl ? 'ابھی شامل ہوں' : 'Join Now'}</span>
+                <ChevronRight className="w-3 h-3" />
+              </div>
+            </div>
+          </Link>
+        )}
         {loading ? (
           <div className="py-20 flex flex-col items-center justify-center text-white/50 space-y-2">
             <RefreshCw className="w-7 h-7 animate-spin text-[#ff2d78]" />
