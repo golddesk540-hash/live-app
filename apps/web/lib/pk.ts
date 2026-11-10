@@ -390,5 +390,158 @@ export function calculatePKBattleWinner(
   }
 }
 
+// ============================================================================
+// Module 6.6: PK Discovery Tab System
+// Reference: 06_06_pk_discovery_tab.png
+// ============================================================================
+
+export type PKDiscoveryTab = 'all' | 'live' | 'available_hosts' | 'popular' | 'recent' | 'featured';
+
+export interface PKDiscoveryHostSummary {
+  id: string;
+  poppoId: string;
+  nickname: string;
+  avatarUrl: string;
+  country: string;
+  countryCode: string;
+  flagEmoji: string;
+  roomNumber: string;
+  score: number;
+}
+
+export interface PKDiscoveryBattleItem {
+  id: string;
+  battleType: string;
+  status: 'active' | 'completed' | 'cancelled';
+  hostA: PKDiscoveryHostSummary;
+  hostB: PKDiscoveryHostSummary;
+  viewerCount: number;
+  viewersFormatted: string;
+  remainingSeconds: number;
+  formattedTimer: string;
+  timerStatus: string;
+  isFeatured: boolean;
+  featuredOrder: number;
+  startedAt: string;
+  endedAt?: string | null;
+  winnerHostId?: string | null;
+}
+
+export interface PKAvailableHostItem {
+  id: string;
+  poppoId: string;
+  nickname: string;
+  avatarUrl: string;
+  country: string;
+  countryCode: string;
+  flagEmoji: string;
+  roomNumber: string;
+  viewerCount: number;
+  viewersFormatted: string;
+  isLive: boolean;
+  inPkBattle: boolean;
+  pkInvitesEnabled: boolean;
+  isEligibleForPk: boolean;
+}
+
+export interface PKDiscoveryCounts {
+  all: number;
+  live: number;
+  availableHosts: number;
+  popular: number;
+  recent: number;
+  featured: number;
+}
+
+export interface PKDiscoveryResponse {
+  success: boolean;
+  tab: PKDiscoveryTab;
+  battles: PKDiscoveryBattleItem[];
+  hosts: PKAvailableHostItem[];
+  counts: PKDiscoveryCounts;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    hasMore: boolean;
+  };
+}
+
+export interface PKFeaturedManageDto {
+  battleId: string;
+  isFeatured: boolean;
+  featuredOrder?: number;
+  adminId?: string;
+}
+
+/**
+ * Format viewer count for PK display (e.g. 24.8K watching)
+ */
+export function formatPKViewers(count: number, isUrdu: boolean = false): string {
+  if (isNaN(count) || count <= 0) {
+    return isUrdu ? '0 ناظرین' : '0 watching';
+  }
+  let formatted = count.toString();
+  if (count >= 1000000) {
+    formatted = (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+  } else if (count >= 1000) {
+    formatted = (count / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+  }
+  return isUrdu ? `${formatted} ناظرین` : `${formatted} watching`;
+}
+
+// ============================================================================
+// Module 6.5: PK Winner Boost System
+// Reference: 06_05_winner_boost.png
+// ============================================================================
+
+export type PKWinnerBoostStatus = 'pending' | 'active' | 'expired' | 'cancelled' | 'rejected';
+export type PKBoostType = 'points_boost' | 'temporary_badge' | 'profile_highlight' | 'winner_animation';
+
+export interface PKWinnerBoost {
+  id: string;
+  battleId: string;
+  resultId?: string | null;
+  winnerUserId: string;
+  winnerNickname: string;
+  winnerAvatar: string;
+  boostType: PKBoostType;
+  boostTitle: string;
+  boostDescription: string;
+  multiplierPercentage: number;
+  status: PKWinnerBoostStatus;
+  durationMinutes: number;
+  remainingSeconds: number;
+  formattedCountdown: string; // 'MM:SS'
+  activatedAt: string;
+  expiresAt: string;
+  createdAt: string;
+  isExpired: boolean;
+}
+
+export interface PKBoostAuditLog {
+  id: string;
+  boostId: string;
+  battleId?: string | null;
+  action: string;
+  actorId: string;
+  actorRole: string;
+  previousStatus?: string | null;
+  newStatus: string;
+  reason?: string | null;
+  createdAt: string;
+}
+
+/**
+ * Format remaining boost seconds into authoritative MM:SS display
+ */
+export function formatBoostTime(seconds: number): string {
+  if (isNaN(seconds) || seconds <= 0) return '00:00';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
+
 
 
