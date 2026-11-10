@@ -824,6 +824,140 @@ export interface PKTimerValidationDto {
   source: 'client' | 'backend_authoritative';
 }
 
+// ============================================================================
+// Module 6.10: PK Battle Hand-off to Real Gifts
+// Reference: 06_10_hand_off_to_real_gifts.png
+// ============================================================================
+
+export interface PKRealGiftItem {
+  id: string;
+  name: string;
+  nameUr: string;
+  coinPrice: number;
+  currencyIcon: 'heart' | 'coin' | 'diamond';
+  imageUrl: string;
+  animationName: string;
+  category: string;
+  displayOrder: number;
+  isActive: boolean;
+}
+
+export const CANONICAL_PK_REAL_GIFTS: PKRealGiftItem[] = [
+  {
+    id: 'rose',
+    name: 'Rose',
+    nameUr: 'گلاب',
+    coinPrice: 1,
+    currencyIcon: 'heart',
+    imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300&auto=format&fit=crop&q=80',
+    animationName: 'rose_bloom',
+    category: 'popular',
+    displayOrder: 1,
+    isActive: true,
+  },
+  {
+    id: 'heart',
+    name: 'Heart',
+    nameUr: 'دل',
+    coinPrice: 10,
+    currencyIcon: 'heart',
+    imageUrl: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=300&auto=format&fit=crop&q=80',
+    animationName: 'heart_burst',
+    category: 'romantic',
+    displayOrder: 2,
+    isActive: true,
+  },
+  {
+    id: 'crown',
+    name: 'Crown',
+    nameUr: 'تاج',
+    coinPrice: 50,
+    currencyIcon: 'coin',
+    imageUrl: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=300&auto=format&fit=crop&q=80',
+    animationName: 'crown_shine',
+    category: 'luxury',
+    displayOrder: 3,
+    isActive: true,
+  },
+  {
+    id: 'car',
+    name: 'Sports Car',
+    nameUr: 'اسپورٹس کار',
+    coinPrice: 200,
+    currencyIcon: 'coin',
+    imageUrl: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=300&auto=format&fit=crop&q=80',
+    animationName: 'car_drive',
+    category: 'luxury',
+    displayOrder: 4,
+    isActive: true,
+  },
+  {
+    id: 'castle',
+    name: 'Magic Castle',
+    nameUr: 'جادوئی محل',
+    coinPrice: 500,
+    currencyIcon: 'coin',
+    imageUrl: 'https://images.unsplash.com/photo-1533158326339-7f3cf2404354?w=300&auto=format&fit=crop&q=80',
+    animationName: 'castle_fireworks',
+    category: 'special',
+    displayOrder: 5,
+    isActive: true,
+  },
+  {
+    id: 'rocket',
+    name: 'Space Rocket',
+    nameUr: 'خلائی راکٹ',
+    coinPrice: 1000,
+    currencyIcon: 'diamond',
+    imageUrl: 'https://images.unsplash.com/photo-1517976487507-5b3b4b45a9d7?w=300&auto=format&fit=crop&q=80',
+    animationName: 'rocket_launch',
+    category: 'legendary',
+    displayOrder: 6,
+    isActive: true,
+  },
+];
+
+export interface PKViewerWallet {
+  userId: string;
+  coins: number;
+  diamondPoints: number;
+  totalSpentCoins: number;
+  totalReceivedPoints: number;
+}
+
+export interface PKSendRealGiftDto {
+  battleId: string;
+  senderId: string;
+  senderName?: string;
+  receiverSide: 'host_a' | 'host_b';
+  receiverId?: string;
+  receiverName?: string;
+  giftId: string;
+  quantity?: number;
+  idempotencyKey?: string;
+}
+
+export interface PKGiftTransaction {
+  id: string;
+  transactionId: string;
+  battleId: string;
+  senderId: string;
+  senderName: string;
+  receiverId: string;
+  receiverName: string;
+  receiverSide: 'host_a' | 'host_b';
+  giftId: string;
+  giftName: string;
+  coinPrice: number;
+  quantity: number;
+  totalCoins: number;
+  hostPoints: number;
+  pkScoreAdded: number;
+  status: 'pending' | 'completed' | 'failed' | 'reversed';
+  createdAt: string;
+}
+
+
 
 
 
