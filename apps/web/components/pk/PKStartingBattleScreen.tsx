@@ -135,9 +135,13 @@ export default function PKStartingBattleScreen({
           if (data.invitation.status === 'accepted') {
             setActiveInvite({ ...activeInvite, status: 'accepted' });
             showToast(lang === 'en' ? 'Invitation accepted! Starting battle...' : 'دعوت قبول ہو گئی! جنگ شروع ہو رہی ہے...', 'success');
-            if (onBattleConfirmed && data.battle) {
+            if (data.battle) {
               setTimeout(() => {
-                onBattleConfirmed(data.battle.id, data.battle);
+                if (onBattleConfirmed) {
+                  onBattleConfirmed(data.battle.id, data.battle);
+                } else if (typeof window !== 'undefined') {
+                  window.location.href = `/pk/battle/${data.battle.id}`;
+                }
               }, 1200);
             }
           } else if (data.invitation.status === 'rejected') {
@@ -199,9 +203,13 @@ export default function PKStartingBattleScreen({
             setRandomOpponent(data.opponent);
             setRandomBattleId(data.battleId);
             showToast(lang === 'en' ? 'Opponent matched! Connecting battle...' : 'مخالف مل گیا! جنگ سے منسلک ہو رہے ہیں...', 'success');
-            if (onBattleConfirmed && data.battleId) {
+            if (data.battleId) {
               setTimeout(() => {
-                onBattleConfirmed(data.battleId, data.opponent);
+                if (onBattleConfirmed) {
+                  onBattleConfirmed(data.battleId, data.opponent);
+                } else if (typeof window !== 'undefined') {
+                  window.location.href = `/pk/battle/${data.battleId}`;
+                }
               }, 1500);
             }
           } else if (data.status === 'no_opponent_available') {
@@ -299,9 +307,13 @@ export default function PKStartingBattleScreen({
         if (action === 'accept') {
           showToast(lang === 'en' ? 'Challenge accepted! Preparing battle...' : 'چیلنج قبول کر لیا گیا! جنگ کی تیاری ہو رہی ہے...', 'success');
           setIncomingInvite(null);
-          if (onBattleConfirmed && data.battle) {
+          if (data.battle) {
             setTimeout(() => {
-              onBattleConfirmed(data.battle.id, data.battle);
+              if (onBattleConfirmed) {
+                onBattleConfirmed(data.battle.id, data.battle);
+              } else if (typeof window !== 'undefined') {
+                window.location.href = `/pk/battle/${data.battle.id}`;
+              }
             }, 1200);
           }
         } else {
@@ -343,9 +355,13 @@ export default function PKStartingBattleScreen({
           setRandomOpponent(data.opponent);
           setRandomBattleId(data.battleId);
           showToast(lang === 'en' ? 'Matched with an opponent!' : 'مخالف کے ساتھ میچ ہو گیا!', 'success');
-          if (onBattleConfirmed && data.battleId) {
+          if (data.battleId) {
             setTimeout(() => {
-              onBattleConfirmed(data.battleId, data.opponent);
+              if (onBattleConfirmed) {
+                onBattleConfirmed(data.battleId, data.opponent);
+              } else if (typeof window !== 'undefined') {
+                window.location.href = `/pk/battle/${data.battleId}`;
+              }
             }, 1500);
           }
         } else {

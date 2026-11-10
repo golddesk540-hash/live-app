@@ -159,3 +159,128 @@ export interface PKBattleRecord {
   startedAt?: string | null;
 }
 
+// ============================================================================
+// Module 6.3: PK Battle Score and Timer
+// Reference: 06_03_score_and_timer.png
+// ============================================================================
+
+export type PKTimerVisualState = 'normal' | 'warning_60s' | 'warning_10s' | 'time_expired';
+
+export interface PKScoreEvent {
+  id: string;
+  battleId: string;
+  hostSide: 'host_a' | 'host_b';
+  targetHostId: string;
+  senderId: string;
+  senderName: string;
+  points: number;
+  giftName?: string;
+  idempotencyKey: string;
+  createdAt: string;
+}
+
+export interface PKBattleComment {
+  id: string;
+  battleId: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface PKHostScoreParticipant {
+  id: string;
+  poppoId: string;
+  nickname: string;
+  avatarUrl: string;
+  roomNumber: string;
+  score: number;
+  viewerCount: number;
+  country: string;
+  countryCode: string;
+  flagEmoji: string;
+}
+
+export interface PKBattleTimerState {
+  durationSeconds: number;
+  remainingSeconds: number;
+  elapsedSeconds: number;
+  formattedTime: string; // 'MM:SS'
+  status: PKTimerVisualState;
+  serverTime: string;
+  startedAt: string;
+  expiresAt: string;
+}
+
+export interface PKBattleScoreTimerData {
+  battleId: string;
+  battleType: PKBattleTypeId;
+  status: 'starting' | 'active' | 'time_expired' | 'completed' | 'cancelled';
+  hostA: PKHostScoreParticipant;
+  hostB: PKHostScoreParticipant;
+  timer: PKBattleTimerState;
+  leadingSide: 'host_a' | 'host_b' | 'tie';
+  leadingHostId?: string | null;
+  ratioA: number; // percentage (0-100)
+  ratioB: number; // percentage (0-100)
+  recentEvents: PKScoreEvent[];
+  recentComments: PKBattleComment[];
+}
+
+export interface SendScoreDto {
+  hostSide: 'host_a' | 'host_b';
+  targetHostId: string;
+  senderId: string;
+  senderName: string;
+  points: number;
+  giftName?: string;
+  idempotencyKey: string;
+}
+
+/**
+ * Format seconds into authoritative MM:SS display
+ */
+export function formatPKTime(seconds: number): string {
+  if (isNaN(seconds) || seconds <= 0) return '00:00';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Determine visual state based on remaining time
+ */
+export function determinePKTimerState(remainingSeconds: number): PKTimerVisualState {
+  if (remainingSeconds <= 0) return 'time_expired';
+  if (remainingSeconds <= 10) return 'warning_10s';
+  if (remainingSeconds <= 60) return 'warning_60s';
+  return 'normal';
+}
+
+/**
+ * Calculate dynamic score bar ratios with safe boundaries so scores remain readable
+ */
+export function calculatePKScoreRatios(scoreA: number, scoreB: number): { ratioA: number; ratioB: number } {
+  const safeA = Math.max(0, scoreA || 0);
+  const safeB = Math.max(0, scoreB || 0);
+  const total = safeA + safeB;
+
+  if (total === 0) {
+    return { ratioA: 50, ratioB: 50 };
+  }
+
+  // Raw percentage
+  let rawA = (safeA / total) * 100;
+
+  // Clamp between 15% and 85% for UI balance and legibility
+  if (rawA < 15) rawA = 15;
+  if (rawA > 85) rawA = 85;
+
+  return {
+    ratioA: Math.round(rawA * 10) / 10,
+    ratioB: Math.round((100 - rawA) * 10) / 10,
+  };
+}
+
+
