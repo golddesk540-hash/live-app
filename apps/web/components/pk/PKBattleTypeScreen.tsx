@@ -129,7 +129,7 @@ export default function PKBattleTypeScreen({
           setTimeout(onClose, 800);
         } else {
           setTimeout(() => {
-            router.push(`/party/room/${roomNumber}?pkSession=${data.sessionId || 'active'}`);
+            router.push(`/pk/room/${roomNumber}/start`);
           }, 800);
         }
       } else {

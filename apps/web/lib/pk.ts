@@ -78,3 +78,84 @@ export const CANONICAL_PK_BATTLE_TYPES: PKBattleType[] = [
     badgeTextUr: 'مقفل',
   },
 ];
+
+// ============================================================================
+// Module 6.2: PK Host Invitation & Random Matchmaking
+// Reference: 06_02_starting_a_battle_invite_random.png
+// ============================================================================
+
+export interface LiveHost {
+  id: string;
+  poppoId: string;
+  nickname: string;
+  avatarUrl: string;
+  country: string;
+  countryCode: string;
+  flagEmoji: string;
+  roomNumber: string;
+  viewerCount: number;
+  isLive: boolean;
+  inPkBattle: boolean;
+  pkInvitesEnabled: boolean;
+  isOnline: boolean;
+  isEligibleForPk: boolean;
+}
+
+export type PKInvitationStatus = 'pending' | 'accepted' | 'rejected' | 'expired' | 'cancelled';
+
+export interface PKInvitation {
+  id: string;
+  senderHostId: string;
+  senderRoomNumber: string;
+  senderNickname: string;
+  senderAvatar: string;
+  receiverHostId: string;
+  receiverRoomNumber: string;
+  receiverNickname: string;
+  receiverAvatar: string;
+  battleType: PKBattleTypeId;
+  status: PKInvitationStatus;
+  rejectionReason?: string | null;
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+  secondsRemaining?: number;
+}
+
+export type RandomMatchStatus =
+  | 'idle'
+  | 'finding_opponent'
+  | 'opponent_found'
+  | 'waiting_confirmation'
+  | 'match_accepted'
+  | 'match_cancelled'
+  | 'no_opponent_available';
+
+export interface PKMatchmakingStatusResponse {
+  success: boolean;
+  status: RandomMatchStatus;
+  hostId: string;
+  roomNumber: string;
+  opponent?: Partial<LiveHost> | null;
+  battleId?: string | null;
+  message?: string;
+  messageUr?: string;
+}
+
+export interface PKBattleRecord {
+  id: string;
+  battleType: PKBattleTypeId;
+  hostAId: string;
+  hostARoom: string;
+  hostANickname: string;
+  hostAAvatar: string;
+  hostBId: string;
+  hostBRoom: string;
+  hostBNickname: string;
+  hostBAvatar: string;
+  matchMethod: 'invite' | 'random';
+  status: 'confirmed' | 'starting' | 'active' | 'completed' | 'cancelled';
+  createdAt: string;
+  startedAt?: string | null;
+}
+

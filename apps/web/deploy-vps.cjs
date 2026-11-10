@@ -35,6 +35,7 @@ conn.on('ready', () => {
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_033.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_034.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_035.cjs
+    DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_036.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node update_room_7001.cjs
     
     echo "--- 3. Installing dependencies & Rebuilding Next.js on VPS ---"
@@ -107,6 +108,10 @@ conn.on('ready', () => {
     curl -s -X POST -H "Content-Type: application/json" -d '{"battleTypeId":"1v1","roomId":"7001","selectedBy":"vps_deploy_host"}' http://127.0.0.1:3005/api/pk/battle-types/select | head -n 10
     curl -s -X POST -H "Content-Type: application/json" -d '{"battleTypeId":"4_host","roomId":"7001","selectedBy":"vps_deploy_host"}' http://127.0.0.1:3005/api/pk/battle-types/select | head -n 10
     curl -s "http://127.0.0.1:3005/api/pk/battle-types/session?roomId=7001" | head -n 10
+    curl -s -I http://127.0.0.1:3005/pk/start?preview=demo | head -n 5
+    curl -s -I http://127.0.0.1:3005/pk/room/7001/start?preview=demo | head -n 5
+    curl -s http://127.0.0.1:3005/api/pk/hosts | head -n 10
+    curl -s -X POST http://127.0.0.1:3005/api/pk/test-reset | head -n 5
     echo ""
     echo "🎉 DEPLOYMENT COMPLETE ON CONTABO VPS!"
   `;

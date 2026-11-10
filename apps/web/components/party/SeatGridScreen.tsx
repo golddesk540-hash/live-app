@@ -56,6 +56,7 @@ import OrderAndClosingScreen from './OrderAndClosingScreen';
 import RoomLimitsScreen from './RoomLimitsScreen';
 import PartyRulesScreen from './PartyRulesScreen';
 import PKBattleTypeScreen from '../pk/PKBattleTypeScreen';
+import PKStartingBattleScreen from '../pk/PKStartingBattleScreen';
 
 interface SeatGridScreenProps {
   roomId: string;
@@ -247,6 +248,7 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
 
   // Module 6.1 PK Battle Types state
   const [isPKBattleOpen, setIsPKBattleOpen] = useState<boolean>(false);
+  const [pkModalStep, setPkModalStep] = useState<'types' | 'starting'>('types');
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -1847,16 +1849,29 @@ export default function SeatGridScreen({ roomId, initialRoom }: SeatGridScreenPr
             >
               <X className="w-4 h-4" />
             </button>
-            <PKBattleTypeScreen
-              roomNumber={roomId}
-              hostId={room?.hostNickname || 'host_maria_7001'}
-              isModal={true}
-              onClose={() => setIsPKBattleOpen(false)}
-              onContinue={(battleType) => {
-                showToast(`PK Battle Type ${battleType} configured! Ready for battle.`);
-                setIsPKBattleOpen(false);
-              }}
-            />
+            {pkModalStep === 'types' ? (
+              <PKBattleTypeScreen
+                roomNumber={roomId}
+                hostId={room?.hostNickname || 'host_maria_7001'}
+                isModal={true}
+                onClose={() => setIsPKBattleOpen(false)}
+                onContinue={(battleType) => {
+                  showToast(`1v1 PK Battle selected! Opening Host Invite & Matchmaking...`);
+                  setPkModalStep('starting');
+                }}
+              />
+            ) : (
+              <PKStartingBattleScreen
+                currentHostId="00000000-0000-0000-0000-000000088201"
+                currentRoomNumber={roomId}
+                currentHostNickname={room?.hostNickname || 'Host Maria'}
+                onBack={() => setPkModalStep('types')}
+                onBattleConfirmed={(battleId) => {
+                  showToast('1v1 PK Battle confirmed! Connecting battle...');
+                  setIsPKBattleOpen(false);
+                }}
+              />
+            )}
           </div>
         </div>
       )}
