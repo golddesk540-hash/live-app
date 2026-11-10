@@ -623,6 +623,74 @@ export function formatActivityCountdown(seconds: number, isUrdu: boolean = false
   return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
+// ============================================================================
+// Module 6.8: PK Battle Reactions System
+// Reference: 06_08_reactions.png
+// ============================================================================
+
+export type PKReactionType =
+  | 'heart'
+  | 'laugh'
+  | 'fire'
+  | 'clap'
+  | 'love'
+  | 'like'
+  | 'wow'
+  | 'party'
+  | 'strong'
+  | 'cry';
+
+export type PKReactionTarget = 'host_a' | 'host_b' | 'both';
+
+export interface PKReactionCatalogItem {
+  id: PKReactionType;
+  emoji: string;
+  label: string;
+  labelUr: string;
+}
+
+export const APPROVED_PK_REACTIONS: PKReactionCatalogItem[] = [
+  { id: 'heart', emoji: '❤️', label: 'Heart', labelUr: 'دل' },
+  { id: 'like', emoji: '👍', label: 'Like', labelUr: 'پسند' },
+  { id: 'fire', emoji: '🔥', label: 'Fire', labelUr: 'آگ' },
+  { id: 'clap', emoji: '👏', label: 'Clap', labelUr: 'تالیاں' },
+  { id: 'love', emoji: '😍', label: 'Love', labelUr: 'محبت' },
+  { id: 'laugh', emoji: '😂', label: 'Laugh', labelUr: 'ہنسی' },
+  { id: 'wow', emoji: '😮', label: 'Wow', labelUr: 'حیرت' },
+  { id: 'party', emoji: '🎉', label: 'Party', labelUr: 'جشن' },
+  { id: 'strong', emoji: '💪', label: 'Strong', labelUr: 'طاقت' },
+  { id: 'cry', emoji: '😭', label: 'Cry', labelUr: 'رونا' },
+];
+
+export interface PKReaction {
+  id: string;
+  battleId: string;
+  userId: string;
+  userNickname: string;
+  userAvatar?: string | null;
+  targetHostSide: PKReactionTarget;
+  reactionType: PKReactionType;
+  emoji: string;
+  createdAt: string;
+}
+
+export interface PKReactionCounters {
+  total: number;
+  hostA: number;
+  hostB: number;
+  byType: Record<string, number>;
+}
+
+export interface SendPKReactionDto {
+  battleId: string;
+  reactionType: PKReactionType;
+  targetHostSide?: PKReactionTarget;
+  userId?: string;
+  userNickname?: string;
+  userAvatar?: string;
+}
+
+
 
 
 
