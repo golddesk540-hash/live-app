@@ -11,7 +11,7 @@ conn.on('ready', () => {
     set -e
     cd /var/www/popo-live
     echo "--- 1. Pulling latest code from origin main ---"
-    git checkout -- apps/web/data/consents.json || true
+    git checkout -- apps/web/data/consents.json apps/web/package-lock.json || true
     git pull origin main
     
     cd /var/www/popo-live/apps/web
