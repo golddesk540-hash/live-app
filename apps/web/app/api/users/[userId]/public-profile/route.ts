@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { resolveUserByIdentifier } from '@/lib/userLookup';
+import { resolveActiveUserVipProfile } from '@/lib/vip';
 import { query } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -85,6 +86,8 @@ export async function GET(
       (privacy.profile_visibility === 'only_me' ||
         (privacy.profile_visibility === 'followers' && !isFollowing));
 
+    const vip = await resolveActiveUserVipProfile(targetUser.id);
+
     return NextResponse.json({
       success: true,
       profile: {
@@ -109,6 +112,21 @@ export async function GET(
         hasBlockedViewer,
         isSelf,
         isPrivateProfile: isProfileRestricted,
+        vip: {
+          hasActiveVip: vip.hasActiveVip,
+          vipLevel: vip.vipLevel,
+          vipTier: vip.vipTier,
+          status: vip.hasActiveVip ? 'active' : vip.status,
+          planId: vip.hasActiveVip ? vip.planId : null,
+          planName: vip.hasActiveVip ? vip.planName : null,
+          badgeLabel: vip.badgeLabel,
+          badgeAssetUrl: vip.badgeAssetUrl,
+          profileFrameAssetUrl: vip.profileFrameAssetUrl,
+          nameDecorationStyle: vip.nameDecorationStyle,
+          themeKey: vip.themeKey,
+          expiryDate: isSelf ? vip.expiryDate : null,
+          activeBenefitKeys: vip.activeBenefitKeys,
+        },
       },
     });
   } catch (err: any) {

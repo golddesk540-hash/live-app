@@ -53,6 +53,17 @@ interface PublicProfile {
   isBlocked: boolean;
   hasBlockedViewer: boolean;
   isSelf: boolean;
+  vip?: {
+    hasActiveVip: boolean;
+    vipLevel: number;
+    vipTier: string;
+    status: string;
+    planName?: string | null;
+    badgeLabel?: string | null;
+    profileFrameAssetUrl?: string | null;
+    nameDecorationStyle?: string | null;
+    activeBenefitKeys?: string[];
+  };
 }
 
 function formatStat(num: number): string {
@@ -407,10 +418,24 @@ function PublicProfileContent() {
 
           {/* User Name & Details overlayed on Hero Cover */}
           <div className="absolute bottom-2 inset-x-0 px-5 text-left">
-            <div className="flex items-center gap-2 mb-1">
-              <h1 className="text-2xl font-extrabold text-white tracking-wide drop-shadow-md">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <h1
+                className={`text-2xl font-extrabold tracking-wide drop-shadow-md ${
+                  profile.vip?.hasActiveVip && profile.vip.activeBenefitKeys?.includes('vip_name_decoration')
+                    ? 'bg-gradient-to-r from-amber-200 via-yellow-300 to-pink-300 bg-clip-text text-transparent'
+                    : 'text-white'
+                }`}
+              >
                 {profile.nickname}
               </h1>
+              {profile.vip?.hasActiveVip && profile.vip.badgeLabel && (
+                <span
+                  data-testid="public-profile-vip-badge"
+                  className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-300 text-[#1D0F03] text-[10px] font-black shadow-md"
+                >
+                  👑 {profile.vip.badgeLabel}
+                </span>
+              )}
               <span className={`text-xl font-bold ${genderColor}`}>
                 {genderSymbol}
               </span>

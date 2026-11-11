@@ -38,18 +38,50 @@ export async function GET(
       );
     }
 
-    const messages: PartyMessage[] = (rows || []).map((r) => ({
-      id: r.id,
-      roomNumber: r.room_number,
-      senderId: r.sender_id,
-      senderName: r.sender_name,
-      senderAvatar: r.sender_avatar || '/assets/party/chat_avatar_ali_khan.png',
-      senderRole: r.sender_role || 'audience',
-      seatNumber: r.seat_number ? Number(r.seat_number) : null,
-      messageText: r.message_text,
-      emoji: r.emoji,
-      createdAt: r.created_at ? new Date(r.created_at).toISOString() : new Date().toISOString(),
-    }));
+    const senderIds = Array.from(
+      new Set((rows || []).map((r: any) => String(r.sender_id || '').trim()).filter(Boolean))
+    );
+    const vipByUser = new Map<string, { vipLevel: number; vipBadgeLabel: string; nameDecorationStyle: string }>();
+    if (senderIds.length > 0) {
+      const vipRows = await query<any>(
+        `SELECT DISTINCT ON (user_id) user_id, vip_level, badge_label, name_decoration_style, granted_benefits
+         FROM popolive.vip_membership_records
+         WHERE user_id = ANY($1) AND status = 'active' AND expiry_date > NOW()
+         ORDER BY user_id, vip_level DESC`,
+        [senderIds]
+      );
+      for (const vr of vipRows) {
+        const keys: string[] = Array.isArray(vr.granted_benefits)
+          ? vr.granted_benefits
+          : JSON.parse(vr.granted_benefits || '[]');
+        if (keys.includes('special_chat_badge')) {
+          vipByUser.set(String(vr.user_id), {
+            vipLevel: parseInt(String(vr.vip_level), 10),
+            vipBadgeLabel: vr.badge_label,
+            nameDecorationStyle: vr.name_decoration_style || 'gold_shimmer',
+          });
+        }
+      }
+    }
+
+    const messages: PartyMessage[] = (rows || []).map((r) => {
+      const vipInfo = vipByUser.get(String(r.sender_id || ''));
+      return {
+        id: r.id,
+        roomNumber: r.room_number,
+        senderId: r.sender_id,
+        senderName: r.sender_name,
+        senderAvatar: r.sender_avatar || '/assets/party/chat_avatar_ali_khan.png',
+        senderRole: r.sender_role || 'audience',
+        seatNumber: r.seat_number ? Number(r.seat_number) : null,
+        messageText: r.message_text,
+        emoji: r.emoji,
+        createdAt: r.created_at ? new Date(r.created_at).toISOString() : new Date().toISOString(),
+        vipLevel: vipInfo?.vipLevel || 0,
+        vipBadgeLabel: vipInfo?.vipBadgeLabel || null,
+        vipNameDecorationStyle: vipInfo?.nameDecorationStyle || null,
+      } as any;
+    });
 
     return NextResponse.json({
       success: true,

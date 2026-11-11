@@ -21,6 +21,7 @@ import {
   Download,
 } from 'lucide-react';
 import type { WalletBalance, WalletAuditLogRecord } from '@/lib/wallet';
+import { AdminVipTab } from '@/components/vip/AdminVipTab';
 
 export default function AdminFinancePanel() {
   const [authUser, setAuthUser] = useState<any>(null);
@@ -33,7 +34,7 @@ export default function AdminFinancePanel() {
   const [loginError, setLoginError] = useState<string | null>(null);
 
   // Data Tabs
-  const [activeTab, setActiveTab] = useState<'wallets' | 'coins' | 'points' | 'gifts' | 'earnings' | 'topup' | 'audit'>('wallets');
+  const [activeTab, setActiveTab] = useState<'wallets' | 'coins' | 'points' | 'gifts' | 'earnings' | 'topup' | 'vip' | 'audit'>('wallets');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -429,6 +430,7 @@ export default function AdminFinancePanel() {
                   { id: 'gifts', label: 'Gift Transactions' },
                   { id: 'earnings', label: 'Host Shares (70/30)' },
                   { id: 'topup', label: 'Top-up & Packages' },
+                  { id: 'vip', label: 'VIP Memberships' },
                   { id: 'audit', label: 'Audit Logs' },
                 ] as const
               ).map((t) => (
@@ -992,6 +994,12 @@ export default function AdminFinancePanel() {
                     </div>
                   </>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'vip' && (
+              <div className="p-4">
+                <AdminVipTab canManage={canAdjust} onStatusMessage={setActionMsg} />
               </div>
             )}
           </div>

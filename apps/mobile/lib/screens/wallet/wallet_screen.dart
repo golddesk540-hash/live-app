@@ -6,6 +6,7 @@ import 'coin_history_screen.dart';
 import 'points_history_screen.dart';
 import 'host_earnings_screen.dart';
 import 'topup_screen.dart';
+import '../vip/vip_screen.dart';
 import '../gifts/gift_catalog_screen.dart';
 
 /// ============================================================================
@@ -680,6 +681,37 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
             subtitle: Text(
               _isUrdu ? 'یومیہ/ہفتہ وار/ماہانہ پوائنٹس اور 30% پلیٹ فارم شیئر' : 'Daily/weekly/monthly stats & 70/30 split',
+              style: const TextStyle(color: Colors.white54, fontSize: 11),
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+          ),
+          Divider(color: Colors.white.withOpacity(0.08), height: 1, indent: 16, endIndent: 16),
+          ListTile(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => VipMembershipScreen(
+                    apiBaseUrl: widget.apiBaseUrl,
+                    userId: widget.userId,
+                    headers: widget.authToken != null ? {'Authorization': 'Bearer ${widget.authToken}'} : null,
+                    previewDemo: widget.previewDemo,
+                    initialUrdu: _isUrdu,
+                  ),
+                ),
+              );
+            },
+            leading: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(color: _goldAccent.withOpacity(0.16), shape: BoxShape.circle),
+              child: const Icon(Icons.workspace_premium_rounded, color: _goldAccent, size: 20),
+            ),
+            title: Text(
+              _isUrdu ? 'وی آئی پی رکنیت (7.7)' : 'VIP Membership & Benefits',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+            ),
+            subtitle: Text(
+              _isUrdu ? 'وی آئی پی بیج، فریم اور شاہی آمد' : 'VIP Crown Badge, Frame & Entrances',
               style: const TextStyle(color: Colors.white54, fontSize: 11),
             ),
             trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),

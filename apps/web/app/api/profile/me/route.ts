@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getAuthenticatedUser, validateNicknameFormat } from '@/lib/auth';
+import { resolveActiveUserVipProfile } from '@/lib/vip';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +11,8 @@ export async function GET(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized. Please log in.' }, { status: 401 });
     }
+
+    const vip = await resolveActiveUserVipProfile(user.id);
 
     return NextResponse.json({
       authenticated: true,
@@ -31,6 +34,7 @@ export async function GET(req: NextRequest) {
         isAdultVerified: user.is_adult_verified,
         status: user.status,
         createdAt: user.created_at,
+        vip,
       },
     });
   } catch (err: any) {
@@ -47,7 +51,43 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { nickname, country, countryCode, gender, avatarUrl, bio, birthdate, birthday, poppoId, id, email, phone } = body;
+    const {
+      nickname,
+      country,
+      countryCode,
+      gender,
+      avatarUrl,
+      bio,
+      birthdate,
+      birthday,
+      poppoId,
+      id,
+      email,
+      phone,
+      vip,
+      vipLevel,
+      vipTier,
+      vipBadge,
+      vipStatus,
+    } = body;
+
+    // Security Check: Users cannot manually assign themselves VIP badges or levels
+    if (
+      vip !== undefined ||
+      vipLevel !== undefined ||
+      vipTier !== undefined ||
+      vipBadge !== undefined ||
+      vipStatus !== undefined
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'VIP_MANUAL_ASSIGNMENT_FORBIDDEN',
+          error: 'Users cannot manually assign or modify VIP membership badges or statuses.',
+        },
+        { status: 403 }
+      );
+    }
 
     // Security Check: Permanent User ID cannot be edited
     if (poppoId !== undefined || id !== undefined) {

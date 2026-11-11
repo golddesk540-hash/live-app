@@ -20,6 +20,7 @@ import {
   Info,
   Coins,
   Gift,
+  Crown,
 } from 'lucide-react';
 import type {
   WalletBalance,
@@ -528,6 +529,27 @@ export default function WalletScreen({
                 </div>
                 <div className="text-[11px] text-white/50">
                   {isRtl ? 'روزانہ، ہفتہ وار، ماہانہ اعداد و شمار اور چارٹس' : 'Daily/weekly/monthly charts & 70/30 split'}
+                </div>
+              </div>
+            </div>
+            <ChevronRight className={`w-5 h-5 text-white/50 ${isRtl ? 'rotate-180' : ''}`} />
+          </Link>
+
+          <Link
+            href={isPreviewDemo ? '/vip?preview=demo' : '/vip'}
+            data-testid="link-vip-membership"
+            className="flex items-center justify-between px-5 py-4 hover:bg-white/[0.04] transition-colors border-t border-white/5"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center shadow-[0_0_12px_rgba(251,191,36,0.4)]">
+                <Crown className="w-4 h-4 text-[#1D0F03]" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-white">
+                  {isRtl ? 'وی آئی پی رکنیت اور مراعات (7.7)' : 'VIP Membership & Benefits'}
+                </div>
+                <div className="text-[11px] text-white/50">
+                  {isRtl ? 'وی آئی پی بیج، پروفائل فریم اور شاہی آمد' : 'VIP Crown Badge, Frame, Entrances & History'}
                 </div>
               </div>
             </div>

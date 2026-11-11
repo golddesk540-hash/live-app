@@ -53,6 +53,20 @@ interface UserProfileData {
   isAdultVerified: boolean;
   status: string;
   createdAt: string;
+  vip?: {
+    hasActiveVip: boolean;
+    vipLevel: number;
+    vipTier: string;
+    status: string;
+    planName?: string | null;
+    badgeLabel?: string | null;
+    badgeAssetUrl?: string | null;
+    profileFrameAssetUrl?: string | null;
+    nameDecorationStyle?: string | null;
+    themeKey?: string | null;
+    expiryDate?: string | null;
+    activeBenefitKeys?: string[];
+  };
 }
 
 interface UserStatistics {
@@ -260,9 +274,17 @@ function MyProfileContent() {
 
         {/* 2. Center Profile Details */}
         <div className="px-5 pt-2 pb-4 flex flex-col items-center text-center">
-          {/* Avatar with Circular Glowing Ring & Badges */}
-          <div className="relative mb-3">
-            <div className="w-24 h-24 rounded-full p-[3px] bg-gradient-to-tr from-[#FF2E74] via-[#C026D3] to-[#A855F7] shadow-[0_0_30px_rgba(255,46,116,0.5)]">
+          {/* Avatar with Circular Glowing Ring & Approved VIP Profile Frame */}
+          <div className="relative mb-3" data-testid="profile-avatar-frame-wrap">
+            <div
+              className={`w-24 h-24 rounded-full p-[3px] ${
+                user.vip?.hasActiveVip && user.vip.activeBenefitKeys?.includes('premium_profile_frame')
+                  ? 'bg-gradient-to-tr from-amber-300 via-[#EC248F] to-yellow-400 shadow-[0_0_34px_rgba(251,191,36,0.7)] ring-2 ring-amber-300/60'
+                  : user.vip?.hasActiveVip
+                  ? 'bg-gradient-to-tr from-amber-400 to-[#C026D3] shadow-[0_0_26px_rgba(251,191,36,0.45)]'
+                  : 'bg-gradient-to-tr from-[#FF2E74] via-[#C026D3] to-[#A855F7] shadow-[0_0_30px_rgba(255,46,116,0.5)]'
+              }`}
+            >
               <div className="w-full h-full rounded-full overflow-hidden bg-[#0F0A24]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -273,10 +295,20 @@ function MyProfileContent() {
               </div>
             </div>
 
-            {/* Crown Badge (top-right of avatar) */}
-            <div className="absolute -top-1.5 -right-1 w-6 h-6 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-300 shadow-md flex items-center justify-center text-[10px]">
-              👑
-            </div>
+            {/* VIP Crown / Host Badge (top-right of avatar) */}
+            {user.vip?.hasActiveVip ? (
+              <div
+                data-testid="profile-vip-badge"
+                className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-yellow-300 text-[#1D0F03] shadow-lg text-[10px] font-black flex items-center gap-0.5"
+              >
+                <span>👑</span>
+                <span>{user.vip.badgeLabel || 'VIP'}</span>
+              </div>
+            ) : (
+              <div className="absolute -top-1.5 -right-1 w-6 h-6 rounded-full bg-gradient-to-tr from-amber-500 to-yellow-300 shadow-md flex items-center justify-center text-[10px]">
+                👑
+              </div>
+            )}
 
             {/* Level Flame Badge (bottom-right of avatar) */}
             <div className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-[10px] font-black text-white shadow-md flex items-center gap-0.5">
@@ -285,9 +317,16 @@ function MyProfileContent() {
             </div>
           </div>
 
-          {/* Nickname + Gender Symbol */}
+          {/* Nickname + Approved VIP Name Decoration + Gender Symbol */}
           <div className="flex items-center justify-center gap-1.5 mb-1">
-            <h2 className="text-xl font-bold text-white tracking-wide">
+            <h2
+              data-testid="profile-nickname"
+              className={`text-xl font-bold tracking-wide ${
+                user.vip?.hasActiveVip && user.vip.activeBenefitKeys?.includes('vip_name_decoration')
+                  ? 'bg-gradient-to-r from-amber-200 via-yellow-300 to-pink-300 bg-clip-text text-transparent'
+                  : 'text-white'
+              }`}
+            >
               {user.nickname}
             </h2>
             <span className={`text-base font-bold ${genderColor}`}>
@@ -634,6 +673,24 @@ function MyProfileContent() {
                   <span className="text-[10px] px-2 py-0.5 rounded bg-white/10 text-white/70">
                     Bronze Host
                   </span>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+                  <span className="text-white/50">{isUr ? 'وی آئی پی رکنیت' : 'VIP Membership'}</span>
+                  <Link
+                    href="/vip"
+                    className="text-[11px] font-bold text-amber-300 hover:underline flex items-center gap-1"
+                  >
+                    <span>
+                      {user.vip?.hasActiveVip
+                        ? `${user.vip.badgeLabel} (${user.vip.planName})${
+                            user.vip.expiryDate
+                              ? ` • Exp ${new Date(user.vip.expiryDate).toLocaleDateString()}`
+                              : ''
+                          }`
+                        : `Status: ${(user.vip?.status || 'None').toUpperCase()} • Upgrade VIP`}
+                    </span>
+                  </Link>
                 </div>
 
                 <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">

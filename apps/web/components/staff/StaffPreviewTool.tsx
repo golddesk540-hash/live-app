@@ -316,8 +316,8 @@ export default function StaffPreviewTool({ initialUser }: StaffPreviewToolProps)
             <span>Finance Admin Controls (Coins &amp; Points)</span>
           </Link>
 
-          {/* Module 7.2 - 7.6 Gift Catalog, Sending Stage, Animations, Host Earnings & Top-up */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2.5">
+          {/* Module 7.2 - 7.7 Gift Catalog, Sending Stage, Animations, Host Earnings, Top-up & VIP */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2.5">
             <Link
               href="/gifts?preview=demo"
               className="py-3 rounded-full bg-pink-950/50 hover:bg-pink-900/50 text-pink-200 font-bold text-xs sm:text-sm border border-pink-400/30 flex items-center justify-center gap-2 transition-all"
@@ -352,6 +352,13 @@ export default function StaffPreviewTool({ initialUser }: StaffPreviewToolProps)
             >
               <Wallet className="w-4 h-4 text-cyan-300" />
               <span>Top-up Coins (7.6)</span>
+            </Link>
+            <Link
+              href="/vip?preview=demo"
+              className="py-3 rounded-full bg-amber-950/45 hover:bg-amber-900/50 text-amber-200 font-bold text-xs sm:text-sm border border-amber-400/30 flex items-center justify-center gap-2 transition-all"
+            >
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>VIP Club (7.7)</span>
             </Link>
             <Link
               href="/admin/gifts"

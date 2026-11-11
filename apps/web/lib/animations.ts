@@ -901,6 +901,25 @@ export async function getHostEntranceEligibility(
   const canonicalId = userRow?.id || cleanId;
   const hostLevel = parseInt(String(userRow?.host_level ?? '1'), 10);
 
+  // Module 7.7 integration: enforce exact server-time expiration before evaluating entrance eligibility
+  await query(
+    `UPDATE popolive.user_vip_memberships
+     SET status = 'expired',
+         vip_level = 0,
+         vip_tier = 'none',
+         badge_label = 'NONE',
+         special_event_access = FALSE,
+         updated_at = NOW()
+     WHERE user_id = $1 AND status = 'active' AND expires_at <= NOW()`,
+    [canonicalId]
+  );
+  await query(
+    `UPDATE popolive.vip_membership_records
+     SET status = 'expired', updated_at = NOW()
+     WHERE user_id = $1 AND status = 'active' AND expiry_date <= NOW()`,
+    [canonicalId]
+  ).catch(() => undefined);
+
   const vipRows = await query<any>(
     `SELECT * FROM popolive.user_vip_memberships
      WHERE user_id = $1 AND status = 'active' AND expires_at > NOW()

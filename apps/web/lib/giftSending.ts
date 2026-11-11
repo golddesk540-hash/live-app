@@ -1060,6 +1060,22 @@ export async function sendRealTimeGift(params: {
 
         const nowIso = new Date().toISOString();
 
+        // Module 7.7 integration: attach verified sender VIP aura/badge ONLY if active & unexpired
+        const vipSenderRows = await client.query(
+          `SELECT badge_label, vip_level, name_decoration_style, granted_benefits
+           FROM popolive.vip_membership_records
+           WHERE user_id = $1 AND status = 'active' AND expiry_date > NOW()
+           ORDER BY vip_level DESC LIMIT 1`,
+          [params.senderUserId]
+        );
+        const activeVip = vipSenderRows.rows[0] || null;
+        const vipBenefits: string[] = activeVip
+          ? Array.isArray(activeVip.granted_benefits)
+            ? activeVip.granted_benefits
+            : JSON.parse(activeVip.granted_benefits || '[]')
+          : [];
+        const hasVipGiftEffects = Boolean(activeVip && vipBenefits.includes('vip_gift_effects'));
+
         await client.query(
           `INSERT INTO popolive.gift_realtime_events (room_scope, sender_user_id, recipient_host_id, event_type, payload)
            VALUES
@@ -1114,12 +1130,22 @@ export async function sendRealTimeGift(params: {
               pkHostAScore: updatedPkHostAScore,
               pkHostBScore: updatedPkHostBScore,
               roomCoinsEarned: updatedRoomCoinsEarned,
+              senderVipBadge: activeVip?.badge_label || null,
               emittedAt: nowIso,
             }),
             JSON.stringify({
               giftTransactionId: gftTxId,
               senderUserId: params.senderUserId,
               senderNickname: resolvedSenderName,
+              senderVipBadge: activeVip?.badge_label || null,
+              senderVipLevel: activeVip ? parseInt(String(activeVip.vip_level), 10) : 0,
+              vipGiftEffect: hasVipGiftEffects
+                ? {
+                    enabled: true,
+                    auraStyle: activeVip.name_decoration_style || 'gold_shimmer',
+                    badgeLabel: activeVip.badge_label,
+                  }
+                : null,
               recipientHostId: hostOption.hostId,
               recipientNickname: hostOption.nickname,
               liveRoomId: stage.liveRoomId,
