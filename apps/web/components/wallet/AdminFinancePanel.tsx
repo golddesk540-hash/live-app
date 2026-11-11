@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   XCircle,
   RefreshCw,
+  Gift,
 } from 'lucide-react';
 import type { WalletBalance, WalletAuditLogRecord } from '@/lib/wallet';
 
@@ -259,6 +260,13 @@ export default function AdminFinancePanel() {
               </div>
             </div>
           )}
+          <Link
+            href="/admin/gifts"
+            className="px-3.5 py-2 rounded-xl bg-pink-500/15 hover:bg-pink-500/25 border border-pink-400/30 text-xs font-bold text-pink-200 inline-flex items-center gap-1.5"
+          >
+            <Gift className="w-3.5 h-3.5" />
+            <span>Gift Catalog Admin</span>
+          </Link>
           <Link
             href="/staff"
             className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold"

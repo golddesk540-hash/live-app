@@ -19,6 +19,7 @@ import {
   Clock,
   Info,
   Coins,
+  Gift,
 } from 'lucide-react';
 import type {
   WalletBalance,
@@ -282,6 +283,14 @@ export default function WalletScreen({
             >
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-[#ff2d78]' : ''}`} />
             </button>
+            <Link
+              href={isPreviewDemo ? '/gifts?preview=demo' : '/gifts'}
+              data-testid="wallet-gift-catalog-link"
+              className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-pink-400 transition"
+              title={isRtl ? 'گفٹ کیٹلاگ دیکھیں' : 'Open Gift Catalog'}
+            >
+              <Gift className="w-4 h-4" />
+            </Link>
             <Link
               href="/admin/finance"
               className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/80 transition"

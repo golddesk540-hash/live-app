@@ -45,6 +45,7 @@ conn.on('ready', () => {
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_043.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_044.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_045.cjs
+    DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_046.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node reset_canonical_battle.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node update_room_7001.cjs
     
@@ -138,6 +139,14 @@ conn.on('ready', () => {
     curl -s "http://127.0.0.1:3005/api/wallet/balance?userId=user_wallet_demo_701&preview=demo" | head -n 10
     curl -s "http://127.0.0.1:3005/api/wallet/coins/history?userId=user_wallet_demo_701&preview=demo" | head -n 10
     curl -s "http://127.0.0.1:3005/api/wallet/points/history?userId=user_wallet_demo_701&preview=demo" | head -n 10
+    curl -s -I http://127.0.0.1:3005/gifts?preview=demo | head -n 5
+    curl -s -I http://127.0.0.1:3005/admin/gifts | head -n 5
+    curl -s "http://127.0.0.1:3005/api/gifts/catalog" | head -n 10
+    curl -s "http://127.0.0.1:3005/api/gifts/categories" | head -n 10
+    curl -s "http://127.0.0.1:3005/api/gifts/popular" | head -n 10
+    curl -s "http://127.0.0.1:3005/api/gifts/new" | head -n 10
+    curl -s "http://127.0.0.1:3005/api/gifts/featured" | head -n 10
+    curl -s "http://127.0.0.1:3005/api/gifts/search?q=Rose" | head -n 10
     echo ""
     echo "🎉 DEPLOYMENT COMPLETE ON CONTABO VPS!"
   `;

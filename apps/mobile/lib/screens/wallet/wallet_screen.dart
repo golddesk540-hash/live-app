@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'coin_history_screen.dart';
 import 'points_history_screen.dart';
+import '../gifts/gift_catalog_screen.dart';
 
 /// ============================================================================
 /// Popo Live — Phase 7 Module 7.1: Coins and Points System
@@ -327,6 +328,30 @@ class _WalletScreenState extends State<WalletScreen> {
                     _isUrdu ? 'EN' : 'اردو',
                     style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
                   ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => GiftCatalogScreen(
+                        userId: widget.userId,
+                        apiBaseUrl: widget.apiBaseUrl,
+                        authToken: widget.authToken,
+                        previewDemo: widget.previewDemo,
+                      ),
+                    ),
+                  );
+                },
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.07),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.card_giftcard_rounded, color: _neonPink, size: 18),
                 ),
               ),
               const SizedBox(width: 6),
