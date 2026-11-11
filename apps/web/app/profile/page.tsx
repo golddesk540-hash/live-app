@@ -33,6 +33,7 @@ import {
   Video,
   Mic,
   Award,
+  Wallet,
 } from 'lucide-react';
 
 interface UserProfileData {
@@ -341,13 +342,22 @@ function MyProfileContent() {
             </div>
           </div>
 
-          {/* Action Buttons: Edit Profile + Gift Button (matches reference) */}
+          {/* Action Buttons: Edit Profile + Wallet + Gift Button */}
           <div className="w-full flex items-center gap-2.5">
             <Link
               href="/profile/edit"
               className="flex-1 py-3 px-4 rounded-2xl bg-[#1E1738] hover:bg-[#281F4A] border border-white/10 text-white text-xs font-bold text-center transition-all shadow-md active:scale-[0.99]"
             >
               {isUr ? 'پروفائل میں ترمیم کریں' : 'Edit Profile'}
+            </Link>
+
+            <Link
+              href="/wallet"
+              className="px-3.5 h-11 rounded-2xl bg-[#1E1738] hover:bg-[#281F4A] border border-amber-400/25 flex items-center justify-center gap-1.5 text-amber-300 text-xs font-bold shadow-md transition-all active:scale-95"
+              title={isUr ? 'والٹ: کوائنز اور پوائنٹس' : 'Wallet: Coins & Points'}
+            >
+              <Wallet className="w-4 h-4" />
+              <span>{isUr ? 'والٹ' : 'Wallet'}</span>
             </Link>
 
             <Link

@@ -21,6 +21,7 @@ import {
   LogIn,
   AlertTriangle,
   Sparkles,
+  Wallet,
 } from 'lucide-react';
 import { useLanguage } from '@/lib/languageContext';
 
@@ -238,7 +239,14 @@ export default function StaffPreviewTool({ initialUser }: StaffPreviewToolProps)
             </span>
           </div>
 
-          <div className="w-9" />
+          <Link
+            href="/admin/finance"
+            aria-label="Admin Finance Controls"
+            title="Admin Finance Controls"
+            className="w-9 h-9 rounded-full bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/25 flex items-center justify-center text-amber-300 hover:text-amber-200 transition-colors"
+          >
+            <Wallet className="w-4 h-4" />
+          </Link>
         </div>
 
         {/* CENTER CONTENT: Shield Icon + Headings */}
@@ -297,6 +305,15 @@ export default function StaffPreviewTool({ initialUser }: StaffPreviewToolProps)
           >
             Manage Test Rooms
           </button>
+
+          {/* Module 7.1 Finance Admin Controls shortcut */}
+          <Link
+            href="/admin/finance"
+            className="w-full py-3 rounded-full bg-purple-950/50 hover:bg-purple-900/50 text-amber-300 font-bold text-xs sm:text-sm border border-amber-400/25 flex items-center justify-center gap-2 transition-all"
+          >
+            <Wallet className="w-4 h-4" />
+            <span>Finance Admin Controls (Coins &amp; Points)</span>
+          </Link>
         </div>
       </div>
     );

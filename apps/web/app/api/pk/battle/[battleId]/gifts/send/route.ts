@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { PKSendRealGiftDto } from '@/lib/pk';
+import { processAtomicGiftTransfer } from '@/lib/wallet';
 
 export const dynamic = 'force-dynamic';
 
@@ -115,77 +116,38 @@ export async function POST(
       }
     }
 
-    // 5. Check Viewer Wallet Balance
-    const walletRows = await query<any>(
-      `SELECT coins, diamond_points FROM popolive.user_wallets WHERE user_id = $1`,
-      [senderId]
-    );
+    // 5. ATOMIC CENTRAL WALLET & POINTS TRANSACTION (Connected to Module 7.1 Wallet Engine)
+    const txId = `tx_pk_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+    const transferRes = await processAtomicGiftTransfer({
+      senderId,
+      senderName,
+      hostUserId: receiverId,
+      giftCoins: totalCoins,
+      giftName: gift.name,
+      isPkBattle: true,
+      referenceId: battleId,
+      idempotencyKey: idempotencyKey || txId,
+    });
 
-    let currentCoins = 3600; // default for demo viewer
-    if (walletRows && walletRows.length > 0) {
-      currentCoins = parseInt(walletRows[0].coins || '0', 10);
-    } else {
-      // Seed default demo wallet
-      await query(
-        `INSERT INTO popolive.user_wallets (user_id, coins, diamond_points)
-         VALUES ($1, 3600, 0)
-         ON CONFLICT (user_id) DO NOTHING`,
-        [senderId]
-      );
-    }
-
-    if (currentCoins < totalCoins) {
+    if (!transferRes.success) {
+      const avail = transferRes.senderWallet?.coins ?? 0;
       return NextResponse.json(
         {
           success: false,
-          error: `Insufficient coin balance. Required: ${totalCoins} coins, available: ${currentCoins} coins.`,
+          error:
+            transferRes.error ||
+            `Insufficient coin balance. Required: ${totalCoins} coins, available: ${avail} coins.`,
           code: 'INSUFFICIENT_COIN_BALANCE',
           requiredCoins: totalCoins,
-          availableCoins: currentCoins,
+          availableCoins: avail,
         },
         { status: 400 }
       );
     }
 
-    // 6. ATOMIC TRANSACTION EXECUTION
-    const txId = `tx_pk_${Date.now()}_${Math.random().toString(36).substring(7)}`;
-    const hostPoints = Math.floor(totalCoins * 0.70); // 70% Host Share Rule
+    const hostPoints = transferRes.hostPointsEarned ?? Math.floor(totalCoins * 0.7);
     const pkScorePoints = totalCoins; // 1 Coin = 1 PK Point
-
-    // Deduct coins from viewer
-    const deductRes = await query<any>(
-      `UPDATE popolive.user_wallets
-       SET coins = coins - $1,
-           total_spent_coins = total_spent_coins + $1,
-           updated_at = NOW()
-       WHERE user_id = $2 AND coins >= $1
-       RETURNING coins`,
-      [totalCoins, senderId]
-    );
-
-    if (!deductRes || deductRes.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Wallet deduction failed. Insufficient funds or concurrent transaction conflict.',
-          code: 'WALLET_DEDUCTION_FAILED',
-        },
-        { status: 400 }
-      );
-    }
-
-    const remainingCoins = deductRes[0].coins;
-
-    // Credit 70% host earnings points
-    await query(
-      `INSERT INTO popolive.user_wallets (user_id, coins, diamond_points, total_received_points, updated_at)
-       VALUES ($1, 0, $2, $2, NOW())
-       ON CONFLICT (user_id) DO UPDATE SET
-         diamond_points = popolive.user_wallets.diamond_points + EXCLUDED.diamond_points,
-         total_received_points = popolive.user_wallets.total_received_points + EXCLUDED.diamond_points,
-         updated_at = NOW()`,
-      [receiverId, hostPoints]
-    ).catch(() => {});
+    const remainingCoins = transferRes.senderWallet?.coins ?? 0;
 
     // Update Authoritative Battle Score on pk_battles
     const scoreUpdateColumn = receiverSide === 'host_a' ? 'host_a_score' : 'host_b_score';
