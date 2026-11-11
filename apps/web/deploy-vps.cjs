@@ -178,4 +178,5 @@ conn.on('ready', () => {
   username: 'root',
   password: 'Iftkharzaman',
   readyTimeout: 30000,
+  keepaliveInterval: 10000,
 });

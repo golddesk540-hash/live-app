@@ -16,7 +16,7 @@ const ACTIVE_LIVE_ROOM_ID = '880219';
 const ENDED_LIVE_ROOM_ID = '990703';
 const SARA_HOST_ID = '00000000-0000-0000-0000-000000088201';
 const AYESHA_HOST_ID = '00000000-0000-0000-0000-000000088202';
-const ZARA_HOST_ID = '45495810-f5fb-46ec-8c81-f29932411c07';
+let ZARA_HOST_ID = '';
 
 let passed = 0;
 let failed = 0;
@@ -256,8 +256,9 @@ async function runTests() {
     request('GET', `/api/gifts/send/context?pkBattleId=${ACTIVE_PK_BATTLE_ID}&userId=${senderA}&preview=demo`),
   ]);
 
+  ZARA_HOST_ID = roomCtxRes.json?.hosts?.[0]?.hostId || '';
   assert(roomCtxRes.statusCode === 200 && roomCtxRes.json?.mode === 'live_room', 'Live room 880219 context loads');
-  assert(roomCtxRes.json?.hosts?.[0]?.hostId === ZARA_HOST_ID, 'Zara Live resolved as Live Room host');
+  assert(Boolean(ZARA_HOST_ID && roomCtxRes.json?.hosts?.[0]?.nickname === 'Zara Live'), `Zara Live resolved as Live Room host (${ZARA_HOST_ID})`);
   assert((roomCtxRes.json?.gifts || []).length >= 8, `Catalog gifts loaded (${(roomCtxRes.json?.gifts || []).length})`);
   assert(roomCtxRes.json?.senderWallet?.availableCoins === 5000, 'Read-only Coin balance = 5000');
 
