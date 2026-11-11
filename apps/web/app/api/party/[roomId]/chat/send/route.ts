@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { SendPartyMessageDto, PartyMessage } from '@/lib/party';
+import { getUserRecognitionSummary } from '@/lib/recognition';
 
 export const dynamic = 'force-dynamic';
 
@@ -110,9 +111,27 @@ export async function POST(
       createdAt: new Date(row.created_at).toISOString(),
     };
 
+    let recBadges: any = null;
+    try {
+      const rec = await getUserRecognitionSummary(senderId, { includePrivate: false });
+      const hasChatDeco =
+        rec.wealth.activeBenefitKeys.includes('rec_chat_decoration') ||
+        rec.shining.activeBenefitKeys.includes('rec_chat_decoration') ||
+        rec.honor.activeBenefitKeys.includes('rec_chat_decoration');
+      recBadges = {
+        wealthLevel: rec.wealth.currentLevelNumber,
+        shiningLevel: rec.shining.currentLevelNumber,
+        honorLevel: rec.honor.currentLevelNumber,
+        chatDecoration: hasChatDeco ? `W${rec.wealth.currentLevelNumber}|S${rec.shining.currentLevelNumber}|H${rec.honor.currentLevelNumber}` : null,
+      };
+    } catch {
+      recBadges = null;
+    }
+
     return NextResponse.json({
       success: true,
       message: createdMessage,
+      recognitionBadges: recBadges,
     });
   } catch (error: any) {
     console.error('API /party/[roomId]/chat/send error:', error);

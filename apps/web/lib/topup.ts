@@ -1409,6 +1409,16 @@ export async function adminRefundTopupOrder(params: {
       )
     ).rows[0];
 
+    // Module 7.8: deduct refunded paid/promo top-up pools cleanly so refunded coins never inflate Wealth
+    await client.query(
+      `UPDATE popolive.user_recognition_coin_pools
+       SET paid_coins = GREATEST(0, paid_coins - $1),
+           promo_coins = GREATEST(0, promo_coins - $2),
+           updated_at = NOW()
+       WHERE user_id = $3`,
+      [Math.max(0, order.baseCoins), Math.max(0, order.bonusCoins), order.userId]
+    );
+
     if (order.coinTransactionId) {
       await client.query(
         `UPDATE popolive.coin_transactions SET status = 'reversed', updated_at = NOW() WHERE transaction_id = $1`,

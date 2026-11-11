@@ -43,6 +43,8 @@ interface PublicProfile {
   bio: string;
   hostLevel: number;
   wealthLevel: number;
+  shiningLevel?: number;
+  honorLevel?: number;
   isAdultVerified: boolean;
   memberSince: string;
   createdAt: string;
@@ -63,6 +65,11 @@ interface PublicProfile {
     profileFrameAssetUrl?: string | null;
     nameDecorationStyle?: string | null;
     activeBenefitKeys?: string[];
+  };
+  recognition?: {
+    wealth: { levelNumber: number; levelName: string; progressPercent: number; approvedBenefits: Array<{ benefitKey: string; title: string }> };
+    shining: { levelNumber: number; levelName: string; progressPercent: number; approvedBenefits: Array<{ benefitKey: string; title: string }> };
+    honor: { levelNumber: number; levelName: string; progressPercent: number; approvedBenefits: Array<{ benefitKey: string; title: string }> };
   };
 }
 
@@ -699,6 +706,38 @@ function PublicProfileContent() {
                   </span>
                 </div>
               </div>
+
+              {/* Module 7.8: Separate Wealth, Shining & Honor Public Recognition Card */}
+              {profile.recognition && (
+                <div
+                  data-testid="public-profile-recognition-card"
+                  className="p-3.5 rounded-2xl bg-[#150B33] border border-purple-400/25 space-y-2.5"
+                >
+                  <div className="flex items-center justify-between text-xs font-extrabold text-purple-200">
+                    <span>{isUr ? 'دولت، شائننگ اور اعزاز (7.8)' : 'Wealth, Shining & Honor'}</span>
+                    <span className="text-[10px] text-white/50">VIP Independent</span>
+                  </div>
+                  {(
+                    [
+                      { key: 'wealth', label: isUr ? 'دولت' : 'Wealth', badge: 'text-amber-300', bar: 'from-amber-400 to-yellow-500', data: profile.recognition.wealth },
+                      { key: 'shining', label: isUr ? 'شائننگ' : 'Shining', badge: 'text-pink-300', bar: 'from-[#FF2E74] to-[#EC4899]', data: profile.recognition.shining },
+                      { key: 'honor', label: isUr ? 'اعزاز' : 'Honor', badge: 'text-emerald-300', bar: 'from-emerald-400 to-cyan-400', data: profile.recognition.honor },
+                    ] as const
+                  ).map((c) => (
+                    <div key={c.key} className="space-y-1">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className={`font-bold ${c.badge}`}>
+                          {c.label} Lv.{c.data.levelNumber} • {c.data.levelName}
+                        </span>
+                        <span className="text-white/60 font-mono">{c.data.progressPercent}%</span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-black/40 overflow-hidden">
+                        <div className={`h-full rounded-full bg-gradient-to-r ${c.bar}`} style={{ width: `${c.data.progressPercent}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {/* Privacy Notice Card */}
               <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-2 text-[11px] text-white/40">

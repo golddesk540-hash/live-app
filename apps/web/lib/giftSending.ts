@@ -1058,6 +1058,15 @@ export async function sendRealTimeGift(params: {
           pkHostSide: pkSide,
         });
 
+        // Module 7.8: atomically update strictly separate Wealth (paid coins) & Shining (gift activity) systems
+        const { recordGiftRecognitionInTx } = await import('@/lib/recognition');
+        await recordGiftRecognitionInTx(client, {
+          senderUserId: params.senderUserId,
+          totalGiftCoins: totalCoins,
+          giftTransactionId: gftTxId,
+          walletCoinsBeforeSpend: ctx.senderWallet.coins + totalCoins,
+        });
+
         const nowIso = new Date().toISOString();
 
         // Module 7.7 integration: attach verified sender VIP aura/badge ONLY if active & unexpired
@@ -1579,6 +1588,14 @@ export async function reverseGiftTransaction(params: {
       actorId: params.actorId,
       updatedHostPointsBalance: newHostPoints,
       updatedTotalReceivedPoints: newHostEarned,
+    });
+
+    // Module 7.8: reverse linked Wealth & Shining score entries & recalculate levels cleanly
+    const { reverseRecognitionForSourceInTx } = await import('@/lib/recognition');
+    await reverseRecognitionForSourceInTx(client, {
+      sourceTxId: gtx.gift_transaction_id,
+      reversalReason: params.reason.trim(),
+      actorId: params.actorId,
     });
 
     const scope = gtx.pk_battle_id

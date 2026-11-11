@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getAuthenticatedUser, validateNicknameFormat } from '@/lib/auth';
 import { resolveActiveUserVipProfile } from '@/lib/vip';
+import { getUserRecognitionSummary } from '@/lib/recognition';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized. Please log in.' }, { status: 401 });
     }
 
-    const vip = await resolveActiveUserVipProfile(user.id);
+    const [vip, recognition] = await Promise.all([
+      resolveActiveUserVipProfile(user.id),
+      getUserRecognitionSummary(user.id, { includePrivate: true }),
+    ]);
 
     return NextResponse.json({
       authenticated: true,
@@ -29,12 +33,15 @@ export async function GET(req: NextRequest) {
         countryCode: user.country_code,
         bio: user.bio || '',
         hostLevel: user.host_level || 1,
-        wealthLevel: user.wealth_level || 1,
+        wealthLevel: recognition.wealth.currentLevelNumber || user.wealth_level || 1,
+        shiningLevel: recognition.shining.currentLevelNumber || 1,
+        honorLevel: recognition.honor.currentLevelNumber || 1,
         isProfileCompleted: user.is_profile_completed,
         isAdultVerified: user.is_adult_verified,
         status: user.status,
         createdAt: user.created_at,
         vip,
+        recognition,
       },
     });
   } catch (err: any) {
@@ -69,9 +76,16 @@ export async function PATCH(req: NextRequest) {
       vipTier,
       vipBadge,
       vipStatus,
+      wealthLevel,
+      shiningLevel,
+      honorLevel,
+      wealthScore,
+      shiningScore,
+      honorScore,
+      recognition,
     } = body;
 
-    // Security Check: Users cannot manually assign themselves VIP badges or levels
+    // Security Check: Users cannot manually assign themselves VIP or Recognition levels/scores
     if (
       vip !== undefined ||
       vipLevel !== undefined ||
@@ -84,6 +98,25 @@ export async function PATCH(req: NextRequest) {
           success: false,
           code: 'VIP_MANUAL_ASSIGNMENT_FORBIDDEN',
           error: 'Users cannot manually assign or modify VIP membership badges or statuses.',
+        },
+        { status: 403 }
+      );
+    }
+
+    if (
+      wealthLevel !== undefined ||
+      shiningLevel !== undefined ||
+      honorLevel !== undefined ||
+      wealthScore !== undefined ||
+      shiningScore !== undefined ||
+      honorScore !== undefined ||
+      recognition !== undefined
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'RECOGNITION_MANUAL_ASSIGNMENT_FORBIDDEN',
+          error: 'Users cannot manually assign or modify Wealth, Shining, or Honor levels.',
         },
         { status: 403 }
       );

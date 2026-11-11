@@ -7,6 +7,7 @@ import 'points_history_screen.dart';
 import 'host_earnings_screen.dart';
 import 'topup_screen.dart';
 import '../vip/vip_screen.dart';
+import '../recognition/recognition_screen.dart';
 import '../gifts/gift_catalog_screen.dart';
 
 /// ============================================================================
@@ -712,6 +713,37 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
             subtitle: Text(
               _isUrdu ? 'وی آئی پی بیج، فریم اور شاہی آمد' : 'VIP Crown Badge, Frame & Entrances',
+              style: const TextStyle(color: Colors.white54, fontSize: 11),
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+          ),
+          Divider(color: Colors.white.withOpacity(0.08), height: 1, indent: 16, endIndent: 16),
+          ListTile(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => RecognitionScreen(
+                    apiBaseUrl: widget.apiBaseUrl,
+                    userId: widget.userId,
+                    headers: widget.authToken != null ? {'Authorization': 'Bearer ${widget.authToken}'} : null,
+                    previewDemo: widget.previewDemo,
+                    initialUrdu: _isUrdu,
+                  ),
+                ),
+              );
+            },
+            leading: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(color: _neonPink.withOpacity(0.16), shape: BoxShape.circle),
+              child: const Icon(Icons.military_tech_rounded, color: _neonPink, size: 20),
+            ),
+            title: Text(
+              _isUrdu ? 'دولت، شائننگ اور اعزاز (7.8)' : 'Wealth, Shining & Honor',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+            ),
+            subtitle: Text(
+              _isUrdu ? 'تین الگ درجات، پنکھ اور لیڈر بورڈ' : 'Separate Levels, Wings & Rankings',
               style: const TextStyle(color: Colors.white54, fontSize: 11),
             ),
             trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),

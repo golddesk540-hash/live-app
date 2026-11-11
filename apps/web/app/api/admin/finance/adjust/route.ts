@@ -16,6 +16,7 @@ export async function POST(req: NextRequest) {
       amount,
       reason,
       idempotencyKey,
+      isPromotional = false,
     } = body;
 
     if (!targetUserId || !['coins', 'points'].includes(balanceType) || !['credit', 'debit'].includes(operation)) {
@@ -35,6 +36,7 @@ export async function POST(req: NextRequest) {
       reason: String(reason || ''),
       idempotencyKey,
       ipAddress: actor.ipAddress,
+      isPromotional: Boolean(isPromotional),
     });
 
     return NextResponse.json(result);

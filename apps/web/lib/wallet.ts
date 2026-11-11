@@ -295,14 +295,22 @@ export async function ensureWalletLocked(dbClient: any, userId: string, rules: F
       )
     ).rows;
 
-    if (rows.length > 0 && initialCoins > 0) {
+    if (rows.length > 0) {
+      if (initialCoins > 0) {
+        await dbClient.query(
+          `INSERT INTO popolive.coin_transactions (
+             transaction_id, wallet_id, user_id, transaction_type, direction, coin_amount,
+             previous_balance, new_balance, status, reference_id, description, created_by
+           ) VALUES ($1, $2, $3, 'initial_credit', 'credit', $4, 0, $4, 'completed', 'WALLET_INIT', 'Initial approved wallet coin allocation', 'system')
+           ON CONFLICT (transaction_id) DO NOTHING`,
+          [generateTxId('TXN_INIT'), rows[0].wallet_id, userId, initialCoins]
+        );
+      }
       await dbClient.query(
-        `INSERT INTO popolive.coin_transactions (
-           transaction_id, wallet_id, user_id, transaction_type, direction, coin_amount,
-           previous_balance, new_balance, status, reference_id, description, created_by
-         ) VALUES ($1, $2, $3, 'initial_credit', 'credit', $4, 0, $4, 'completed', 'WALLET_INIT', 'Initial approved wallet coin allocation', 'system')
-         ON CONFLICT (transaction_id) DO NOTHING`,
-        [generateTxId('TXN_INIT'), rows[0].wallet_id, userId, initialCoins]
+        `INSERT INTO popolive.user_recognition_coin_pools (user_id, paid_coins, promo_coins, updated_at)
+         VALUES ($1, 0, $2, NOW())
+         ON CONFLICT (user_id) DO NOTHING`,
+        [userId, initialCoins]
       );
     }
   }
@@ -478,6 +486,40 @@ export async function creditCoinsInTx(
 
   const mappedTx = mapCoinTxRow(txRows[0]);
   const mappedWallet = mapWalletRow(updatedRows[0], rules.hostGiftSharePercent);
+
+  // Module 7.8: track paid vs promotional coins accurately for Wealth eligibility
+  const { recordCoinPoolCreditInTx } = await import('@/lib/recognition');
+  if (transactionType === 'topup') {
+    const baseCoins = Number.isFinite(Number(metadata?.baseCoins))
+      ? Math.max(0, Math.floor(Number(metadata.baseCoins)))
+      : amount;
+    const bonusCoins = Number.isFinite(Number(metadata?.bonusCoins))
+      ? Math.max(0, Math.floor(Number(metadata.bonusCoins)))
+      : Math.max(0, amount - baseCoins);
+    await recordCoinPoolCreditInTx(client, {
+      userId,
+      paidCoins: baseCoins,
+      promoCoins: bonusCoins,
+      walletCoinsBefore: prevCoins,
+      excludeTxId: txId,
+    });
+  } else if (transactionType === 'initial_credit' || Boolean(metadata?.isPromotional)) {
+    await recordCoinPoolCreditInTx(client, {
+      userId,
+      paidCoins: 0,
+      promoCoins: amount,
+      walletCoinsBefore: prevCoins,
+      excludeTxId: txId,
+    });
+  } else if (transactionType === 'admin_credit') {
+    await recordCoinPoolCreditInTx(client, {
+      userId,
+      paidCoins: amount,
+      promoCoins: 0,
+      walletCoinsBefore: prevCoins,
+      excludeTxId: txId,
+    });
+  }
 
   await emitWalletRealtimeEvent(client, userId, 'wallet:coin_balance_updated', {
     userId,
@@ -691,6 +733,25 @@ export async function deductCoins(params: {
 
     const mappedTx = mapCoinTxRow(txRows[0]);
     const mappedWallet = mapWalletRow(updatedRows[0], rules.hostGiftSharePercent);
+
+    // Module 7.8: Wealth tracks eligible non-VIP feature spends (excludes promotional coins unless approved)
+    if (
+      transactionType === 'feature_spend' &&
+      !metadata?.excludeFromWealth &&
+      !metadata?.vipPurchase &&
+      !/^VIP/i.test(String(referenceId || '')) &&
+      !/\bVIP\b/i.test(String(description || ''))
+    ) {
+      const { recordCoinSpendWealthInTx } = await import('@/lib/recognition');
+      await recordCoinSpendWealthInTx(client, {
+        userId,
+        coinsSpent: amount,
+        sourceType: 'feature_spend',
+        sourceTxId: txId,
+        walletCoinsBeforeSpend: prevCoins,
+        excludeFromWealth: false,
+      });
+    }
 
     await emitWalletRealtimeEvent(client, userId, 'wallet:coin_balance_updated', {
       userId,
@@ -1228,6 +1289,7 @@ export async function adminAdjustWalletBalance(params: {
   reason: string;
   idempotencyKey?: string;
   ipAddress?: string;
+  isPromotional?: boolean;
 }) {
   const {
     targetUserId,
@@ -1239,6 +1301,7 @@ export async function adminAdjustWalletBalance(params: {
     reason,
     idempotencyKey,
     ipAddress = null,
+    isPromotional = false,
   } = params;
 
   if (!isAuthorizedFinanceAdmin(actorRole)) {
@@ -1310,8 +1373,8 @@ export async function adminAdjustWalletBalance(params: {
         await client.query(
           `INSERT INTO popolive.coin_transactions (
              transaction_id, wallet_id, user_id, transaction_type, direction, coin_amount,
-             previous_balance, new_balance, status, reference_id, idempotency_key, description, created_by
-           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'completed', $9, $10, $11, $12)
+             previous_balance, new_balance, status, reference_id, idempotency_key, description, metadata, created_by
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'completed', $9, $10, $11, $12::jsonb, $13)
            RETURNING *`,
           [
             txId,
@@ -1325,10 +1388,31 @@ export async function adminAdjustWalletBalance(params: {
             `ADMIN:${adminId}`,
             idempotencyKey || null,
             `Finance Admin ${operation}: ${reason.trim()}`,
+            JSON.stringify({ isPromotional: Boolean(isPromotional) }),
             adminId,
           ]
         )
       ).rows[0];
+
+      // Module 7.8: Keep paid vs promotional coin pool synced for Wealth eligibility
+      if (operation === 'credit') {
+        const { recordCoinPoolCreditInTx } = await import('@/lib/recognition');
+        await recordCoinPoolCreditInTx(client, {
+          userId: targetUserId,
+          paidCoins: isPromotional ? 0 : amount,
+          promoCoins: isPromotional ? amount : 0,
+          walletCoinsBefore: prevCoins,
+          excludeTxId: txId,
+        });
+      } else {
+        const { consumeCoinsFromPoolInTx } = await import('@/lib/recognition');
+        await consumeCoinsFromPoolInTx(client, {
+          userId: targetUserId,
+          totalSpendCoins: amount,
+          walletCoinsBeforeSpend: prevCoins,
+          excludeFromWealth: true,
+        });
+      }
 
       await client.query(
         `INSERT INTO popolive.wallet_audit_logs (
@@ -1526,6 +1610,14 @@ export async function reverseWalletTransaction(params: {
          ) VALUES ($1, $2, $3, 'transaction_reversal', $4, $5, $6, 'coins', $7, $8, $9, $10, $11)`,
         [generateTxId('AUDIT'), orig.user_id, walletRow.wallet_id, adminId, actorRole, reason.trim(), origAmount, currCoins, newCoins, transactionId, ipAddress]
       );
+
+      // Module 7.8: reverse any linked Wealth recognition entries when a wallet coin tx is reversed
+      const { reverseRecognitionForSourceInTx } = await import('@/lib/recognition');
+      await reverseRecognitionForSourceInTx(client, {
+        sourceTxId: transactionId,
+        reversalReason: reason.trim(),
+        actorId: adminId,
+      });
 
       await emitWalletRealtimeEvent(client, orig.user_id, 'wallet:transaction_reversed', {
         ledger: 'coins',

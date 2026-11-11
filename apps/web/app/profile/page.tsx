@@ -50,6 +50,8 @@ interface UserProfileData {
   bio: string;
   hostLevel: number;
   wealthLevel: number;
+  shiningLevel?: number;
+  honorLevel?: number;
   isAdultVerified: boolean;
   status: string;
   createdAt: string;
@@ -66,6 +68,29 @@ interface UserProfileData {
     themeKey?: string | null;
     expiryDate?: string | null;
     activeBenefitKeys?: string[];
+  };
+  recognition?: {
+    wealth: {
+      currentLevelNumber: number;
+      currentLevelName: string;
+      progressPercent: number;
+      nextLevelNumber: number | null;
+      approvedBenefits: Array<{ benefitKey: string; title: string }>;
+    };
+    shining: {
+      currentLevelNumber: number;
+      currentLevelName: string;
+      progressPercent: number;
+      nextLevelNumber: number | null;
+      approvedBenefits: Array<{ benefitKey: string; title: string }>;
+    };
+    honor: {
+      currentLevelNumber: number;
+      currentLevelName: string;
+      progressPercent: number;
+      nextLevelNumber: number | null;
+      approvedBenefits: Array<{ benefitKey: string; title: string }>;
+    };
   };
 }
 
@@ -667,13 +692,45 @@ function MyProfileContent() {
                     </div>
                     <div>
                       <p className="text-xs font-bold text-white">Host Level {user.hostLevel || 1}</p>
-                      <p className="text-[10px] text-white/50">Wealth Level {user.wealthLevel || 1}</p>
+                      <p className="text-[10px] text-white/50">Wealth Lv.{user.recognition?.wealth.currentLevelNumber || user.wealthLevel || 1}</p>
                     </div>
                   </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-white/10 text-white/70">
-                    Bronze Host
-                  </span>
+                  <Link
+                    href="/recognition"
+                    data-testid="profile-recognition-link"
+                    className="text-[10px] px-2.5 py-1 rounded-full bg-pink-500/20 border border-pink-400/35 text-pink-200 font-bold hover:brightness-110"
+                  >
+                    {isUr ? 'درجات اور مراعات ↗' : 'Wealth • Shining • Honor ↗'}
+                  </Link>
                 </div>
+
+                {/* Module 7.8: Three Separate Recognition Progress Bars (Wealth / Shining / Honor) */}
+                {user.recognition && (
+                  <div className="pt-2 border-t border-white/5 space-y-2" data-testid="profile-recognition-card">
+                    {(
+                      [
+                        { key: 'wealth', label: isUr ? 'دولت' : 'Wealth', color: 'from-amber-400 to-yellow-500', badge: 'text-amber-300', data: user.recognition.wealth },
+                        { key: 'shining', label: isUr ? 'شائننگ' : 'Shining', color: 'from-[#FF2E74] to-[#EC4899]', badge: 'text-pink-300', data: user.recognition.shining },
+                        { key: 'honor', label: isUr ? 'اعزاز' : 'Honor', color: 'from-emerald-400 to-cyan-400', badge: 'text-emerald-300', data: user.recognition.honor },
+                      ] as const
+                    ).map((cat) => (
+                      <div key={cat.key} className="space-y-1">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className={`font-extrabold ${cat.badge}`}>
+                            {cat.label} Lv.{cat.data.currentLevelNumber} ({cat.data.currentLevelName})
+                          </span>
+                          <span className="text-white/60 font-mono">{cat.data.progressPercent}%</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-black/40 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full bg-gradient-to-r ${cat.color}`}
+                            style={{ width: `${Math.min(100, Math.max(0, cat.data.progressPercent))}%` }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
                   <span className="text-white/50">{isUr ? 'وی آئی پی رکنیت' : 'VIP Membership'}</span>

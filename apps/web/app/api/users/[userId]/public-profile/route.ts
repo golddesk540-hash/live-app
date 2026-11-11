@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { resolveUserByIdentifier } from '@/lib/userLookup';
 import { resolveActiveUserVipProfile } from '@/lib/vip';
+import { getUserRecognitionSummary } from '@/lib/recognition';
 import { query } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -86,7 +87,26 @@ export async function GET(
       (privacy.profile_visibility === 'only_me' ||
         (privacy.profile_visibility === 'followers' && !isFollowing));
 
-    const vip = await resolveActiveUserVipProfile(targetUser.id);
+    const [vip, recognition] = await Promise.all([
+      resolveActiveUserVipProfile(targetUser.id),
+      getUserRecognitionSummary(targetUser.id, { includePrivate: false }),
+    ]);
+
+    const sanitizeCategoryPublic = (cat: typeof recognition.wealth) => ({
+      category: cat.category,
+      levelNumber: cat.currentLevelNumber,
+      levelId: cat.currentLevelId,
+      levelName: cat.currentLevelName,
+      levelNameUr: cat.currentLevelNameUr,
+      badgeImageUrl: cat.badgeImageUrl,
+      wingStyle: cat.wingStyle,
+      borderColor: cat.borderColor,
+      nextLevelNumber: cat.nextLevelNumber,
+      nextLevelName: cat.nextLevelName,
+      progressPercent: cat.progressPercent,
+      activeBenefitKeys: cat.activeBenefitKeys,
+      approvedBenefits: cat.approvedBenefits,
+    });
 
     return NextResponse.json({
       success: true,
@@ -100,7 +120,9 @@ export async function GET(
         gender: isGenderHidden ? 'unspecified' : targetUser.gender || 'unspecified',
         bio: isProfileRestricted ? 'This profile is private.' : targetUser.bio || '',
         hostLevel: Number(targetUser.host_level) || 1,
-        wealthLevel: Number(targetUser.wealth_level) || 1,
+        wealthLevel: recognition.wealth.currentLevelNumber || Number(targetUser.wealth_level) || 1,
+        shiningLevel: recognition.shining.currentLevelNumber || 1,
+        honorLevel: recognition.honor.currentLevelNumber || 1,
         isAdultVerified: Boolean(targetUser.is_adult_verified),
         memberSince: targetUser.created_at ? new Date(targetUser.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : 'November 2026',
         createdAt: targetUser.created_at,
@@ -126,6 +148,11 @@ export async function GET(
           themeKey: vip.themeKey,
           expiryDate: isSelf ? vip.expiryDate : null,
           activeBenefitKeys: vip.activeBenefitKeys,
+        },
+        recognition: {
+          wealth: sanitizeCategoryPublic(recognition.wealth),
+          shining: sanitizeCategoryPublic(recognition.shining),
+          honor: sanitizeCategoryPublic(recognition.honor),
         },
       },
     });
