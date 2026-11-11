@@ -469,7 +469,7 @@ export default function GiftSendingPanel({
           message: data.error || data.message || 'Gift sending failed.',
           isInsufficient: Boolean(data.topUpRecommended || data.errorCode === 'INSUFFICIENT_COINS'),
           shortfallCoins: data.shortfallCoins,
-          topUpUrl: data.topUpUrl || '/wallet',
+          topUpUrl: data.topUpUrl || '/recharge',
         });
         if (typeof data.updatedSenderWallet?.availableCoins === 'number') {
           setContextData((prev) =>
@@ -803,7 +803,7 @@ export default function GiftSendingPanel({
             </div>
             {errorBanner.isInsufficient ? (
               <Link
-                href={errorBanner.topUpUrl || '/wallet'}
+                href={errorBanner.topUpUrl || '/recharge'}
                 className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-[#ff2e83] to-[#ff6aa5] text-white font-bold whitespace-nowrap text-[11px] shadow"
               >
                 {t.topUp}
@@ -1024,7 +1024,7 @@ export default function GiftSendingPanel({
                   {t.insufficientTitle} ({availableCoins.toLocaleString()} / {estimatedTotalCoins.toLocaleString()})
                 </span>
                 <Link
-                  href="/wallet"
+                  href="/recharge"
                   className="px-2.5 py-0.5 rounded-full bg-amber-400 text-[#1b0830] font-extrabold text-[10px] hover:bg-amber-300"
                 >
                   {t.topUp}

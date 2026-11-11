@@ -33,7 +33,7 @@ export default function AdminFinancePanel() {
   const [loginError, setLoginError] = useState<string | null>(null);
 
   // Data Tabs
-  const [activeTab, setActiveTab] = useState<'wallets' | 'coins' | 'points' | 'gifts' | 'earnings' | 'audit'>('wallets');
+  const [activeTab, setActiveTab] = useState<'wallets' | 'coins' | 'points' | 'gifts' | 'earnings' | 'topup' | 'audit'>('wallets');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -42,6 +42,9 @@ export default function AdminFinancePanel() {
   const [giftTransactions, setGiftTransactions] = useState<any[]>([]);
   const [earningShares, setEarningShares] = useState<any[]>([]);
   const [earningSummary, setEarningSummary] = useState<any>(null);
+  const [topupPackages, setTopupPackages] = useState<any[]>([]);
+  const [topupOrders, setTopupOrders] = useState<any[]>([]);
+  const [topupSummary, setTopupSummary] = useState<any>(null);
   const [auditLogs, setAuditLogs] = useState<WalletAuditLogRecord[]>([]);
   const [canAdjust, setCanAdjust] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -115,6 +118,18 @@ export default function AdminFinancePanel() {
           setEarningShares([]);
           setEarningSummary(null);
         }
+      } else if (activeTab === 'topup') {
+        const params = new URLSearchParams({ limit: '30' });
+        if (searchQuery.trim()) params.set('search', searchQuery.trim());
+        if (statusFilter !== 'all') params.set('status', statusFilter);
+        const [pkgRes, ordRes] = await Promise.all([
+          fetch('/api/admin/finance/topup/packages'),
+          fetch(`/api/admin/finance/topup/orders?${params.toString()}`),
+        ]);
+        const [pkgData, ordData] = await Promise.all([pkgRes.json(), ordRes.json()]);
+        setTopupPackages(pkgData.success ? pkgData.packages || [] : []);
+        setTopupOrders(ordData.success ? ordData.items || [] : []);
+        setTopupSummary(ordData.success ? ordData.summary || null : null);
       } else if (activeTab === 'audit') {
         const res = await fetch(`/api/admin/finance/audit-logs?userId=${encodeURIComponent(searchQuery)}`);
         const data = await res.json();
@@ -413,6 +428,7 @@ export default function AdminFinancePanel() {
                   { id: 'points', label: 'Points Ledger' },
                   { id: 'gifts', label: 'Gift Transactions' },
                   { id: 'earnings', label: 'Host Shares (70/30)' },
+                  { id: 'topup', label: 'Top-up & Packages' },
                   { id: 'audit', label: 'Audit Logs' },
                 ] as const
               ).map((t) => (
@@ -799,6 +815,178 @@ export default function AdminFinancePanel() {
                               </td>
                             </tr>
                           )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+            {activeTab === 'topup' && (
+              <div data-testid="admin-topup-tab" className="p-4 space-y-5">
+                {!canAdjust ? (
+                  <div className="rounded-2xl bg-rose-950/40 border border-rose-500/30 p-6 text-center text-xs text-rose-200">
+                    Authorized Finance Admin role (`finance_admin`) is required to manage Coin Packages, Top-up Orders & Refunds.
+                  </div>
+                ) : (
+                  <>
+                    {topupSummary && (
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div className="rounded-2xl bg-[#16082f] border border-purple-500/20 p-3.5">
+                          <div className="text-[10px] uppercase font-bold text-purple-300/75">Total Orders</div>
+                          <div className="text-xl font-black text-white mt-1 tabular-nums">{topupSummary.totalOrders}</div>
+                        </div>
+                        <div className="rounded-2xl bg-[#16082f] border border-emerald-500/25 p-3.5">
+                          <div className="text-[10px] uppercase font-bold text-emerald-300/80">Verified Revenue</div>
+                          <div className="text-xl font-black text-emerald-300 mt-1 tabular-nums">
+                            ${Number(topupSummary.successfulRevenueUsd || 0).toFixed(2)}
+                          </div>
+                        </div>
+                        <div className="rounded-2xl bg-[#16082f] border border-amber-500/25 p-3.5">
+                          <div className="text-[10px] uppercase font-bold text-amber-300/80">Coins Credited</div>
+                          <div className="text-xl font-black text-amber-300 mt-1 tabular-nums">
+                            {(topupSummary.totalCoinsCredited || 0).toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="rounded-2xl bg-[#16082f] border border-pink-500/25 p-3.5">
+                          <div className="text-[10px] uppercase font-bold text-pink-300/80">Successful / Refunded</div>
+                          <div className="text-xl font-black text-pink-300 mt-1 tabular-nums">
+                            {topupSummary.successfulOrders} / {topupSummary.refundedOrders}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Coin Packages Management */}
+                    <div className="rounded-2xl bg-[#15082c] border border-purple-500/20 p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-black text-white">Configured Coin Packages</h3>
+                        <span className="text-[11px] text-purple-300/70">Backend Pricing & Bonus Control</span>
+                      </div>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-purple-950/60 text-purple-200 uppercase text-[10px]">
+                            <tr>
+                              <th className="p-3">Package ID</th>
+                              <th className="p-3">Name</th>
+                              <th className="p-3">Base</th>
+                              <th className="p-3">Bonus</th>
+                              <th className="p-3">Total</th>
+                              <th className="p-3">Price</th>
+                              <th className="p-3">Status</th>
+                              <th className="p-3 text-right">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-purple-500/10">
+                            {topupPackages.map((p) => (
+                              <tr key={p.packageId}>
+                                <td className="p-3 font-mono text-purple-200">{p.packageId}</td>
+                                <td className="p-3 font-bold text-white">{p.packageName}</td>
+                                <td className="p-3 text-white">{p.baseCoins.toLocaleString()}</td>
+                                <td className="p-3 text-amber-300">+{p.bonusCoins.toLocaleString()}</td>
+                                <td className="p-3 font-bold text-emerald-300">{p.totalCoins.toLocaleString()}</td>
+                                <td className="p-3 font-bold text-pink-300">${Number(p.priceAmount).toFixed(2)}</td>
+                                <td className="p-3">
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                      p.isActive ? 'bg-emerald-500/20 text-emerald-300' : 'bg-rose-500/20 text-rose-300'
+                                    }`}
+                                  >
+                                    {p.isActive ? 'active' : 'disabled'}
+                                  </span>
+                                </td>
+                                <td className="p-3 text-right">
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      const res = await fetch('/api/admin/finance/topup/packages', {
+                                        method: 'PATCH',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ packageId: p.packageId, isActive: !p.isActive }),
+                                      });
+                                      if (res.ok) await loadTabData();
+                                    }}
+                                    className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-[10px] font-bold text-white"
+                                  >
+                                    {p.isActive ? 'Disable' : 'Enable'}
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Top-up Orders Table */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-purple-950/60 text-purple-200 uppercase text-[10px]">
+                          <tr>
+                            <th className="p-3">Order / Receipt</th>
+                            <th className="p-3">User ID</th>
+                            <th className="p-3">Package</th>
+                            <th className="p-3">Provider</th>
+                            <th className="p-3">Coins</th>
+                            <th className="p-3">Paid</th>
+                            <th className="p-3">Status</th>
+                            <th className="p-3 text-right">Refund</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-purple-500/10">
+                          {topupOrders.map((ord) => (
+                            <tr key={ord.orderId} className="hover:bg-white/[0.02]">
+                              <td className="p-3">
+                                <div className="font-mono text-[11px] text-purple-300">{ord.orderId}</div>
+                                <div className="font-mono text-[10px] text-white/45">{ord.receiptId || 'No receipt'}</div>
+                              </td>
+                              <td className="p-3 font-mono text-white/80">{ord.userId}</td>
+                              <td className="p-3 font-bold text-white">{ord.packageName}</td>
+                              <td className="p-3 text-purple-200">{ord.providerKey}</td>
+                              <td className="p-3 font-black text-amber-300">+{ord.totalCoins.toLocaleString()}</td>
+                              <td className="p-3 font-bold text-pink-300">${Number(ord.amount).toFixed(2)}</td>
+                              <td className="p-3">
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    ord.status === 'successful'
+                                      ? 'bg-emerald-500/20 text-emerald-300'
+                                      : ord.status === 'refunded'
+                                      ? 'bg-cyan-500/20 text-cyan-300'
+                                      : 'bg-rose-500/20 text-rose-300'
+                                  }`}
+                                >
+                                  {ord.status}
+                                </span>
+                              </td>
+                              <td className="p-3 text-right">
+                                {ord.status === 'successful' ? (
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      const reason = prompt(`Mandatory Audit Reason to refund ${ord.orderId}:`);
+                                      if (!reason || reason.trim().length < 5) return;
+                                      const res = await fetch('/api/admin/finance/topup/refund', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ orderId: ord.orderId, reason }),
+                                      });
+                                      const d = await res.json();
+                                      setActionMsg({
+                                        type: res.ok && d.success ? 'success' : 'error',
+                                        text: d.success ? `Refunded ${ord.orderId} cleanly.` : d.error || 'Refund rejected.',
+                                      });
+                                      await loadTabData();
+                                    }}
+                                    className="px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500/35 text-rose-300 text-[10px] font-bold"
+                                  >
+                                    Refund Coins
+                                  </button>
+                                ) : (
+                                  <span className="text-[10px] text-white/30">—</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
                         </tbody>
                       </table>
                     </div>

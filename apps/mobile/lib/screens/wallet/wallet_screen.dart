@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'coin_history_screen.dart';
 import 'points_history_screen.dart';
 import 'host_earnings_screen.dart';
+import 'topup_screen.dart';
 import '../gifts/gift_catalog_screen.dart';
 
 /// ============================================================================
@@ -513,14 +514,16 @@ class _WalletScreenState extends State<WalletScreen> {
                         if (widget.onTopupPressed != null) {
                           widget.onTopupPressed!();
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                _isUrdu
-                                    ? 'ٹاپ اپ صرف تصدیق شدہ سرور ادائیگی کے ذریعے ہوتا ہے'
-                                    : 'Top-up uses verified payment gateway (Recharge screen)',
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => TopupScreen(
+                                apiBaseUrl: widget.apiBaseUrl,
+                                userId: widget.userId,
+                                headers: widget.authToken != null
+                                    ? {'Authorization': 'Bearer ${widget.authToken}'}
+                                    : null,
+                                previewDemo: widget.previewDemo,
                               ),
-                              backgroundColor: const Color(0xFF281D4D),
                             ),
                           );
                         }

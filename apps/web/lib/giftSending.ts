@@ -1245,7 +1245,7 @@ export async function sendRealTimeGift(params: {
         totalSpentCoins: senderSummary.totalSpentCoins,
       },
       topUpRecommended: failCode === 'INSUFFICIENT_COINS',
-      topUpUrl: '/wallet',
+      topUpUrl: '/recharge',
       shortfallCoins,
     };
   }

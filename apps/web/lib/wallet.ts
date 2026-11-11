@@ -365,17 +365,20 @@ export async function getPointsBalance(userId: string): Promise<{
 // 4. Credit Coins & Deduct Coins (Atomic Transactions + Idempotency)
 // =============================================================================
 
-export async function creditCoins(params: {
-  userId: string;
-  amount: number;
-  transactionType: 'topup' | 'admin_credit' | 'initial_credit' | 'reversal';
-  referenceId?: string;
-  relatedTxId?: string;
-  idempotencyKey?: string;
-  description?: string;
-  createdBy?: string;
-  metadata?: Record<string, any>;
-}): Promise<{
+export async function creditCoinsInTx(
+  client: any,
+  params: {
+    userId: string;
+    amount: number;
+    transactionType: 'topup' | 'admin_credit' | 'initial_credit' | 'reversal';
+    referenceId?: string;
+    relatedTxId?: string;
+    idempotencyKey?: string;
+    description?: string;
+    createdBy?: string;
+    metadata?: Record<string, any>;
+  }
+): Promise<{
   success: boolean;
   isDuplicate?: boolean;
   transaction: CoinTransactionRecord;
@@ -400,103 +403,120 @@ export async function creditCoins(params: {
     });
   }
 
-  return withTransaction(async (client) => {
-    const rules = await getFinanceRules(client);
-    if (amount > rules.maxSingleTransactionAmount) {
-      throw Object.assign(new Error('Coin credit exceeds single-transaction safety limit.'), {
-        code: 'AMOUNT_LIMIT_EXCEEDED',
-        status: 400,
-      });
-    }
-
-    if (idempotencyKey) {
-      const existing = (
-        await client.query(`SELECT * FROM popolive.coin_transactions WHERE idempotency_key = $1`, [
-          idempotencyKey,
-        ])
-      ).rows;
-      if (existing.length > 0) {
-        const currentWallet = await ensureWalletLocked(client, userId, rules);
-        return {
-          success: true,
-          isDuplicate: true,
-          transaction: mapCoinTxRow(existing[0]),
-          wallet: mapWalletRow(currentWallet, rules.hostGiftSharePercent),
-        };
-      }
-    }
-
-    const walletRow = await ensureWalletLocked(client, userId, rules);
-    if (walletRow.is_frozen) {
-      throw Object.assign(new Error('Wallet is currently frozen for security review.'), {
-        code: 'WALLET_FROZEN',
-        status: 403,
-      });
-    }
-
-    const prevCoins = parseInt(String(walletRow.coins), 10);
-    const newCoins = prevCoins + amount;
-
-    const updatedRows = (
-      await client.query(
-        `UPDATE popolive.user_wallets
-         SET coins = $1, updated_at = NOW()
-         WHERE user_id = $2
-         RETURNING *`,
-        [newCoins, userId]
-      )
-    ).rows;
-
-    const txId = generateTxId('TXN_COIN');
-    const txRows = (
-      await client.query(
-        `INSERT INTO popolive.coin_transactions (
-           transaction_id, wallet_id, user_id, transaction_type, direction, coin_amount,
-           previous_balance, new_balance, status, reference_id, related_tx_id, idempotency_key,
-           description, metadata, created_by
-         ) VALUES ($1, $2, $3, $4, 'credit', $5, $6, $7, 'completed', $8, $9, $10, $11, $12::jsonb, $13)
-         RETURNING *`,
-        [
-          txId,
-          walletRow.wallet_id,
-          userId,
-          transactionType,
-          amount,
-          prevCoins,
-          newCoins,
-          referenceId || null,
-          relatedTxId || null,
-          idempotencyKey || null,
-          description || `Credited ${amount} coins (${transactionType})`,
-          JSON.stringify(metadata),
-          createdBy,
-        ]
-      )
-    ).rows;
-
-    const mappedTx = mapCoinTxRow(txRows[0]);
-    const mappedWallet = mapWalletRow(updatedRows[0], rules.hostGiftSharePercent);
-
-    await emitWalletRealtimeEvent(client, userId, 'wallet:coin_balance_updated', {
-      userId,
-      walletId: mappedWallet.walletId,
-      coins: newCoins,
-      previousBalance: prevCoins,
-      delta: amount,
-      transactionId: txId,
+  const rules = await getFinanceRules(client);
+  if (amount > rules.maxSingleTransactionAmount) {
+    throw Object.assign(new Error('Coin credit exceeds single-transaction safety limit.'), {
+      code: 'AMOUNT_LIMIT_EXCEEDED',
+      status: 400,
     });
+  }
 
-    await emitWalletRealtimeEvent(client, userId, 'wallet:transaction_completed', {
-      ledger: 'coins',
-      transaction: mappedTx,
+  if (idempotencyKey) {
+    const existing = (
+      await client.query(`SELECT * FROM popolive.coin_transactions WHERE idempotency_key = $1`, [
+        idempotencyKey,
+      ])
+    ).rows;
+    if (existing.length > 0) {
+      const currentWallet = await ensureWalletLocked(client, userId, rules);
+      return {
+        success: true,
+        isDuplicate: true,
+        transaction: mapCoinTxRow(existing[0]),
+        wallet: mapWalletRow(currentWallet, rules.hostGiftSharePercent),
+      };
+    }
+  }
+
+  const walletRow = await ensureWalletLocked(client, userId, rules);
+  if (walletRow.is_frozen) {
+    throw Object.assign(new Error('Wallet is currently frozen for security review.'), {
+      code: 'WALLET_FROZEN',
+      status: 403,
     });
+  }
 
-    return {
-      success: true,
-      transaction: mappedTx,
-      wallet: mappedWallet,
-    };
+  const prevCoins = parseInt(String(walletRow.coins), 10);
+  const newCoins = prevCoins + amount;
+
+  const updatedRows = (
+    await client.query(
+      `UPDATE popolive.user_wallets
+       SET coins = $1, updated_at = NOW()
+       WHERE user_id = $2
+       RETURNING *`,
+      [newCoins, userId]
+    )
+  ).rows;
+
+  const txId = generateTxId('TXN_COIN');
+  const txRows = (
+    await client.query(
+      `INSERT INTO popolive.coin_transactions (
+         transaction_id, wallet_id, user_id, transaction_type, direction, coin_amount,
+         previous_balance, new_balance, status, reference_id, related_tx_id, idempotency_key,
+         description, metadata, created_by
+       ) VALUES ($1, $2, $3, $4, 'credit', $5, $6, $7, 'completed', $8, $9, $10, $11, $12::jsonb, $13)
+       RETURNING *`,
+      [
+        txId,
+        walletRow.wallet_id,
+        userId,
+        transactionType,
+        amount,
+        prevCoins,
+        newCoins,
+        referenceId || null,
+        relatedTxId || null,
+        idempotencyKey || null,
+        description || `Credited ${amount} coins (${transactionType})`,
+        JSON.stringify(metadata),
+        createdBy,
+      ]
+    )
+  ).rows;
+
+  const mappedTx = mapCoinTxRow(txRows[0]);
+  const mappedWallet = mapWalletRow(updatedRows[0], rules.hostGiftSharePercent);
+
+  await emitWalletRealtimeEvent(client, userId, 'wallet:coin_balance_updated', {
+    userId,
+    walletId: mappedWallet.walletId,
+    coins: newCoins,
+    previousBalance: prevCoins,
+    delta: amount,
+    transactionId: txId,
   });
+
+  await emitWalletRealtimeEvent(client, userId, 'wallet:transaction_completed', {
+    ledger: 'coins',
+    transaction: mappedTx,
+  });
+
+  return {
+    success: true,
+    transaction: mappedTx,
+    wallet: mappedWallet,
+  };
+}
+
+export async function creditCoins(params: {
+  userId: string;
+  amount: number;
+  transactionType: 'topup' | 'admin_credit' | 'initial_credit' | 'reversal';
+  referenceId?: string;
+  relatedTxId?: string;
+  idempotencyKey?: string;
+  description?: string;
+  createdBy?: string;
+  metadata?: Record<string, any>;
+}): Promise<{
+  success: boolean;
+  isDuplicate?: boolean;
+  transaction: CoinTransactionRecord;
+  wallet: WalletBalance;
+}> {
+  return withTransaction((client) => creditCoinsInTx(client, params));
 }
 
 export async function deductCoins(params: {
