@@ -23,6 +23,7 @@ import {
 import type { WalletBalance, WalletAuditLogRecord } from '@/lib/wallet';
 import { AdminVipTab } from '@/components/vip/AdminVipTab';
 import { AdminRecognitionTab } from '@/components/recognition/AdminRecognitionTab';
+import { AdminStoreTab } from '@/components/store/AdminStoreTab';
 
 export default function AdminFinancePanel() {
   const [authUser, setAuthUser] = useState<any>(null);
@@ -35,7 +36,7 @@ export default function AdminFinancePanel() {
   const [loginError, setLoginError] = useState<string | null>(null);
 
   // Data Tabs
-  const [activeTab, setActiveTab] = useState<'wallets' | 'coins' | 'points' | 'gifts' | 'earnings' | 'topup' | 'vip' | 'recognition' | 'audit'>('wallets');
+  const [activeTab, setActiveTab] = useState<'wallets' | 'coins' | 'points' | 'gifts' | 'earnings' | 'topup' | 'vip' | 'recognition' | 'store' | 'audit'>('wallets');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -433,6 +434,7 @@ export default function AdminFinancePanel() {
                   { id: 'topup', label: 'Top-up & Packages' },
                   { id: 'vip', label: 'VIP Memberships' },
                   { id: 'recognition', label: 'Wealth / Shining / Honor' },
+                  { id: 'store', label: 'Virtual Store' },
                   { id: 'audit', label: 'Audit Logs' },
                 ] as const
               ).map((t) => (
@@ -1008,6 +1010,12 @@ export default function AdminFinancePanel() {
             {activeTab === 'recognition' && (
               <div className="p-4">
                 <AdminRecognitionTab canManage={canAdjust} onStatusMessage={setActionMsg} />
+              </div>
+            )}
+
+            {activeTab === 'store' && (
+              <div className="p-4">
+                <AdminStoreTab canManage={canAdjust} onStatusMessage={setActionMsg} />
               </div>
             )}
           </div>

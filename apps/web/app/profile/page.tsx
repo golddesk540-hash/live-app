@@ -92,6 +92,15 @@ interface UserProfileData {
       approvedBenefits: Array<{ benefitKey: string; title: string }>;
     };
   };
+  storeEquipment?: {
+    profileFrame?: { itemId: string; name: string; previewImageUrl: string; visualStyle?: any } | null;
+    nameDecoration?: { itemId: string; name: string; visualStyle?: any } | null;
+    chatDecoration?: { itemId: string; name: string; visualStyle?: any } | null;
+    entranceEffect?: { itemId: string; name: string; previewImageUrl: string } | null;
+    theme?: { itemId: string; name: string; visualStyle?: any } | null;
+    specialBadge?: { itemId: string; name: string; previewImageUrl: string; visualStyle?: any } | null;
+    accessory?: { itemId: string; name: string; previewImageUrl: string } | null;
+  };
 }
 
 interface UserStatistics {
@@ -299,11 +308,14 @@ function MyProfileContent() {
 
         {/* 2. Center Profile Details */}
         <div className="px-5 pt-2 pb-4 flex flex-col items-center text-center">
-          {/* Avatar with Circular Glowing Ring & Approved VIP Profile Frame */}
+          {/* Avatar with Circular Glowing Ring & Approved Store/VIP Profile Frame */}
           <div className="relative mb-3" data-testid="profile-avatar-frame-wrap">
             <div
               className={`w-24 h-24 rounded-full p-[3px] ${
-                user.vip?.hasActiveVip && user.vip.activeBenefitKeys?.includes('premium_profile_frame')
+                user.storeEquipment?.profileFrame
+                  ? user.storeEquipment.profileFrame.visualStyle?.ringClass ||
+                    'bg-gradient-to-tr from-yellow-300 via-[#ff2e74] to-amber-400 shadow-[0_0_36px_rgba(255,46,116,0.75)] ring-2 ring-amber-300/80'
+                  : user.vip?.hasActiveVip && user.vip.activeBenefitKeys?.includes('premium_profile_frame')
                   ? 'bg-gradient-to-tr from-amber-300 via-[#EC248F] to-yellow-400 shadow-[0_0_34px_rgba(251,191,36,0.7)] ring-2 ring-amber-300/60'
                   : user.vip?.hasActiveVip
                   ? 'bg-gradient-to-tr from-amber-400 to-[#C026D3] shadow-[0_0_26px_rgba(251,191,36,0.45)]'
@@ -342,18 +354,29 @@ function MyProfileContent() {
             </div>
           </div>
 
-          {/* Nickname + Approved VIP Name Decoration + Gender Symbol */}
-          <div className="flex items-center justify-center gap-1.5 mb-1">
+          {/* Nickname + Approved Store/VIP Name Decoration + Badge */}
+          <div className="flex flex-wrap items-center justify-center gap-1.5 mb-1">
             <h2
               data-testid="profile-nickname"
               className={`text-xl font-bold tracking-wide ${
-                user.vip?.hasActiveVip && user.vip.activeBenefitKeys?.includes('vip_name_decoration')
+                user.storeEquipment?.nameDecoration
+                  ? user.storeEquipment.nameDecoration.visualStyle?.nameClass ||
+                    'bg-gradient-to-r from-pink-300 via-amber-200 to-fuchsia-300 bg-clip-text text-transparent font-black'
+                  : user.vip?.hasActiveVip && user.vip.activeBenefitKeys?.includes('vip_name_decoration')
                   ? 'bg-gradient-to-r from-amber-200 via-yellow-300 to-pink-300 bg-clip-text text-transparent'
                   : 'text-white'
               }`}
             >
               {user.nickname}
             </h2>
+            {user.storeEquipment?.specialBadge && (
+              <span
+                data-testid="profile-store-badge"
+                className="px-2 py-0.5 rounded-full text-[9px] font-black bg-gradient-to-r from-fuchsia-600 to-pink-500 text-white shadow"
+              >
+                {user.storeEquipment.specialBadge.visualStyle?.badgeLabel || user.storeEquipment.specialBadge.name}
+              </span>
+            )}
             <span className={`text-base font-bold ${genderColor}`}>
               {genderSymbol}
             </span>
@@ -746,6 +769,29 @@ function MyProfileContent() {
                               : ''
                           }`
                         : `Status: ${(user.vip?.status || 'None').toUpperCase()} • Upgrade VIP`}
+                    </span>
+                  </Link>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+                  <span className="text-white/50">{isUr ? 'ورچوئل اسٹور' : 'Virtual Store & Loadout'}</span>
+                  <Link
+                    href="/store?tab=inventory"
+                    data-testid="profile-store-link"
+                    className="text-[11px] font-bold text-pink-300 hover:underline flex items-center gap-1"
+                  >
+                    <span>
+                      {user.storeEquipment?.profileFrame || user.storeEquipment?.specialBadge || user.storeEquipment?.theme
+                        ? `Equipped: ${[
+                            user.storeEquipment?.profileFrame?.name,
+                            user.storeEquipment?.specialBadge?.name,
+                            user.storeEquipment?.theme?.name,
+                          ]
+                            .filter(Boolean)
+                            .join(' • ')}`
+                        : isUr
+                        ? 'اسٹور اور انوینٹری کھولیں ↗'
+                        : 'Manage Equipped Items ↗'}
                     </span>
                   </Link>
                 </div>

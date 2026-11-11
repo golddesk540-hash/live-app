@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { SendPartyMessageDto, PartyMessage } from '@/lib/party';
 import { getUserRecognitionSummary } from '@/lib/recognition';
+import { getUserEquippedStoreLoadout } from '@/lib/store';
 
 export const dynamic = 'force-dynamic';
 
@@ -128,10 +129,18 @@ export async function POST(
       recBadges = null;
     }
 
+    let storeEquipment: any = null;
+    try {
+      storeEquipment = await getUserEquippedStoreLoadout(senderId);
+    } catch {
+      storeEquipment = null;
+    }
+
     return NextResponse.json({
       success: true,
       message: createdMessage,
       recognitionBadges: recBadges,
+      storeEquipment,
     });
   } catch (error: any) {
     console.error('API /party/[roomId]/chat/send error:', error);

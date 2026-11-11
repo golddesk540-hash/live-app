@@ -3,6 +3,7 @@ import { query } from '@/lib/db';
 import { getAuthenticatedUser, validateNicknameFormat } from '@/lib/auth';
 import { resolveActiveUserVipProfile } from '@/lib/vip';
 import { getUserRecognitionSummary } from '@/lib/recognition';
+import { getUserEquippedStoreLoadout } from '@/lib/store';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,9 +14,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized. Please log in.' }, { status: 401 });
     }
 
-    const [vip, recognition] = await Promise.all([
+    const [vip, recognition, storeEquipment] = await Promise.all([
       resolveActiveUserVipProfile(user.id),
       getUserRecognitionSummary(user.id, { includePrivate: true }),
+      getUserEquippedStoreLoadout(user.id),
     ]);
 
     return NextResponse.json({
@@ -42,6 +44,7 @@ export async function GET(req: NextRequest) {
         createdAt: user.created_at,
         vip,
         recognition,
+        storeEquipment,
       },
     });
   } catch (err: any) {
@@ -83,7 +86,35 @@ export async function PATCH(req: NextRequest) {
       shiningScore,
       honorScore,
       recognition,
+      store,
+      storeEquipment,
+      storeInventory,
+      equippedItems,
+      equippedFrame,
+      equippedBadge,
+      equippedEntrance,
+      equippedTheme,
     } = body;
+
+    if (
+      store !== undefined ||
+      storeEquipment !== undefined ||
+      storeInventory !== undefined ||
+      equippedItems !== undefined ||
+      equippedFrame !== undefined ||
+      equippedBadge !== undefined ||
+      equippedEntrance !== undefined ||
+      equippedTheme !== undefined
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'STORE_MANUAL_ASSIGNMENT_FORBIDDEN',
+          error: 'Users cannot manually assign or modify Virtual Store items or equipped loadouts.',
+        },
+        { status: 403 }
+      );
+    }
 
     // Security Check: Users cannot manually assign themselves VIP or Recognition levels/scores
     if (

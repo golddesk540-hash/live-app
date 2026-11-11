@@ -71,6 +71,11 @@ interface PublicProfile {
     shining: { levelNumber: number; levelName: string; progressPercent: number; approvedBenefits: Array<{ benefitKey: string; title: string }> };
     honor: { levelNumber: number; levelName: string; progressPercent: number; approvedBenefits: Array<{ benefitKey: string; title: string }> };
   };
+  storeEquipment?: {
+    profileFrame?: { itemId: string; name: string; previewImageUrl: string } | null;
+    nameDecoration?: { itemId: string; name: string; visualStyle?: any } | null;
+    specialBadge?: { itemId: string; name: string; visualStyle?: any } | null;
+  };
 }
 
 function formatStat(num: number): string {
@@ -427,14 +432,26 @@ function PublicProfileContent() {
           <div className="absolute bottom-2 inset-x-0 px-5 text-left">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
               <h1
+                data-testid="public-profile-nickname"
                 className={`text-2xl font-extrabold tracking-wide drop-shadow-md ${
-                  profile.vip?.hasActiveVip && profile.vip.activeBenefitKeys?.includes('vip_name_decoration')
+                  profile.storeEquipment?.nameDecoration
+                    ? profile.storeEquipment.nameDecoration.visualStyle?.nameClass ||
+                      'bg-gradient-to-r from-pink-300 via-amber-200 to-fuchsia-300 bg-clip-text text-transparent'
+                    : profile.vip?.hasActiveVip && profile.vip.activeBenefitKeys?.includes('vip_name_decoration')
                     ? 'bg-gradient-to-r from-amber-200 via-yellow-300 to-pink-300 bg-clip-text text-transparent'
                     : 'text-white'
                 }`}
               >
                 {profile.nickname}
               </h1>
+              {profile.storeEquipment?.specialBadge && (
+                <span
+                  data-testid="public-profile-store-badge"
+                  className="px-2 py-0.5 rounded-full bg-gradient-to-r from-fuchsia-600 to-pink-500 text-white text-[10px] font-black shadow-md"
+                >
+                  {profile.storeEquipment.specialBadge.visualStyle?.badgeLabel || profile.storeEquipment.specialBadge.name}
+                </span>
+              )}
               {profile.vip?.hasActiveVip && profile.vip.badgeLabel && (
                 <span
                   data-testid="public-profile-vip-badge"

@@ -8,6 +8,7 @@ import 'host_earnings_screen.dart';
 import 'topup_screen.dart';
 import '../vip/vip_screen.dart';
 import '../recognition/recognition_screen.dart';
+import '../store/store_screen.dart';
 import '../gifts/gift_catalog_screen.dart';
 
 /// ============================================================================
@@ -744,6 +745,37 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
             subtitle: Text(
               _isUrdu ? 'تین الگ درجات، پنکھ اور لیڈر بورڈ' : 'Separate Levels, Wings & Rankings',
+              style: const TextStyle(color: Colors.white54, fontSize: 11),
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+          ),
+          Divider(color: Colors.white.withOpacity(0.08), height: 1, indent: 16, endIndent: 16),
+          ListTile(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => StoreScreen(
+                    apiBaseUrl: widget.apiBaseUrl,
+                    userId: widget.userId,
+                    headers: widget.authToken != null ? {'Authorization': 'Bearer ${widget.authToken}'} : null,
+                    previewDemo: widget.previewDemo,
+                    initialUrdu: _isUrdu,
+                  ),
+                ),
+              );
+            },
+            leading: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(color: _neonPink.withOpacity(0.16), shape: BoxShape.circle),
+              child: const Icon(Icons.storefront_rounded, color: _neonPink, size: 20),
+            ),
+            title: Text(
+              _isUrdu ? 'ورچوئل اسٹور اور انوینٹری (7.9)' : 'Virtual Store & Inventory',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+            ),
+            subtitle: Text(
+              _isUrdu ? 'فریمز، چیٹ ببلز، انٹری ایفیکٹس اور تھیمز' : 'Frames, Chat Bubbles, Entrances & Themes',
               style: const TextStyle(color: Colors.white54, fontSize: 11),
             ),
             trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),

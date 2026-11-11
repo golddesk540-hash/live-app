@@ -140,6 +140,14 @@ export interface HostEntranceEligibility {
   specialEventAccess: boolean;
   vipActive: boolean;
   allowedEntranceTypes: EntranceType[];
+  equippedStoreEntrance?: {
+    inventoryId: string;
+    itemId: string;
+    name: string;
+    previewImageUrl: string;
+    animationAssetUrl: string | null;
+    expiresAt: string | null;
+  } | null;
 }
 
 export interface AnimationAuditLogRecord {
@@ -956,6 +964,9 @@ export async function getHostEntranceEligibility(
     }
   }
 
+  const storeLoadout = await (await import('@/lib/store')).getUserEquippedStoreLoadout(canonicalId).catch(() => null);
+  const storeEntrance = storeLoadout?.entranceEffect || null;
+
   return {
     hostUserId: canonicalId,
     nickname: userRow?.nickname || (cleanId === 'user_wallet_demo_701' ? 'Supporter 701' : 'Live Host'),
@@ -968,6 +979,16 @@ export async function getHostEntranceEligibility(
     specialEventAccess,
     vipActive,
     allowedEntranceTypes,
+    equippedStoreEntrance: storeEntrance
+      ? {
+          inventoryId: storeEntrance.inventoryId,
+          itemId: storeEntrance.itemId,
+          name: storeEntrance.name,
+          previewImageUrl: storeEntrance.previewImageUrl,
+          animationAssetUrl: storeEntrance.animationAssetUrl,
+          expiresAt: storeEntrance.expiresAt,
+        }
+      : null,
   };
 }
 
@@ -1079,6 +1100,11 @@ export async function triggerHostEntrance(params: {
     const queueId = genId('ENTQ');
     const isFullscreen = requestedType === 'vip' || requestedType === 'special_event';
 
+    const storeEntrance = eligibility.equippedStoreEntrance;
+    const resolvedAnimUrl = storeEntrance?.animationAssetUrl || effect.animationUrl;
+    const resolvedPreviewUrl = storeEntrance?.previewImageUrl || effect.previewImageUrl;
+    const resolvedEffectName = storeEntrance?.name || effect.name;
+
     const insRes = await client.query(
       `INSERT INTO popolive.animation_playback_queue (
          queue_id, dedupe_key, event_category, room_scope, live_room_id, pk_battle_id, pk_host_side,
@@ -1104,7 +1130,7 @@ export async function triggerHostEntrance(params: {
         pkSide,
         effect.entranceId,
         effect.entranceType,
-        effect.name,
+        resolvedEffectName,
         effect.nameUr,
         eligibility.hostUserId,
         eligibility.nickname,
@@ -1117,10 +1143,10 @@ export async function triggerHostEntrance(params: {
         isFullscreen,
         effect.durationMs,
         effect.assetType,
-        effect.animationUrl,
-        effect.previewImageUrl,
+        resolvedAnimUrl,
+        resolvedPreviewUrl,
         effect.soundUrl,
-        effect.previewImageUrl,
+        resolvedPreviewUrl,
       ]
     );
 

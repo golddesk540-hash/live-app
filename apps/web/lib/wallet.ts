@@ -561,17 +561,20 @@ export async function creditCoins(params: {
   return withTransaction((client) => creditCoinsInTx(client, params));
 }
 
-export async function deductCoins(params: {
-  userId: string;
-  amount: number;
-  transactionType: 'gift_sent' | 'admin_debit' | 'feature_spend' | 'reversal';
-  referenceId?: string;
-  relatedTxId?: string;
-  idempotencyKey?: string;
-  description?: string;
-  createdBy?: string;
-  metadata?: Record<string, any>;
-}): Promise<{
+export async function deductCoinsInTx(
+  client: any,
+  params: {
+    userId: string;
+    amount: number;
+    transactionType: 'gift_sent' | 'admin_debit' | 'feature_spend' | 'reversal';
+    referenceId?: string;
+    relatedTxId?: string;
+    idempotencyKey?: string;
+    description?: string;
+    createdBy?: string;
+    metadata?: Record<string, any>;
+  }
+): Promise<{
   success: boolean;
   isDuplicate?: boolean;
   code?: string;
@@ -598,8 +601,7 @@ export async function deductCoins(params: {
     });
   }
 
-  return withTransaction(async (client) => {
-    const rules = await getFinanceRules(client);
+  const rules = await getFinanceRules(client);
 
     if (idempotencyKey) {
       const existing = (
@@ -772,7 +774,27 @@ export async function deductCoins(params: {
       transaction: mappedTx,
       wallet: mappedWallet,
     };
-  });
+}
+
+export async function deductCoins(params: {
+  userId: string;
+  amount: number;
+  transactionType: 'gift_sent' | 'admin_debit' | 'feature_spend' | 'reversal';
+  referenceId?: string;
+  relatedTxId?: string;
+  idempotencyKey?: string;
+  description?: string;
+  createdBy?: string;
+  metadata?: Record<string, any>;
+}): Promise<{
+  success: boolean;
+  isDuplicate?: boolean;
+  code?: string;
+  error?: string;
+  transaction: CoinTransactionRecord;
+  wallet: WalletBalance;
+}> {
+  return withTransaction((client) => deductCoinsInTx(client, params));
 }
 
 // =============================================================================
@@ -1618,6 +1640,31 @@ export async function reverseWalletTransaction(params: {
         reversalReason: reason.trim(),
         actorId: adminId,
       });
+
+      // Module 7.9: if reversed transaction paid for a Store purchase, revoke linked inventory & equipment
+      if (orig.reference_id && String(orig.reference_id).startsWith('STR_PUR')) {
+        const purRevRows = await client.query(
+          `UPDATE popolive.store_purchases
+           SET status = 'reversed', updated_at = NOW()
+           WHERE purchase_id = $1 AND status = 'completed'
+           RETURNING purchase_id, inventory_id, user_id`,
+          [String(orig.reference_id)]
+        );
+        for (const pr of purRevRows.rows || []) {
+          if (pr.inventory_id) {
+            await client.query(
+              `UPDATE popolive.user_store_inventory
+               SET status = 'revoked', is_equipped = FALSE, updated_at = NOW()
+               WHERE inventory_id = $1`,
+              [pr.inventory_id]
+            );
+            await client.query(
+              `DELETE FROM popolive.user_store_equipment WHERE inventory_id = $1`,
+              [pr.inventory_id]
+            );
+          }
+        }
+      }
 
       await emitWalletRealtimeEvent(client, orig.user_id, 'wallet:transaction_reversed', {
         ledger: 'coins',

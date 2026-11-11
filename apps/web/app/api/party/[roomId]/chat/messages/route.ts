@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { PartyMessage } from '@/lib/party';
+import { getBatchEquippedStoreLoadouts } from '@/lib/store';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,8 +65,11 @@ export async function GET(
       }
     }
 
+    const storeByUser = senderIds.length > 0 ? await getBatchEquippedStoreLoadouts(senderIds).catch(() => new Map()) : new Map();
+
     const messages: PartyMessage[] = (rows || []).map((r) => {
       const vipInfo = vipByUser.get(String(r.sender_id || ''));
+      const storeEq = storeByUser.get(String(r.sender_id || ''));
       return {
         id: r.id,
         roomNumber: r.room_number,
@@ -80,6 +84,9 @@ export async function GET(
         vipLevel: vipInfo?.vipLevel || 0,
         vipBadgeLabel: vipInfo?.vipBadgeLabel || null,
         vipNameDecorationStyle: vipInfo?.nameDecorationStyle || null,
+        storeChatDecoration: storeEq?.chatDecoration || null,
+        storeNameDecoration: storeEq?.nameDecoration || null,
+        storeSpecialBadge: storeEq?.specialBadge || null,
       } as any;
     });
 

@@ -3,6 +3,7 @@ import { getAuthenticatedUser } from '@/lib/auth';
 import { resolveUserByIdentifier } from '@/lib/userLookup';
 import { resolveActiveUserVipProfile } from '@/lib/vip';
 import { getUserRecognitionSummary } from '@/lib/recognition';
+import { getUserEquippedStoreLoadout } from '@/lib/store';
 import { query } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -87,9 +88,10 @@ export async function GET(
       (privacy.profile_visibility === 'only_me' ||
         (privacy.profile_visibility === 'followers' && !isFollowing));
 
-    const [vip, recognition] = await Promise.all([
+    const [vip, recognition, storeEquipment] = await Promise.all([
       resolveActiveUserVipProfile(targetUser.id),
       getUserRecognitionSummary(targetUser.id, { includePrivate: false }),
+      getUserEquippedStoreLoadout(targetUser.id),
     ]);
 
     const sanitizeCategoryPublic = (cat: typeof recognition.wealth) => ({
@@ -154,6 +156,7 @@ export async function GET(
           shining: sanitizeCategoryPublic(recognition.shining),
           honor: sanitizeCategoryPublic(recognition.honor),
         },
+        storeEquipment,
       },
     });
   } catch (err: any) {
