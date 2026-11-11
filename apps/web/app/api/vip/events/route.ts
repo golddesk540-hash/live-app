@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
         } catch (err) {
           console.error('VIP SSE poll error:', err);
         }
-      }, 650);
+      }, 400);
 
       const keepAlive = setInterval(() => {
         if (closed) return;
@@ -113,9 +113,10 @@ export async function GET(req: NextRequest) {
 
   return new NextResponse(stream, {
     headers: {
-      'Content-Type': 'text/event-stream',
+      'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
       Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
     },
   });
 }
