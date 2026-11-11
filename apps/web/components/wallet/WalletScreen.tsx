@@ -510,6 +510,29 @@ export default function WalletScreen({
             </div>
             <ChevronRight className={`w-5 h-5 text-white/50 ${isRtl ? 'rotate-180' : ''}`} />
           </Link>
+
+          <div className="h-[1px] bg-purple-400/15 mx-5" />
+
+          <Link
+            href={isPreviewDemo ? '/earnings?preview=demo' : '/earnings'}
+            data-testid="link-host-earnings"
+            className="flex items-center justify-between px-5 py-4 hover:bg-white/[0.04] transition-colors"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#ff007f] to-[#f59e0b] flex items-center justify-center shadow-[0_0_12px_rgba(255,0,127,0.4)]">
+                <ShieldCheck className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-white">
+                  {isRtl ? 'ہوسٹ کمائی ڈیش بورڈ (70%)' : 'Host Earnings & 70% Share'}
+                </div>
+                <div className="text-[11px] text-white/50">
+                  {isRtl ? 'روزانہ، ہفتہ وار، ماہانہ اعداد و شمار اور چارٹس' : 'Daily/weekly/monthly charts & 70/30 split'}
+                </div>
+              </div>
+            </div>
+            <ChevronRight className={`w-5 h-5 text-white/50 ${isRtl ? 'rotate-180' : ''}`} />
+          </Link>
         </div>
 
         {/* 6. RECENT TRANSACTIONS LIST (Switchable between Coins & Points based on activeTab) */}

@@ -18,6 +18,7 @@ import {
   XCircle,
   RefreshCw,
   Gift,
+  Download,
 } from 'lucide-react';
 import type { WalletBalance, WalletAuditLogRecord } from '@/lib/wallet';
 
@@ -32,13 +33,15 @@ export default function AdminFinancePanel() {
   const [loginError, setLoginError] = useState<string | null>(null);
 
   // Data Tabs
-  const [activeTab, setActiveTab] = useState<'wallets' | 'coins' | 'points' | 'gifts' | 'audit'>('wallets');
+  const [activeTab, setActiveTab] = useState<'wallets' | 'coins' | 'points' | 'gifts' | 'earnings' | 'audit'>('wallets');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const [wallets, setWallets] = useState<WalletBalance[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [giftTransactions, setGiftTransactions] = useState<any[]>([]);
+  const [earningShares, setEarningShares] = useState<any[]>([]);
+  const [earningSummary, setEarningSummary] = useState<any>(null);
   const [auditLogs, setAuditLogs] = useState<WalletAuditLogRecord[]>([]);
   const [canAdjust, setCanAdjust] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -99,6 +102,19 @@ export default function AdminFinancePanel() {
         const res = await fetch(`/api/admin/gifts/transactions?${params.toString()}`);
         const data = await res.json();
         if (data.success) setGiftTransactions(data.transactions || []);
+      } else if (activeTab === 'earnings') {
+        const params = new URLSearchParams({ limit: '40' });
+        if (searchQuery.trim()) params.set('search', searchQuery.trim());
+        if (statusFilter !== 'all') params.set('status', statusFilter);
+        const res = await fetch(`/api/admin/finance/earnings?${params.toString()}`);
+        const data = await res.json();
+        if (data.success) {
+          setEarningShares(data.records || []);
+          setEarningSummary(data.summary || null);
+        } else {
+          setEarningShares([]);
+          setEarningSummary(null);
+        }
       } else if (activeTab === 'audit') {
         const res = await fetch(`/api/admin/finance/audit-logs?userId=${encodeURIComponent(searchQuery)}`);
         const data = await res.json();
@@ -396,6 +412,7 @@ export default function AdminFinancePanel() {
                   { id: 'coins', label: 'Coin Ledger' },
                   { id: 'points', label: 'Points Ledger' },
                   { id: 'gifts', label: 'Gift Transactions' },
+                  { id: 'earnings', label: 'Host Shares (70/30)' },
                   { id: 'audit', label: 'Audit Logs' },
                 ] as const
               ).map((t) => (
@@ -678,6 +695,115 @@ export default function AdminFinancePanel() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {activeTab === 'earnings' && (
+              <div className="p-4 space-y-4" data-testid="admin-host-earnings-tab">
+                {!canAdjust ? (
+                  <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-400/30 text-xs text-rose-200 flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-rose-300 flex-shrink-0" />
+                    <span>
+                      Forbidden: Only authorized finance administrators (`finance_admin`) can inspect host share &amp; platform share financial reports or export CSV.
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 flex-1">
+                        <div className="rounded-2xl bg-[#1b0b38] border border-purple-400/25 p-3">
+                          <div className="text-[10px] font-bold uppercase text-purple-200/70">Total Gift Coins</div>
+                          <div className="text-lg font-black text-amber-300 tabular-nums">
+                            {(earningSummary?.totalCoinsProcessed ?? 0).toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="rounded-2xl bg-[#1b0b38] border border-emerald-400/25 p-3">
+                          <div className="text-[10px] font-bold uppercase text-purple-200/70">Host Points (70%)</div>
+                          <div className="text-lg font-black text-emerald-300 tabular-nums">
+                            {(earningSummary?.totalHostPointsCredited ?? 0).toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="rounded-2xl bg-[#1b0b38] border border-pink-400/25 p-3">
+                          <div className="text-[10px] font-bold uppercase text-purple-200/70">Platform Share (30%)</div>
+                          <div className="text-lg font-black text-pink-300 tabular-nums">
+                            {(earningSummary?.totalPlatformShare ?? 0).toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="rounded-2xl bg-[#1b0b38] border border-purple-400/25 p-3">
+                          <div className="text-[10px] font-bold uppercase text-purple-200/70">Credited / Reversed</div>
+                          <div className="text-lg font-black text-white tabular-nums">
+                            {earningSummary?.creditedCount ?? 0} / {earningSummary?.reversedCount ?? 0}
+                          </div>
+                        </div>
+                      </div>
+
+                      <a
+                        href={`/api/admin/finance/earnings/export?search=${encodeURIComponent(searchQuery)}`}
+                        data-testid="export-earnings-csv-btn"
+                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#ff2d78] to-[#a855f7] text-xs font-extrabold text-white inline-flex items-center gap-2 shadow-lg hover:opacity-90"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>Export CSV Report</span>
+                      </a>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-purple-950/50 text-purple-200 uppercase text-[10px]">
+                          <tr>
+                            <th className="p-3">Earning / Gift Tx</th>
+                            <th className="p-3">Host</th>
+                            <th className="p-3">Sender</th>
+                            <th className="p-3">Gift</th>
+                            <th className="p-3">Coins</th>
+                            <th className="p-3">Host Pts (70%)</th>
+                            <th className="p-3">Platform (30%)</th>
+                            <th className="p-3">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-purple-500/10">
+                          {earningShares.map((row: any) => (
+                            <tr key={row.earningId} className="hover:bg-white/[0.02]">
+                              <td className="p-3 font-mono text-[11px] text-white/80">
+                                <div>{row.earningId}</div>
+                                <div className="text-[10px] text-white/45">{row.giftTransactionId}</div>
+                              </td>
+                              <td className="p-3">
+                                <div className="font-bold text-white">{row.hostNickname}</div>
+                                <div className="font-mono text-[10px] text-white/50">{row.hostUserId.slice(0, 12)}</div>
+                              </td>
+                              <td className="p-3 text-white/80">{row.senderNickname}</td>
+                              <td className="p-3 font-bold text-white">
+                                {row.giftName} x{row.giftQuantity}
+                              </td>
+                              <td className="p-3 font-black text-amber-300 tabular-nums">{row.originalCoinAmount}</td>
+                              <td className="p-3 font-black text-emerald-300 tabular-nums">+{row.pointsCredited}</td>
+                              <td className="p-3 font-bold text-pink-300 tabular-nums">{row.platformShareAmount}</td>
+                              <td className="p-3">
+                                <span
+                                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    row.status === 'credited'
+                                      ? 'bg-emerald-500/20 text-emerald-300'
+                                      : 'bg-rose-500/20 text-rose-300'
+                                  }`}
+                                >
+                                  {row.status}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                          {earningShares.length === 0 && !loading && (
+                            <tr>
+                              <td colSpan={8} className="p-6 text-center text-white/50">
+                                No host share records match current filters.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>

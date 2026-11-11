@@ -56,7 +56,10 @@ export async function POST(req: NextRequest) {
       roomId: body.roomId || null,
       liveRoomId: body.liveRoomId || null,
       pkBattleId: body.pkBattleId || null,
-      idempotencyKey: body.idempotencyKey ? String(body.idempotencyKey) : null,
+      idempotencyKey:
+        body.idempotencyKey || req.headers.get('x-idempotency-key')
+          ? String(body.idempotencyKey || req.headers.get('x-idempotency-key'))
+          : null,
       ipAddress: access.actor.ipAddress,
     });
 

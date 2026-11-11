@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'coin_history_screen.dart';
 import 'points_history_screen.dart';
+import 'host_earnings_screen.dart';
 import '../gifts/gift_catalog_screen.dart';
 
 /// ============================================================================
@@ -645,6 +646,37 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
             subtitle: Text(
               _isUrdu ? 'ہوسٹ کی 70% گفٹ کمائی' : 'Host 70% gift earnings & reversals',
+              style: const TextStyle(color: Colors.white54, fontSize: 11),
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+          ),
+          Divider(color: Colors.white.withOpacity(0.08), height: 1, indent: 16, endIndent: 16),
+          ListTile(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => HostEarningsScreen(
+                    hostUserId: widget.userId,
+                    apiBaseUrl: widget.apiBaseUrl,
+                    authToken: widget.authToken,
+                    previewDemo: widget.previewDemo,
+                    initialUrdu: _isUrdu,
+                  ),
+                ),
+              );
+            },
+            leading: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(color: _neonPink.withOpacity(0.16), shape: BoxShape.circle),
+              child: const Icon(Icons.pie_chart_rounded, color: _neonPink, size: 20),
+            ),
+            title: Text(
+              _isUrdu ? 'ہوسٹ کمائی ڈیش بورڈ' : 'Host Earnings (70% Share)',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+            ),
+            subtitle: Text(
+              _isUrdu ? 'یومیہ/ہفتہ وار/ماہانہ پوائنٹس اور 30% پلیٹ فارم شیئر' : 'Daily/weekly/monthly stats & 70/30 split',
               style: const TextStyle(color: Colors.white54, fontSize: 11),
             ),
             trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),

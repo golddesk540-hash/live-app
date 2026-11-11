@@ -41,8 +41,12 @@ const FORBIDDEN_OVERRIDE_KEYS = [
   'totalCoinOverride',
   'hostPoints',
   'hostPointsCredited',
+  'pointsCredited',
   'sharePercentage',
+  'hostSharePercentage',
   'platformShare',
+  'platformShareAmount',
+  'platformSharePercentage',
   'senderBalance',
   'availableCoins',
   'coinAmountOverride',
@@ -1030,6 +1034,30 @@ export async function sendRealTimeGift(params: {
           imageUrl: gift.imageUrl,
         };
 
+        // Module 7.5: record immutable 70% host share + 30% platform share atomically inside same tx
+        const { recordHostEarningShareInTx } = await import('@/lib/hostEarnings');
+        await recordHostEarningShareInTx(client, {
+          giftTransactionId: gftTxId,
+          hostUserId: hostOption.hostId,
+          hostNickname: hostOption.nickname,
+          senderUserId: params.senderUserId,
+          senderNickname: resolvedSenderName,
+          giftId: gift.giftId,
+          giftName: gift.name,
+          giftQuantity: qtyMeta.quantity,
+          sourceType: stage.pkBattleId ? 'pk_battle' : stage.liveRoomId ? 'live_room' : 'direct_gift',
+          liveRoomId: stage.liveRoomId,
+          pkBattleId: stage.pkBattleId,
+          originalCoinAmount: totalCoins,
+          hostSharePercentage: ctx.sharePercent,
+          pointsCredited: pointsEarned,
+          platformShareAmount: platformShare,
+          pointsTxId: ptsTxId,
+          updatedHostPointsBalance: ctx.hostWallet.points,
+          updatedTotalReceivedPoints: ctx.hostWallet.totalReceivedPoints,
+          pkHostSide: pkSide,
+        });
+
         const nowIso = new Date().toISOString();
 
         await client.query(
@@ -1515,6 +1543,17 @@ export async function reverseGiftTransaction(params: {
        WHERE id = $3 RETURNING *`,
       [params.reason.trim(), params.actorId, gtx.id]
     );
+
+    // Module 7.5: mark linked host earning share as reversed & emit host-scoped reversal SSE
+    const { reverseHostEarningShareInTx } = await import('@/lib/hostEarnings');
+    await reverseHostEarningShareInTx(client, {
+      giftTransactionId: gtx.gift_transaction_id,
+      reversalReference: revPtsTxId,
+      reason: params.reason.trim(),
+      actorId: params.actorId,
+      updatedHostPointsBalance: newHostPoints,
+      updatedTotalReceivedPoints: newHostEarned,
+    });
 
     const scope = gtx.pk_battle_id
       ? `pk:${gtx.pk_battle_id}`
