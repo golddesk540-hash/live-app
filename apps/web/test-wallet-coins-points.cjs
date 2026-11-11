@@ -2,7 +2,7 @@ const http = require('http');
 const https = require('https');
 const crypto = require('crypto');
 
-const baseUrl = process.env.TEST_BASE_URL || 'http://127.0.0.1:3000';
+const baseUrl = (process.env.TEST_BASE_URL || 'http://127.0.0.1:3000').trim();
 const isHttps = baseUrl.startsWith('https');
 const client = isHttps ? https : http;
 
@@ -239,9 +239,9 @@ async function runTests() {
     assert(viewerAuth.statusCode === 200 && viewerAuth.cookieHeader.includes('poppo_session'), 'viewer701@popolive.com signed in cleanly');
 
     // ------------------------------------------------------------------------
-    // TEST 8: Unverified top-up fails (403); HMAC-signed top-up succeeds
+    // TEST 8: Unverified / tampered signature top-up fails (403); Authorized top-up succeeds
     // ------------------------------------------------------------------------
-    console.log('\n[Test 8] Top-up security: unverified request rejected (403); HMAC-signed top-up succeeds');
+    console.log('\n[Test 8] Top-up security: unverified & forged signature rejected (403); authorized top-up succeeds');
     const senderId = `test_sender_${RUN_ID}`;
     const hostId = `test_host_${RUN_ID}`;
 
@@ -252,8 +252,35 @@ async function runTests() {
     });
     assert(badTopupRes.statusCode === 403 && badTopupRes.json?.code === 'UNAUTHORIZED_TOPUP_CREDIT', `Unverified top-up rejected with 403 (${badTopupRes.statusCode})`);
 
+    const forgedSigRes = await request(
+      'POST',
+      '/api/wallet/topup/credit',
+      {
+        userId: senderId,
+        amount: 1000,
+        referenceId: `FORGED_${RUN_ID}`,
+      },
+      { 'x-topup-signature': 'deadbeef00000000000000000000000000000000000000000000000000000000' }
+    );
+    assert(forgedSigRes.statusCode === 403 && forgedSigRes.json?.code === 'UNAUTHORIZED_TOPUP_CREDIT', `Forged HMAC signature rejected with 403 (${forgedSigRes.statusCode})`);
+
+    // Standard viewer role also cannot credit coins directly via /api/wallet/topup/credit
+    const viewerTopupRes = await request(
+      'POST',
+      '/api/wallet/topup/credit',
+      {
+        userId: senderId,
+        amount: 1000,
+        referenceId: `VIEWER_TRY_${RUN_ID}`,
+      },
+      { Cookie: viewerAuth.cookieHeader }
+    );
+    assert(viewerTopupRes.statusCode === 403 && viewerTopupRes.json?.code === 'UNAUTHORIZED_TOPUP_CREDIT', `Regular user rejected from crediting top-up (403)`);
+
     const topupRef = `ORD_VERIFIED_${RUN_ID}`;
-    const topupSig = signTopup(senderId, 1000, topupRef);
+    const topupHeaders = !isHttps
+      ? { 'x-topup-signature': signTopup(senderId, 1000, topupRef) }
+      : { Cookie: financeAuth.cookieHeader };
     const goodTopupRes = await request(
       'POST',
       '/api/wallet/topup/credit',
@@ -264,9 +291,9 @@ async function runTests() {
         idempotencyKey: `IDEMP_TOPUP_${RUN_ID}`,
         description: 'Test Suite Verified Coin Top-up',
       },
-      { 'x-topup-signature': topupSig }
+      topupHeaders
     );
-    assert(goodTopupRes.statusCode === 200 && goodTopupRes.json?.success === true, 'HMAC-signed top-up credited 1,000 coins');
+    assert(goodTopupRes.statusCode === 200 && goodTopupRes.json?.success === true, 'Authorized top-up credited 1,000 coins');
     assert(goodTopupRes.json?.wallet?.coins === 1000, `Sender balance after top-up = 1,000 (got ${goodTopupRes.json?.wallet?.coins})`);
     assert(goodTopupRes.json?.wallet?.points === 0, 'Top-up did NOT touch host points balance (stays 0)');
     assert(goodTopupRes.json?.transaction?.transactionType === 'topup', 'Transaction logged with type "topup"');
@@ -522,7 +549,7 @@ async function runTests() {
       'POST',
       '/api/wallet/topup/credit',
       { userId: concSender, amount: 1000, referenceId: concRef, idempotencyKey: concRef },
-      { 'x-topup-signature': signTopup(concSender, 1000, concRef) }
+      { Cookie: financeAuth.cookieHeader }
     );
 
     const parallelGiftCalls = Array.from({ length: 8 }, (_, idx) =>
@@ -556,7 +583,7 @@ async function runTests() {
         'POST',
         '/api/wallet/topup/credit',
         { userId: concSender, amount: 50, referenceId: topRef2, idempotencyKey: topRef2 },
-        { 'x-topup-signature': signTopup(concSender, 50, topRef2) }
+        { Cookie: financeAuth.cookieHeader }
       );
     });
     assert(sseResult.statusCode === 200 && sseResult.connectedRestored?.restoredWallet?.coins === 200, 'SSE connected event restored latest wallet balance (200)');
