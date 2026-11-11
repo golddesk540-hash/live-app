@@ -13,9 +13,12 @@ const MIME_BY_EXT: Record<string, string> = {
   '.json': 'application/json; charset=utf-8',
   '.mp4': 'video/mp4',
   '.webm': 'video/webm',
+  '.wav': 'audio/wav',
+  '.mp3': 'audio/mpeg',
+  '.ogg': 'audio/ogg',
 };
 
-const ALLOWED_FOLDERS = new Set(['images', 'animations', 'thumbnails']);
+const ALLOWED_FOLDERS = new Set(['images', 'animations', 'thumbnails', 'sfx']);
 
 export async function GET(
   _req: NextRequest,

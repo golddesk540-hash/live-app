@@ -26,6 +26,8 @@ import {
 import SafetyToolsScreen from './SafetyToolsScreen';
 import GiftSendingPanel from '@/components/gifts/GiftSendingPanel';
 import LiveGiftAnimationOverlay, { LiveGiftBroadcastEvent } from '@/components/gifts/LiveGiftAnimationOverlay';
+import AnimationStageOverlay from '@/components/animations/AnimationStageOverlay';
+import type { AnimationQueueItem } from '@/lib/animations';
 
 interface ViewerSessionData {
   isDemo?: boolean;
@@ -107,6 +109,9 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
   const [showSafetyTools, setShowSafetyTools] = useState<boolean>(false);
   const [showGiftPanel, setShowGiftPanel] = useState<boolean>(false);
   const [liveGiftBanner, setLiveGiftBanner] = useState<LiveGiftBroadcastEvent | null>(null);
+  const [stageAnimations, setStageAnimations] = useState<AnimationQueueItem[]>([]);
+  const [stageEntrances, setStageEntrances] = useState<AnimationQueueItem[]>([]);
+  const [stageQueued, setStageQueued] = useState<AnimationQueueItem[]>([]);
   const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set());
   const [mutedUserIds, setMutedUserIds] = useState<Set<string>>(new Set());
 
@@ -125,6 +130,38 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
         if (d.mutedUserIds) setMutedUserIds(new Set(d.mutedUserIds));
       })
       .catch(() => {});
+  }, [roomId]);
+
+  // Subscribe to Module 7.4 real-time gift animations & host entrance effects (non-blocking)
+  useEffect(() => {
+    const activeRoom = roomId || '880219';
+    const es = new EventSource(`/api/animations/events?roomId=${encodeURIComponent(activeRoom)}&preview=demo`);
+    const handleSync = (ev: any) => {
+      try {
+        const d = JSON.parse(ev.data);
+        const playing: AnimationQueueItem[] = d.activeAnimations || d.playing || [];
+        setStageAnimations(playing.filter((a) => a.eventCategory === 'gift'));
+        setStageEntrances(playing.filter((a) => a.eventCategory === 'host_entrance'));
+        if (Array.isArray(d.queuedAnimations || d.queued)) {
+          setStageQueued(d.queuedAnimations || d.queued);
+        }
+      } catch {}
+    };
+    es.addEventListener('animation:state_sync', handleSync);
+    es.addEventListener('animation:gift_queue_updated', handleSync);
+    es.addEventListener('animation:gift_started', (ev: any) => {
+      try {
+        const item: AnimationQueueItem = JSON.parse(ev.data);
+        setStageAnimations((prev) => (prev.some((x) => x.queueId === item.queueId) ? prev : [...prev, item]));
+      } catch {}
+    });
+    es.addEventListener('animation:host_entrance', (ev: any) => {
+      try {
+        const item: AnimationQueueItem = JSON.parse(ev.data);
+        setStageEntrances((prev) => (prev.some((x) => x.queueId === item.queueId) ? prev : [item, ...prev]));
+      } catch {}
+    });
+    return () => es.close();
   }, [roomId]);
 
   // Chat Handoff (Prepared for Module 4.5)
@@ -802,10 +839,25 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
           </button>
         </div>
 
-        {/* Floating Non-Blocking Gift Notification Overlay */}
+        {/* Floating Non-Blocking Module 7.3 & 7.4 Animation & Host Entrance Overlays */}
         <LiveGiftAnimationOverlay
           activeGift={liveGiftBanner}
           placement="room-floating"
+        />
+        <AnimationStageOverlay
+          activeAnimations={stageAnimations}
+          activeEntrances={stageEntrances}
+          queuedAnimations={stageQueued}
+          stageMode="live"
+          onAnimationComplete={(queueId) => {
+            setStageAnimations((prev) => prev.filter((a) => a.queueId !== queueId));
+            setStageEntrances((prev) => prev.filter((a) => a.queueId !== queueId));
+            fetch('/api/animations/gift/complete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ queueId }),
+            }).catch(() => {});
+          }}
         />
 
         {/* Real-Time Gift Sending Drawer (Module 7.3) */}

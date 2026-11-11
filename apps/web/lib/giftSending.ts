@@ -1224,6 +1224,17 @@ export async function sendRealTimeGift(params: {
 
   bumpCacheVersion().catch(() => {});
 
+  // Module 7.4 integration: dispatch approved animation non-blockingly ONLY after financial tx committed
+  try {
+    const { dispatchGiftAnimationFromTransaction } = await import('@/lib/animations');
+    await dispatchGiftAnimationFromTransaction({
+      giftTransactionId: committedTx!.giftTransactionId,
+      allowIdempotentReturn: true,
+    });
+  } catch (animErr) {
+    console.warn('[Module 7.4] Non-fatal gift animation queue dispatch skipped:', animErr);
+  }
+
   const sWallet = transferRes.senderWallet!;
   const hWallet = transferRes.hostWallet!;
 

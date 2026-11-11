@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../animations/animation_overlay_widget.dart';
+import '../animations/animation_settings_sheet.dart';
 import 'gift_sending_sheet.dart';
 
 /// ============================================================================
@@ -47,6 +49,12 @@ class _LiveGiftDemoScreenState extends State<LiveGiftDemoScreen> {
   int _pkHostBScore = 9840;
   int _availableCoins = 12500;
   Map<String, dynamic>? _activeBurst;
+  Map<String, dynamic> _animPrefs = {
+    'enableLargeAnimations': true,
+    'enableSoundEffects': true,
+    'reduceAnimations': false,
+    'respectDeviceReducedMotion': true,
+  };
 
   @override
   void initState() {
@@ -121,6 +129,27 @@ class _LiveGiftDemoScreenState extends State<LiveGiftDemoScreen> {
         elevation: 0,
         title: const Text('Popo Live', style: TextStyle(fontWeight: FontWeight.w900)),
         actions: [
+          IconButton(
+            tooltip: 'Animation & Sound Settings',
+            icon: const Icon(Icons.tune_rounded, color: Colors.white70),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.transparent,
+                isScrollControlled: true,
+                builder: (_) => AnimationSettingsSheet(
+                  userId: widget.userId,
+                  apiBaseUrl: widget.apiBaseUrl,
+                  authToken: widget.authToken,
+                  previewDemo: widget.previewDemo,
+                  initialPrefs: _animPrefs,
+                  onSaved: (nextPrefs) {
+                    if (mounted) setState(() => _animPrefs = nextPrefs);
+                  },
+                ),
+              );
+            },
+          ),
           Container(
             margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -161,6 +190,14 @@ class _LiveGiftDemoScreenState extends State<LiveGiftDemoScreen> {
                     ),
                     Text('$_pkHostBScore', style: const TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.w900)),
                   ],
+                ),
+                AnimationOverlayWidget(
+                  apiBaseUrl: widget.apiBaseUrl,
+                  userId: widget.userId,
+                  roomId: widget.roomId,
+                  pkBattleId: widget.pkBattleId,
+                  previewDemo: widget.previewDemo,
+                  preferences: _animPrefs,
                 ),
                 if (_activeBurst != null) ...[
                   const SizedBox(height: 8),

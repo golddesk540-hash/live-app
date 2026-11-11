@@ -617,9 +617,17 @@ export default function GiftSendingPanel({
               <X className="w-4 h-4" />
             </button>
           ) : (
-            <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-purple-200">
-              <Bell className="w-3.5 h-3.5" />
-            </div>
+            <Link
+              href={`/animations?${
+                contextData?.pkBattleId
+                  ? `pkBattleId=${encodeURIComponent(contextData.pkBattleId)}`
+                  : `roomId=${encodeURIComponent(contextData?.roomNumber || roomId || '880219')}`
+              }&preview=demo`}
+              className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-amber-300"
+              title="Open Animations & Host Entrances (7.4)"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+            </Link>
           )}
         </div>
       </div>

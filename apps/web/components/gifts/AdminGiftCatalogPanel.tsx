@@ -14,9 +14,11 @@ import {
   Power,
   RefreshCw,
   ShieldCheck,
+  Sparkles,
   Upload,
   Wallet,
 } from 'lucide-react';
+import AdminAnimationsTab from '../animations/AdminAnimationsTab';
 import type {
   GiftAuditLogRecord,
   GiftCatalogItem,
@@ -41,7 +43,7 @@ export default function AdminGiftCatalogPanel() {
   const [loginPassword, setLoginPassword] = useState('AdminPass123!');
   const [loginBusy, setLoginBusy] = useState(false);
 
-  const [tab, setTab] = useState<'gifts' | 'categories' | 'audit'>('gifts');
+  const [tab, setTab] = useState<'gifts' | 'categories' | 'animations' | 'audit'>('gifts');
   const [gifts, setGifts] = useState<GiftCatalogItem[]>([]);
   const [categories, setCategories] = useState<GiftCategoryRecord[]>([]);
   const [auditLogs, setAuditLogs] = useState<GiftAuditLogRecord[]>([]);
@@ -202,7 +204,9 @@ export default function AdminGiftCatalogPanel() {
         throw new Error(data.message || 'Asset upload failed');
       }
       const asset = data.asset;
-      setAssetType(asset.assetType);
+      if (asset.assetType !== 'audio') {
+        setAssetType(asset.assetType);
+      }
       if (asset.assetType === 'lottie' || asset.assetType === 'video' || asset.assetType === 'gif') {
         setAnimationUrl(asset.fileUrl);
       }
@@ -487,6 +491,19 @@ export default function AdminGiftCatalogPanel() {
               >
                 <FolderPlus className="w-3.5 h-3.5" />
                 <span>Categories ({categories.length})</span>
+              </button>
+              <button
+                type="button"
+                data-testid="admin-tab-animations"
+                onClick={() => setTab('animations')}
+                className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold ${
+                  tab === 'animations'
+                    ? 'bg-gradient-to-r from-[#ff007f] to-[#ec4899] text-white'
+                    : 'bg-[#1a0a36] border border-[#3a1a70] text-purple-200'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Animations &amp; Entrances</span>
               </button>
               <button
                 type="button"
@@ -899,6 +916,8 @@ export default function AdminGiftCatalogPanel() {
                 </div>
               </div>
             )}
+
+            {tab === 'animations' && <AdminAnimationsTab />}
 
             {tab === 'audit' && (
               <div className="rounded-3xl bg-[#15072e] border border-[#38186c] p-5 space-y-2.5">

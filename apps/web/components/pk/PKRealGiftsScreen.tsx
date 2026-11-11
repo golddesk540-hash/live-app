@@ -182,6 +182,12 @@ export default function PKRealGiftsScreen({
 
         <div className="flex items-center gap-1.5">
           <Link
+            href={`/animations?pkBattleId=${encodeURIComponent(battleId)}&preview=demo`}
+            className="px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-[10px] font-bold text-amber-200 hover:bg-amber-500/30 transition"
+          >
+            {isRtl ? 'اینیمیشن' : 'PK FX'}
+          </Link>
+          <Link
             href={`/gifts/send?pkBattleId=${encodeURIComponent(battleId)}&preview=demo`}
             className="px-2.5 py-1 rounded-full bg-pink-500/20 border border-pink-400/35 text-[10px] font-bold text-pink-200 hover:bg-pink-500/30 transition"
           >

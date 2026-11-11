@@ -3,17 +3,19 @@ import path from 'path';
 import crypto from 'crypto';
 
 // =============================================================================
-// Popo Live Phase 7 Module 7.2 — Gift Asset Validation, Storage & Optimization
-// Supports PNG, WebP, GIF, Lottie JSON, and MP4/WebM animations
+// Popo Live Phase 7 Module 7.2 / 7.4 — Gift & Animation Asset Validation & Storage
+// Supports PNG, WebP, GIF, Lottie JSON, MP4/WebM animations, and WAV/MP3/OGG SFX
 // =============================================================================
 
 export type SupportedGiftAssetType = 'png' | 'webp' | 'gif' | 'lottie' | 'video';
+export type SupportedUploadAssetType = SupportedGiftAssetType | 'audio';
 
 export const FALLBACK_GIFT_IMAGE_URL = '/assets/gifts/fallback_gift.png';
 export const FALLBACK_GIFT_THUMBNAIL_URL = '/assets/gifts/thumbs/fallback_gift.png';
 
 const MAX_STATIC_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
 const MAX_ANIMATION_BYTES = 12 * 1024 * 1024; // 12 MB
+const MAX_AUDIO_BYTES = 4 * 1024 * 1024; // 4 MB
 
 const DANGEROUS_EXTENSIONS = [
   '.exe',
@@ -35,7 +37,7 @@ const DANGEROUS_EXTENSIONS = [
 ];
 
 export interface ValidatedGiftUploadResult {
-  assetType: SupportedGiftAssetType;
+  assetType: SupportedUploadAssetType;
   fileUrl: string;
   thumbnailUrl: string;
   fallbackUrl: string;
@@ -51,7 +53,7 @@ function hasDangerousExtension(filename: string): boolean {
 }
 
 function detectBinaryFormat(buffer: Buffer, mimeHint: string, originalName: string): {
-  assetType: SupportedGiftAssetType | 'jpeg';
+  assetType: SupportedUploadAssetType | 'jpeg';
   ext: string;
   mimeType: string;
 } | null {
@@ -89,6 +91,28 @@ function detectBinaryFormat(buffer: Buffer, mimeHint: string, originalName: stri
   // MP4 magic: ....ftyp
   if (buffer.length >= 12 && buffer.subarray(4, 8).toString('ascii') === 'ftyp') {
     return { assetType: 'video', ext: '.mp4', mimeType: 'video/mp4' };
+  }
+
+  // WAV magic: RIFF....WAVE
+  if (
+    buffer.length >= 12 &&
+    buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+    buffer.subarray(8, 12).toString('ascii') === 'WAVE'
+  ) {
+    return { assetType: 'audio', ext: '.wav', mimeType: 'audio/wav' };
+  }
+
+  // OGG magic: OggS
+  if (buffer.length >= 4 && buffer.subarray(0, 4).toString('ascii') === 'OggS') {
+    return { assetType: 'audio', ext: '.ogg', mimeType: 'audio/ogg' };
+  }
+
+  // MP3 magic: ID3 tag or MPEG audio sync frame (FF FB / FF F3 / FF F2)
+  if (
+    buffer.subarray(0, 3).toString('ascii') === 'ID3' ||
+    (buffer[0] === 0xff && (buffer[1] === 0xfb || buffer[1] === 0xf3 || buffer[1] === 0xf2))
+  ) {
+    return { assetType: 'audio', ext: '.mp3', mimeType: 'audio/mpeg' };
   }
 
   // Lottie JSON check (must parse as JSON with "layers" Array + "v" or "fr")
@@ -144,14 +168,15 @@ export function validateAndStoreGiftAsset(params: {
   if (!detected) {
     throw Object.assign(
       new Error(
-        'Unsupported or invalid gift asset format. Allowed formats: PNG, WebP, GIF, Lottie JSON (.json), MP4/WebM video.'
+        'Unsupported or invalid asset format. Allowed formats: PNG, WebP, GIF, Lottie JSON (.json), MP4/WebM video, and WAV/MP3/OGG audio.'
       ),
       { code: 'INVALID_ASSET_FORMAT', status: 400 }
     );
   }
 
   const isAnimation = detected.assetType === 'gif' || detected.assetType === 'lottie' || detected.assetType === 'video';
-  const maxBytes = isAnimation ? MAX_ANIMATION_BYTES : MAX_STATIC_IMAGE_BYTES;
+  const isAudio = detected.assetType === 'audio';
+  const maxBytes = isAudio ? MAX_AUDIO_BYTES : isAnimation ? MAX_ANIMATION_BYTES : MAX_STATIC_IMAGE_BYTES;
   if (buffer.length > maxBytes) {
     throw Object.assign(
       new Error(
@@ -162,7 +187,7 @@ export function validateAndStoreGiftAsset(params: {
   }
 
   const baseUploadDir = path.join(process.cwd(), 'public', 'uploads', 'gifts');
-  const folder = isAnimation ? 'animations' : 'images';
+  const folder = isAudio ? 'sfx' : isAnimation ? 'animations' : 'images';
   const targetDir = path.join(baseUploadDir, folder);
   const thumbDir = path.join(baseUploadDir, 'thumbnails');
 
@@ -184,7 +209,7 @@ export function validateAndStoreGiftAsset(params: {
     thumbnailUrl = `/api/gifts/media/thumbnails/${thumbFileName}`;
   }
 
-  const normalizedType: SupportedGiftAssetType =
+  const normalizedType: SupportedUploadAssetType =
     detected.assetType === 'jpeg' ? 'png' : detected.assetType;
 
   return {
