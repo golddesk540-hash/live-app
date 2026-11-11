@@ -316,21 +316,28 @@ export default function StaffPreviewTool({ initialUser }: StaffPreviewToolProps)
             <span>Finance Admin Controls (Coins &amp; Points)</span>
           </Link>
 
-          {/* Module 7.2 Virtual Gift Catalog & Admin Shortcuts */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          {/* Module 7.2 & 7.3 Virtual Gift Catalog, Sending Stage & Admin Shortcuts */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <Link
               href="/gifts?preview=demo"
               className="py-3 rounded-full bg-pink-950/50 hover:bg-pink-900/50 text-pink-200 font-bold text-xs sm:text-sm border border-pink-400/30 flex items-center justify-center gap-2 transition-all"
             >
               <Gift className="w-4 h-4 text-pink-400" />
-              <span>Gift Catalog Preview</span>
+              <span>Gift Catalog</span>
+            </Link>
+            <Link
+              href="/gifts/send?preview=demo"
+              className="py-3 rounded-full bg-fuchsia-950/50 hover:bg-fuchsia-900/50 text-fuchsia-200 font-bold text-xs sm:text-sm border border-fuchsia-400/30 flex items-center justify-center gap-2 transition-all"
+            >
+              <Gift className="w-4 h-4 text-fuchsia-400" />
+              <span>Live Gift Stage (7.3)</span>
             </Link>
             <Link
               href="/admin/gifts"
               className="py-3 rounded-full bg-purple-950/50 hover:bg-purple-900/50 text-purple-200 font-bold text-xs sm:text-sm border border-purple-400/30 flex items-center justify-center gap-2 transition-all"
             >
               <Shield className="w-4 h-4 text-purple-300" />
-              <span>Gift Catalog Admin</span>
+              <span>Gift Admin</span>
             </Link>
           </div>
         </div>

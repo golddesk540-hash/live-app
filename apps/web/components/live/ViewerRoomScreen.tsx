@@ -24,6 +24,8 @@ import {
   Shield,
 } from 'lucide-react';
 import SafetyToolsScreen from './SafetyToolsScreen';
+import GiftSendingPanel from '@/components/gifts/GiftSendingPanel';
+import LiveGiftAnimationOverlay, { LiveGiftBroadcastEvent } from '@/components/gifts/LiveGiftAnimationOverlay';
 
 interface ViewerSessionData {
   isDemo?: boolean;
@@ -103,6 +105,8 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showStreamInfo, setShowStreamInfo] = useState<boolean>(false);
   const [showSafetyTools, setShowSafetyTools] = useState<boolean>(false);
+  const [showGiftPanel, setShowGiftPanel] = useState<boolean>(false);
+  const [liveGiftBanner, setLiveGiftBanner] = useState<LiveGiftBroadcastEvent | null>(null);
   const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set());
   const [mutedUserIds, setMutedUserIds] = useState<Set<string>>(new Set());
 
@@ -786,19 +790,44 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
             <Share2 className="w-4 h-4" />
           </button>
 
-          {/* Gift Button (1:1 with 04_04_viewer_room.png) */}
+          {/* Gift Button (Module 7.3 Real-Time Gift Sending Drawer) */}
           <button
             type="button"
-            onClick={() => {
-              spawnHeart('🌹');
-              triggerToast('Rose sent to host!');
-            }}
+            data-testid="live-room-open-gift-btn"
+            onClick={() => setShowGiftPanel(true)}
             className="w-11 h-11 rounded-full bg-gradient-to-r from-[#ff2d55] to-[#e91e63] flex items-center justify-center text-white shadow-lg shadow-pink-500/50 hover:brightness-110 active:scale-95 transition-all flex-shrink-0"
-            title="Send Gift (Coming in Module 4.6)"
+            title="Send Virtual Gift"
           >
             <Gift className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Floating Non-Blocking Gift Notification Overlay */}
+        <LiveGiftAnimationOverlay
+          activeGift={liveGiftBanner}
+          placement="room-floating"
+        />
+
+        {/* Real-Time Gift Sending Drawer (Module 7.3) */}
+        {showGiftPanel && (
+          <div
+            data-testid="live-room-gift-drawer"
+            className="absolute inset-0 z-50 flex flex-col justify-end bg-black/65 backdrop-blur-sm animate-fade-in"
+          >
+            <GiftSendingPanel
+              variant="drawer"
+              roomId={sessionData?.room?.roomNumber || roomId || '880219'}
+              previewDemo={true}
+              onClose={() => setShowGiftPanel(false)}
+              onGiftCompleted={(evt) => {
+                setLiveGiftBanner(evt);
+                spawnHeart('🎁');
+                triggerToast(`${evt.senderNickname} sent ${evt.giftName} x${evt.quantity}!`);
+                setTimeout(() => setLiveGiftBanner(null), 3200);
+              }}
+            />
+          </div>
+        )}
 
         {/* Safety Tools Bottom Sheet Modal (Module 4.6) */}
         {showSafetyTools && (

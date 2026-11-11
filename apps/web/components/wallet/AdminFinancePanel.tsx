@@ -32,12 +32,13 @@ export default function AdminFinancePanel() {
   const [loginError, setLoginError] = useState<string | null>(null);
 
   // Data Tabs
-  const [activeTab, setActiveTab] = useState<'wallets' | 'coins' | 'points' | 'audit'>('wallets');
+  const [activeTab, setActiveTab] = useState<'wallets' | 'coins' | 'points' | 'gifts' | 'audit'>('wallets');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const [wallets, setWallets] = useState<WalletBalance[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [giftTransactions, setGiftTransactions] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<WalletAuditLogRecord[]>([]);
   const [canAdjust, setCanAdjust] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -91,6 +92,13 @@ export default function AdminFinancePanel() {
         const res = await fetch(`/api/admin/finance/transactions?${params.toString()}`);
         const data = await res.json();
         if (data.success) setTransactions(data.transactions || []);
+      } else if (activeTab === 'gifts') {
+        const params = new URLSearchParams({ limit: '30' });
+        if (searchQuery.trim()) params.set('search', searchQuery.trim());
+        if (statusFilter !== 'all') params.set('status', statusFilter);
+        const res = await fetch(`/api/admin/gifts/transactions?${params.toString()}`);
+        const data = await res.json();
+        if (data.success) setGiftTransactions(data.transactions || []);
       } else if (activeTab === 'audit') {
         const res = await fetch(`/api/admin/finance/audit-logs?userId=${encodeURIComponent(searchQuery)}`);
         const data = await res.json();
@@ -211,6 +219,38 @@ export default function AdminFinancePanel() {
       }
     } catch {
       setActionMsg({ type: 'error', text: 'Network error reversing transaction.' });
+    }
+  };
+
+  const handleReverseGiftTx = async (giftTransactionId: string) => {
+    const reason = prompt(`Enter mandatory Finance Audit Reason to reverse ${giftTransactionId}:`);
+    if (!reason || reason.trim().length < 4) {
+      alert('Reversal cancelled: A reason of at least 4 characters is required.');
+      return;
+    }
+
+    setActionMsg(null);
+    try {
+      const res = await fetch(
+        `/api/admin/gifts/transactions/${encodeURIComponent(giftTransactionId)}/reverse`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setActionMsg({ type: 'error', text: data.error || 'Gift reversal failed.' });
+      } else {
+        setActionMsg({
+          type: 'success',
+          text: `Reversed gift ${giftTransactionId}: refunded sender coins & deducted host points with full audit.`,
+        });
+        await loadTabData();
+      }
+    } catch {
+      setActionMsg({ type: 'error', text: 'Network error reversing gift transaction.' });
     }
   };
 
@@ -355,6 +395,7 @@ export default function AdminFinancePanel() {
                   { id: 'wallets', label: 'User Wallets' },
                   { id: 'coins', label: 'Coin Ledger' },
                   { id: 'points', label: 'Points Ledger' },
+                  { id: 'gifts', label: 'Gift Transactions' },
                   { id: 'audit', label: 'Audit Logs' },
                 ] as const
               ).map((t) => (
@@ -519,6 +560,84 @@ export default function AdminFinancePanel() {
                         </td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {activeTab === 'gifts' && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-purple-950/50 text-purple-200 uppercase text-[10px]">
+                    <tr>
+                      <th className="p-4">Gift Tx ID</th>
+                      <th className="p-4">Sender → Host</th>
+                      <th className="p-4">Gift &amp; Qty</th>
+                      <th className="p-4">Total Coins</th>
+                      <th className="p-4">Host Points (70%)</th>
+                      <th className="p-4">Platform (30%)</th>
+                      <th className="p-4">Status</th>
+                      <th className="p-4 text-right">Reverse</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-purple-500/10">
+                    {giftTransactions.map((g) => (
+                      <tr key={g.giftTransactionId} className="hover:bg-white/[0.02]">
+                        <td className="p-4 font-mono text-[11px] text-purple-300">{g.giftTransactionId}</td>
+                        <td className="p-4">
+                          <div className="font-semibold text-white">{g.senderNickname} → {g.recipientNickname}</div>
+                          <div className="text-[10px] font-mono text-white/50">
+                            {g.pkBattleId ? `PK ${g.pkBattleId.slice(0, 8)} (${g.pkHostSide || ''})` : `Room ${g.liveRoomId || '-'}`}
+                          </div>
+                        </td>
+                        <td className="p-4 font-bold text-pink-200">
+                          {g.giftNameSnapshot} <span className="text-pink-400">x{g.quantity}</span>
+                        </td>
+                        <td className="p-4 font-black text-amber-300">
+                          {Number(g.totalCoinAmount || 0).toLocaleString()}
+                        </td>
+                        <td className="p-4 font-bold text-emerald-300">
+                          +{Number(g.hostPointsCredited || 0).toLocaleString()}
+                        </td>
+                        <td className="p-4 font-bold text-purple-300">
+                          {Number(g.platformShare || 0).toLocaleString()}
+                        </td>
+                        <td className="p-4">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                              g.status === 'completed'
+                                ? 'bg-emerald-500/15 text-emerald-400'
+                                : g.status === 'failed'
+                                ? 'bg-rose-500/15 text-rose-400'
+                                : g.status === 'reversed'
+                                ? 'bg-amber-500/15 text-amber-400'
+                                : 'bg-sky-500/15 text-sky-400'
+                            }`}
+                          >
+                            {g.status}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right">
+                          {g.status === 'completed' && (
+                            <button
+                              type="button"
+                              disabled={!canAdjust}
+                              onClick={() => handleReverseGiftTx(g.giftTransactionId)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/30 text-amber-300 font-bold text-[10px] disabled:opacity-30"
+                            >
+                              <RotateCcw className="w-3 h-3" /> Reverse
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {giftTransactions.length === 0 && !loading && (
+                      <tr>
+                        <td colSpan={8} className="p-6 text-center text-white/50">
+                          No gift transactions match the current filter.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

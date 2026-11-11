@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'gift_detail_sheet.dart';
+import 'live_gift_demo_screen.dart';
 
 /// ============================================================================
 /// Popo Live — Phase 7 Module 7.2: Complete Virtual Gift Catalog Screen
@@ -269,7 +270,22 @@ class _GiftCatalogScreenState extends State<GiftCatalogScreen> {
         isUrdu: _isUrdu,
         onSelectGift: (selected) {
           setState(() => _selectedGiftId = selected['giftId']?.toString());
-          widget.onGiftSelected?.call(selected);
+          if (widget.onGiftSelected != null) {
+            widget.onGiftSelected!.call(selected);
+          } else {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => LiveGiftDemoScreen(
+                  userId: widget.userId,
+                  apiBaseUrl: widget.apiBaseUrl,
+                  authToken: widget.authToken,
+                  initialGiftId: selected['giftId']?.toString(),
+                  previewDemo: widget.previewDemo,
+                  onOpenWallet: widget.onOpenWallet,
+                ),
+              ),
+            );
+          }
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               backgroundColor: const Color(0xFF1F0C42),

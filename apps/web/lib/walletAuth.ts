@@ -107,3 +107,73 @@ export function verifyApprovedTopupSignature(
     return false;
   }
 }
+
+export async function resolveGiftSenderAccess(
+  req: NextRequest,
+  requestedSenderId?: string | null,
+  isPreviewDemo: boolean = false
+): Promise<{
+  allowed: boolean;
+  statusCode: number;
+  errorCode?: string;
+  message?: string;
+  actor: WalletActorContext;
+  senderUserId: string;
+}> {
+  const actor = await resolveWalletActor(req);
+  const reqSender = (requestedSenderId || '').trim();
+
+  if (actor.user) {
+    if (reqSender && reqSender !== actor.user.id && reqSender !== actor.user.poppo_id) {
+      return {
+        allowed: false,
+        statusCode: 403,
+        errorCode: 'UNAUTHORIZED_SENDER_SPOOF',
+        message: 'Cannot send or preview gifts on behalf of another user account.',
+        actor,
+        senderUserId: actor.user.id,
+      };
+    }
+    return {
+      allowed: true,
+      statusCode: 200,
+      actor,
+      senderUserId: actor.user.id,
+    };
+  }
+
+  const resolvedId =
+    reqSender ||
+    (actor.actorId !== 'anonymous' ? actor.actorId : '') ||
+    (isPreviewDemo ? DEFAULT_DEMO_WALLET_USER_ID : '');
+
+  if (!resolvedId) {
+    return {
+      allowed: false,
+      statusCode: 401,
+      errorCode: 'AUTHENTICATION_REQUIRED',
+      message: 'Authentication or preview demo session is required.',
+      actor,
+      senderUserId: '',
+    };
+  }
+
+  const permitted = canAccessPrivateWallet(actor, resolvedId, isPreviewDemo);
+  if (!permitted) {
+    return {
+      allowed: false,
+      statusCode: 403,
+      errorCode: 'FORBIDDEN_WALLET_ACCESS',
+      message: 'Not authorized to access this sender wallet.',
+      actor,
+      senderUserId: resolvedId,
+    };
+  }
+
+  return {
+    allowed: true,
+    statusCode: 200,
+    actor,
+    senderUserId: resolvedId,
+  };
+}

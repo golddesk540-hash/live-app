@@ -46,6 +46,7 @@ conn.on('ready', () => {
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_044.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_045.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_046.cjs
+    DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node apply_047.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node reset_canonical_battle.cjs
     DATABASE_URL="postgresql://nordleads:local-platform-password@127.0.0.1:5432/nordleads?schema=popolive" node update_room_7001.cjs
     
@@ -147,6 +148,9 @@ conn.on('ready', () => {
     curl -s "http://127.0.0.1:3005/api/gifts/new" | head -n 10
     curl -s "http://127.0.0.1:3005/api/gifts/featured" | head -n 10
     curl -s "http://127.0.0.1:3005/api/gifts/search?q=Rose" | head -n 10
+    curl -s -I http://127.0.0.1:3005/gifts/send?preview=demo | head -n 5
+    curl -s "http://127.0.0.1:3005/api/gifts/send/context?pkBattleId=00000000-0000-0000-0000-000000000603&preview=demo" | head -n 10
+    curl -s "http://127.0.0.1:3005/api/gifts/send/context?roomId=880219&preview=demo" | head -n 10
     echo ""
     echo "🎉 DEPLOYMENT COMPLETE ON CONTABO VPS!"
   `;

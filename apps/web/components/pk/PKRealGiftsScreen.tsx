@@ -180,13 +180,21 @@ export default function PKRealGiftsScreen({
           {isRtl ? 'تحفہ بھیجیں' : 'Send Gift'}
         </h1>
 
-        <button
-          onClick={() => setLang(lang === 'en' ? 'ur' : 'en')}
-          className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-pink-400"
-          title="Toggle Language"
-        >
-          <Globe className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <Link
+            href={`/gifts/send?pkBattleId=${encodeURIComponent(battleId)}&preview=demo`}
+            className="px-2.5 py-1 rounded-full bg-pink-500/20 border border-pink-400/35 text-[10px] font-bold text-pink-200 hover:bg-pink-500/30 transition"
+          >
+            {isRtl ? 'مکمل فہرست' : 'Full Stage'}
+          </Link>
+          <button
+            onClick={() => setLang(lang === 'en' ? 'ur' : 'en')}
+            className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-pink-400"
+            title="Toggle Language"
+          >
+            <Globe className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* 2. RECIPIENT HOST SELECTOR */}

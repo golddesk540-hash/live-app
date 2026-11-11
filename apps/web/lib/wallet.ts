@@ -111,12 +111,12 @@ export interface FinanceRulesConfig {
   maxSingleTransactionAmount: number;
 }
 
-function generateTxId(prefix: string): string {
+export function generateTxId(prefix: string): string {
   const rand = crypto.randomBytes(4).toString('hex').toUpperCase();
   return `${prefix}_${Date.now()}_${rand}`;
 }
 
-function mapWalletRow(row: any, sharePercent: number): WalletBalance {
+export function mapWalletRow(row: any, sharePercent: number): WalletBalance {
   return {
     walletId: row.wallet_id,
     userId: row.user_id,
@@ -232,7 +232,7 @@ export async function calculateHostShare(
 // 2. Real-Time Wallet Event Emitter (Persisted Outbox + Redis Cache Invalidate)
 // =============================================================================
 
-async function emitWalletRealtimeEvent(
+export async function emitWalletRealtimeEvent(
   dbClient: any,
   userId: string,
   eventType:
@@ -257,7 +257,7 @@ async function emitWalletRealtimeEvent(
   await redisDel(`wallet:balance:${userId}`).catch(() => {});
 }
 
-async function ensureWalletLocked(dbClient: any, userId: string, rules: FinanceRulesConfig) {
+export async function ensureWalletLocked(dbClient: any, userId: string, rules: FinanceRulesConfig) {
   let rows = (
     await dbClient.query(
       `SELECT wallet_id, user_id, coins, diamond_points, total_spent_coins, total_received_points, is_frozen, created_at, updated_at
@@ -834,6 +834,15 @@ export async function processAtomicGiftTransfer(params: {
   isPkBattle?: boolean;
   referenceId?: string;
   idempotencyKey?: string;
+  onSuccessInTransaction?: (ctx: {
+    client: any;
+    coinTxRow: any;
+    ptsTxRow: any;
+    senderWallet: WalletBalance;
+    hostWallet: WalletBalance;
+    hostPointsEarned: number;
+    sharePercent: number;
+  }) => Promise<void>;
 }): Promise<{
   success: boolean;
   isDuplicate?: boolean;
@@ -1058,6 +1067,18 @@ export async function processAtomicGiftTransfer(params: {
       ledger: 'coins',
       transaction: mappedCoinTx,
     });
+
+    if (params.onSuccessInTransaction) {
+      await params.onSuccessInTransaction({
+        client,
+        coinTxRow,
+        ptsTxRow,
+        senderWallet: mappedSenderWallet,
+        hostWallet: mappedHostWallet,
+        hostPointsEarned: pointsEarned,
+        sharePercent,
+      });
+    }
 
     return {
       success: true,

@@ -1012,6 +1012,12 @@ export default function GiftCatalogScreen() {
                 >
                   {t.selectGift} — {formatCoins(detailGift.coinPrice)} {t.coins}
                 </button>
+                <Link
+                  href={`/gifts/send?giftId=${encodeURIComponent(detailGift.giftId)}&preview=demo`}
+                  className="mt-2 w-full rounded-2xl bg-[#26104c] border border-pink-400/40 hover:border-pink-300 py-2.5 text-center text-xs font-bold text-pink-200 block transition-colors"
+                >
+                  {isRtl ? 'لائیو روم میں بھیجیں →' : 'Send in Live / PK Room →'}
+                </Link>
               </>
             )}
           </div>

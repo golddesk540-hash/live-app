@@ -51,6 +51,8 @@ export interface GiftCatalogItem {
   isFeatured: boolean;
   displayOrder: number;
   isActive: boolean;
+  maxQuantity: number;
+  allowedQuantities: number[];
   fallbackImageUrl: string;
   createdAt: string;
   updatedAt: string;
@@ -93,7 +95,7 @@ async function getCacheVersion(): Promise<string> {
   return v || '1';
 }
 
-async function bumpCacheVersion(): Promise<void> {
+export async function bumpCacheVersion(): Promise<void> {
   await redisSetWithTtl(CATALOG_VERSION_KEY, String(Date.now()), 86400);
 }
 
@@ -139,6 +141,13 @@ function mapGiftRow(row: any): GiftCatalogItem {
     isFeatured: Boolean(row.is_featured),
     displayOrder: parseInt(String(row.display_order ?? '100'), 10),
     isActive: Boolean(row.is_active),
+    maxQuantity: parseInt(String(row.max_quantity ?? '99'), 10),
+    allowedQuantities:
+      Array.isArray(row.allowed_quantities) && row.allowed_quantities.length > 0
+        ? row.allowed_quantities
+            .map((v: any) => parseInt(String(v), 10))
+            .filter((n: number) => Number.isFinite(n) && n > 0)
+        : [1, 5, 10, 66, 99],
     fallbackImageUrl: FALLBACK_GIFT_IMAGE_URL,
     createdAt: row.created_at ? new Date(row.created_at).toISOString() : '',
     updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : '',
