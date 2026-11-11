@@ -523,19 +523,25 @@ async function runTests() {
   // --------------------------------------------------------------------------
   console.log('\n[Test 15] Anti-Spam Rate Limiting (>30 requests within 10s returns 429)');
   let hit429 = false;
-  for (let i = 0; i < 34; i++) {
-    const r = await request('POST', '/api/gifts/send', {
-      senderUserId: burstSender,
-      recipientHostId: ZARA_HOST_ID,
-      liveRoomId: ACTIVE_LIVE_ROOM_ID,
-      giftId: 'gift_rose',
-      quantity: 1,
-      idempotencyKey: `IDEM_BURST_${RUN_ID}_${i}`,
-      preview: 'demo',
-    });
-    if (r.statusCode === 429 && r.json?.errorCode === 'RATE_LIMIT_EXCEEDED') {
+  for (let batch = 0; batch < 3 && !hit429; batch++) {
+    const calls = [];
+    for (let j = 0; j < 12; j++) {
+      const i = batch * 12 + j;
+      calls.push(
+        request('POST', '/api/gifts/send', {
+          senderUserId: burstSender,
+          recipientHostId: ZARA_HOST_ID,
+          liveRoomId: ACTIVE_LIVE_ROOM_ID,
+          giftId: 'gift_rose',
+          quantity: 1,
+          idempotencyKey: `IDEM_BURST_${RUN_ID}_${i}`,
+          preview: 'demo',
+        })
+      );
+    }
+    const results = await Promise.all(calls);
+    if (results.some((r) => r.statusCode === 429 && r.json?.errorCode === 'RATE_LIMIT_EXCEEDED')) {
       hit429 = true;
-      break;
     }
   }
   assert(hit429 === true, 'Rapid spam burst hit 429 RATE_LIMIT_EXCEEDED');
