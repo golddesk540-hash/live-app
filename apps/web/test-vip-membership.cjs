@@ -20,7 +20,7 @@ const SARA_HOST_ID = '00000000-0000-0000-0000-000000088201';
 const ZARA_HOST_ID = '45495810-f5fb-46ec-8c81-f29932411c07';
 const AYESHA_HOST_ID = '00000000-0000-0000-0000-000000088202';
 const LIVE_ROOM_ID = '880219';
-const PARTY_ROOM_ID = '7001';
+const PARTY_ROOM_ID = '7002';
 
 // Valid minimal 1x1 transparent PNG bytes for asset upload test
 const TINY_PNG_BASE64 =
@@ -759,9 +759,11 @@ async function runTests() {
     );
 
     // Send 10-coin gift while VIP active -> check 70/30 math unchanged & vipGiftEffect broadcast on SSE
+    const roomCtxRes = await request('GET', `/api/gifts/send/context?roomId=${LIVE_ROOM_ID}`);
+    const liveRoomHostId = roomCtxRes.json?.hosts?.[0]?.hostId || ZARA_HOST_ID;
     const zaraBalBefore = await request(
       'GET',
-      `/api/wallet/balance?userId=${ZARA_HOST_ID}&preview=demo&fresh=true`
+      `/api/wallet/balance?userId=${liveRoomHostId}&preview=demo&fresh=true`
     );
     let giftSendRes = null;
     const giftSseEvents = await collectSseEvents(
@@ -773,7 +775,7 @@ async function runTests() {
           'POST',
           '/api/gifts/send',
           {
-            recipientHostId: ZARA_HOST_ID,
+            recipientHostId: liveRoomHostId,
             giftId: 'gift_rose',
             quantity: 1,
             roomId: LIVE_ROOM_ID,
@@ -789,7 +791,7 @@ async function runTests() {
 
     const zaraBalAfter = await request(
       'GET',
-      `/api/wallet/balance?userId=${ZARA_HOST_ID}&preview=demo&fresh=true`
+      `/api/wallet/balance?userId=${liveRoomHostId}&preview=demo&fresh=true`
     );
     const giftAnimBroadcast = giftSseEvents.find(
       (e) =>
