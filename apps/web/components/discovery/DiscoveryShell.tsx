@@ -51,6 +51,7 @@ import {
   Crown,
   VideoOff,
   ShieldCheck,
+  ListTodo,
 } from 'lucide-react';
 import LiveRoomCard from './LiveRoomCard';
 import PartyRoomCard, { PartyRoomItem } from './PartyRoomCard';
@@ -663,6 +664,16 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                   </Link>
 
                   <Link
+                    href="/daily-tasks"
+                    data-testid="discovery-menu-daily-tasks"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <ListTodo className="w-3.5 h-3.5 text-[#FF4D8D]" />
+                    <span>{isUr ? 'روزانہ کے ٹاسک' : 'Daily Host Tasks'}</span>
+                  </Link>
+
+                  <Link
                     href="/earning-identity"
                     data-testid="discovery-menu-earning-identity"
                     onClick={() => setShowUserMenu(false)}
@@ -803,6 +814,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
               </span>
 
               {[
+                { label_en: 'Daily Host Tasks', label_ur: 'روزانہ کے ٹاسک', icon: ListTodo, href: '/daily-tasks' },
                 { label_en: 'Earning Identity', label_ur: 'کمائی کی شناخت', icon: ShieldCheck, href: '/earning-identity' },
                 { label_en: 'Square Discovery', label_ur: 'اسکوائر ڈسکوری', icon: Compass, href: '/square/discovery' },
                 { label_en: 'Agency Portal', label_ur: 'ایجنسی پورٹل', icon: Trophy, href: '/agency' },

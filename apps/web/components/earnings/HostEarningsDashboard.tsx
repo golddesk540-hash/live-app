@@ -22,6 +22,7 @@ import {
   TrendingUp,
   Wifi,
   WifiOff,
+  ListTodo,
 } from 'lucide-react';
 import type {
   HostEarningShareRecord,
@@ -257,6 +258,15 @@ export default function HostEarningsDashboard({
           </div>
 
           <div className="flex items-center gap-2">
+            <Link
+              href="/daily-tasks"
+              data-testid="earnings-daily-tasks-link"
+              className="h-8 px-3 rounded-full bg-[#ff2d78]/15 hover:bg-[#ff2d78]/25 border border-[#ff2d78]/35 hidden sm:inline-flex items-center gap-1.5 text-[11px] font-bold text-pink-200 transition whitespace-nowrap"
+              title="Daily Host Tasks"
+            >
+              <ListTodo className="w-3.5 h-3.5 text-[#ff2d78]" />
+              <span>{isUrdu ? 'روزانہ کے ٹاسک' : 'Daily Tasks'}</span>
+            </Link>
             <Link
               href="/earning-identity"
               data-testid="earnings-identity-link"

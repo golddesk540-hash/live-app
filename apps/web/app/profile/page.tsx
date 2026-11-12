@@ -38,6 +38,7 @@ import {
   Wallet,
   UserPlus,
   VideoOff,
+  ListTodo,
 } from 'lucide-react';
 
 interface UserProfileData {
@@ -905,6 +906,20 @@ function MyProfileContent() {
                     className="text-[11px] font-bold text-amber-300 hover:underline"
                   >
                     {isUr ? 'شناخت دیکھیں ↗' : 'Host Verification ↗'}
+                  </Link>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
+                  <span className="text-white/50 flex items-center gap-1.5">
+                    <ListTodo className="w-3.5 h-3.5 text-[#FF4D8D]" />
+                    {isUr ? 'روزانہ کے ٹاسک' : 'Daily Host Tasks'}
+                  </span>
+                  <Link
+                    href="/daily-tasks"
+                    data-testid="profile-daily-tasks-link"
+                    className="text-[11px] font-bold text-[#FF4D8D] hover:underline"
+                  >
+                    {isUr ? 'ٹاسک دیکھیں ↗' : 'View Activity Goals ↗'}
                   </Link>
                 </div>
 
