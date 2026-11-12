@@ -665,6 +665,16 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                   </Link>
 
                   <Link
+                    href="/coin-seller"
+                    data-testid="discovery-menu-coin-seller"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <Coins className="w-3.5 h-3.5 text-amber-300" />
+                    <span>{isUr ? 'کوائن سیلر' : 'Coin Seller'}</span>
+                  </Link>
+
+                  <Link
                     href="/agent-earnings"
                     data-testid="discovery-menu-agent-earnings"
                     onClick={() => setShowUserMenu(false)}
@@ -875,6 +885,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
               </span>
 
               {[
+                { label_en: 'Coin Seller', label_ur: 'کوائن سیلر', icon: Coins, href: '/coin-seller' },
                 { label_en: 'Agent Earnings', label_ur: 'ایجنٹ کمائی', icon: Coins, href: '/agent-earnings' },
                 { label_en: 'Agency Management', label_ur: 'ایجنسی مینجمنٹ', icon: Building2, href: '/agency-management' },
                 { label_en: 'Event Leaderboard', label_ur: 'ایونٹ لیڈر بورڈ', icon: Calendar, href: '/event-leaderboard' },

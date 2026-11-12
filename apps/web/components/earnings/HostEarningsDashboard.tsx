@@ -261,6 +261,15 @@ export default function HostEarningsDashboard({
 
           <div className="flex flex-wrap items-center justify-end gap-2">
             <Link
+              href="/coin-seller"
+              data-testid="earnings-coin-seller-link"
+              className="h-8 px-3 rounded-full bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/35 hidden xl:inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-200 transition whitespace-nowrap"
+              title="Coin Seller"
+            >
+              <Coins className="w-3.5 h-3.5 text-amber-300" />
+              <span>{isUrdu ? 'کوائن سیلر' : 'Coin Seller'}</span>
+            </Link>
+            <Link
               href="/agent-earnings"
               data-testid="earnings-agent-earnings-link"
               className="h-8 px-3 rounded-full bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/35 hidden xl:inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-200 transition whitespace-nowrap"

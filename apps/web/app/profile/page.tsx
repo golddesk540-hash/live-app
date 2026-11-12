@@ -36,6 +36,7 @@ import {
   Mic,
   Award,
   Building2,
+  Coins,
   Wallet,
   UserPlus,
   VideoOff,
@@ -936,6 +937,20 @@ function MyProfileContent() {
                     className="text-[11px] font-bold text-amber-300 hover:underline"
                   >
                     {isUr ? 'لیول دیکھیں ↗' : 'View Host Tiers ↗'}
+                  </Link>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
+                  <span className="text-white/50 flex items-center gap-1.5">
+                    <Coins className="w-3.5 h-3.5 text-amber-300" />
+                    {isUr ? 'کوائن سیلر' : 'Coin Seller'}
+                  </span>
+                  <Link
+                    href="/coin-seller"
+                    data-testid="profile-coin-seller-link"
+                    className="text-[11px] font-bold text-amber-300 hover:underline"
+                  >
+                    {isUr ? 'سیلر ڈیش بورڈ ↗' : 'View Coin Seller ↗'}
                   </Link>
                 </div>
 
