@@ -39,6 +39,7 @@ import {
   UserPlus,
   VideoOff,
   ListTodo,
+  Trophy,
 } from 'lucide-react';
 
 interface UserProfileData {
@@ -934,6 +935,20 @@ function MyProfileContent() {
                     className="text-[11px] font-bold text-amber-300 hover:underline"
                   >
                     {isUr ? 'لیول دیکھیں ↗' : 'View Host Tiers ↗'}
+                  </Link>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
+                  <span className="text-white/50 flex items-center gap-1.5">
+                    <Trophy className="w-3.5 h-3.5 text-amber-300" />
+                    {isUr ? 'ہوسٹ رینکنگ' : 'Host Rankings'}
+                  </span>
+                  <Link
+                    href="/host-rankings"
+                    data-testid="profile-host-rankings-link"
+                    className="text-[11px] font-bold text-amber-300 hover:underline"
+                  >
+                    {isUr ? 'لیڈر بورڈ دیکھیں ↗' : 'View Leaderboard ↗'}
                   </Link>
                 </div>
 

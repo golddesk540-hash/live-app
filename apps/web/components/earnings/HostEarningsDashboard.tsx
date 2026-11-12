@@ -20,6 +20,7 @@ import {
   Sparkles,
   Star,
   TrendingUp,
+  Trophy,
   Wifi,
   WifiOff,
   ListTodo,
@@ -258,6 +259,15 @@ export default function HostEarningsDashboard({
           </div>
 
           <div className="flex items-center gap-2">
+            <Link
+              href="/host-rankings"
+              data-testid="earnings-host-rankings-link"
+              className="h-8 px-3 rounded-full bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/35 hidden xl:inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-200 transition whitespace-nowrap"
+              title="Host Rankings"
+            >
+              <Trophy className="w-3.5 h-3.5 text-amber-300" />
+              <span>{isUrdu ? 'رینکنگ' : 'Host Rankings'}</span>
+            </Link>
             <Link
               href="/new-host-pack"
               data-testid="earnings-new-host-pack-link"
