@@ -939,6 +939,20 @@ function MyProfileContent() {
 
                 <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
                   <span className="text-white/50 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#FF4D8D]" />
+                    {isUr ? 'نیو ہوسٹ پیک' : 'New-Host Pack'}
+                  </span>
+                  <Link
+                    href="/new-host-pack"
+                    data-testid="profile-new-host-pack-link"
+                    className="text-[11px] font-bold text-[#FF4D8D] hover:underline"
+                  >
+                    {isUr ? 'اسٹارٹر گائیڈ ↗' : 'Starter Guide ↗'}
+                  </Link>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
+                  <span className="text-white/50 flex items-center gap-1.5">
                     <VideoOff className="w-3.5 h-3.5 text-purple-300/75" />
                     {isUr ? '1-to-1 ویڈیو کال' : '1-to-1 Video Call'}
                   </span>
