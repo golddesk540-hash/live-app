@@ -808,6 +808,48 @@ function MyProfileContent() {
                 </div>
 
                 <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+                  <span className="text-white/50">{isUr ? 'ان باکس اور چیٹس' : 'Inbox & Messages'}</span>
+                  <Link
+                    href="/inbox"
+                    data-testid="profile-inbox-link"
+                    className="text-[11px] font-bold text-[#FF2E74] hover:underline flex items-center gap-1"
+                  >
+                    <span>{isUr ? 'ان باکس کھولیں ↗' : 'Open Direct Chats & Requests ↗'}</span>
+                  </Link>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+                  <span className="text-white/50">{isUr ? 'سسٹم نوٹس' : 'System Notices'}</span>
+                  <Link
+                    href="/system-notices"
+                    data-testid="profile-system-notices-link"
+                    className="text-[11px] font-bold text-amber-300 hover:underline flex items-center gap-1"
+                  >
+                    <span>{isUr ? 'آفیشل نوٹس دیکھیں ↗' : 'Official Platform Alerts ↗'}</span>
+                  </Link>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+                  <span className="text-white/50">{isUr ? 'اسکوائر کمیونٹی' : 'Square Community'}</span>
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href="/square/create"
+                      data-testid="profile-create-post-link"
+                      className="text-[11px] font-bold text-[#FF4D8D] hover:underline"
+                    >
+                      {isUr ? 'پوسٹ بنائیں' : 'Create Post'}
+                    </Link>
+                    <Link
+                      href="/square"
+                      data-testid="profile-square-link"
+                      className="text-[11px] font-bold text-pink-300 hover:underline flex items-center gap-1"
+                    >
+                      <span>{isUr ? 'کمیونٹی پوسٹس دیکھیں ↗' : 'Explore Square Posts ↗'}</span>
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
                   <span className="text-white/50">{isUr ? 'فین کلب' : 'Fan Club'}</span>
                   <span className="text-[10px] text-amber-300 font-medium">
                     {stats.fanClub?.description || 'Coming Soon (Unlocks at Lv.5)'}

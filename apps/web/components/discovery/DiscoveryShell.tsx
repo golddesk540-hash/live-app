@@ -46,6 +46,7 @@ import {
   Filter,
   RefreshCw,
   MapPin,
+  Bell,
 } from 'lucide-react';
 import LiveRoomCard from './LiveRoomCard';
 import PartyRoomCard, { PartyRoomItem } from './PartyRoomCard';
@@ -469,6 +470,24 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           </Link>
 
           <Link
+            href="/inbox"
+            data-testid="discovery-header-inbox-link"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-semibold transition-colors"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-[#FF2E74]" />
+            <span>{isUr ? 'ان باکس' : 'Inbox'}</span>
+          </Link>
+
+          <Link
+            href="/square"
+            data-testid="discovery-header-square-link"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-semibold transition-colors"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-pink-400" />
+            <span>{isUr ? 'اسکوائر' : 'Square'}</span>
+          </Link>
+
+          <Link
             href="/download"
             className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-semibold transition-colors"
           >
@@ -536,6 +555,42 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                       <span>{isUr ? 'اسٹاف پریویو' : 'Staff Preview'}</span>
                     </Link>
                   )}
+
+                  <Link
+                    href="/inbox"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-[#FF2E74]" />
+                    <span>{isUr ? 'ان باکس اور پیغامات' : 'Inbox & Chats'}</span>
+                  </Link>
+
+                  <Link
+                    href="/system-notices"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <Bell className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{isUr ? 'سسٹم نوٹس' : 'System Notices'}</span>
+                  </Link>
+
+                  <Link
+                    href="/square"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-pink-400" />
+                    <span>{isUr ? 'اسکوائر پوسٹس' : 'Square Posts'}</span>
+                  </Link>
+
+                  <Link
+                    href="/square/create"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-[#FF2E74]" />
+                    <span>{isUr ? 'پوسٹ بنائیں' : 'Create Post'}</span>
+                  </Link>
 
                   <Link
                     href="/settings"
@@ -1491,13 +1546,14 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
         </Link>
 
         <Link
-          href="/help"
+          href="/inbox"
+          data-testid="discovery-mobile-inbox-link"
           className="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-colors"
         >
           <div className="p-1">
             <MessageSquare className="w-5 h-5" />
           </div>
-          <span className="text-[10px] font-semibold">{isUr ? 'پیغامات' : 'Messages'}</span>
+          <span className="text-[10px] font-semibold">{isUr ? 'پیغامات' : 'Inbox'}</span>
         </Link>
 
         <Link
