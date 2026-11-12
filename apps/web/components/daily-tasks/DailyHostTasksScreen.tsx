@@ -291,6 +291,7 @@ export const DailyHostTasksScreen: React.FC = () => {
               { href: '/live', label: 'Home', active: false },
               { href: '/earnings?preview=demo', label: 'Host Earnings', active: false },
               { href: '/daily-tasks', label: 'Daily Host Tasks', active: true },
+              { href: '/task-level', label: 'Task Level', active: false },
               { href: '/earning-identity', label: 'Earning Identity', active: false },
               { href: '/square', label: 'Square', active: false },
               { href: '/profile', label: 'Profile', active: false },
@@ -727,6 +728,13 @@ export const DailyHostTasksScreen: React.FC = () => {
               </div>
 
               <div className="pt-1 flex flex-col gap-2">
+                <Link
+                  href="/task-level"
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-[#1C0D38] hover:bg-[#27134D] border border-purple-400/30 text-xs font-bold text-purple-100 transition-colors"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#FF6BA3]" />
+                  <span>Open Task Level</span>
+                </Link>
                 <Link
                   href="/earning-identity"
                   className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-[#1C0D38] hover:bg-[#27134D] border border-amber-400/30 text-xs font-bold text-amber-200 transition-colors"

@@ -664,6 +664,16 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                   </Link>
 
                   <Link
+                    href="/task-level"
+                    data-testid="discovery-menu-task-level"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <Trophy className="w-3.5 h-3.5 text-amber-300" />
+                    <span>{isUr ? 'ٹاسک لیول' : 'Task Level'}</span>
+                  </Link>
+
+                  <Link
                     href="/daily-tasks"
                     data-testid="discovery-menu-daily-tasks"
                     onClick={() => setShowUserMenu(false)}
@@ -814,6 +824,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
               </span>
 
               {[
+                { label_en: 'Task Level', label_ur: 'ٹاسک لیول', icon: Trophy, href: '/task-level' },
                 { label_en: 'Daily Host Tasks', label_ur: 'روزانہ کے ٹاسک', icon: ListTodo, href: '/daily-tasks' },
                 { label_en: 'Earning Identity', label_ur: 'کمائی کی شناخت', icon: ShieldCheck, href: '/earning-identity' },
                 { label_en: 'Square Discovery', label_ur: 'اسکوائر ڈسکوری', icon: Compass, href: '/square/discovery' },

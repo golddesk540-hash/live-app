@@ -259,6 +259,15 @@ export default function HostEarningsDashboard({
 
           <div className="flex items-center gap-2">
             <Link
+              href="/task-level"
+              data-testid="earnings-task-level-link"
+              className="h-8 px-3 rounded-full bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/35 hidden md:inline-flex items-center gap-1.5 text-[11px] font-bold text-purple-200 transition whitespace-nowrap"
+              title="Task Level"
+            >
+              <Star className="w-3.5 h-3.5 text-amber-300" />
+              <span>{isUrdu ? 'لیول' : 'Task Level'}</span>
+            </Link>
+            <Link
               href="/daily-tasks"
               data-testid="earnings-daily-tasks-link"
               className="h-8 px-3 rounded-full bg-[#ff2d78]/15 hover:bg-[#ff2d78]/25 border border-[#ff2d78]/35 hidden sm:inline-flex items-center gap-1.5 text-[11px] font-bold text-pink-200 transition whitespace-nowrap"
