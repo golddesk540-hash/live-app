@@ -480,6 +480,14 @@ export const SquareFeedScreen: React.FC = () => {
                     <MessageCircle className="w-3.5 h-3.5 text-emerald-400" /> Open Inbox
                   </Link>
                   <Link
+                    href="/notifications"
+                    onClick={() => setShowHeaderMenu(false)}
+                    data-testid="square-menu-notifications-link"
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-purple-100 hover:bg-white/10 flex items-center gap-2"
+                  >
+                    <Heart className="w-3.5 h-3.5 text-[#FF4D8D]" /> Notifications
+                  </Link>
+                  <Link
                     href="/system-notices"
                     onClick={() => setShowHeaderMenu(false)}
                     className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-purple-100 hover:bg-white/10 flex items-center gap-2"

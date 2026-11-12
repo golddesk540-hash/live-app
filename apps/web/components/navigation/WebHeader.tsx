@@ -1,10 +1,12 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
 import { SearchBar } from '@/components/ui/SearchBar';
+import { useUnreadNotificationsCount } from '@/components/notifications/useUnreadNotificationsCount';
 import { Video, Coins, Globe, Bell } from 'lucide-react';
 
 export interface WebHeaderProps {
@@ -20,6 +22,8 @@ export const WebHeader: React.FC<WebHeaderProps> = ({
   coins = 12500,
   className,
 }) => {
+  const unreadNotifications = useUnreadNotificationsCount();
+
   return (
     <header
       className={cn(
@@ -66,12 +70,22 @@ export const WebHeader: React.FC<WebHeaderProps> = ({
           </div>
 
           {/* Notifications */}
-          <button
-            type="button"
-            className="p-2 rounded-full bg-popo-dark-800 hover:bg-popo-dark-700 text-popo-text-secondary hover:text-white border border-white/5 transition-colors"
+          <Link
+            href="/notifications"
+            data-testid="web-header-notifications-link"
+            aria-label="Notifications"
+            className="relative p-2 rounded-full bg-popo-dark-800 hover:bg-popo-dark-700 text-popo-text-secondary hover:text-white border border-white/5 transition-colors"
           >
             <Bell className="w-4 h-4" />
-          </button>
+            {unreadNotifications > 0 && (
+              <span
+                data-testid="shared-nav-notifications-badge"
+                className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#FF1A6C] text-white text-[9px] font-black flex items-center justify-center border border-[#120624]"
+              >
+                {unreadNotifications}
+              </span>
+            )}
+          </Link>
 
           {/* Go Live Button */}
           <Button

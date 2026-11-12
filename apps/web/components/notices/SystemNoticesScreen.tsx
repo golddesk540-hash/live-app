@@ -335,6 +335,14 @@ export const SystemNoticesScreen: React.FC = () => {
                     <InboxIcon className="w-3.5 h-3.5 text-[#FF4D8D]" /> Open Inbox
                   </Link>
                   <Link
+                    href="/notifications"
+                    onClick={() => setShowHeaderMenu(false)}
+                    data-testid="notices-menu-notifications-link"
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-purple-100 hover:bg-white/10 flex items-center gap-2"
+                  >
+                    <Bell className="w-3.5 h-3.5 text-[#FF4D8D]" /> Activity Notifications
+                  </Link>
+                  <Link
                     href="/square"
                     onClick={() => setShowHeaderMenu(false)}
                     className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-purple-100 hover:bg-white/10 flex items-center gap-2"

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useLanguage } from '@/lib/languageContext';
+import { useUnreadNotificationsCount } from '@/components/notifications/useUnreadNotificationsCount';
 import {
   COUNTRIES_LIST,
   POPULAR_COUNTRY_SHORTCUTS,
@@ -210,6 +211,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { lang, toggleLang, isUr } = useLanguage();
+  const unreadNotifications = useUnreadNotificationsCount();
   const [isPending, startTransition] = useTransition();
 
   const [activeTab, setActiveTab] = useState<DiscoveryTab>(initialTab);
@@ -489,6 +491,23 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           </Link>
 
           <Link
+            href="/notifications"
+            data-testid="discovery-header-notifications-link"
+            aria-label="Notifications"
+            className="relative flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/85 hover:text-white transition-colors"
+          >
+            <Bell className="w-4 h-4 text-[#FF6BA3]" />
+            {unreadNotifications > 0 && (
+              <span
+                data-testid="discovery-notifications-badge"
+                className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#FF1A6C] text-white text-[9px] font-black flex items-center justify-center border border-[#120B24]"
+              >
+                {unreadNotifications}
+              </span>
+            )}
+          </Link>
+
+          <Link
             href="/download"
             className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-semibold transition-colors"
           >
@@ -573,6 +592,23 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                   >
                     <Bell className="w-3.5 h-3.5 text-amber-400" />
                     <span>{isUr ? 'سسٹم نوٹس' : 'System Notices'}</span>
+                  </Link>
+
+                  <Link
+                    href="/notifications"
+                    data-testid="discovery-menu-notifications"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Heart className="w-3.5 h-3.5 text-[#FF2E74]" />
+                      <span>{isUr ? 'سرگرمیاں اور اطلاعات' : 'Notifications'}</span>
+                    </span>
+                    {unreadNotifications > 0 && (
+                      <span className="px-1.5 py-0.5 rounded-full bg-[#FF1A6C] text-white text-[10px] font-black">
+                        {unreadNotifications}
+                      </span>
+                    )}
                   </Link>
 
                   <Link

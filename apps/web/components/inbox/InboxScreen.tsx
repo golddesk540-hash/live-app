@@ -472,6 +472,14 @@ export const InboxScreen: React.FC = () => {
                     <Sparkles className="w-3.5 h-3.5 text-pink-400" /> Square Posts Feed
                   </Link>
                   <Link
+                    href="/notifications"
+                    onClick={() => setShowHeaderMenu(false)}
+                    data-testid="inbox-menu-notifications-link"
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-purple-100 hover:bg-white/10 flex items-center gap-2"
+                  >
+                    <Heart className="w-3.5 h-3.5 text-[#FF4D8D]" /> Activity Notifications
+                  </Link>
+                  <Link
                     href="/system-notices"
                     onClick={() => setShowHeaderMenu(false)}
                     className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-purple-100 hover:bg-white/10 flex items-center gap-2"
