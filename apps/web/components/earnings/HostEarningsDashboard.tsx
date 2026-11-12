@@ -257,6 +257,15 @@ export default function HostEarningsDashboard({
           </div>
 
           <div className="flex items-center gap-2">
+            <Link
+              href="/earning-identity"
+              data-testid="earnings-identity-link"
+              className="h-8 px-3 rounded-full bg-amber-400/15 hover:bg-amber-400/25 border border-amber-400/35 hidden sm:inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-200 transition whitespace-nowrap"
+              title="Earning Identity & Verification"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
+              <span>{isUrdu ? 'شناخت' : 'Earning Identity'}</span>
+            </Link>
             <button
               type="button"
               onClick={() => {

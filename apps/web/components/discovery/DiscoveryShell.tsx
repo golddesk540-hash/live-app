@@ -50,6 +50,7 @@ import {
   Bell,
   Crown,
   VideoOff,
+  ShieldCheck,
 } from 'lucide-react';
 import LiveRoomCard from './LiveRoomCard';
 import PartyRoomCard, { PartyRoomItem } from './PartyRoomCard';
@@ -662,6 +663,16 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                   </Link>
 
                   <Link
+                    href="/earning-identity"
+                    data-testid="discovery-menu-earning-identity"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
+                    <span>{isUr ? 'کمائی کی شناخت' : 'Earning Identity'}</span>
+                  </Link>
+
+                  <Link
                     href="/video-call"
                     data-testid="discovery-menu-video-call-off"
                     onClick={() => setShowUserMenu(false)}
@@ -792,6 +803,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
               </span>
 
               {[
+                { label_en: 'Earning Identity', label_ur: 'کمائی کی شناخت', icon: ShieldCheck, href: '/earning-identity' },
                 { label_en: 'Square Discovery', label_ur: 'اسکوائر ڈسکوری', icon: Compass, href: '/square/discovery' },
                 { label_en: 'Agency Portal', label_ur: 'ایجنسی پورٹل', icon: Trophy, href: '/agency' },
                 { label_en: 'Recharge Coins', label_ur: 'کوائنز ریچارج', icon: Coins, href: '/recharge' },

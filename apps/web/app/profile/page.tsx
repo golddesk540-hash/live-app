@@ -896,6 +896,20 @@ function MyProfileContent() {
 
                 <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
                   <span className="text-white/50 flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
+                    {isUr ? 'کمائی کی شناخت' : 'Earning Identity'}
+                  </span>
+                  <Link
+                    href="/earning-identity"
+                    data-testid="profile-earning-identity-link"
+                    className="text-[11px] font-bold text-amber-300 hover:underline"
+                  >
+                    {isUr ? 'شناخت دیکھیں ↗' : 'Host Verification ↗'}
+                  </Link>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
+                  <span className="text-white/50 flex items-center gap-1.5">
                     <VideoOff className="w-3.5 h-3.5 text-purple-300/75" />
                     {isUr ? '1-to-1 ویڈیو کال' : '1-to-1 Video Call'}
                   </span>
