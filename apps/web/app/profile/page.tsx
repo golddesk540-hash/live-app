@@ -940,6 +940,20 @@ function MyProfileContent() {
 
                 <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
                   <span className="text-white/50 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-[#FF4D8D]" />
+                    {isUr ? 'ایونٹ لیڈر بورڈ' : 'Event Leaderboard'}
+                  </span>
+                  <Link
+                    href="/event-leaderboard"
+                    data-testid="profile-event-leaderboard-link"
+                    className="text-[11px] font-bold text-[#FF4D8D] hover:underline"
+                  >
+                    {isUr ? 'ایونٹس دیکھیں ↗' : 'View Events ↗'}
+                  </Link>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
+                  <span className="text-white/50 flex items-center gap-1.5">
                     <Trophy className="w-3.5 h-3.5 text-amber-300" />
                     {isUr ? 'ہوسٹ رینکنگ' : 'Host Rankings'}
                   </span>

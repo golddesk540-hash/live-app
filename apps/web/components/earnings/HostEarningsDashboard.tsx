@@ -258,7 +258,16 @@ export default function HostEarningsDashboard({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Link
+              href="/event-leaderboard"
+              data-testid="earnings-event-leaderboard-link"
+              className="h-8 px-3 rounded-full bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/35 hidden xl:inline-flex items-center gap-1.5 text-[11px] font-bold text-purple-200 transition whitespace-nowrap"
+              title="Event Leaderboard"
+            >
+              <Calendar className="w-3.5 h-3.5 text-[#FF6BA3]" />
+              <span>{isUrdu ? 'ایونٹ بورڈ' : 'Event Board'}</span>
+            </Link>
             <Link
               href="/host-rankings"
               data-testid="earnings-host-rankings-link"
