@@ -640,6 +640,16 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                   </Link>
 
                   <Link
+                    href="/invites"
+                    data-testid="discovery-menu-invites"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <UserPlus className="w-3.5 h-3.5 text-[#FF4D8D]" />
+                    <span>{isUr ? 'دوستوں کو مدعو کریں' : 'Invite Friends'}</span>
+                  </Link>
+
+                  <Link
                     href="/settings"
                     onClick={() => setShowUserMenu(false)}
                     className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"

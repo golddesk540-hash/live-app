@@ -38,6 +38,7 @@ import {
   X,
   Bell,
   Sparkles,
+  UserPlus,
 } from 'lucide-react';
 
 export const InboxScreen: React.FC = () => {
@@ -478,6 +479,14 @@ export const InboxScreen: React.FC = () => {
                     className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-purple-100 hover:bg-white/10 flex items-center gap-2"
                   >
                     <Heart className="w-3.5 h-3.5 text-[#FF4D8D]" /> Activity Notifications
+                  </Link>
+                  <Link
+                    href="/invites"
+                    onClick={() => setShowHeaderMenu(false)}
+                    data-testid="inbox-menu-invites-link"
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-purple-100 hover:bg-white/10 flex items-center gap-2"
+                  >
+                    <UserPlus className="w-3.5 h-3.5 text-pink-300" /> Invite Friends
                   </Link>
                   <Link
                     href="/system-notices"

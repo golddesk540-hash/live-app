@@ -36,6 +36,7 @@ import {
   Mic,
   Award,
   Wallet,
+  UserPlus,
 } from 'lucide-react';
 
 interface UserProfileData {
@@ -875,6 +876,20 @@ function MyProfileContent() {
                     ) : (
                       <span>{isUr ? 'فین کلب دریافت کریں ↗' : `${stats.fanClub?.description || 'Explore Fan Clubs'} ↗`}</span>
                     )}
+                  </Link>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
+                  <span className="text-white/50 flex items-center gap-1.5">
+                    <UserPlus className="w-3.5 h-3.5 text-[#FF4D8D]" />
+                    {isUr ? 'دوستوں کو مدعو کریں' : 'Invite Friends'}
+                  </span>
+                  <Link
+                    href="/invites"
+                    data-testid="profile-invites-link"
+                    className="text-[11px] font-bold text-[#FF4D8D] hover:underline"
+                  >
+                    {isUr ? 'لنک شیئر کریں ↗' : 'Share Invite Link ↗'}
                   </Link>
                 </div>
               </div>

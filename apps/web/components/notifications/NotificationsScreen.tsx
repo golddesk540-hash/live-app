@@ -531,6 +531,14 @@ export const NotificationsScreen: React.FC = () => {
                   >
                     <Bell className="w-3.5 h-3.5 text-amber-400" /> Official System Notices
                   </Link>
+                  <Link
+                    href="/invites"
+                    onClick={() => setShowHeaderMenu(false)}
+                    data-testid="notifications-menu-invites-link"
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-pink-200 hover:bg-white/10 flex items-center gap-2"
+                  >
+                    <UserPlus className="w-3.5 h-3.5 text-[#FF4D8D]" /> Invite Friends
+                  </Link>
                 </div>
               )}
             </div>
