@@ -942,6 +942,20 @@ function MyProfileContent() {
 
                 <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
                   <span className="text-white/50 flex items-center gap-1.5">
+                    <Wallet className="w-3.5 h-3.5 text-[#FF4D8D]" />
+                    {isUr ? 'نکاسی' : 'Withdrawals'}
+                  </span>
+                  <Link
+                    href="/withdrawals"
+                    data-testid="profile-withdrawals-link"
+                    className="text-[11px] font-bold text-[#FF4D8D] hover:underline"
+                  >
+                    {isUr ? 'نکاسی کی درخواستیں ↗' : 'View Withdrawals ↗'}
+                  </Link>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
+                  <span className="text-white/50 flex items-center gap-1.5">
                     <Coins className="w-3.5 h-3.5 text-amber-300" />
                     {isUr ? 'کوائن سیلر' : 'Coin Seller'}
                   </span>

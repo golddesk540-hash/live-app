@@ -53,6 +53,7 @@ import {
   VideoOff,
   ShieldCheck,
   ListTodo,
+  Wallet,
 } from 'lucide-react';
 import LiveRoomCard from './LiveRoomCard';
 import PartyRoomCard, { PartyRoomItem } from './PartyRoomCard';
@@ -665,6 +666,16 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                   </Link>
 
                   <Link
+                    href="/withdrawals"
+                    data-testid="discovery-menu-withdrawals"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <Wallet className="w-3.5 h-3.5 text-pink-400" />
+                    <span>{isUr ? 'نکاسی' : 'Withdrawals'}</span>
+                  </Link>
+
+                  <Link
                     href="/coin-seller"
                     data-testid="discovery-menu-coin-seller"
                     onClick={() => setShowUserMenu(false)}
@@ -885,6 +896,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
               </span>
 
               {[
+                { label_en: 'Withdrawals', label_ur: 'نکاسی', icon: Wallet, href: '/withdrawals' },
                 { label_en: 'Coin Seller', label_ur: 'کوائن سیلر', icon: Coins, href: '/coin-seller' },
                 { label_en: 'Agent Earnings', label_ur: 'ایجنٹ کمائی', icon: Coins, href: '/agent-earnings' },
                 { label_en: 'Agency Management', label_ur: 'ایجنسی مینجمنٹ', icon: Building2, href: '/agency-management' },

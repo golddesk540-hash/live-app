@@ -22,6 +22,7 @@ import {
   Star,
   TrendingUp,
   Trophy,
+  Wallet,
   Wifi,
   WifiOff,
   ListTodo,
@@ -260,6 +261,15 @@ export default function HostEarningsDashboard({
           </div>
 
           <div className="flex flex-wrap items-center justify-end gap-2">
+            <Link
+              href="/withdrawals"
+              data-testid="earnings-withdrawals-link"
+              className="h-8 px-3 rounded-full bg-pink-500/15 hover:bg-pink-500/25 border border-pink-400/35 hidden xl:inline-flex items-center gap-1.5 text-[11px] font-bold text-pink-200 transition whitespace-nowrap"
+              title="Withdrawals"
+            >
+              <Wallet className="w-3.5 h-3.5 text-pink-300" />
+              <span>{isUrdu ? 'نکاسی' : 'Withdrawals'}</span>
+            </Link>
             <Link
               href="/coin-seller"
               data-testid="earnings-coin-seller-link"
