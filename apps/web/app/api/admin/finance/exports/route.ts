@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
         search: body.search,
       },
       idempotencyKey: body.idempotencyKey || req.headers.get('idempotency-key'),
+      ttlSeconds: typeof body.ttlSeconds === 'number' ? body.ttlSeconds : undefined,
     });
 
     return NextResponse.json({ success: true, exportJob: result }, { status: 201 });

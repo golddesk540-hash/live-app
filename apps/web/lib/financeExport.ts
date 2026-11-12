@@ -572,6 +572,7 @@ export async function createFinanceExportJob(params: {
   exportFormat: FinanceExportFormat;
   filters?: FinanceReportFilter;
   idempotencyKey?: string | null;
+  ttlSeconds?: number | null;
 }) {
   assertFinanceAdminActor(params.actor);
 
@@ -625,7 +626,11 @@ export async function createFinanceExportJob(params: {
 
   const filters = params.filters || {};
   const exportId = generateFinanceId('EXP_FIN');
-  const expiresAtMs = Date.now() + EXPORT_TOKEN_TTL_SECONDS * 1000;
+  const effectiveTtlSeconds =
+    typeof params.ttlSeconds === 'number' && Number.isFinite(params.ttlSeconds)
+      ? Math.min(EXPORT_TOKEN_TTL_SECONDS, Math.max(1, Math.trunc(params.ttlSeconds)))
+      : EXPORT_TOKEN_TTL_SECONDS;
+  const expiresAtMs = Date.now() + effectiveTtlSeconds * 1000;
   const expiresAtIso = new Date(expiresAtMs).toISOString();
   const downloadToken = signExportDownloadToken(exportId, expiresAtMs);
   const tokenHash = sha256Hex(downloadToken);

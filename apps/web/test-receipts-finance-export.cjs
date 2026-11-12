@@ -585,16 +585,24 @@ async function run() {
   const ordDlBlocked = await requestBinary('GET', csvJob.json.exportJob.downloadUrl, null, { Cookie: ordAuth.cookieHeader });
   const tamperedTokenUrl = `${csvJob.json.exportJob.downloadUrl}tampered`;
   const tamperedDl = await requestBinary('GET', tamperedTokenUrl);
-  const expTs = Date.now() - 5000;
-  const expSecret = process.env.AUTH_SECRET || 'poppo-live-auth-secret-super-secure-key-2026';
-  const expSig = crypto.createHmac('sha256', expSecret).update(`${csvJob.json.exportJob.exportId}.${expTs}`).digest('hex');
-  const expiredDl = await requestBinary(
-    'GET',
-    `/api/admin/finance/exports/${encodeURIComponent(csvJob.json.exportJob.exportId)}/download?token=${encodeURIComponent(`${csvJob.json.exportJob.exportId}.${expTs}.${expSig}`)}`
+  const shortTtlJob = await requestBinary(
+    'POST',
+    '/api/admin/finance/exports',
+    { reportType: 'transactions', exportFormat: 'csv', ttlSeconds: 1, filters: { preset: 'today' } },
+    { Cookie: finAuth.cookieHeader }
   );
+  assert(
+    shortTtlJob.statusCode === 201 && Boolean(shortTtlJob.json?.exportJob?.downloadUrl),
+    'Short-TTL (1s) CSV export created by finance_admin'
+  );
+  await new Promise((r) => setTimeout(r, 1700));
+  const expiredDl = await requestBinary('GET', shortTtlJob.json.exportJob.downloadUrl);
   assert(ordDlBlocked.statusCode === 403, 'Ordinary admin blocked (403) from downloading private export even with token');
   assert(tamperedDl.statusCode === 403, 'Tampered download token signature rejected (403)');
-  assert(expiredDl.statusCode === 410, 'Expired signed download token rejected (410 EXPORT_TOKEN_EXPIRED)');
+  assert(
+    expiredDl.statusCode === 410 && expiredDl.json?.errorCode === 'EXPORT_TOKEN_EXPIRED',
+    'Expired signed download token rejected (410 EXPORT_TOKEN_EXPIRED)'
+  );
 
   // Check Audit Logs capture export lifecycle
   const listExpRes = await requestBinary('GET', '/api/admin/finance/exports?limit=25', null, { Cookie: finAuth.cookieHeader });
