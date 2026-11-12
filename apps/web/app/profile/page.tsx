@@ -4,6 +4,8 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/lib/languageContext';
+import { loadLocalJoinedFanClubs } from '@/components/fan-club/fanClubLocalStore';
+import { JoinedClubRecord } from '@/components/fan-club/types';
 import {
   ArrowLeft,
   Copy,
@@ -153,6 +155,11 @@ function MyProfileContent() {
   const [copiedId, setCopiedId] = useState(false);
   const [toastMessage, setToMessage] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [joinedFanClubs, setJoinedFanClubs] = useState<JoinedClubRecord[]>([]);
+
+  useEffect(() => {
+    setJoinedFanClubs(loadLocalJoinedFanClubs());
+  }, []);
 
   // 1. Fetch authenticated user data & statistics
   useEffect(() => {
@@ -849,11 +856,26 @@ function MyProfileContent() {
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
                   <span className="text-white/50">{isUr ? 'فین کلب' : 'Fan Club'}</span>
-                  <span className="text-[10px] text-amber-300 font-medium">
-                    {stats.fanClub?.description || 'Coming Soon (Unlocks at Lv.5)'}
-                  </span>
+                  <Link
+                    href="/fan-club"
+                    data-testid="profile-fan-club-link"
+                    className="flex items-center gap-1.5 text-[11px] font-bold text-amber-300 hover:underline"
+                  >
+                    {joinedFanClubs.length > 0 ? (
+                      <span
+                        data-testid="profile-active-fan-badge"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-400/20 to-pink-500/20 border border-amber-300/45 text-amber-200 font-extrabold"
+                      >
+                        <Crown className="w-3 h-3 text-amber-300 fill-amber-300" />
+                        {joinedFanClubs[0].badgeLabel} Lv.{joinedFanClubs[0].clubLevel}
+                        {joinedFanClubs.length > 1 ? ` (+${joinedFanClubs.length - 1})` : ''} ↗
+                      </span>
+                    ) : (
+                      <span>{isUr ? 'فین کلب دریافت کریں ↗' : `${stats.fanClub?.description || 'Explore Fan Clubs'} ↗`}</span>
+                    )}
+                  </Link>
                 </div>
               </div>
             </div>

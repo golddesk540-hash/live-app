@@ -47,6 +47,7 @@ import {
   RefreshCw,
   MapPin,
   Bell,
+  Crown,
 } from 'lucide-react';
 import LiveRoomCard from './LiveRoomCard';
 import PartyRoomCard, { PartyRoomItem } from './PartyRoomCard';
@@ -590,6 +591,16 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                   >
                     <Camera className="w-3.5 h-3.5 text-[#FF2E74]" />
                     <span>{isUr ? 'پوسٹ بنائیں' : 'Create Post'}</span>
+                  </Link>
+
+                  <Link
+                    href="/fan-club"
+                    data-testid="discovery-menu-fan-club"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <Crown className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{isUr ? 'فین کلب' : 'Fan Club'}</span>
                   </Link>
 
                   <Link

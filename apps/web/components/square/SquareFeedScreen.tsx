@@ -57,6 +57,7 @@ import {
   Bell,
   Play,
   Flag,
+  Crown,
 } from 'lucide-react';
 
 function mapCreatorToInboxProfile(c: SquareCreator): InboxUserProfile {
@@ -462,6 +463,14 @@ export const SquareFeedScreen: React.FC = () => {
                     className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-purple-100 hover:bg-white/10 flex items-center gap-2"
                   >
                     <Flag className="w-3.5 h-3.5 text-[#FF4D8D]" /> Comments & Reports
+                  </Link>
+                  <Link
+                    href="/fan-club"
+                    onClick={() => setShowHeaderMenu(false)}
+                    data-testid="square-menu-fan-club-link"
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-purple-100 hover:bg-white/10 flex items-center gap-2"
+                  >
+                    <Crown className="w-3.5 h-3.5 text-amber-300" /> Fan Club
                   </Link>
                   <Link
                     href="/inbox"
