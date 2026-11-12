@@ -1249,6 +1249,30 @@ export async function purchaseStoreItem(params: {
     const purchase = mapPurchaseRow(finalPurRows[0]);
     const inventory = mapInventoryRow(finalInvRows[0]);
 
+    // Module 7.10: sync central receipt for Store purchase
+    const { syncFinancialReceiptInTx } = await import('@/lib/receipts');
+    await syncFinancialReceiptInTx(client, {
+      userId: canonicalUserId,
+      txCategory: 'store_purchase',
+      sourceTable: 'store_purchases',
+      sourceTxId: purchase.purchaseId,
+      title: `Store Purchase (${item.name})`,
+      titleUr: `اسٹور خریداری (${item.nameUr || item.name})`,
+      description: `Virtual Store item: ${item.name} x${quantity}`,
+      coinQuantity: purchase.totalCoins,
+      storeSummary: {
+        purchaseId: purchase.purchaseId,
+        itemId: item.itemId,
+        itemName: item.name,
+        categoryId: item.categoryId,
+        quantity,
+        unitCoinPrice: purchase.unitCoinPrice,
+        inventoryId: purchase.inventoryId,
+      },
+      paymentMethod: 'coin_wallet',
+      status: 'successful',
+    });
+
     await emitStoreRealtimeEvent(client, canonicalUserId, 'store:purchase_completed', {
       userId: canonicalUserId,
       purchase,
@@ -2226,6 +2250,20 @@ export async function adminRefundStorePurchase(params: {
        WHERE purchase_id = $1 RETURNING *`,
       [pur.purchase_id]
     );
+
+    // Module 7.10: update store receipt status to refunded
+    const { syncFinancialReceiptInTx } = await import('@/lib/receipts');
+    await syncFinancialReceiptInTx(client, {
+      userId: String(pur.user_id),
+      txCategory: 'store_purchase',
+      sourceTable: 'store_purchases',
+      sourceTxId: pur.purchase_id,
+      title: `Store Purchase (${pur.item_name_snapshot})`,
+      description: `Refunded Virtual Store item: ${pur.item_name_snapshot}`,
+      coinQuantity: refundAmount,
+      paymentMethod: 'coin_wallet',
+      status: 'refunded',
+    });
 
     await emitStoreRealtimeEvent(client, String(pur.user_id), 'store:inventory_updated', {
       userId: pur.user_id,

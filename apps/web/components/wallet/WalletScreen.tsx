@@ -23,6 +23,7 @@ import {
   Crown,
   Award,
   ShoppingBag,
+  FileText,
 } from 'lucide-react';
 import type {
   WalletBalance,
@@ -594,6 +595,27 @@ export default function WalletScreen({
                 </div>
                 <div className="text-[11px] text-white/50">
                   {isRtl ? 'فریمز، چیٹ ببلز، انٹری ایفیکٹس اور تھیمز' : 'Avatar Frames, Chat Bubbles, Entrances & Themes'}
+                </div>
+              </div>
+            </div>
+            <ChevronRight className={`w-5 h-5 text-white/50 ${isRtl ? 'rotate-180' : ''}`} />
+          </Link>
+
+          <Link
+            href={isPreviewDemo ? '/finance?preview=demo' : '/finance'}
+            data-testid="link-receipts-finance"
+            className="flex items-center justify-between px-5 py-4 hover:bg-white/[0.04] transition-colors border-t border-white/5"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.4)]">
+                <FileText className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-white">
+                  {isRtl ? 'رسیدیں اور مالیاتی ریکارڈ (7.10)' : 'Receipts & Financial Records'}
+                </div>
+                <div className="text-[11px] text-white/50">
+                  {isRtl ? 'مستند پی ڈی ایف رسیدیں اور ٹرانزیکشن ہسٹری' : 'Official PDF Receipts & Full Transaction History'}
                 </div>
               </div>
             </div>

@@ -9,6 +9,7 @@ import 'topup_screen.dart';
 import '../vip/vip_screen.dart';
 import '../recognition/recognition_screen.dart';
 import '../store/store_screen.dart';
+import '../finance/receipts_finance_screen.dart';
 import '../gifts/gift_catalog_screen.dart';
 
 /// ============================================================================
@@ -776,6 +777,37 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
             subtitle: Text(
               _isUrdu ? 'فریمز، چیٹ ببلز، انٹری ایفیکٹس اور تھیمز' : 'Frames, Chat Bubbles, Entrances & Themes',
+              style: const TextStyle(color: Colors.white54, fontSize: 11),
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+          ),
+          Divider(color: Colors.white.withOpacity(0.08), height: 1, indent: 16, endIndent: 16),
+          ListTile(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ReceiptsFinanceScreen(
+                    apiBaseUrl: widget.apiBaseUrl,
+                    userId: widget.userId,
+                    headers: widget.authToken != null ? {'Authorization': 'Bearer ${widget.authToken}'} : null,
+                    previewDemo: widget.previewDemo,
+                    initialUrdu: _isUrdu,
+                  ),
+                ),
+              );
+            },
+            leading: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(color: const Color(0xFF10B981).withOpacity(0.16), shape: BoxShape.circle),
+              child: const Icon(Icons.receipt_long_rounded, color: Color(0xFF34D399), size: 20),
+            ),
+            title: Text(
+              _isUrdu ? 'رسیدیں اور مالیات (7.10)' : 'Receipts & Finance',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+            ),
+            subtitle: Text(
+              _isUrdu ? 'مستند رسیدیں اور ٹرانزیکشن ہسٹری' : 'Official Receipts & Financial Records',
               style: const TextStyle(color: Colors.white54, fontSize: 11),
             ),
             trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),

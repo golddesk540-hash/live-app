@@ -24,6 +24,7 @@ import type { WalletBalance, WalletAuditLogRecord } from '@/lib/wallet';
 import { AdminVipTab } from '@/components/vip/AdminVipTab';
 import { AdminRecognitionTab } from '@/components/recognition/AdminRecognitionTab';
 import { AdminStoreTab } from '@/components/store/AdminStoreTab';
+import { AdminReportsExportTab } from '@/components/finance/AdminReportsExportTab';
 
 export default function AdminFinancePanel() {
   const [authUser, setAuthUser] = useState<any>(null);
@@ -36,7 +37,7 @@ export default function AdminFinancePanel() {
   const [loginError, setLoginError] = useState<string | null>(null);
 
   // Data Tabs
-  const [activeTab, setActiveTab] = useState<'wallets' | 'coins' | 'points' | 'gifts' | 'earnings' | 'topup' | 'vip' | 'recognition' | 'store' | 'audit'>('wallets');
+  const [activeTab, setActiveTab] = useState<'wallets' | 'coins' | 'points' | 'gifts' | 'earnings' | 'topup' | 'vip' | 'recognition' | 'store' | 'reports' | 'audit'>('wallets');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -147,6 +148,12 @@ export default function AdminFinancePanel() {
 
   useEffect(() => {
     checkSession();
+    if (typeof window !== 'undefined') {
+      const urlTab = new URLSearchParams(window.location.search).get('tab');
+      if (urlTab === 'reports' || urlTab === 'store' || urlTab === 'vip' || urlTab === 'recognition') {
+        setActiveTab(urlTab);
+      }
+    }
   }, [checkSession]);
 
   useEffect(() => {
@@ -423,7 +430,7 @@ export default function AdminFinancePanel() {
 
           {/* Navigation Tabs & Search Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-            <div className="flex items-center gap-1.5 bg-[#150b2b] p-1 rounded-2xl border border-purple-500/20">
+            <div className="flex flex-wrap items-center gap-1.5 bg-[#150b2b] p-1 rounded-2xl border border-purple-500/20">
               {(
                 [
                   { id: 'wallets', label: 'User Wallets' },
@@ -435,6 +442,7 @@ export default function AdminFinancePanel() {
                   { id: 'vip', label: 'VIP Memberships' },
                   { id: 'recognition', label: 'Wealth / Shining / Honor' },
                   { id: 'store', label: 'Virtual Store' },
+                  { id: 'reports', label: 'Reports & Export' },
                   { id: 'audit', label: 'Audit Logs' },
                 ] as const
               ).map((t) => (
@@ -1016,6 +1024,12 @@ export default function AdminFinancePanel() {
             {activeTab === 'store' && (
               <div className="p-4">
                 <AdminStoreTab canManage={canAdjust} onStatusMessage={setActionMsg} />
+              </div>
+            )}
+
+            {activeTab === 'reports' && (
+              <div className="p-4">
+                <AdminReportsExportTab canManage={canAdjust} onStatusMessage={setActionMsg} />
               </div>
             )}
           </div>

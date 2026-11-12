@@ -1067,6 +1067,61 @@ export async function sendRealTimeGift(params: {
           walletCoinsBeforeSpend: ctx.senderWallet.coins + totalCoins,
         });
 
+        // Module 7.10: sync gift_sent (sender) and host_earning (host) receipts atomically
+        const { syncFinancialReceiptInTx } = await import('@/lib/receipts');
+        await syncFinancialReceiptInTx(client, {
+          userId: params.senderUserId,
+          txCategory: 'gift_sent',
+          sourceTable: 'gift_transactions',
+          sourceTxId: gftTxId,
+          title: `Gift Sent (${gift.name} x${qtyMeta.quantity})`,
+          titleUr: `تحفہ بھیجا گیا (${gift.name} x${qtyMeta.quantity})`,
+          description: `Sent ${gift.name} x${qtyMeta.quantity} to ${hostOption.nickname}`,
+          coinQuantity: totalCoins,
+          pointsQuantity: pointsEarned,
+          platformShareCoins: platformShare,
+          sharePercentage: ctx.sharePercent,
+          giftSummary: {
+            giftId: gift.giftId,
+            giftName: gift.name,
+            quantity: qtyMeta.quantity,
+            recipientHostId: hostOption.hostId,
+            recipientNickname: hostOption.nickname,
+            liveRoomId: stage.liveRoomId,
+            pkBattleId: stage.pkBattleId,
+          },
+          paymentMethod: 'coin_wallet',
+          status: 'successful',
+        });
+        const earnRes = await client.query(
+          `SELECT earning_id FROM popolive.host_earning_shares WHERE gift_transaction_id = $1 LIMIT 1`,
+          [gftTxId]
+        );
+        if (earnRes.rows[0]?.earning_id) {
+          await syncFinancialReceiptInTx(client, {
+            userId: hostOption.hostId,
+            txCategory: 'host_earning',
+            sourceTable: 'host_earning_shares',
+            sourceTxId: earnRes.rows[0].earning_id,
+            title: `Host Earning (${gift.name} x${qtyMeta.quantity})`,
+            titleUr: `ہوسٹ کمائی (${gift.name} x${qtyMeta.quantity})`,
+            description: `70% non-cash Host Points share from ${gift.name} x${qtyMeta.quantity} (${totalCoins} gift coins)`,
+            coinQuantity: totalCoins,
+            pointsQuantity: pointsEarned,
+            platformShareCoins: platformShare,
+            sharePercentage: ctx.sharePercent,
+            giftSummary: {
+              giftId: gift.giftId,
+              giftName: gift.name,
+              quantity: qtyMeta.quantity,
+              sourceType: stage.pkBattleId ? 'pk_battle' : stage.liveRoomId ? 'live_room' : 'direct_gift',
+              giftTransactionId: gftTxId,
+            },
+            paymentMethod: 'host_share_70pct',
+            status: 'successful',
+          });
+        }
+
         const nowIso = new Date().toISOString();
 
         // Module 7.7 integration: attach verified sender VIP aura/badge ONLY if active & unexpired
@@ -1596,6 +1651,56 @@ export async function reverseGiftTransaction(params: {
       sourceTxId: gtx.gift_transaction_id,
       reversalReason: params.reason.trim(),
       actorId: params.actorId,
+    });
+
+    // Module 7.10: mark gift & host earning receipts reversed + issue reversal receipts
+    const { syncFinancialReceiptInTx } = await import('@/lib/receipts');
+    await syncFinancialReceiptInTx(client, {
+      userId: gtx.sender_user_id,
+      txCategory: 'gift_sent',
+      sourceTable: 'gift_transactions',
+      sourceTxId: gtx.gift_transaction_id,
+      title: `Gift Sent (${gtx.gift_name_snapshot} x${gtx.quantity})`,
+      description: `Reversed gift transaction`,
+      coinQuantity: totalCoins,
+      pointsQuantity: hostPoints,
+      platformShareCoins: Number(gtx.platform_share || 0),
+      sharePercentage: Number(gtx.share_percentage || 70),
+      paymentMethod: 'coin_wallet',
+      status: 'reversed',
+    });
+    const revEarnRows = await client.query(
+      `SELECT earning_id FROM popolive.host_earning_shares WHERE gift_transaction_id = $1 LIMIT 1`,
+      [gtx.gift_transaction_id]
+    );
+    if (revEarnRows.rows[0]?.earning_id) {
+      await syncFinancialReceiptInTx(client, {
+        userId: gtx.recipient_host_id,
+        txCategory: 'host_earning',
+        sourceTable: 'host_earning_shares',
+        sourceTxId: revEarnRows.rows[0].earning_id,
+        title: `Host Earning (${gtx.gift_name_snapshot} x${gtx.quantity})`,
+        description: `Reversed host earning share`,
+        coinQuantity: totalCoins,
+        pointsQuantity: hostPoints,
+        platformShareCoins: Number(gtx.platform_share || 0),
+        sharePercentage: Number(gtx.share_percentage || 70),
+        paymentMethod: 'host_share_70pct',
+        status: 'reversed',
+      });
+    }
+    await syncFinancialReceiptInTx(client, {
+      userId: gtx.sender_user_id,
+      txCategory: 'reversal',
+      sourceTable: 'coin_transactions',
+      sourceTxId: revCoinTxId,
+      relatedOriginalTxId: gtx.gift_transaction_id,
+      title: 'Coin Transaction Reversal',
+      titleUr: 'سکے کی ٹرانزیکشن منسوخی',
+      description: `Gift Reversal (${gtx.gift_transaction_id}): ${params.reason.trim()}`,
+      coinQuantity: totalCoins,
+      paymentMethod: 'finance_ledger',
+      status: 'successful',
     });
 
     const scope = gtx.pk_battle_id

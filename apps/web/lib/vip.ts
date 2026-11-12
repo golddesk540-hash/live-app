@@ -1008,6 +1008,39 @@ async function settleVerifiedVipOrderInTx(
   const receipt = mapReceiptRow(receiptRow);
   const order = mapOrderRow(updatedOrderRow);
 
+  // Module 7.10: sync VIP purchase/renewal receipt
+  const { syncFinancialReceiptInTx } = await import('@/lib/receipts');
+  await syncFinancialReceiptInTx(client, {
+    receiptId: receipt.receiptId,
+    legacyReceiptId: receipt.receiptId,
+    userId,
+    txCategory: orderRow.order_type === 'renewal' ? 'vip_renewal' : 'vip_purchase',
+    sourceTable: 'vip_membership_orders',
+    sourceTxId: order.orderId,
+    title:
+      orderRow.order_type === 'renewal'
+        ? `VIP Renewal (${plan.planName})`
+        : `VIP Membership (${plan.planName})`,
+    titleUr:
+      orderRow.order_type === 'renewal'
+        ? `وی آئی پی تجدید (${plan.planName})`
+        : `وی آئی پی رکنیت (${plan.planName})`,
+    description: `${plan.planName} • ${plan.durationDays} Days (Level ${plan.vipLevel})`,
+    paymentAmount: Number(order.amount || 0),
+    currency: order.currency,
+    coinQuantity: params.coinsCharged ?? 0,
+    vipSummary: {
+      planId: plan.planId,
+      planName: plan.planName,
+      vipLevel: plan.vipLevel,
+      orderType: orderRow.order_type,
+      durationDays: plan.durationDays,
+    },
+    paymentMethod: orderRow.provider_key,
+    providerReferenceRaw: paymentReference,
+    status: 'successful',
+  });
+
   await emitVipRealtimeEvent(client, userId, 'vip:purchase_completed', {
     orderId: order.orderId,
     purchaseId: order.purchaseId,
@@ -2236,6 +2269,26 @@ export async function adminRefundVipOrder(params: {
       `UPDATE popolive.vip_receipts SET receipt_status = 'refunded' WHERE order_id = $1`,
       [orderRow.order_id]
     );
+
+    // Module 7.10: update central VIP receipt status to refunded
+    const { syncFinancialReceiptInTx } = await import('@/lib/receipts');
+    await syncFinancialReceiptInTx(client, {
+      userId: affectedUserId,
+      txCategory: orderRow.order_type === 'renewal' ? 'vip_renewal' : 'vip_purchase',
+      sourceTable: 'vip_membership_orders',
+      sourceTxId: orderRow.order_id,
+      title:
+        orderRow.order_type === 'renewal'
+          ? `VIP Renewal (${orderRow.plan_name})`
+          : `VIP Membership (${orderRow.plan_name})`,
+      description: `${orderRow.plan_name} refund`,
+      paymentAmount: Number(orderRow.amount || 0),
+      currency: orderRow.currency,
+      coinQuantity: Number(orderRow.coins_charged || 0),
+      paymentMethod: orderRow.provider_key,
+      providerReferenceRaw: orderRow.payment_reference,
+      status: 'refunded',
+    });
 
     await syncUserVipToAnimationsTableInTx(client, {
       userId: affectedUserId,

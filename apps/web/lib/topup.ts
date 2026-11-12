@@ -927,6 +927,27 @@ export async function handleTopupWebhook(params: {
     const mappedOrder = mapTopupOrderRow(updatedOrderRow);
     const mappedReceipt = mapTopupReceiptRow(receiptRow);
 
+    // Module 7.10: sync immutable financial receipt for verified top-up
+    const { syncFinancialReceiptInTx } = await import('@/lib/receipts');
+    await syncFinancialReceiptInTx(client, {
+      receiptId: mappedReceipt.receiptId,
+      legacyReceiptId: mappedReceipt.receiptId,
+      userId: order.userId,
+      txCategory: 'topup',
+      sourceTable: 'topup_payment_orders',
+      sourceTxId: order.orderId,
+      title: `Coin Top-up (${order.packageName})`,
+      titleUr: `سکے ٹاپ اپ (${order.packageName})`,
+      description: `Verified coin package purchase: ${order.packageName}`,
+      paymentAmount: order.amount,
+      currency: order.currency,
+      coinQuantity: order.baseCoins,
+      bonusCoinQuantity: order.bonusCoins,
+      paymentMethod: providerKey,
+      providerReferenceRaw: payRef,
+      status: 'successful',
+    });
+
     await emitTopupRealtimeEvent(client, order.userId, 'wallet:payment_successful', {
       order: mappedOrder,
     });
@@ -1465,6 +1486,40 @@ export async function adminRefundTopupOrder(params: {
       `UPDATE popolive.topup_receipts SET status = 'refunded' WHERE order_id = $1`,
       [order.orderId]
     );
+
+    // Module 7.10: mark original top-up receipt refunded & issue refund ledger receipt
+    const { syncFinancialReceiptInTx } = await import('@/lib/receipts');
+    await syncFinancialReceiptInTx(client, {
+      receiptId: order.receiptId || `RCP_${order.orderId}`,
+      legacyReceiptId: order.receiptId,
+      userId: order.userId,
+      txCategory: 'topup',
+      sourceTable: 'topup_payment_orders',
+      sourceTxId: order.orderId,
+      title: `Coin Top-up (${order.packageName})`,
+      titleUr: `سکے ٹاپ اپ (${order.packageName})`,
+      description: `Refunded coin package purchase: ${order.packageName}`,
+      paymentAmount: order.amount,
+      currency: order.currency,
+      coinQuantity: order.baseCoins,
+      bonusCoinQuantity: order.bonusCoins,
+      paymentMethod: order.providerKey,
+      providerReferenceRaw: order.providerPaymentRef,
+      status: 'refunded',
+    });
+    await syncFinancialReceiptInTx(client, {
+      userId: order.userId,
+      txCategory: 'refund',
+      sourceTable: 'coin_transactions',
+      sourceTxId: revTxId,
+      relatedOriginalTxId: order.orderId,
+      title: 'Approved Coin Refund',
+      titleUr: 'منظور شدہ سکے کی واپسی',
+      description: `Refund of top-up order ${order.orderId}: ${params.reason.trim()}`,
+      coinQuantity: order.totalCoins,
+      paymentMethod: 'finance_ledger',
+      status: 'successful',
+    });
 
     await client.query(
       `INSERT INTO popolive.topup_admin_audit_logs (actor_id, actor_role, action_type, target_id, reason, details)

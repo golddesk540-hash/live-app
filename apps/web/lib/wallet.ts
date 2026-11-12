@@ -1444,6 +1444,21 @@ export async function adminAdjustWalletBalance(params: {
         [generateTxId('AUDIT'), targetUserId, walletRow.wallet_id, adminId, actorRole, reason.trim(), amount, prevCoins, newCoins, txId, ipAddress]
       );
 
+      // Module 7.10: sync receipt for authorized coin adjustment
+      const { syncFinancialReceiptInTx } = await import('@/lib/receipts');
+      await syncFinancialReceiptInTx(client, {
+        userId: targetUserId,
+        txCategory: 'wallet_adjustment',
+        sourceTable: 'coin_transactions',
+        sourceTxId: txId,
+        title: 'Authorized Coin Wallet Adjustment',
+        titleUr: 'مستند سکے والٹ ایڈجسٹمنٹ',
+        description: `Finance Admin ${operation}: ${reason.trim()}`,
+        coinQuantity: amount,
+        paymentMethod: 'finance_ledger',
+        status: 'successful',
+      });
+
       await emitWalletRealtimeEvent(client, targetUserId, 'wallet:coin_balance_updated', {
         userId: targetUserId,
         coins: newCoins,
@@ -1508,6 +1523,21 @@ export async function adminAdjustWalletBalance(params: {
          ) VALUES ($1, $2, $3, 'admin_points_adjustment', $4, $5, $6, 'points', $7, $8, $9, $10, $11)`,
         [generateTxId('AUDIT'), targetUserId, walletRow.wallet_id, adminId, actorRole, reason.trim(), amount, prevPts, newPts, txId, ipAddress]
       );
+
+      // Module 7.10: sync receipt for authorized points adjustment
+      const { syncFinancialReceiptInTx } = await import('@/lib/receipts');
+      await syncFinancialReceiptInTx(client, {
+        userId: targetUserId,
+        txCategory: 'wallet_adjustment',
+        sourceTable: 'points_transactions',
+        sourceTxId: txId,
+        title: 'Authorized Points Adjustment',
+        titleUr: 'مستند پوائنٹس ایڈجسٹمنٹ',
+        description: `Finance Admin Points ${operation}: ${reason.trim()}`,
+        pointsQuantity: amount,
+        paymentMethod: 'points_ledger',
+        status: 'successful',
+      });
 
       await emitWalletRealtimeEvent(client, targetUserId, 'wallet:points_balance_updated', {
         userId: targetUserId,
@@ -1666,6 +1696,22 @@ export async function reverseWalletTransaction(params: {
         }
       }
 
+      // Module 7.10: sync reversal receipt & update any reversed store purchase receipt
+      const { syncFinancialReceiptInTx } = await import('@/lib/receipts');
+      await syncFinancialReceiptInTx(client, {
+        userId: orig.user_id,
+        txCategory: 'reversal',
+        sourceTable: 'coin_transactions',
+        sourceTxId: revTxId,
+        relatedOriginalTxId: transactionId,
+        title: 'Coin Transaction Reversal',
+        titleUr: 'سکے کی ٹرانزیکشن منسوخی',
+        description: `Reversal of ${transactionId}: ${reason.trim()}`,
+        coinQuantity: origAmount,
+        paymentMethod: 'finance_ledger',
+        status: 'successful',
+      });
+
       await emitWalletRealtimeEvent(client, orig.user_id, 'wallet:transaction_reversed', {
         ledger: 'coins',
         originalTransactionId: transactionId,
@@ -1766,6 +1812,22 @@ export async function reverseWalletTransaction(params: {
          ) VALUES ($1, $2, $3, 'transaction_reversal', $4, $5, $6, 'points', $7, $8, $9, $10, $11)`,
         [generateTxId('AUDIT'), orig.host_user_id, walletRow.wallet_id, adminId, actorRole, reason.trim(), origPts, currPts, newPts, transactionId, ipAddress]
       );
+
+      // Module 7.10: sync points reversal receipt
+      const { syncFinancialReceiptInTx } = await import('@/lib/receipts');
+      await syncFinancialReceiptInTx(client, {
+        userId: orig.host_user_id,
+        txCategory: 'reversal',
+        sourceTable: 'points_transactions',
+        sourceTxId: revTxId,
+        relatedOriginalTxId: transactionId,
+        title: 'Host Points Reversal',
+        titleUr: 'ہوسٹ پوائنٹس منسوخی',
+        description: `Reversal of ${transactionId}: ${reason.trim()}`,
+        pointsQuantity: origPts,
+        paymentMethod: 'points_ledger',
+        status: 'successful',
+      });
 
       await emitWalletRealtimeEvent(client, orig.host_user_id, 'wallet:transaction_reversed', {
         ledger: 'points',

@@ -797,6 +797,17 @@ function MyProfileContent() {
                 </div>
 
                 <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
+                  <span className="text-white/50">{isUr ? 'رسیدیں اور مالیات' : 'Receipts & Finance'}</span>
+                  <Link
+                    href="/finance"
+                    data-testid="profile-finance-link"
+                    className="text-[11px] font-bold text-emerald-300 hover:underline flex items-center gap-1"
+                  >
+                    <span>{isUr ? 'رسیدیں اور پی ڈی ایف دیکھیں ↗' : 'View Official Receipts & PDFs ↗'}</span>
+                  </Link>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs">
                   <span className="text-white/50">{isUr ? 'فین کلب' : 'Fan Club'}</span>
                   <span className="text-[10px] text-amber-300 font-medium">
                     {stats.fanClub?.description || 'Coming Soon (Unlocks at Lv.5)'}
