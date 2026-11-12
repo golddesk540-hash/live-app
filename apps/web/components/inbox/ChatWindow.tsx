@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { InboxAvatar } from './InboxAvatar';
 import { CHAT_EMOJI_PALETTE } from './mockInboxData';
+import { VideoCallDisabledButton } from '@/components/video-call/VideoCallDisabledButton';
 import {
   InboxConversation,
   InboxMessageAttachment,
@@ -234,23 +235,29 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           </button>
         </div>
 
-        {/* Chat Options Menu */}
-        <div className="relative shrink-0">
-          <button
-            type="button"
-            onClick={() => setShowOptionsMenu((v) => !v)}
-            data-testid="chat-options-btn"
-            aria-label="Chat options"
-            className="p-2 rounded-full bg-[#221045] hover:bg-[#2E175C] text-purple-100 border border-white/10 transition-colors"
-          >
-            <MoreVertical className="w-4 h-4" />
-          </button>
-
-          {showOptionsMenu && (
-            <div
-              data-testid="chat-options-menu"
-              className="absolute right-0 mt-2 w-52 rounded-2xl bg-[#100521] border border-purple-400/25 shadow-2xl p-1.5 z-40 space-y-0.5"
+        {/* Chat Actions + Disabled 1-to-1 Video Call Entry (Module 8.9 Default OFF) */}
+        <div className="shrink-0 flex items-center gap-2">
+          <VideoCallDisabledButton
+            variant="icon"
+            testId="chat-video-call-off-btn"
+            targetName={user.name}
+          />
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowOptionsMenu((v) => !v)}
+              data-testid="chat-options-btn"
+              aria-label="Chat options"
+              className="p-2 rounded-full bg-[#221045] hover:bg-[#2E175C] text-purple-100 border border-white/10 transition-colors"
             >
+              <MoreVertical className="w-4 h-4" />
+            </button>
+
+            {showOptionsMenu && (
+              <div
+                data-testid="chat-options-menu"
+                className="absolute right-0 top-full mt-2 w-52 rounded-2xl bg-[#100521] border border-purple-400/25 shadow-2xl p-1.5 z-40 space-y-0.5"
+              >
               <button
                 type="button"
                 onClick={() => {
@@ -348,8 +355,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               >
                 <Trash2 className="w-3.5 h-3.5" /> Delete Conversation
               </button>
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useLanguage } from '@/lib/languageContext';
+import { VideoCallDisabledButton } from '@/components/video-call/VideoCallDisabledButton';
 import {
   ArrowLeft,
   MoreHorizontal,
@@ -577,6 +578,14 @@ function PublicProfileContent() {
               <MessageCircle className="w-4 h-4 text-white/80" />
               <span>{isUr ? 'میسج' : 'Message'}</span>
             </button>
+
+            {!profile.isSelf && (
+              <VideoCallDisabledButton
+                variant="pill"
+                testId="public-profile-video-call-off-btn"
+                targetName={profile.nickname}
+              />
+            )}
           </div>
         </div>
 

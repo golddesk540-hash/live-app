@@ -49,6 +49,7 @@ import {
   MapPin,
   Bell,
   Crown,
+  VideoOff,
 } from 'lucide-react';
 import LiveRoomCard from './LiveRoomCard';
 import PartyRoomCard, { PartyRoomItem } from './PartyRoomCard';
@@ -647,6 +648,21 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                   >
                     <UserPlus className="w-3.5 h-3.5 text-[#FF4D8D]" />
                     <span>{isUr ? 'دوستوں کو مدعو کریں' : 'Invite Friends'}</span>
+                  </Link>
+
+                  <Link
+                    href="/video-call"
+                    data-testid="discovery-menu-video-call-off"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <span className="flex items-center gap-2">
+                      <VideoOff className="w-3.5 h-3.5 text-purple-300/75" />
+                      <span>{isUr ? '1-to-1 ویڈیو کال' : '1-to-1 Video Call'}</span>
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded-full bg-[#FF1A6C]/20 border border-[#FF1A6C]/45 text-[9px] font-black text-[#FF6BA3]">
+                      OFF
+                    </span>
                   </Link>
 
                   <Link

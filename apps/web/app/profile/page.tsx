@@ -37,6 +37,7 @@ import {
   Award,
   Wallet,
   UserPlus,
+  VideoOff,
 } from 'lucide-react';
 
 interface UserProfileData {
@@ -890,6 +891,23 @@ function MyProfileContent() {
                     className="text-[11px] font-bold text-[#FF4D8D] hover:underline"
                   >
                     {isUr ? 'لنک شیئر کریں ↗' : 'Share Invite Link ↗'}
+                  </Link>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
+                  <span className="text-white/50 flex items-center gap-1.5">
+                    <VideoOff className="w-3.5 h-3.5 text-purple-300/75" />
+                    {isUr ? '1-to-1 ویڈیو کال' : '1-to-1 Video Call'}
+                  </span>
+                  <Link
+                    href="/video-call"
+                    data-testid="profile-video-call-off-link"
+                    className="inline-flex items-center gap-1.5 text-[11px] font-bold text-purple-200/80 hover:underline"
+                  >
+                    <span className="px-1.5 py-0.5 rounded-full bg-[#FF1A6C]/20 border border-[#FF1A6C]/45 text-[9px] font-black text-[#FF6BA3]">
+                      OFF
+                    </span>
+                    <span>{isUr ? 'حالت دیکھیں ↗' : 'View Status ↗'}</span>
                   </Link>
                 </div>
               </div>
