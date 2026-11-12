@@ -614,11 +614,22 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
 
                   <Link
                     href="/square"
+                    data-testid="discovery-menu-square"
                     onClick={() => setShowUserMenu(false)}
                     className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-pink-400" />
                     <span>{isUr ? 'اسکوائر پوسٹس' : 'Square Posts'}</span>
+                  </Link>
+
+                  <Link
+                    href="/square/discovery"
+                    data-testid="discovery-menu-square-discovery"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <Compass className="w-3.5 h-3.5 text-[#FF4D8D]" />
+                    <span>{isUr ? 'اسکوائر ڈسکوری' : 'Square Discovery'}</span>
                   </Link>
 
                   <Link
@@ -781,6 +792,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
               </span>
 
               {[
+                { label_en: 'Square Discovery', label_ur: 'اسکوائر ڈسکوری', icon: Compass, href: '/square/discovery' },
                 { label_en: 'Agency Portal', label_ur: 'ایجنسی پورٹل', icon: Trophy, href: '/agency' },
                 { label_en: 'Recharge Coins', label_ur: 'کوائنز ریچارج', icon: Coins, href: '/recharge' },
                 { label_en: 'Help & Support', label_ur: 'مدد اور سوالات', icon: HelpCircle, href: '/help' },

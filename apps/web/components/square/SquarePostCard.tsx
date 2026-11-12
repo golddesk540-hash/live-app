@@ -115,8 +115,14 @@ export const SquarePostCard: React.FC<SquarePostCardProps> = ({
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-[11px] text-purple-200/55 mt-0.5">
-              <span>{post.publishedAgo}</span>
+            <div className="flex items-center gap-1.5 text-[11px] text-purple-200/55 mt-0.5 flex-wrap">
+              <Link
+                href={`/square/post/${post.id}`}
+                data-testid={`post-timestamp-detail-link-${post.id}`}
+                className="hover:text-[#FF4D8D] hover:underline transition-colors whitespace-nowrap"
+              >
+                {post.publishedAgo}
+              </Link>
               <span>•</span>
               <span className="inline-flex items-center gap-1">
                 {post.visibility === 'Public' ? (
@@ -377,17 +383,17 @@ export const SquarePostCard: React.FC<SquarePostCardProps> = ({
       )}
 
       {/* Engagement Footer */}
-      <div className="flex items-center justify-between gap-2 pt-3.5 mt-4 border-t border-white/10 text-xs">
-        <div className="flex items-center gap-4 sm:gap-6">
+      <div className="flex items-center justify-between gap-1.5 pt-3.5 mt-4 border-t border-white/10 text-[11px] sm:text-xs">
+        <div className="flex items-center gap-2 sm:gap-5 min-w-0">
           <button
             type="button"
             onClick={() => onToggleLike(post.id)}
             data-testid={`post-like-btn-${post.id}`}
-            className={`inline-flex items-center gap-1.5 font-bold transition-all active:scale-90 ${
+            className={`inline-flex items-center gap-1 sm:gap-1.5 font-bold whitespace-nowrap transition-all active:scale-90 ${
               post.isLiked ? 'text-[#FF1A6C]' : 'text-purple-200/70 hover:text-white'
             }`}
           >
-            <Heart className={`w-4 h-4 ${post.isLiked ? 'fill-[#FF1A6C]' : ''}`} />
+            <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${post.isLiked ? 'fill-[#FF1A6C]' : ''}`} />
             <span data-testid={`post-like-count-${post.id}`}>{post.likesCount}</span>
           </button>
 
@@ -395,9 +401,9 @@ export const SquarePostCard: React.FC<SquarePostCardProps> = ({
             type="button"
             onClick={() => onOpenComments(post)}
             data-testid={`post-comment-btn-${post.id}`}
-            className="inline-flex items-center gap-1.5 font-semibold text-purple-200/70 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1 sm:gap-1.5 font-semibold whitespace-nowrap text-purple-200/70 hover:text-white transition-colors"
           >
-            <MessageCircle className="w-4 h-4" />
+            <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
             <span>{post.comments.length} comments</span>
           </button>
 
@@ -405,26 +411,36 @@ export const SquarePostCard: React.FC<SquarePostCardProps> = ({
             type="button"
             onClick={() => onOpenShare(post)}
             data-testid={`post-share-btn-${post.id}`}
-            className="inline-flex items-center gap-1.5 font-semibold text-purple-200/70 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1 sm:gap-1.5 font-semibold whitespace-nowrap text-purple-200/70 hover:text-white transition-colors"
           >
-            <Share2 className="w-4 h-4" />
+            <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
             <span>Share{post.sharesCount > 0 ? ` (${post.sharesCount})` : ''}</span>
           </button>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onToggleSave(post.id)}
-          data-testid={`post-save-btn-${post.id}`}
-          aria-label={post.isSaved ? 'Unsave post' : 'Save post'}
-          className={`p-1.5 rounded-full transition-colors ${
-            post.isSaved
-              ? 'text-amber-400 bg-amber-400/15'
-              : 'text-purple-200/60 hover:text-white hover:bg-white/10'
-          }`}
-        >
-          <Bookmark className={`w-4 h-4 ${post.isSaved ? 'fill-amber-400' : ''}`} />
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          <Link
+            href={`/square/post/${post.id}`}
+            data-testid={`post-detail-link-${post.id}`}
+            className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white/5 hover:bg-[#FF1A6C]/20 border border-white/10 hover:border-[#FF1A6C]/40 text-[10px] sm:text-[11px] font-bold text-purple-100/80 hover:text-white whitespace-nowrap transition-colors"
+          >
+            <span>Details</span>
+            <span aria-hidden="true">↗</span>
+          </Link>
+          <button
+            type="button"
+            onClick={() => onToggleSave(post.id)}
+            data-testid={`post-save-btn-${post.id}`}
+            aria-label={post.isSaved ? 'Unsave post' : 'Save post'}
+            className={`p-1.5 rounded-full transition-colors ${
+              post.isSaved
+                ? 'text-amber-400 bg-amber-400/15'
+                : 'text-purple-200/60 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            <Bookmark className={`w-4 h-4 ${post.isSaved ? 'fill-amber-400' : ''}`} />
+          </button>
+        </div>
       </div>
     </article>
   );
