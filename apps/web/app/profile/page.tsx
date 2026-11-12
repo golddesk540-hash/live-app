@@ -941,6 +941,20 @@ function MyProfileContent() {
 
                 <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
                   <span className="text-white/50 flex items-center gap-1.5">
+                    <Wallet className="w-3.5 h-3.5 text-amber-300" />
+                    {isUr ? 'ایجنٹ کمائی' : 'Agent Earnings'}
+                  </span>
+                  <Link
+                    href="/agent-earnings"
+                    data-testid="profile-agent-earnings-link"
+                    className="text-[11px] font-bold text-amber-300 hover:underline"
+                  >
+                    {isUr ? 'کمائی دیکھیں ↗' : 'View Agent Earnings ↗'}
+                  </Link>
+                </div>
+
+                <div className="pt-2 border-t border-white/5 flex items-center justify-between gap-2 text-xs">
+                  <span className="text-white/50 flex items-center gap-1.5">
                     <Building2 className="w-3.5 h-3.5 text-[#FF4D8D]" />
                     {isUr ? 'ایجنسی مینجمنٹ' : 'Agency Management'}
                   </span>
