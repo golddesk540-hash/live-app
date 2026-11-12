@@ -48,6 +48,7 @@ import {
   RefreshCw,
   MapPin,
   Bell,
+  Building2,
   Crown,
   VideoOff,
   ShieldCheck,
@@ -664,6 +665,16 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                   </Link>
 
                   <Link
+                    href="/agency-management"
+                    data-testid="discovery-menu-agency-management"
+                    onClick={() => setShowUserMenu(false)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-[#FF4D8D]" />
+                    <span>{isUr ? 'ایجنسی مینجمنٹ' : 'Agency Management'}</span>
+                  </Link>
+
+                  <Link
                     href="/event-leaderboard"
                     data-testid="discovery-menu-event-leaderboard"
                     onClick={() => setShowUserMenu(false)}
@@ -854,6 +865,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
               </span>
 
               {[
+                { label_en: 'Agency Management', label_ur: 'ایجنسی مینجمنٹ', icon: Building2, href: '/agency-management' },
                 { label_en: 'Event Leaderboard', label_ur: 'ایونٹ لیڈر بورڈ', icon: Calendar, href: '/event-leaderboard' },
                 { label_en: 'Host Rankings', label_ur: 'ہوسٹ رینکنگ', icon: Trophy, href: '/host-rankings' },
                 { label_en: 'New-Host Pack', label_ur: 'نیو ہوسٹ پیک', icon: Sparkles, href: '/new-host-pack' },

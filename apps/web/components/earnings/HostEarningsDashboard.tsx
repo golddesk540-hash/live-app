@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   BarChart3,
   Bell,
+  Building2,
   Calendar,
   ChevronLeft,
   ChevronRight,
@@ -259,6 +260,15 @@ export default function HostEarningsDashboard({
           </div>
 
           <div className="flex flex-wrap items-center justify-end gap-2">
+            <Link
+              href="/agency-management"
+              data-testid="earnings-agency-management-link"
+              className="h-8 px-3 rounded-full bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/35 hidden xl:inline-flex items-center gap-1.5 text-[11px] font-bold text-purple-100 transition whitespace-nowrap"
+              title="Agency Management"
+            >
+              <Building2 className="w-3.5 h-3.5 text-[#FF6BA3]" />
+              <span>{isUrdu ? 'ایجنسی' : 'Agency'}</span>
+            </Link>
             <Link
               href="/event-leaderboard"
               data-testid="earnings-event-leaderboard-link"
