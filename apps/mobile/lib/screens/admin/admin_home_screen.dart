@@ -268,6 +268,50 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     },
   ];
 
+  // Sample Content & Economy Items (Module 10.6)
+  final List<Map<String, String>> _economyGifts = [
+    {
+      'id': 'GFT-ROSE-01',
+      'name': 'Red Velvet Rose',
+      'category': 'Popular',
+      'coins': '10',
+      'status': 'Active',
+      'usage': '452K',
+    },
+    {
+      'id': 'GFT-LOVE-02',
+      'name': 'Heart Sparkle Fireworks',
+      'category': 'Romantic',
+      'coins': '99',
+      'status': 'Active',
+      'usage': '184K',
+    },
+    {
+      'id': 'GFT-CAR-03',
+      'name': 'Cyber Sports Car',
+      'category': 'Luxury',
+      'coins': '2,999',
+      'status': 'Active',
+      'usage': '24.8K',
+    },
+    {
+      'id': 'GFT-YACHT-04',
+      'name': 'Ocean Sovereign Yacht',
+      'category': 'Luxury',
+      'coins': '9,999',
+      'status': 'Active',
+      'usage': '8.2K',
+    },
+    {
+      'id': 'GFT-DRAGON-05',
+      'name': 'Mythic Golden Dragon',
+      'category': 'Special',
+      'coins': '19,999',
+      'status': 'Active',
+      'usage': '3.4K',
+    },
+  ];
+
   // Sample admin list (Module 10.1)
   final List<Map<String, String>> _admins = [
     {
@@ -341,7 +385,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'User, Host, Live, Report & Safety Suite · 10.5',
+                  'User, Host, Live, Report, Safety & Economy Suite · 10.6',
                   style: TextStyle(color: Colors.white54, fontSize: 10),
                 ),
               ],
@@ -352,7 +396,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Navigation Pills (Dashboard / Users / Hosts / Live Monitor / Reports / Child Safety / Staff / Roles)
+          // Navigation Pills (Dashboard / Users / Hosts / Live Monitor / Reports / Child Safety / Economy / Staff / Roles)
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -368,6 +412,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 _buildFilterPill('Reports', 6),
                 const SizedBox(width: 8),
                 _buildFilterPill('Child Safety', 7),
+                const SizedBox(width: 8),
+                _buildFilterPill('Content & Economy', 8),
                 const SizedBox(width: 8),
                 _buildFilterPill('Staff Admins', 3),
                 const SizedBox(width: 8),
@@ -896,6 +942,137 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
+
+          // TAB 8: CONTENT & ECONOMY ADMIN (Module 10.6)
+          if (_activeTabIndex == 8) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'CONTENT & ECONOMY · COINS & GIFTS',
+                  style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.4)),
+                  ),
+                  child: const Text('14.8M Coins', style: TextStyle(color: Color(0xFFFCD34D), fontSize: 10, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Hub Cards Quick Row
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF160A2D),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFFF0F7B).withOpacity(0.3)),
+                    ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.play_circle_outline, color: Color(0xFFFF0F7B), size: 20),
+                        SizedBox(height: 6),
+                        Text('Live Categories', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                        Text('7 Active Topics', style: TextStyle(color: Colors.white54, fontSize: 10)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF160A2D),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFA855F7).withOpacity(0.3)),
+                    ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.image_outlined, color: Color(0xFFA855F7), size: 20),
+                        SizedBox(height: 6),
+                        Text('Banners & Promos', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                        Text('21 Carousels', style: TextStyle(color: Colors.white54, fontSize: 10)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'Interactive Virtual Gifts Catalog',
+              style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            ..._economyGifts.map((g) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF160A2D),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.purple.withOpacity(0.2)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF0F7B).withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.card_giftcard, color: Color(0xFFFF0F7B), size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            g['name']!,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                          Text(
+                            '${g['category']} · Used ${g['usage']} times',
+                            style: const TextStyle(color: Colors.white54, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0E061E),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.monetization_on_outlined, color: Color(0xFFF59E0B), size: 12),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${g['coins']} Coins',
+                            style: const TextStyle(color: Color(0xFFFCD34D), fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

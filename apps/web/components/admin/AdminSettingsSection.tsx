@@ -33,24 +33,24 @@ export const AdminSettingsSection: React.FC<AdminSettingsSectionProps> = ({
 
   const upcomingModules = [
     {
-      code: '10.6',
-      title: 'Content & Economy Admin',
-      desc: 'Coin pricing packages, reseller quota pools, host point conversions, and virtual gifts CMS.',
-    },
-    {
-      code: '10.6',
-      title: 'Agency Management Center',
-      desc: 'Agency registration reviews, agent commission rules, and creator roster oversight.',
-    },
-    {
       code: '10.7',
-      title: 'Content & Banners',
-      desc: 'App banners, discovery announcements, broadcast category hierarchy, and localized assets.',
+      title: 'Agency, Seller & Payout Admin',
+      desc: 'Agency registration reviews, coin seller quotas, agent commissions, and creator payout authorizations.',
     },
     {
       code: '10.8',
-      title: 'App Configuration & Settings',
-      desc: 'Global app parameters, feature flags, maintenance mode toggles, and API keys.',
+      title: 'News, Languages & Push Admin',
+      desc: 'App notices, multi-language localization dictionary, push notification broadcasts, and alert delivery.',
+    },
+    {
+      code: '10.9',
+      title: 'Analytics & Reporting Dashboard',
+      desc: 'Comprehensive platform analytics, retention cohorts, host performance metrics, and export auditing.',
+    },
+    {
+      code: '10.10',
+      title: 'Store Release & Launch Rehearsal',
+      desc: 'App store release checklist, pre-flight verification tests, compliance readiness, and staging rehearsals.',
     },
   ];
 

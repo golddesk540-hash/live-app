@@ -43,9 +43,9 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { id: 'live_monitor', label: 'Live Monitor', icon: Radio, badge: '1,264', badgeColor: 'bg-pink-500/20 text-pink-300' },
   { id: 'reports', label: 'Reports', icon: ShieldAlert, badge: '56', badgeColor: 'bg-amber-500/20 text-amber-300' },
   { id: 'safety', label: 'Safety', icon: Shield, badge: '24', badgeColor: 'bg-rose-500/20 text-rose-300' },
-  { id: 'economy', label: 'Economy', icon: Coins, isPhase10Submodule: '10.6' },
+  { id: 'economy', label: 'Economy', icon: Coins, badge: '48', badgeColor: 'bg-emerald-500/20 text-emerald-300' },
+  { id: 'content', label: 'Content', icon: Layers, badge: '21', badgeColor: 'bg-purple-500/20 text-purple-300' },
   { id: 'agency', label: 'Agency', icon: Building2, isPhase10Submodule: '10.7' },
-  { id: 'content', label: 'Content', icon: Layers, isPhase10Submodule: '10.8' },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 

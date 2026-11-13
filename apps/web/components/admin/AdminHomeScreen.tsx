@@ -23,6 +23,7 @@ import { UserHostAdminModule } from './user-host/UserHostAdminModule';
 import { LiveMonitorModule } from './live-monitor/LiveMonitorModule';
 import { ReportQueueModule } from './reports/ReportQueueModule';
 import { ChildSafetyOperationsModule } from './safety/ChildSafetyOperationsModule';
+import { ContentEconomyAdminModule } from './economy/ContentEconomyAdminModule';
 import {
   AdminActivityItem,
   AdminNavSection,
@@ -279,25 +280,12 @@ export const AdminHomeScreen: React.FC = () => {
   // Sidebar navigation handler
   const handleSelectNav = (section: AdminNavSection) => {
     setIsMobileMenuOpen(false);
-    // Future module routing checks (Module 10.2 Users/Hosts, 10.3 Live Monitor, 10.4 Reports & 10.5 Safety are active)
-    if (
-      ['economy', 'agency', 'content'].includes(
-        section
-      )
-    ) {
-      const titles: Record<string, { title: string; mod: string }> = {
-        economy: {
-          title: 'Platform Coins & Ledger',
-          mod: 'Module 10.6 Economy & Content Admin',
-        },
-        agency: { title: 'Agency Guild Center', mod: 'Module 10.7 Agency, Seller & Payout Admin' },
-        content: { title: 'Banners & Virtual Gifts CMS', mod: 'Module 10.8 News, Languages & Push Admin' },
-      };
-      const info = titles[section] || { title: section, mod: 'Phase 10 Future Module' };
+    // Future module routing checks (Module 10.2 Users/Hosts, 10.3 Live Monitor, 10.4 Reports, 10.5 Safety, 10.6 Economy/Content are active)
+    if (section === 'agency') {
       setComingSoonModal({
         isOpen: true,
-        title: info.title,
-        phaseModule: info.mod,
+        title: 'Agency Guild Center',
+        phaseModule: 'Module 10.7 Agency, Seller & Payout Admin',
       });
       return;
     }
@@ -555,6 +543,16 @@ export const AdminHomeScreen: React.FC = () => {
               <ChildSafetyOperationsModule
                 onNavigateToUser={() => setActiveNav('users')}
                 onNavigateToHost={() => setActiveNav('hosts')}
+              />
+            </div>
+          )}
+
+          {/* View: Content & Economy Admin Module 10.6 */}
+          {(activeNav === 'economy' || activeNav === 'content') && (
+            <div className="animate-fadeIn">
+              <ContentEconomyAdminModule
+                initialTab={activeNav === 'content' ? 'content' : 'dashboard'}
+                onLogActivity={logActivity}
               />
             </div>
           )}
