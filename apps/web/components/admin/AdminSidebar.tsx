@@ -40,7 +40,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { id: 'activity', label: 'Activity Log', icon: History },
   { id: 'users', label: 'Users', icon: Users, badge: '28' },
   { id: 'hosts', label: 'Hosts', icon: UserCheck, badge: '22', badgeColor: 'bg-purple-500/20 text-purple-300' },
-  { id: 'live_monitor', label: 'Live Monitor', icon: Radio, badge: '1,264', badgeColor: 'bg-pink-500/20 text-pink-300', isPhase10Submodule: '10.3' },
+  { id: 'live_monitor', label: 'Live Monitor', icon: Radio, badge: '1,264', badgeColor: 'bg-pink-500/20 text-pink-300' },
   { id: 'reports', label: 'Reports', icon: ShieldAlert, badge: '56', badgeColor: 'bg-amber-500/20 text-amber-300', isPhase10Submodule: '10.4' },
   { id: 'safety', label: 'Safety', icon: Shield, isPhase10Submodule: '10.5' },
   { id: 'economy', label: 'Economy', icon: Coins, isPhase10Submodule: '10.6' },

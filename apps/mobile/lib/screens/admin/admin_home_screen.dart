@@ -126,6 +126,50 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     },
   ];
 
+  // Sample Live Sessions (Module 10.3)
+  final List<Map<String, String>> _liveSessions = [
+    {
+      'id': 'LIV-88201',
+      'room': '88201',
+      'username': 'Host_Lina',
+      'title': 'Acoustic chill & sing-along night ✨',
+      'category': 'Entertainment',
+      'viewers': '12.4K',
+      'duration': '1h 14m',
+      'status': 'LIVE',
+    },
+    {
+      'id': 'LIV-88202',
+      'room': '88202',
+      'username': 'Host_Riya',
+      'title': 'Bollywood hits & piano live sessions 🎹',
+      'category': 'Music',
+      'viewers': '8.9K',
+      'duration': '58m',
+      'status': 'LIVE',
+    },
+    {
+      'id': 'LIV-88203',
+      'room': '88203',
+      'username': 'Host_Emma',
+      'title': 'Late night coffee & real talks ☕',
+      'category': 'Chat',
+      'viewers': '6.7K',
+      'duration': '42m',
+      'status': 'LIVE',
+    },
+    {
+      'id': 'LIV-88021',
+      'room': '88021',
+      'username': 'Host_Sara',
+      'title': 'Official Popo Partner Gala & PK 🏆',
+      'category': 'Entertainment',
+      'viewers': '15.2K',
+      'duration': '1h 55m',
+      'status': 'LIVE',
+    },
+  ];
+
   // Sample admin list (Module 10.1)
   final List<Map<String, String>> _admins = [
     {
@@ -199,7 +243,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'User & Host Operations Suite · 10.2',
+                  'User, Host & Live Monitor Suite · 10.3',
                   style: TextStyle(color: Colors.white54, fontSize: 10),
                 ),
               ],
@@ -210,7 +254,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Navigation Pills (Dashboard / Users / Hosts / Staff / Roles)
+          // Navigation Pills (Dashboard / Users / Hosts / Staff / Roles / Live Monitor)
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -220,6 +264,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 _buildFilterPill('Users', 1),
                 const SizedBox(width: 8),
                 _buildFilterPill('Hosts', 2),
+                const SizedBox(width: 8),
+                _buildFilterPill('Live Monitor', 5),
                 const SizedBox(width: 8),
                 _buildFilterPill('Staff Admins', 3),
                 const SizedBox(width: 8),
@@ -409,6 +455,130 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   Text(
                     r['desc'],
                     style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
+              ),
+            )),
+          ],
+
+          // TAB 5: Live Monitor (Module 10.3)
+          if (_activeTabIndex == 5) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Live Video Streams',
+                  style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.redAccent.withOpacity(0.5)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.fiber_manual_record, color: Colors.redAccent, size: 8),
+                      SizedBox(width: 4),
+                      Text('1,264 LIVE', style: TextStyle(color: Colors.redAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ..._liveSessions.map((s) => Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF160A2D),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.purple.withOpacity(0.25)),
+              ),
+              child: Row(
+                children: [
+                  Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 22,
+                        backgroundColor: const Color(0xFFFF0F7B).withOpacity(0.2),
+                        child: Text(
+                          s['username']!.replaceAll('Host_', '').substring(0, 1),
+                          style: const TextStyle(color: Color(0xFFFF0F7B), fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text('LIVE', style: TextStyle(color: Colors.white, fontSize: 7, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              s['username']!,
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFF0F7B).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                s['category']!,
+                                style: const TextStyle(color: Color(0xFFFF0F7B), fontSize: 9, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          s['title']!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white70, fontSize: 11),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Room #${s['room']} · ${s['duration']}',
+                          style: const TextStyle(color: Colors.white38, fontSize: 10),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0E061E),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.purple.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.remove_red_eye_outlined, color: Color(0xFFFF0F7B), size: 12),
+                        const SizedBox(width: 4),
+                        Text(
+                          s['viewers']!,
+                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

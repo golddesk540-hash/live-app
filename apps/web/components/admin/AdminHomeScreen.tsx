@@ -20,6 +20,7 @@ import { QuickActionsSection } from './QuickActionsSection';
 import { RoleManagementSection } from './RoleManagementSection';
 import { AdminSettingsSection } from './AdminSettingsSection';
 import { UserHostAdminModule } from './user-host/UserHostAdminModule';
+import { LiveMonitorModule } from './live-monitor/LiveMonitorModule';
 import {
   AdminActivityItem,
   AdminNavSection,
@@ -254,9 +255,10 @@ export const AdminHomeScreen: React.FC = () => {
   const handleQuickAction = (section: AdminNavSection, title: string) => {
     if (section === 'users') {
       setActiveNav('users');
+    } else if (section === 'live_monitor') {
+      setActiveNav('live_monitor');
     } else {
       const modLabels: Record<string, string> = {
-        live_monitor: 'Module 10.3 Live Stream Monitor',
         reports: 'Module 10.4 Reports & Safety Queue',
         content: 'Module 10.7 Content Management',
       };
@@ -271,17 +273,13 @@ export const AdminHomeScreen: React.FC = () => {
   // Sidebar navigation handler
   const handleSelectNav = (section: AdminNavSection) => {
     setIsMobileMenuOpen(false);
-    // Future module routing checks (Module 10.2 Users and Hosts are now active)
+    // Future module routing checks (Module 10.2 Users/Hosts & 10.3 Live Monitor are now active)
     if (
-      ['live_monitor', 'reports', 'safety', 'economy', 'agency', 'content'].includes(
+      ['reports', 'safety', 'economy', 'agency', 'content'].includes(
         section
       )
     ) {
       const titles: Record<string, { title: string; mod: string }> = {
-        live_monitor: {
-          title: 'Agora Live Video Monitor',
-          mod: 'Module 10.3 Live Stream Monitor',
-        },
         reports: {
           title: 'User Safety & Moderation Queue',
           mod: 'Module 10.4 Reports & Safety Queue',
@@ -530,6 +528,16 @@ export const AdminHomeScreen: React.FC = () => {
           {activeNav === 'hosts' && (
             <div className="animate-fadeIn">
               <UserHostAdminModule initialTab="hosts" onLogActivity={logActivity} />
+            </div>
+          )}
+
+          {/* View: Live Monitor Module 10.3 */}
+          {activeNav === 'live_monitor' && (
+            <div className="animate-fadeIn">
+              <LiveMonitorModule
+                onLogActivity={logActivity}
+                onNavigateToHostAdmin={() => setActiveNav('hosts')}
+              />
             </div>
           )}
 
