@@ -24,6 +24,7 @@ import { LiveMonitorModule } from './live-monitor/LiveMonitorModule';
 import { ReportQueueModule } from './reports/ReportQueueModule';
 import { ChildSafetyOperationsModule } from './safety/ChildSafetyOperationsModule';
 import { ContentEconomyAdminModule } from './economy/ContentEconomyAdminModule';
+import { AgencySellerPayoutAdminModule } from './agency-seller-payout/AgencySellerPayoutAdminModule';
 import {
   AdminActivityItem,
   AdminNavSection,
@@ -264,9 +265,12 @@ export const AdminHomeScreen: React.FC = () => {
       setActiveNav('reports');
     } else if (section === 'safety') {
       setActiveNav('safety');
+    } else if (section === 'economy' || section === 'content') {
+      setActiveNav(section);
+    } else if (section === 'agency') {
+      setActiveNav('agency');
     } else {
       const modLabels: Record<string, string> = {
-        economy: 'Module 10.6 Economy & Content Admin',
         content: 'Module 10.8 News, Languages & Push Admin',
       };
       setComingSoonModal({
@@ -280,15 +284,6 @@ export const AdminHomeScreen: React.FC = () => {
   // Sidebar navigation handler
   const handleSelectNav = (section: AdminNavSection) => {
     setIsMobileMenuOpen(false);
-    // Future module routing checks (Module 10.2 Users/Hosts, 10.3 Live Monitor, 10.4 Reports, 10.5 Safety, 10.6 Economy/Content are active)
-    if (section === 'agency') {
-      setComingSoonModal({
-        isOpen: true,
-        title: 'Agency Guild Center',
-        phaseModule: 'Module 10.7 Agency, Seller & Payout Admin',
-      });
-      return;
-    }
     setActiveNav(section);
   };
 
@@ -553,6 +548,15 @@ export const AdminHomeScreen: React.FC = () => {
               <ContentEconomyAdminModule
                 initialTab={activeNav === 'content' ? 'content' : 'dashboard'}
                 onLogActivity={logActivity}
+              />
+            </div>
+          )}
+
+          {/* View: Agency, Seller & Payout Admin Module 10.7 */}
+          {activeNav === 'agency' && (
+            <div className="animate-fadeIn">
+              <AgencySellerPayoutAdminModule
+                onLogAdminActivity={logActivity}
               />
             </div>
           )}

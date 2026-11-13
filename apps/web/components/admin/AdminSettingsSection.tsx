@@ -33,11 +33,6 @@ export const AdminSettingsSection: React.FC<AdminSettingsSectionProps> = ({
 
   const upcomingModules = [
     {
-      code: '10.7',
-      title: 'Agency, Seller & Payout Admin',
-      desc: 'Agency registration reviews, coin seller quotas, agent commissions, and creator payout authorizations.',
-    },
-    {
       code: '10.8',
       title: 'News, Languages & Push Admin',
       desc: 'App notices, multi-language localization dictionary, push notification broadcasts, and alert delivery.',

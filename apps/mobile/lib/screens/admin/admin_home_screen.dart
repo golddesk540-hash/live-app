@@ -385,7 +385,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'User, Host, Live, Report, Safety & Economy Suite · 10.6',
+                  'User, Host, Live, Safety, Economy & Partner Suite · 10.7',
                   style: TextStyle(color: Colors.white54, fontSize: 10),
                 ),
               ],
@@ -396,7 +396,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Navigation Pills (Dashboard / Users / Hosts / Live Monitor / Reports / Child Safety / Economy / Staff / Roles)
+          // Navigation Pills (Dashboard / Users / Hosts / Live Monitor / Reports / Child Safety / Economy / Agency / Staff / Roles)
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -414,6 +414,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 _buildFilterPill('Child Safety', 7),
                 const SizedBox(width: 8),
                 _buildFilterPill('Content & Economy', 8),
+                const SizedBox(width: 8),
+                _buildFilterPill('Agency & Payouts', 9),
                 const SizedBox(width: 8),
                 _buildFilterPill('Staff Admins', 3),
                 const SizedBox(width: 8),
@@ -1078,6 +1080,214 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 ),
               );
             }).toList(),
+          ],
+
+          // TAB 9: AGENCY, SELLER & PAYOUT ADMIN (Module 10.7)
+          if (_activeTabIndex == 9) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'AGENCY, SELLER & PAYOUT ADMIN',
+                  style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF0F7B).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFFF0F7B).withOpacity(0.4)),
+                  ),
+                  child: const Text('22 Claims', style: TextStyle(color: Color(0xFFFF7BB0), fontSize: 10, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Primary 4 Hub Cards matching 10_07 Reference
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF160A2D),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.blueAccent.withOpacity(0.4)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            CircleAvatar(
+                              radius: 14,
+                              backgroundColor: Colors.blueAccent.withOpacity(0.2),
+                              child: const Icon(Icons.people, color: Colors.blueAccent, size: 14),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                              decoration: BoxDecoration(color: const Color(0xFF34D399).withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                              child: const Text('Active', style: TextStyle(color: Color(0xFF34D399), fontSize: 9, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text('Agency Alpha', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                        const Text('AG1001 · 48 Hosts', style: TextStyle(color: Colors.white54, fontSize: 10)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF160A2D),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.purpleAccent.withOpacity(0.4)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            CircleAvatar(
+                              radius: 14,
+                              backgroundColor: Colors.purpleAccent.withOpacity(0.2),
+                              child: const Icon(Icons.apartment, color: Colors.purpleAccent, size: 14),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                              decoration: BoxDecoration(color: const Color(0xFF34D399).withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                              child: const Text('Active', style: TextStyle(color: Color(0xFF34D399), fontSize: 9, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text('Agency Prime', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                        const Text('AG1002 · 35 Hosts', style: TextStyle(color: Colors.white54, fontSize: 10)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF160A2D),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFFF0F7B).withOpacity(0.4)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            CircleAvatar(
+                              radius: 14,
+                              backgroundColor: const Color(0xFFFF0F7B).withOpacity(0.2),
+                              child: const Icon(Icons.storefront, color: Color(0xFFFF0F7B), size: 14),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                              decoration: BoxDecoration(color: const Color(0xFF34D399).withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                              child: const Text('Active', style: TextStyle(color: Color(0xFF34D399), fontSize: 9, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text('Seller_Rahul', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                        const Text('SL2001 · \$14.5k Sales', style: TextStyle(color: Colors.white54, fontSize: 10)),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF160A2D),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.4)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            CircleAvatar(
+                              radius: 14,
+                              backgroundColor: const Color(0xFFF59E0B).withOpacity(0.2),
+                              child: const Icon(Icons.receipt_long, color: Color(0xFFF59E0B), size: 14),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                              decoration: BoxDecoration(color: const Color(0xFFF59E0B).withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                              child: const Text('Processing', style: TextStyle(color: Color(0xFFFCD34D), fontSize: 9, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        const Text('Payout Request', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                        const Text('#PYS-8421 · \$1,250', style: TextStyle(color: Colors.white54, fontSize: 10)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'PAYOUT REQUESTS QUEUE',
+              style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF160A2D),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Colors.purple.withOpacity(0.25)),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: const Color(0xFFFF0F7B).withOpacity(0.2),
+                    child: const Icon(Icons.account_balance_wallet, color: Color(0xFFFF0F7B), size: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('#PYS-8421 · Seller_Rahul', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                        Text('Bank Transfer (Meezan Bank) · PK64MEZN00...1234', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0E061E),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+                    ),
+                    child: const Text('\$1,250 USD', style: TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
           ],
         ],
       ),

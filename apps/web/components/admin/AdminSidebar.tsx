@@ -45,7 +45,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { id: 'safety', label: 'Safety', icon: Shield, badge: '24', badgeColor: 'bg-rose-500/20 text-rose-300' },
   { id: 'economy', label: 'Economy', icon: Coins, badge: '48', badgeColor: 'bg-emerald-500/20 text-emerald-300' },
   { id: 'content', label: 'Content', icon: Layers, badge: '21', badgeColor: 'bg-purple-500/20 text-purple-300' },
-  { id: 'agency', label: 'Agency', icon: Building2, isPhase10Submodule: '10.7' },
+  { id: 'agency', label: 'Agency & Payouts', icon: Building2, badge: '28', badgeColor: 'bg-pink-500/20 text-pink-300' },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
