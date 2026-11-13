@@ -33,14 +33,14 @@ export const AdminSettingsSection: React.FC<AdminSettingsSectionProps> = ({
 
   const upcomingModules = [
     {
-      code: '10.4',
-      title: 'Reports & Safety Queue',
-      desc: 'Triage user abuse reports, automated chat toxicity flags, and safety sanctions.',
+      code: '10.5',
+      title: 'Child Safety Operations',
+      desc: 'Age verification workflows, minor detection guards, specialized child safety escalation queues.',
     },
     {
-      code: '10.5',
-      title: 'Economy & Coin Management',
-      desc: 'Coin pricing packages, reseller quota pools, host point conversions, and payouts.',
+      code: '10.6',
+      title: 'Content & Economy Admin',
+      desc: 'Coin pricing packages, reseller quota pools, host point conversions, and virtual gifts CMS.',
     },
     {
       code: '10.6',

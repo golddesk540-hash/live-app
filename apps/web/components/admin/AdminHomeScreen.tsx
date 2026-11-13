@@ -21,6 +21,7 @@ import { RoleManagementSection } from './RoleManagementSection';
 import { AdminSettingsSection } from './AdminSettingsSection';
 import { UserHostAdminModule } from './user-host/UserHostAdminModule';
 import { LiveMonitorModule } from './live-monitor/LiveMonitorModule';
+import { ReportQueueModule } from './reports/ReportQueueModule';
 import {
   AdminActivityItem,
   AdminNavSection,
@@ -257,10 +258,12 @@ export const AdminHomeScreen: React.FC = () => {
       setActiveNav('users');
     } else if (section === 'live_monitor') {
       setActiveNav('live_monitor');
+    } else if (section === 'reports') {
+      setActiveNav('reports');
     } else {
       const modLabels: Record<string, string> = {
-        reports: 'Module 10.4 Reports & Safety Queue',
-        content: 'Module 10.7 Content Management',
+        safety: 'Module 10.5 Child Safety Operations',
+        content: 'Module 10.8 News, Languages & Push Admin',
       };
       setComingSoonModal({
         isOpen: true,
@@ -273,27 +276,23 @@ export const AdminHomeScreen: React.FC = () => {
   // Sidebar navigation handler
   const handleSelectNav = (section: AdminNavSection) => {
     setIsMobileMenuOpen(false);
-    // Future module routing checks (Module 10.2 Users/Hosts & 10.3 Live Monitor are now active)
+    // Future module routing checks (Module 10.2 Users/Hosts, 10.3 Live Monitor & 10.4 Reports are active)
     if (
-      ['reports', 'safety', 'economy', 'agency', 'content'].includes(
+      ['safety', 'economy', 'agency', 'content'].includes(
         section
       )
     ) {
       const titles: Record<string, { title: string; mod: string }> = {
-        reports: {
-          title: 'User Safety & Moderation Queue',
-          mod: 'Module 10.4 Reports & Safety Queue',
-        },
         safety: {
           title: 'Trust & Safety Policies',
-          mod: 'Module 10.4 Reports & Safety Queue',
+          mod: 'Module 10.5 Child Safety Operations',
         },
         economy: {
           title: 'Platform Coins & Ledger',
-          mod: 'Module 10.5 Economy & Coin Management',
+          mod: 'Module 10.6 Economy & Content Admin',
         },
-        agency: { title: 'Agency Guild Center', mod: 'Module 10.6 Agency Management Center' },
-        content: { title: 'Banners & Virtual Gifts CMS', mod: 'Module 10.7 Content Management' },
+        agency: { title: 'Agency Guild Center', mod: 'Module 10.7 Agency, Seller & Payout Admin' },
+        content: { title: 'Banners & Virtual Gifts CMS', mod: 'Module 10.8 News, Languages & Push Admin' },
       };
       const info = titles[section] || { title: section, mod: 'Phase 10 Future Module' };
       setComingSoonModal({
@@ -537,6 +536,16 @@ export const AdminHomeScreen: React.FC = () => {
               <LiveMonitorModule
                 onLogActivity={logActivity}
                 onNavigateToHostAdmin={() => setActiveNav('hosts')}
+              />
+            </div>
+          )}
+
+          {/* View: Report Queue Module 10.4 */}
+          {activeNav === 'reports' && (
+            <div className="animate-fadeIn">
+              <ReportQueueModule
+                onNavigateToUser={() => setActiveNav('users')}
+                onNavigateToHost={() => setActiveNav('hosts')}
               />
             </div>
           )}

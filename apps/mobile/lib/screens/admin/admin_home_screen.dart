@@ -170,6 +170,55 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     },
   ];
 
+  // Sample Reports (Module 10.4)
+  final List<Map<String, String>> _reports = [
+    {
+      'id': '#RP98421',
+      'reporter': 'User_98462',
+      'reported': 'Host_Elena',
+      'category': 'Unsuitable Content',
+      'status': 'Pending',
+      'priority': 'High',
+      'time': '2m ago',
+    },
+    {
+      'id': '#RP98420',
+      'reporter': 'User_Mike',
+      'reported': 'User_Tariq99',
+      'category': 'Harassment & Abuse',
+      'status': 'Under Review',
+      'priority': 'Urgent',
+      'time': '6m ago',
+    },
+    {
+      'id': '#RP98419',
+      'reporter': 'Host_Sara',
+      'reported': 'User_Devon',
+      'category': 'Offensive Language',
+      'status': 'Pending',
+      'priority': 'Medium',
+      'time': '10m ago',
+    },
+    {
+      'id': '#RP98418',
+      'reporter': 'User_Mike',
+      'reported': 'User_SpamBot1',
+      'category': 'Spam & Promotion',
+      'status': 'Pending',
+      'priority': 'Low',
+      'time': '16m ago',
+    },
+    {
+      'id': '#RP98414',
+      'reporter': 'Host_Sara',
+      'reported': 'Host_Carlos',
+      'category': 'Room Rule Violation',
+      'status': 'Resolved',
+      'priority': 'Low',
+      'time': '2h ago',
+    },
+  ];
+
   // Sample admin list (Module 10.1)
   final List<Map<String, String>> _admins = [
     {
@@ -243,7 +292,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'User, Host & Live Monitor Suite · 10.3',
+                  'User, Host, Live & Report Suite · 10.4',
                   style: TextStyle(color: Colors.white54, fontSize: 10),
                 ),
               ],
@@ -254,7 +303,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Navigation Pills (Dashboard / Users / Hosts / Staff / Roles / Live Monitor)
+          // Navigation Pills (Dashboard / Users / Hosts / Live Monitor / Reports / Staff / Roles)
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -266,6 +315,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 _buildFilterPill('Hosts', 2),
                 const SizedBox(width: 8),
                 _buildFilterPill('Live Monitor', 5),
+                const SizedBox(width: 8),
+                _buildFilterPill('Reports', 6),
                 const SizedBox(width: 8),
                 _buildFilterPill('Staff Admins', 3),
                 const SizedBox(width: 8),
@@ -583,6 +634,114 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 ],
               ),
             )),
+          ],
+
+          // TAB 6: REPORTS QUEUE (Module 10.4)
+          if (_activeTabIndex == 6) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'REPORT QUEUE · INCIDENT TRIAGE',
+                  style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.4)),
+                  ),
+                  child: const Text('56 Active', style: TextStyle(color: Color(0xFFFCD34D), fontSize: 10, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ..._reports.map((rep) {
+              final isPending = rep['status'] == 'Pending';
+              final isReview = rep['status'] == 'Under Review';
+              final isUrgent = rep['priority'] == 'Urgent';
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF160A2D),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isUrgent ? const Color(0xFFF43F5E).withOpacity(0.5) : const Color(0xFFA855F7).withOpacity(0.2),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Report ${rep['id']}',
+                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+                        ),
+                        Text(
+                          rep['time']!,
+                          style: const TextStyle(color: Colors.white38, fontSize: 10),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                rep['category']!,
+                                style: const TextStyle(color: Color(0xFFFF0F7B), fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Target: ${rep['reported']} · By ${rep['reporter']}',
+                                style: const TextStyle(color: Colors.white70, fontSize: 11),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isPending
+                                ? const Color(0xFFF59E0B).withOpacity(0.2)
+                                : isReview
+                                    ? const Color(0xFFA855F7).withOpacity(0.2)
+                                    : const Color(0xFF10B981).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isPending
+                                  ? const Color(0xFFF59E0B).withOpacity(0.4)
+                                  : isReview
+                                      ? const Color(0xFFA855F7).withOpacity(0.4)
+                                      : const Color(0xFF10B981).withOpacity(0.4),
+                            ),
+                          ),
+                          child: Text(
+                            rep['status']!,
+                            style: TextStyle(
+                              color: isPending
+                                  ? const Color(0xFFFCD34D)
+                                  : isReview
+                                      ? const Color(0xFFD8B4FE)
+                                      : const Color(0xFF6EE7B7),
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
           ],
         ],
       ),
