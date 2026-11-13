@@ -19,6 +19,7 @@ import { PlatformStatisticsCards } from './PlatformStatisticsCards';
 import { QuickActionsSection } from './QuickActionsSection';
 import { RoleManagementSection } from './RoleManagementSection';
 import { AdminSettingsSection } from './AdminSettingsSection';
+import { UserHostAdminModule } from './user-host/UserHostAdminModule';
 import {
   AdminActivityItem,
   AdminNavSection,
@@ -252,7 +253,7 @@ export const AdminHomeScreen: React.FC = () => {
   // Quick Action Dispatcher
   const handleQuickAction = (section: AdminNavSection, title: string) => {
     if (section === 'users') {
-      setActiveNav('admins');
+      setActiveNav('users');
     } else {
       const modLabels: Record<string, string> = {
         live_monitor: 'Module 10.3 Live Stream Monitor',
@@ -270,14 +271,13 @@ export const AdminHomeScreen: React.FC = () => {
   // Sidebar navigation handler
   const handleSelectNav = (section: AdminNavSection) => {
     setIsMobileMenuOpen(false);
-    // Future module routing checks
+    // Future module routing checks (Module 10.2 Users and Hosts are now active)
     if (
-      ['hosts', 'live_monitor', 'reports', 'safety', 'economy', 'agency', 'content'].includes(
+      ['live_monitor', 'reports', 'safety', 'economy', 'agency', 'content'].includes(
         section
       )
     ) {
       const titles: Record<string, { title: string; mod: string }> = {
-        hosts: { title: 'Creator & Host Operations', mod: 'Module 10.2 User and Host Admin' },
         live_monitor: {
           title: 'Agora Live Video Monitor',
           mod: 'Module 10.3 Live Stream Monitor',
@@ -505,8 +505,8 @@ export const AdminHomeScreen: React.FC = () => {
             </div>
           )}
 
-          {/* View: Admins List */}
-          {(activeNav === 'admins' || activeNav === 'users') && (
+          {/* View: Staff Admins List */}
+          {activeNav === 'admins' && (
             <div className="animate-fadeIn">
               <AdminManagementSection
                 admins={admins}
@@ -517,6 +517,19 @@ export const AdminHomeScreen: React.FC = () => {
                 onToggleStatus={handleToggleAdminStatus}
                 onDeleteAdmin={handleDeleteAdmin}
               />
+            </div>
+          )}
+
+          {/* View: User and Host Admin Module 10.2 */}
+          {activeNav === 'users' && (
+            <div className="animate-fadeIn">
+              <UserHostAdminModule initialTab="users" onLogActivity={logActivity} />
+            </div>
+          )}
+
+          {activeNav === 'hosts' && (
+            <div className="animate-fadeIn">
+              <UserHostAdminModule initialTab="hosts" onLogActivity={logActivity} />
             </div>
           )}
 

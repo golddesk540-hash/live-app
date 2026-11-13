@@ -33,11 +33,6 @@ export const AdminSettingsSection: React.FC<AdminSettingsSectionProps> = ({
 
   const upcomingModules = [
     {
-      code: '10.2',
-      title: 'User and Host Admin',
-      desc: 'Deep inspection of user credentials, host verifications, and suspension management.',
-    },
-    {
       code: '10.3',
       title: 'Live Stream Monitor',
       desc: 'Real-time multi-room Agora feed monitoring, technical stream vitals, and live policing.',
