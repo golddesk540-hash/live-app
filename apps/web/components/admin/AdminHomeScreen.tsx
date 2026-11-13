@@ -22,6 +22,7 @@ import { AdminSettingsSection } from './AdminSettingsSection';
 import { UserHostAdminModule } from './user-host/UserHostAdminModule';
 import { LiveMonitorModule } from './live-monitor/LiveMonitorModule';
 import { ReportQueueModule } from './reports/ReportQueueModule';
+import { ChildSafetyOperationsModule } from './safety/ChildSafetyOperationsModule';
 import {
   AdminActivityItem,
   AdminNavSection,
@@ -260,9 +261,11 @@ export const AdminHomeScreen: React.FC = () => {
       setActiveNav('live_monitor');
     } else if (section === 'reports') {
       setActiveNav('reports');
+    } else if (section === 'safety') {
+      setActiveNav('safety');
     } else {
       const modLabels: Record<string, string> = {
-        safety: 'Module 10.5 Child Safety Operations',
+        economy: 'Module 10.6 Economy & Content Admin',
         content: 'Module 10.8 News, Languages & Push Admin',
       };
       setComingSoonModal({
@@ -276,17 +279,13 @@ export const AdminHomeScreen: React.FC = () => {
   // Sidebar navigation handler
   const handleSelectNav = (section: AdminNavSection) => {
     setIsMobileMenuOpen(false);
-    // Future module routing checks (Module 10.2 Users/Hosts, 10.3 Live Monitor & 10.4 Reports are active)
+    // Future module routing checks (Module 10.2 Users/Hosts, 10.3 Live Monitor, 10.4 Reports & 10.5 Safety are active)
     if (
-      ['safety', 'economy', 'agency', 'content'].includes(
+      ['economy', 'agency', 'content'].includes(
         section
       )
     ) {
       const titles: Record<string, { title: string; mod: string }> = {
-        safety: {
-          title: 'Trust & Safety Policies',
-          mod: 'Module 10.5 Child Safety Operations',
-        },
         economy: {
           title: 'Platform Coins & Ledger',
           mod: 'Module 10.6 Economy & Content Admin',
@@ -544,6 +543,16 @@ export const AdminHomeScreen: React.FC = () => {
           {activeNav === 'reports' && (
             <div className="animate-fadeIn">
               <ReportQueueModule
+                onNavigateToUser={() => setActiveNav('users')}
+                onNavigateToHost={() => setActiveNav('hosts')}
+              />
+            </div>
+          )}
+
+          {/* View: Child Safety Operations Module 10.5 */}
+          {activeNav === 'safety' && (
+            <div className="animate-fadeIn">
+              <ChildSafetyOperationsModule
                 onNavigateToUser={() => setActiveNav('users')}
                 onNavigateToHost={() => setActiveNav('hosts')}
               />

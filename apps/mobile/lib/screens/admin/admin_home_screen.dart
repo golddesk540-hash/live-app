@@ -219,6 +219,55 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     },
   ];
 
+  // Sample Safety Cases (Module 10.5)
+  final List<Map<String, String>> _safetyCases = [
+    {
+      'id': '#CS-7701',
+      'user': 'User_98462',
+      'category': 'Age Verification Review',
+      'priority': 'Urgent',
+      'status': 'Under Review',
+      'time': '15m ago',
+      'host': 'Host_Elena',
+    },
+    {
+      'id': '#CS-7702',
+      'user': 'User_Tariq99',
+      'category': 'Inappropriate Interaction',
+      'priority': 'High',
+      'status': 'Under Review',
+      'time': '1h ago',
+      'host': 'None',
+    },
+    {
+      'id': '#CS-7703',
+      'user': 'User_Devon',
+      'category': 'Underage Stream Flag',
+      'priority': 'High',
+      'status': 'Pending',
+      'time': '1.5h ago',
+      'host': 'None',
+    },
+    {
+      'id': '#CS-7705',
+      'user': 'Popo_Support_Official_Fake',
+      'category': 'Grooming Prevention Alert',
+      'priority': 'Urgent',
+      'status': 'Escalated',
+      'time': '3h ago',
+      'host': 'None',
+    },
+    {
+      'id': '#CS-7704',
+      'user': 'User_SpamBot1',
+      'category': 'Restricted Contact Violation',
+      'priority': 'Medium',
+      'status': 'Resolved',
+      'time': '2.5h ago',
+      'host': 'None',
+    },
+  ];
+
   // Sample admin list (Module 10.1)
   final List<Map<String, String>> _admins = [
     {
@@ -292,7 +341,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'User, Host, Live & Report Suite · 10.4',
+                  'User, Host, Live, Report & Safety Suite · 10.5',
                   style: TextStyle(color: Colors.white54, fontSize: 10),
                 ),
               ],
@@ -303,7 +352,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Navigation Pills (Dashboard / Users / Hosts / Live Monitor / Reports / Staff / Roles)
+          // Navigation Pills (Dashboard / Users / Hosts / Live Monitor / Reports / Child Safety / Staff / Roles)
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -317,6 +366,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 _buildFilterPill('Live Monitor', 5),
                 const SizedBox(width: 8),
                 _buildFilterPill('Reports', 6),
+                const SizedBox(width: 8),
+                _buildFilterPill('Child Safety', 7),
                 const SizedBox(width: 8),
                 _buildFilterPill('Staff Admins', 3),
                 const SizedBox(width: 8),
@@ -731,6 +782,114 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                                   : isReview
                                       ? const Color(0xFFD8B4FE)
                                       : const Color(0xFF6EE7B7),
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
+
+          // TAB 7: CHILD SAFETY OPERATIONS (Module 10.5)
+          if (_activeTabIndex == 7) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'CHILD SAFETY OPERATIONS · TRUST & SAFETY',
+                  style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF43F5E).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFF43F5E).withOpacity(0.4)),
+                  ),
+                  child: const Text('24 Cases', style: TextStyle(color: Color(0xFFFDA4AF), fontSize: 10, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ..._safetyCases.map((sc) {
+              final isUrgent = sc['priority'] == 'Urgent';
+              final isEscalated = sc['status'] == 'Escalated';
+              final isResolved = sc['status'] == 'Resolved';
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF160A2D),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isUrgent ? const Color(0xFFF43F5E).withOpacity(0.5) : const Color(0xFFA855F7).withOpacity(0.2),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Safety Case ${sc['id']}',
+                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+                        ),
+                        Text(
+                          sc['time']!,
+                          style: const TextStyle(color: Colors.white38, fontSize: 10),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                sc['category']!,
+                                style: const TextStyle(color: Color(0xFFFF0F7B), fontSize: 12, fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Target: ${sc['user']}',
+                                style: const TextStyle(color: Colors.white70, fontSize: 11),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isUrgent || isEscalated
+                                ? const Color(0xFFF43F5E).withOpacity(0.2)
+                                : isResolved
+                                    ? const Color(0xFF10B981).withOpacity(0.2)
+                                    : const Color(0xFFA855F7).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isUrgent || isEscalated
+                                  ? const Color(0xFFF43F5E).withOpacity(0.4)
+                                  : isResolved
+                                      ? const Color(0xFF10B981).withOpacity(0.4)
+                                      : const Color(0xFFA855F7).withOpacity(0.4),
+                            ),
+                          ),
+                          child: Text(
+                            sc['status']!,
+                            style: TextStyle(
+                              color: isUrgent || isEscalated
+                                  ? const Color(0xFFFDA4AF)
+                                  : isResolved
+                                      ? const Color(0xFF6EE7B7)
+                                      : const Color(0xFFD8B4FE),
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                             ),
