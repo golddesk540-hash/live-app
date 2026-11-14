@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   Newspaper,
   Radio,
+  Rocket,
   Settings,
   Shield,
   ShieldAlert,
@@ -48,6 +49,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { id: 'content', label: 'Content', icon: Layers, badge: '21', badgeColor: 'bg-purple-500/20 text-purple-300' },
   { id: 'agency', label: 'Agency & Payouts', icon: Building2, badge: '28', badgeColor: 'bg-pink-500/20 text-pink-300' },
   { id: 'news', label: 'News & Push', icon: Newspaper, badge: '21', badgeColor: 'bg-pink-500/20 text-pink-300' },
+  { id: 'release', label: 'Store Release', icon: Rocket, badge: 'v1.0.0', badgeColor: 'bg-emerald-500/20 text-emerald-300' },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 

@@ -35,7 +35,8 @@ export const AdminSettingsSection: React.FC<AdminSettingsSectionProps> = ({
     {
       code: '10.10',
       title: 'Store Release & Launch Rehearsal',
-      desc: 'App store release checklist, pre-flight verification tests, compliance readiness, and staging rehearsals.',
+      desc: 'Official production store release checklist, pre-flight verification, compliance audit, and staging rehearsals.',
+      status: 'Completed',
     },
   ];
 

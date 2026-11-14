@@ -27,6 +27,7 @@ export type AdminNavSection =
   | 'agency'
   | 'content'
   | 'news'
+  | 'release'
   | 'settings'
   | 'admins'
   | 'roles'

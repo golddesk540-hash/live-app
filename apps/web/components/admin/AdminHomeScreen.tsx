@@ -27,6 +27,7 @@ import { ContentEconomyAdminModule } from './economy/ContentEconomyAdminModule';
 import { AgencySellerPayoutAdminModule } from './agency-seller-payout/AgencySellerPayoutAdminModule';
 import { NewsLanguagesPushModule } from './news-languages-push/NewsLanguagesPushModule';
 import { MainAdminDashboardModule } from './dashboard/MainAdminDashboardModule';
+import { StoreReleaseAdminModule } from './release/StoreReleaseAdminModule';
 import {
   AdminActivityItem,
   AdminNavSection,
@@ -61,6 +62,7 @@ export const AdminHomeScreen: React.FC = () => {
           'agency',
           'content',
           'news',
+          'release',
           'settings',
           'admins',
           'roles',
@@ -472,6 +474,15 @@ export const AdminHomeScreen: React.FC = () => {
             <div className="animate-fadeIn">
               <NewsLanguagesPushModule
                 onLogAdminActivity={logActivity}
+              />
+            </div>
+          )}
+
+          {/* View: Store Release and Launch Rehearsal Module 10.10 */}
+          {activeNav === 'release' && (
+            <div className="animate-fadeIn">
+              <StoreReleaseAdminModule
+                onNavigateSection={(sec) => setActiveNav(sec as AdminNavSection)}
               />
             </div>
           )}

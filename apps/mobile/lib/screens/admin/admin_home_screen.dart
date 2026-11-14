@@ -419,6 +419,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 const SizedBox(width: 8),
                 _buildFilterPill('News & Push', 10),
                 const SizedBox(width: 8),
+                _buildFilterPill('Store Release', 11),
+                const SizedBox(width: 8),
                 _buildFilterPill('Staff Admins', 3),
                 const SizedBox(width: 8),
                 _buildFilterPill('Roles', 4),
@@ -1551,6 +1553,133 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               ),
             ),
           ],
+
+          // TAB 11: Store Release and Launch Rehearsal (Module 10.10)
+          if (_activeTabIndex == 11) ...[
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2E1065), Color(0xFF1E1B4B)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0xFFFF0F7B).withOpacity(0.4)),
+                boxShadow: [
+                  BoxShadow(color: const Color(0xFFFF0F7B).withOpacity(0.15), blurRadius: 16, offset: const Offset(0, 6)),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF0F7B).withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFFF0F7B).withOpacity(0.4)),
+                        ),
+                        child: const Text('MODULE 10.10', style: TextStyle(color: Color(0xFFFF0F7B), fontSize: 10, fontWeight: FontWeight.bold)),
+                      ),
+                      const Text('v1.0.0 · Build #104', style: TextStyle(color: Colors.white70, fontSize: 11, fontFamily: 'monospace')),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('Store Release & Launch', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  const Text('Production release gate, store listing previews, and launch rehearsal.', style: TextStyle(color: Colors.white60, fontSize: 12)),
+                  const SizedBox(height: 16),
+
+                  // 6 Checkpoints matching 10_10_store_release_and_launch_rehearsal.png
+                  _buildReleaseCheckpoint('✓ Build Preparation', 'Release AAB & TestFlight IPA compilation complete'),
+                  _buildReleaseCheckpoint('✓ App Configuration', 'Target API 35 (Android 15) & iOS 18.1 compliant'),
+                  _buildReleaseCheckpoint('✓ Store Assets (Icon, Screenshots)', '1080x2400 and 1290x2796 assets loaded'),
+                  _buildReleaseCheckpoint('✓ Store Listing Info', 'Multi-language metadata and mature 17+ ratings set'),
+                  _buildReleaseCheckpoint('✓ Testing & QA', '31/32 test suites passed, 0 critical blockers'),
+                  _buildReleaseCheckpoint('✓ Launch Rehearsal', 'All 9 dry-run deployment simulation gates clear'),
+
+                  const SizedBox(height: 18),
+                  // Ready for Store Release Button matching 10_10_store_release_and_launch_rehearsal.png
+                  GestureDetector(
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('🚀 Ready for Store Release — Launch Rehearsal Confirmed!'),
+                          backgroundColor: Color(0xFFFF0F7B),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF0F7B), Color(0xFFA855F7)],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(color: const Color(0xFFFF0F7B).withOpacity(0.4), blurRadius: 14, offset: const Offset(0, 4)),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.rocket_launch, color: Colors.white, size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'Ready for Store Release',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReleaseCheckpoint(String title, String subtitle) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0E061E).withOpacity(0.8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.purple.withOpacity(0.2)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 2),
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: Colors.emeraldAccent.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.check, color: Colors.greenAccent, size: 12),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 2),
+                Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 10)),
+              ],
+            ),
+          ),
         ],
       ),
     );
