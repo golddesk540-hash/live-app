@@ -30,7 +30,10 @@ export const NewsPreviewModal: React.FC<NewsPreviewModalProps> = ({
   if (!isOpen || !article) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fade-in overflow-y-auto">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-fade-in overflow-y-auto"
+      data-testid="news-preview-modal"
+    >
       <div className="relative w-full max-w-4xl bg-[#17082e] border border-purple-500/30 rounded-2xl p-6 shadow-2xl shadow-purple-950/70 my-8 max-h-[92vh] overflow-y-auto">
         {/* Header & Device Switcher */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-purple-500/20 mb-6 gap-3">
