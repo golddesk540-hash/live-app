@@ -26,6 +26,7 @@ import { ChildSafetyOperationsModule } from './safety/ChildSafetyOperationsModul
 import { ContentEconomyAdminModule } from './economy/ContentEconomyAdminModule';
 import { AgencySellerPayoutAdminModule } from './agency-seller-payout/AgencySellerPayoutAdminModule';
 import { NewsLanguagesPushModule } from './news-languages-push/NewsLanguagesPushModule';
+import { MainAdminDashboardModule } from './dashboard/MainAdminDashboardModule';
 import {
   AdminActivityItem,
   AdminNavSection,
@@ -382,136 +383,10 @@ export const AdminHomeScreen: React.FC = () => {
 
         {/* Content Viewport */}
         <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-y-auto space-y-8 custom-scrollbar">
-          {/* View: Dashboard Overview */}
+          {/* View: Dashboard Overview (Module 10.9 Main Admin Dashboard & Analytics) */}
           {activeNav === 'dashboard' && (
-            <div className="space-y-8 animate-fadeIn">
-              {/* Section 1: Platform Statistics 4-Cards */}
-              <PlatformStatisticsCards stats={platformStats} />
-
-              {/* Section 2: Platform Overview Chart (Interactive SVG Neon Line Chart) */}
-              <PlatformOverviewChart />
-
-              {/* Section 3: Quick Actions */}
-              <QuickActionsSection onSelectAction={handleQuickAction} />
-
-              {/* Section 4: Quick Preview of Admins & Roles */}
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Left 7 cols: Admin Management Preview */}
-                <div className="lg:col-span-7">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base font-bold text-white flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-pink-500 shadow-[0_0_8px_#FF0F7B]" />
-                      <span>Admin User Staff ({admins.length})</span>
-                    </h3>
-                    <button
-                      onClick={() => setActiveNav('admins')}
-                      className="text-xs text-pink-400 hover:text-pink-300 font-semibold flex items-center gap-1 group"
-                    >
-                      <span>Manage All Admins</span>
-                      <svg
-                        className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="space-y-3">
-                    {admins.slice(0, 4).map((adm) => (
-                      <div
-                        key={adm.id}
-                        className="p-3.5 rounded-2xl bg-[#160A2D]/80 border border-purple-500/20 flex items-center justify-between gap-3 hover:border-pink-500/40 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={adm.avatar}
-                            alt={adm.name}
-                            className="w-9 h-9 rounded-xl object-cover border border-purple-500/30"
-                          />
-                          <div>
-                            <div className="text-xs font-bold text-white">{adm.name}</div>
-                            <div className="text-[11px] text-zinc-400 font-mono">
-                              {adm.email}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="px-2 py-0.5 rounded-lg bg-purple-500/15 text-purple-300 text-[10px] font-semibold border border-purple-500/30">
-                            {adm.role}
-                          </span>
-                          <button
-                            onClick={() => handleOpenViewAdmin(adm)}
-                            className="px-2.5 py-1 rounded-xl bg-[#0E061E] hover:bg-purple-900/40 text-[11px] text-zinc-300 border border-purple-500/20"
-                          >
-                            Details
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Right 5 cols: Latest Activity Preview */}
-                <div className="lg:col-span-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-base font-bold text-white flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-[0_0_8px_#A855F7]" />
-                      <span>Recent Audit Events</span>
-                    </h3>
-                    <button
-                      onClick={() => setActiveNav('activity')}
-                      className="text-xs text-pink-400 hover:text-pink-300 font-semibold flex items-center gap-1 group"
-                    >
-                      <span>Full Audit Log</span>
-                      <svg
-                        className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  <div className="space-y-3">
-                    {activityLogs.slice(0, 4).map((log) => (
-                      <div
-                        key={log.id}
-                        className="p-3.5 rounded-2xl bg-[#160A2D]/80 border border-purple-500/20 space-y-1 hover:border-purple-500/40 transition-colors"
-                      >
-                        <div className="flex items-center justify-between text-[11px]">
-                          <span className="font-bold text-white truncate max-w-[150px]">
-                            {log.actionTitle}
-                          </span>
-                          <span className="text-zinc-500 font-mono">{log.timeLabel}</span>
-                        </div>
-                        <div className="text-[11px] text-zinc-400 line-clamp-1">
-                          {log.details}
-                        </div>
-                        <div className="flex items-center gap-2 pt-1 text-[10px] text-zinc-500">
-                          <span>By {log.adminName}</span>
-                          <span>•</span>
-                          <span className="uppercase text-pink-400/80 font-mono">
-                            {log.category}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+            <div className="animate-fadeIn">
+              <MainAdminDashboardModule onNavigateSection={(sec) => handleSelectNav(sec as AdminNavSection)} />
             </div>
           )}
 

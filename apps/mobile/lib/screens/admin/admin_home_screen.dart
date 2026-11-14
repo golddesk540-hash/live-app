@@ -385,7 +385,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'User, Host, Live, Safety, Economy, Agency & News Suite · 10.8',
+                  'Main Platform Dashboard & Analytics Suite · 10.9',
                   style: TextStyle(color: Colors.white54, fontSize: 10),
                 ),
               ],
@@ -428,21 +428,36 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
 
           const SizedBox(height: 18),
 
-          // TAB 0: Dashboard Overview
+          // TAB 0: Dashboard Overview (Module 10.9 Main Platform Dashboard)
           if (_activeTabIndex == 0) ...[
-            const Text(
-              'PLATFORM OVERVIEW',
-              style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'EXECUTIVE PLATFORM OVERVIEW',
+                  style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF0F7B).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFFF0F7B).withOpacity(0.3)),
+                  ),
+                  child: const Text('Live Telemetry', style: TextStyle(color: Color(0xFFFF0F7B), fontSize: 10, fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
+            // 4 Hero Cards matching 10_09_dashboard.png
             Row(
               children: [
                 Expanded(
-                  child: _buildStatCard('Total Users', _stats['totalUsers'], Icons.people_outline, const Color(0xFFFF0F7B)),
+                  child: _buildHeroMetricCard('Total Users', '1,245,320', '+12.4%', Icons.people_outline, const Color(0xFF3B82F6), 1),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _buildStatCard('Live Hosts', _stats['liveHosts'], Icons.mic_none, const Color(0xFFA855F7)),
+                  child: _buildHeroMetricCard('Active Hosts', '8,420', '+8.2%', Icons.mic_none, const Color(0xFFA855F7), 2),
                 ),
               ],
             ),
@@ -450,12 +465,88 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _buildStatCard('Today Live', _stats['todayLive'], Icons.sensors, const Color(0xFF38BDF8)),
+                  child: _buildHeroMetricCard('Live Sessions', '56,320', '+15.6%', Icons.sensors, const Color(0xFFFF0F7B), 5),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _buildStatCard('Reports Queue', _stats['reports'], Icons.flag_outlined, const Color(0xFFFB7185)),
+                  child: _buildHeroMetricCard('Total Coins', '98,540,000', '+24.1%', Icons.monetization_on_outlined, const Color(0xFFFBBF24), 8),
                 ),
+              ],
+            ),
+            const SizedBox(height: 18),
+
+            // Mon-Sun Weekly Activity Bar Chart matching 10_09_dashboard.png
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF160A2D).withOpacity(0.9),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFA855F7).withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Weekly Active Engagement (Mon - Sun)',
+                        style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text('Past 7 Days', style: TextStyle(color: Colors.white70, fontSize: 10)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 110,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        _buildMobileBarColumn('Mon', 0.65, '820K'),
+                        _buildMobileBarColumn('Tue', 0.78, '980K'),
+                        _buildMobileBarColumn('Wed', 0.85, '1.05M'),
+                        _buildMobileBarColumn('Thu', 0.72, '910K'),
+                        _buildMobileBarColumn('Fri', 0.94, '1.18M'),
+                        _buildMobileBarColumn('Sat', 1.0, '1.24M', isPeak: true),
+                        _buildMobileBarColumn('Sun', 0.88, '1.10M'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+
+            // Quick Navigation Hub
+            const Text(
+              'QUICK MODULE DIRECTORY',
+              style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+            ),
+            const SizedBox(height: 10),
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 2.2,
+              children: [
+                _buildQuickNavTile('User Directory', '1.2M users', Icons.people_outline, const Color(0xFF3B82F6), 1),
+                _buildQuickNavTile('Host Operations', '8.4k hosts', Icons.mic_none, const Color(0xFFA855F7), 2),
+                _buildQuickNavTile('Live Monitor', '1.2k streams', Icons.sensors, const Color(0xFFFF0F7B), 5),
+                _buildQuickNavTile('Report Queue', '32 pending', Icons.flag_outlined, const Color(0xFFF59E0B), 6),
+                _buildQuickNavTile('Child Safety', '4 high alerts', Icons.security, const Color(0xFFF43F5E), 7),
+                _buildQuickNavTile('Content Store', '98.5M coins', Icons.storefront, const Color(0xFF10B981), 8),
+                _buildQuickNavTile('Agencies & Payouts', '22 claims', Icons.account_balance, const Color(0xFFEC4899), 9),
+                _buildQuickNavTile('News & Broadcast', '8 languages', Icons.notifications_none, const Color(0xFF06B6D4), 10),
               ],
             ),
           ],
@@ -1620,6 +1711,119 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             style: TextStyle(color: accent, fontSize: 20, fontWeight: FontWeight.bold),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHeroMetricCard(String label, String value, String growth, IconData icon, Color accent, int targetTab) {
+    return GestureDetector(
+      onTap: () => setState(() => _activeTabIndex = targetTab),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF160A2D),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: accent.withOpacity(0.35)),
+          boxShadow: [
+            BoxShadow(color: accent.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: accent.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: accent, size: 16),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(growth, style: const TextStyle(color: Colors.greenAccent, fontSize: 9, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 2),
+            Text(label, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileBarColumn(String day, double heightFactor, String label, {bool isPeak = false}) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(label, style: TextStyle(color: isPeak ? const Color(0xFFFF0F7B) : Colors.white38, fontSize: 8, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        Container(
+          width: 22,
+          height: 65 * heightFactor,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+              colors: isPeak
+                  ? [const Color(0xFFA855F7), const Color(0xFFFF0F7B)]
+                  : [const Color(0xFF7C3AED), const Color(0xFFA855F7).withOpacity(0.7)],
+            ),
+            borderRadius: BorderRadius.circular(6),
+            boxShadow: isPeak
+                ? [BoxShadow(color: const Color(0xFFFF0F7B).withOpacity(0.4), blurRadius: 6, spreadRadius: 1)]
+                : null,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(day, style: TextStyle(color: isPeak ? Colors.white : Colors.white60, fontSize: 10, fontWeight: isPeak ? FontWeight.bold : FontWeight.normal)),
+      ],
+    );
+  }
+
+  Widget _buildQuickNavTile(String title, String subtitle, IconData icon, Color accent, int targetTab) {
+    return GestureDetector(
+      onTap: () => setState(() => _activeTabIndex = targetTab),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF160A2D).withOpacity(0.85),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: accent.withOpacity(0.25)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: accent.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: accent, size: 16),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(title, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 9), maxLines: 1),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
