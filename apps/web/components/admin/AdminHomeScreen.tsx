@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { AdminActivitySection } from './AdminActivitySection';
 import { AdminHeader } from './AdminHeader';
 import { AdminManagementSection } from './AdminManagementSection';
@@ -25,6 +25,7 @@ import { ReportQueueModule } from './reports/ReportQueueModule';
 import { ChildSafetyOperationsModule } from './safety/ChildSafetyOperationsModule';
 import { ContentEconomyAdminModule } from './economy/ContentEconomyAdminModule';
 import { AgencySellerPayoutAdminModule } from './agency-seller-payout/AgencySellerPayoutAdminModule';
+import { NewsLanguagesPushModule } from './news-languages-push/NewsLanguagesPushModule';
 import {
   AdminActivityItem,
   AdminNavSection,
@@ -40,6 +41,36 @@ export const AdminHomeScreen: React.FC = () => {
   const [activeNav, setActiveNav] = useState<AdminNavSection>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Sync activeNav with URL query param if present
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const section = params.get('section') || params.get('tab');
+      if (
+        section &&
+        [
+          'dashboard',
+          'users',
+          'hosts',
+          'live_monitor',
+          'reports',
+          'safety',
+          'economy',
+          'agency',
+          'content',
+          'news',
+          'settings',
+          'admins',
+          'roles',
+          'permissions',
+          'activity',
+        ].includes(section)
+      ) {
+        setActiveNav(section as AdminNavSection);
+      }
+    }
+  }, []);
 
   // Core Data State (in-memory React state)
   const [admins, setAdmins] = useState<AdminRecord[]>(createInitialAdmins());
@@ -556,6 +587,15 @@ export const AdminHomeScreen: React.FC = () => {
           {activeNav === 'agency' && (
             <div className="animate-fadeIn">
               <AgencySellerPayoutAdminModule
+                onLogAdminActivity={logActivity}
+              />
+            </div>
+          )}
+
+          {/* View: News, Languages and Push Notifications Module 10.8 */}
+          {activeNav === 'news' && (
+            <div className="animate-fadeIn">
+              <NewsLanguagesPushModule
                 onLogAdminActivity={logActivity}
               />
             </div>

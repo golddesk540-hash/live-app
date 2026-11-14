@@ -33,11 +33,6 @@ export const AdminSettingsSection: React.FC<AdminSettingsSectionProps> = ({
 
   const upcomingModules = [
     {
-      code: '10.8',
-      title: 'News, Languages & Push Admin',
-      desc: 'App notices, multi-language localization dictionary, push notification broadcasts, and alert delivery.',
-    },
-    {
       code: '10.9',
       title: 'Analytics & Reporting Dashboard',
       desc: 'Comprehensive platform analytics, retention cohorts, host performance metrics, and export auditing.',

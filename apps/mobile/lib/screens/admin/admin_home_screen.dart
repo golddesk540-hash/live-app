@@ -385,7 +385,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'User, Host, Live, Safety, Economy & Partner Suite · 10.7',
+                  'User, Host, Live, Safety, Economy, Agency & News Suite · 10.8',
                   style: TextStyle(color: Colors.white54, fontSize: 10),
                 ),
               ],
@@ -396,7 +396,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Navigation Pills (Dashboard / Users / Hosts / Live Monitor / Reports / Child Safety / Economy / Agency / Staff / Roles)
+          // Navigation Pills (Dashboard / Users / Hosts / Live Monitor / Reports / Child Safety / Economy / Agency / News / Staff / Roles)
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -416,6 +416,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 _buildFilterPill('Content & Economy', 8),
                 const SizedBox(width: 8),
                 _buildFilterPill('Agency & Payouts', 9),
+                const SizedBox(width: 8),
+                _buildFilterPill('News & Push', 10),
                 const SizedBox(width: 8),
                 _buildFilterPill('Staff Admins', 3),
                 const SizedBox(width: 8),
@@ -1284,6 +1286,175 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                       border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
                     ),
                     child: const Text('\$1,250 USD', style: TextStyle(color: Color(0xFF34D399), fontSize: 11, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // TAB 10: NEWS, LANGUAGES & PUSH ADMIN (Module 10.8)
+          if (_activeTabIndex == 10) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'NEWS, LANGUAGES & PUSH ADMIN',
+                  style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF0F7B).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFFF0F7B).withOpacity(0.4)),
+                  ),
+                  child: const Text('Module 10.8 Live', style: TextStyle(color: Color(0xFFFF7BB0), fontSize: 10, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Visual Reference 10_08 Featured Articles Cards
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF160A2D),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFFF0F7B).withOpacity(0.35)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(color: Colors.pink.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                        child: const Text('Events', style: TextStyle(color: Colors.pinkAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(color: const Color(0xFF34D399).withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                        child: const Text('Published', style: TextStyle(color: Color(0xFF34D399), fontSize: 10, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text('New Event Launch 🎉', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                  const SizedBox(height: 4),
+                  const Text('Spring Carnival 2026 kicks off worldwide with exclusive gifts and leaderboards.', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                  const SizedBox(height: 8),
+                  const Text('Jan 20, 2026 · By Sarah Jenkins', style: TextStyle(color: Colors.white38, fontSize: 10)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF160A2D),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Colors.purple.withOpacity(0.25)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(color: Colors.purple.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                        child: const Text('Promotions', style: TextStyle(color: Colors.purpleAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(color: const Color(0xFF34D399).withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                        child: const Text('Published', style: TextStyle(color: Color(0xFF34D399), fontSize: 10, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text('Host Promotion Update', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                  const SizedBox(height: 4),
+                  const Text('Higher commission tiers and agency matching bonuses announced for Q1.', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                  const SizedBox(height: 8),
+                  const Text('Jan 18, 2026 · By Admin Michael', style: TextStyle(color: Colors.white38, fontSize: 10)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF160A2D),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Colors.purple.withOpacity(0.25)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(color: Colors.indigo.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                        child: const Text('Updates', style: TextStyle(color: Colors.indigoAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(color: Colors.purpleAccent.withOpacity(0.2), borderRadius: BorderRadius.circular(8)),
+                        child: const Text('Draft', style: TextStyle(color: Colors.purpleAccent, fontSize: 10, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text('App New Features', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                  const SizedBox(height: 4),
+                  const Text('Version 4.2 introduces multi-guest audio booths and coin seller verification badges.', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                  const SizedBox(height: 8),
+                  const Text('Jan 15, 2026 · By Engineering Team', style: TextStyle(color: Colors.white38, fontSize: 10)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'PUSH MARKETING & LOCALIZATION',
+              style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF160A2D),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Colors.pink.withOpacity(0.25)),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Colors.pink.withOpacity(0.2),
+                    child: const Icon(Icons.notifications_active, color: Colors.pinkAccent, size: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Weekend Top Up Bonanza', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                        Text('Target: All Users · 1.4M Reach · Scheduled', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0E061E),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.pink.withOpacity(0.3)),
+                    ),
+                    child: const Text('Queued', style: TextStyle(color: Colors.pinkAccent, fontSize: 11, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
