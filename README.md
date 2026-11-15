@@ -2,11 +2,35 @@
 
 > Official Multiplatform Live Streaming & Social Entertainment Ecosystem  
 > **Client Specification Version:** 1.0 (7 November 2026)  
-> **Status:** Phase 1 (Foundation & Website) Active
+> **Status:** Web & Master Admin (Phases 1–10) COMPLETED. **Active Phase:** Mobile App Implementation Plan (Sprint 1: M0–M2) Active  
+> **Master Blueprint:** See [docs/NEXT_IMPLEMENTATION_PLAN.md](file:///d:/popo%20live/docs/NEXT_IMPLEMENTATION_PLAN.md)
 
 ---
 
-## Architecture Overview
+## 📱 Active Directive: Complete Android & iOS Clone
+
+> **"Agla kaam phone app hai. Web ke pages dubara mat banao. Ek Flutter app: Android aur iOS. Poori access phone pe."**  
+> — *Client Pack v1.1 (15 November 2026)*
+
+1. **Web stays thin & administrative:** `apps/web` stays 100% intact (marketing, card top-up, live watch, and master admin suite).
+2. **Phone is the product:** Android & iOS Flutter app (`apps/mobile`) covering Explore, Go Live, Party, PK, Gifts, Chat, Wallet, and Me.
+3. **Same API:** The Flutter app calls the existing ~319 Next.js routes under `apps/web/app/api`. `apps/api` remains empty.
+4. **Existing 49+ Dart Screens:** Saved in `apps/mobile/lib/screens/` and will be wired in Sprint 3 & 4. Do not delete or rewrite them.
+
+---
+
+## 🏃 Mobile Sprints Roadmap
+
+| Sprint | Modules | Scope | Status |
+| :---: | :--- | :--- | :---: |
+| **Sprint 1** | **M0 + M1 + M2** | Flutter Shell, 18+ Gate, Auth, Me Center, Explore Home | 🟡 **ACTIVE** |
+| Sprint 2 | M3 + M4 | Solo Live Studio, Viewer Room, 9-Seat Party Room | ⚪ Next |
+| Sprint 3 | M5 + M6 | Wire existing PK screens, Gifts catalog, Wallet & In-App Purchase | ⚪ Pending |
+| Sprint 4 | M7 + M8 + M9 | Wire Inbox & Square, Host/Agency Center, Store Release builds | ⚪ Pending |
+
+---
+
+## 🔒 Locked Rules & Baseline Decisions
 
 ```
 popo-live/
