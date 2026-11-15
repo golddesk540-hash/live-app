@@ -173,8 +173,25 @@ class LiveApiService {
   }
 
   /// Removes viewer presence and decrements room viewer count
-  Future<ApiResponse<dynamic>> leaveViewer({required String roomId}) async {
-    return _client.post('/api/live/viewer/leave', body: {'roomId': roomId});
+  Future<ApiResponse<dynamic>> leaveViewer({
+    required String roomId,
+    bool isDemo = false,
+  }) async {
+    return _client.post(
+      '/api/live/viewer/leave',
+      body: {'roomId': roomId, if (isDemo) 'isDemo': true},
+    );
+  }
+
+  /// Sends periodic viewer heartbeat to keep presence active
+  Future<ApiResponse<dynamic>> heartbeat({
+    required String roomId,
+    bool isDemo = false,
+  }) async {
+    return _client.post(
+      '/api/live/viewer/join',
+      body: {'roomId': roomId, if (isDemo) 'isDemo': true},
+    );
   }
 
   // ==========================================

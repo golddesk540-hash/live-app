@@ -249,22 +249,26 @@ class LiveSessionManager extends ChangeNotifier {
   }
 
   /// Sends a chat message to the current room
-  Future<bool> sendChatMessage(String content) async {
+  Future<bool> sendChatMessage(String content, {String? emoji}) async {
     if (_currentSession == null || content.trim().isEmpty) return false;
 
     final res = await _apiService.sendChatMessage(
       roomId: _currentSession!.id,
-      content: content.trim(),
+      text: content.trim(),
+      emoji: emoji,
     );
 
     if (res.isSuccess) {
       final msg = LiveChatMessage(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        userId: 'self',
-        nickname: 'You',
-        content: content.trim(),
-        sentAt: DateTime.now(),
-        type: LiveMessageType.chat,
+        roomId: _currentSession!.id,
+        senderId: 'self',
+        senderNickname: 'You',
+        senderAvatarUrl: null,
+        senderRole: 'viewer',
+        text: content.trim(),
+        emoji: emoji,
+        createdAt: DateTime.now(),
       );
       _chatMessages.add(msg);
       notifyListeners();

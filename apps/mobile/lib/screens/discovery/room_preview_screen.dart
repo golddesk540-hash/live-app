@@ -8,6 +8,7 @@ import '../../widgets/popo_loading_indicator.dart';
 import '../../widgets/popo_primary_button.dart';
 import '../../widgets/popo_icon_button.dart';
 import '../../widgets/popo_card.dart';
+import '../live/viewer_room_screen.dart';
 
 /// Room Preview Screen (Sprint 1: M2 Room Metadata Preview)
 /// Displays host, room tags, audience count, and PK details.
@@ -270,15 +271,15 @@ class _RoomPreviewScreenState extends State<RoomPreviewScreen> {
                 child: Row(
                   children: [
                     const Icon(
-                      Icons.info_outline_rounded,
-                      color: PopoTheme.cyan,
+                      Icons.play_circle_fill_rounded,
+                      color: PopoTheme.primary,
                       size: 20,
                     ),
                     const SizedBox(width: 10),
-                    Expanded(
+                    const Expanded(
                       child: Text(
-                        PopoStrings.get('room_preview_note'),
-                        style: const TextStyle(
+                        'Live broadcast is active. Tap Watch Live Stream below to enter.',
+                        style: TextStyle(
                           color: PopoTheme.textPrimary,
                           fontSize: 11,
                           height: 1.3,
@@ -453,6 +454,29 @@ class _RoomPreviewScreenState extends State<RoomPreviewScreen> {
                       ],
                     ],
                   ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Watch Live Stream CTA (Sprint 2: M3)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: PopoPrimaryButton(
+                  text: 'Watch Live Stream',
+                  icon: Icons.play_arrow_rounded,
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ViewerRoomScreen(
+                          roomId: widget.roomId,
+                          initialTitle: _room?.title,
+                          initialHostNickname: _room?.host.nickname,
+                          initialCoverUrl: _room?.coverUrl,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
 

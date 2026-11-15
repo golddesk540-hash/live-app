@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
               u.avatar_url as host_avatar_url, COALESCE(u.wealth_level, 1) as host_wealth_level
        FROM popolive.live_rooms r
        JOIN popolive.users u ON r.host_id = u.id
-       WHERE r.id = $1 OR r.room_number = $1
+       WHERE r.id::text = $1 OR r.room_number = $1
        LIMIT 1`,
       [roomId]
     );
