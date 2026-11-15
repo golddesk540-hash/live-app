@@ -55,5 +55,11 @@
 	<string>Popo Live requires microphone access for audio streaming in live broadcasts and party rooms.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Popo Live requires photo library access to upload user avatars and profile banners.</string>
+
+	<!-- Audio Background Modes for Live Streaming -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 </dict>
 </plist>

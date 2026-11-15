@@ -4,3 +4,4 @@ export 'discovery_banner.dart';
 export 'discovery_country.dart';
 export 'discovery_ranking.dart';
 export 'search_result.dart';
+export 'live/live_models.dart';

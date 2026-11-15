@@ -13,3 +13,4 @@ export 'services/country_service.dart';
 export 'services/banner_service.dart';
 export 'services/rankings_service.dart';
 export 'services/room_service.dart';
+export 'services/live_api_service.dart';
