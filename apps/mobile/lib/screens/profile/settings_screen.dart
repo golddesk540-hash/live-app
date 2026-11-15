@@ -1,0 +1,224 @@
+import 'package:flutter/material.dart';
+
+import '../../theme/popo_theme.dart';
+import '../../l10n/strings.dart';
+import '../../widgets/popo_icon_button.dart';
+import '../../widgets/popo_secondary_button.dart';
+import '../../widgets/popo_card.dart';
+import '../../auth/auth_state.dart';
+import '../auth/login_screen.dart';
+
+/// Settings screen managing language preference, application information, and secure logout
+class SettingsScreen extends StatelessWidget {
+  const SettingsScreen({Key? key}) : super(key: key);
+
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: PopoTheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: PopoTheme.borderSubtle),
+        ),
+        title: Text(
+          PopoStrings.get('logout'),
+          style: const TextStyle(
+            color: PopoTheme.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          PopoStrings.get('confirm_logout'),
+          style: const TextStyle(color: PopoTheme.textSecondary, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              PopoStrings.get('cancel'),
+              style: const TextStyle(color: PopoTheme.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: PopoTheme.danger,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await AuthState.instance.logout();
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
+            },
+            child: Text(PopoStrings.get('logout')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<String>(
+      valueListenable: PopoStrings.currentLanguage,
+      builder: (context, currentLang, _) {
+        return Scaffold(
+          backgroundColor: PopoTheme.background,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: PopoIconButton(
+              icon: Icons.arrow_back_ios_new_rounded,
+              iconSize: 18,
+              tooltip: 'Back',
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+            title: Text(
+              PopoStrings.get('settings_title'),
+              style: const TextStyle(
+                color: PopoTheme.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          body: SafeArea(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              children: [
+                // Language Selection Card
+                PopoCard(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.language_rounded,
+                            color: PopoTheme.cyan,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            PopoStrings.get('language'),
+                            style: const TextStyle(
+                              color: PopoTheme.textPrimary,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      RadioListTile<String>(
+                        title: const Text(
+                          'English (Default)',
+                          style: TextStyle(
+                            color: PopoTheme.textPrimary,
+                            fontSize: 14,
+                          ),
+                        ),
+                        value: 'en',
+                        groupValue: currentLang,
+                        activeColor: PopoTheme.primary,
+                        onChanged: (val) {
+                          if (val != null) PopoStrings.setLanguage(val);
+                        },
+                      ),
+                      RadioListTile<String>(
+                        title: const Text(
+                          'اردو (Urdu - Nastaliq)',
+                          style: TextStyle(
+                            color: PopoTheme.textPrimary,
+                            fontSize: 14,
+                          ),
+                        ),
+                        value: 'ur',
+                        groupValue: currentLang,
+                        activeColor: PopoTheme.primary,
+                        onChanged: (val) {
+                          if (val != null) PopoStrings.setLanguage(val);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // App Info Card
+                PopoCard(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _buildSettingRow(
+                        icon: Icons.info_outline_rounded,
+                        title: PopoStrings.get('app_version'),
+                        trailing: '1.0.0 (Build 1)',
+                      ),
+                      const Divider(color: PopoTheme.borderSubtle, height: 20),
+                      _buildSettingRow(
+                        icon: Icons.verified_user_outlined,
+                        title: PopoStrings.get('terms_and_privacy'),
+                        trailing: 'v4.2.0 (Active)',
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+
+                // Logout Button
+                PopoSecondaryButton(
+                  text: PopoStrings.get('logout'),
+                  icon: Icons.logout_rounded,
+                  textColor: PopoTheme.danger,
+                  borderColor: PopoTheme.danger.withOpacity(0.35),
+                  onPressed: () => _confirmLogout(context),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSettingRow({
+    required IconData icon,
+    required String title,
+    required String trailing,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: PopoTheme.textSecondary, size: 20),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              color: PopoTheme.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Text(
+          trailing,
+          style: const TextStyle(
+            color: PopoTheme.textSecondary,
+            fontSize: 12.5,
+          ),
+        ),
+      ],
+    );
+  }
+}

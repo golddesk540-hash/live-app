@@ -114,6 +114,46 @@ class PopoStrings {
       'change_number': 'Change Phone Number',
       'select_country': 'Select Country Code',
 
+      // Complete Profile
+      'complete_profile_title': 'Complete Your Profile',
+      'complete_profile_subtitle':
+          'Set your nickname, birthday, and location to enter Popo Live',
+      'birthdate': 'Date of Birth',
+      'birthdate_hint': 'Select your birthday (18+ only)',
+      'gender': 'Gender',
+      'gender_male': 'Male',
+      'gender_female': 'Female',
+      'gender_other': 'Other',
+      'gender_unspecified': 'Prefer not to say',
+      'country': 'Country / Region',
+      'bio': 'About Me (Bio)',
+      'bio_hint': 'Share something interesting about yourself...',
+      'save_and_continue': 'Save & Continue',
+      'save_changes': 'Save Changes',
+      'birthday_locked_notice':
+          'Birthday changes require official identity verification.',
+
+      // Public & Me Profile
+      'edit_profile': 'Edit Profile',
+      'public_profile': 'Public Profile',
+      'followers': 'Followers',
+      'following': 'Following',
+      'gifts_received': 'Gifts',
+      'wealth_level': 'Wealth Level',
+      'host_level': 'Host Level',
+      'copy_id': 'Copy ID',
+      'profile_updated_success': 'Profile updated successfully!',
+      'follow': 'Follow',
+      'unfollow': 'Unfollow',
+
+      // Settings
+      'settings_title': 'Settings',
+      'app_version': 'App Version',
+      'terms_and_privacy': 'Terms & Privacy Policy',
+      'account_security': 'Account Security',
+      'confirm_logout': 'Are you sure you want to log out of Popo Live?',
+      'cancel': 'Cancel',
+
       // OAuth & Platform
       'apple_signin_ios_only':
           'Apple Sign-In is only supported on iOS devices.',
@@ -134,6 +174,9 @@ class PopoStrings {
       'err_invalid_phone':
           'Please enter a valid phone number including country code.',
       'err_invalid_otp': 'Please enter the complete 6-digit verification code.',
+      'err_missing_birthdate': 'Please select your date of birth.',
+      'err_under_18': 'You must be at least 18 years old to access Popo Live.',
+      'err_future_birthday': 'Date of birth cannot be in the future.',
 
       // Forgot Password
       'forgot_password_title': 'Reset Password',
@@ -146,7 +189,6 @@ class PopoStrings {
       'profile_title': 'Me Center',
       'user_id': 'ID',
       'copied_to_clipboard': 'User ID copied to clipboard!',
-      'edit_profile': 'Edit Profile',
       'wallet': 'Wallet',
       'coins': 'Coins',
       'points': 'Points',
@@ -230,6 +272,45 @@ class PopoStrings {
       'change_number': 'فون نمبر تبدیل کریں',
       'select_country': 'ملک کا کوڈ منتخب کریں',
 
+      // Complete Profile
+      'complete_profile_title': 'اپنی پروفائل مکمل کریں',
+      'complete_profile_subtitle': 'پوپو لائیو میں داخل ہونے کے لیے اپنا نام، تاریخ پیدائش اور ملک درج کریں',
+      'birthdate': 'تاریخ پیدائش',
+      'birthdate_hint': 'تاریخ پیدائش منتخب کریں (صرف 18+ سال)',
+      'gender': 'جنس',
+      'gender_male': 'مرد',
+      'gender_female': 'خاتون',
+      'gender_other': 'دیگر',
+      'gender_unspecified': 'ظاہر نہیں کرنا',
+      'country': 'ملک / علاقہ',
+      'bio': 'میرے بارے میں (بائیو)',
+      'bio_hint': 'اپنے بارے میں کچھ لکھیں...',
+      'save_and_continue': 'محفوظ کریں اور آگے بڑھیں',
+      'save_changes': 'تبدیلیاں محفوظ کریں',
+      'birthday_locked_notice':
+          'تاریخ پیدائش تبدیل کرنے کے لیے دفتری شناختی تصدیق درکار ہے۔',
+
+      // Public & Me Profile
+      'edit_profile': 'پروفائل میں ترمیم',
+      'public_profile': 'عوامی پروفائل',
+      'followers': 'فالوورز',
+      'following': 'فالوونگ',
+      'gifts_received': 'تحائف',
+      'wealth_level': 'دولت کا درجہ',
+      'host_level': 'ہوسٹ کا درجہ',
+      'copy_id': 'آئی ڈی کاپی کریں',
+      'profile_updated_success': 'پروفائل کامیابی سے اپ ڈیٹ ہو گئی!',
+      'follow': 'فالو کریں',
+      'unfollow': 'ان فالو',
+
+      // Settings
+      'settings_title': 'سیٹنگز',
+      'app_version': 'ایپ ورژن',
+      'terms_and_privacy': 'شرائط اور پرائیویسی پالیسی',
+      'account_security': 'اکاؤنٹ سیکیورٹی',
+      'confirm_logout': 'کیا آپ واقعی پوپو لائیو سے لاگ آؤٹ کرنا چاہتے ہیں؟',
+      'cancel': 'منسوخ',
+
       // OAuth & Platform
       'apple_signin_ios_only':
           'ایپل سائن ان صرف ایپل (iOS) ڈیوائسز پر دستیاب ہے۔',
@@ -249,6 +330,9 @@ class PopoStrings {
           'آپ کا 18+ عمر کی تصدیق کرنا اور شرائط تسلیم کرنا لازمی ہے۔',
       'err_invalid_phone': 'براہ کرم ایک درست فون نمبر درج کریں۔',
       'err_invalid_otp': 'براہ کرم پورا 6 ہندسوں کا تصدیقی کوڈ درج کریں۔',
+      'err_missing_birthdate': 'براہ کرم اپنی تاریخ پیدائش منتخب کریں۔',
+      'err_under_18': 'پوپو لائیو استعمال کرنے کے لیے آپ کی عمر کم از کم 18 سال ہونی چاہیے۔',
+      'err_future_birthday': 'تاریخ پیدائش مستقبل کی نہیں ہو سکتی۔',
 
       // Forgot Password
       'forgot_password_title': 'پاس ورڈ ری سیٹ کریں',
@@ -261,7 +345,6 @@ class PopoStrings {
       'profile_title': 'می سینٹر',
       'user_id': 'آئی ڈی',
       'copied_to_clipboard': 'یوزر آئی ڈی کاپی ہو گئی!',
-      'edit_profile': 'پروفائل میں ترمیم',
       'wallet': 'والٹ',
       'coins': 'سکے',
       'points': 'پوائنٹس',
