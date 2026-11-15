@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'theme/popo_theme.dart';
-import 'shell/app_shell.dart';
+import 'screens/auth/splash_screen.dart';
 import 'l10n/strings.dart';
 
 /// Root Widget for Popo Live Application
@@ -19,14 +19,14 @@ class PopoLiveApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           theme: PopoTheme.darkTheme,
           locale: Locale(lang),
-          // Set text direction dynamically for Urdu Nastaliq
+          // Set text direction dynamically for Urdu
           builder: (context, child) {
             return Directionality(
               textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
               child: child!,
             );
           },
-          home: const AppShell(),
+          home: const SplashScreen(),
         );
       },
     );

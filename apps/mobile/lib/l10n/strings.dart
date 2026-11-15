@@ -23,7 +23,7 @@ class PopoStrings {
     return dict[key] ?? _strings['en']![key] ?? key;
   }
 
-  // Common UI keys
+  // Common UI getters
   static String get appName => get('app_name');
   static String get tabHome => get('tab_home');
   static String get tabParty => get('tab_party');
@@ -40,6 +40,8 @@ class PopoStrings {
   static String get partyOpensSprint2 => get('party_opens_sprint2');
   static String get goLiveOpensSprint2 => get('go_live_opens_sprint2');
   static String get inboxOpensSprint4 => get('inbox_opens_sprint4');
+
+  static String get profileTitle => get('profile_title');
 
   static const Map<String, Map<String, String>> _strings = {
     'en': {
@@ -59,16 +61,61 @@ class PopoStrings {
       'party_opens_sprint2': '9-Seat Party Rooms activate in Sprint 2 (M4).',
       'go_live_opens_sprint2':
           'Host Live Studio & Agora Video stream activates in Sprint 2 (M3).',
-      'inbox_opens_sprint4': 'Direct Messages and FCM Push notifications activate in Sprint 4 (M7).',
+      'inbox_opens_sprint4':
+          'Direct Messages and FCM Push notifications activate in Sprint 4 (M7).',
       'locked_placeholder': 'Upcoming Sprint Milestone',
       'back_to_explore': 'Back to Explore',
 
-      'login_title': 'Login to Popo Live',
-      'register_title': 'Create Account',
+      // 18+ Age Verification Gate
       'age_gate_title': '18+ Age Verification Required',
-      'age_gate_desc': 'Popo Live is an adult live streaming community. You must be at least 18 years old to proceed.',
-      'accept_and_continue': 'I am 18+ and Accept Terms',
+      'age_gate_badge': 'MANDATORY COMPLIANCE',
+      'age_gate_desc':
+          'Popo Live is an adult live streaming & interactive entertainment community. By continuing, you verify that you are at least 18 years of age and agree to our Terms of Service and Privacy Policy.',
+      'age_gate_checkbox':
+          'I confirm that I am at least 18 years of age and agree to the Terms of Service & Privacy Policy.',
+      'accept_and_continue': 'Accept & Continue',
+      'age_gate_decline': 'Decline & Exit',
+      'age_gate_declined_msg':
+          'Access to Popo Live is strictly restricted to adult users aged 18 and older. You cannot proceed without age confirmation.',
 
+      // Login
+      'login_title': 'Welcome Back',
+      'login_subtitle': 'Sign in to connect with live hosts & friends worldwide',
+      'email_or_phone': 'Email, Phone or Poppo ID',
+      'password': 'Password',
+      'forgot_password': 'Forgot Password?',
+      'login_btn': 'Log In',
+      'dont_have_account': 'Don\'t have an account? Sign Up',
+      'or_continue_with': 'Or continue with',
+      'oauth_coming_soon': 'Social login will be active in the upcoming integration prompt.',
+
+      // Register
+      'register_title': 'Create Account',
+      'register_subtitle': 'Join the premier live streaming community today',
+      'nickname': 'Nickname',
+      'nickname_hint': '3-20 characters (letters, numbers, _)',
+      'email': 'Email Address',
+      'confirm_password': 'Confirm Password',
+      'register_btn': 'Create Account',
+      'already_have_account': 'Already have an account? Log In',
+
+      // Validation
+      'err_empty_identifier': 'Please enter your email, phone, or Poppo ID.',
+      'err_empty_password': 'Please enter your password.',
+      'err_password_short': 'Password must be at least 8 characters long.',
+      'err_password_mismatch': 'Passwords do not match.',
+      'err_invalid_email': 'Please enter a valid email address.',
+      'err_nickname_short': 'Nickname must be at least 3 characters.',
+      'err_terms_required': 'You must confirm that you are 18+ and accept terms.',
+
+      // Forgot Password
+      'forgot_password_title': 'Reset Password',
+      'forgot_password_desc': 'Enter your registered email or phone to receive instructions.',
+      'send_reset_link': 'Send Reset Instructions',
+      'reset_link_sent':
+          'If an account exists with this identifier, password reset instructions have been dispatched.',
+
+      // Profile & Settings
       'profile_title': 'Me Center',
       'user_id': 'ID',
       'copied_to_clipboard': 'User ID copied to clipboard!',
@@ -80,6 +127,7 @@ class PopoStrings {
       'language': 'Language',
       'logout': 'Log Out',
 
+      // Errors
       'error_network':
           'Unable to connect to server. Please check your internet connection.',
       'error_unknown': 'An unexpected error occurred. Please try again.',
@@ -107,12 +155,56 @@ class PopoStrings {
       'locked_placeholder': 'آئندہ سپرنٹ کا سنگ میل',
       'back_to_explore': 'واپس ہوم پر جائیں',
 
-      'login_title': 'پوپو لائیو میں لاگ ان کریں',
-      'register_title': 'نیا اکاؤنٹ بنائیں',
-      'age_gate_title': '18+ عمر کی توثیق ضروری ہے',
-      'age_gate_desc': 'پوپو لائیو بالغان کے لیے ایک لائیو اسٹریمنگ پلیٹ فارم ہے۔ آگے بڑھنے کے لیے آپ کی عمر کم از کم 18 سال ہونی چاہیے۔',
-      'accept_and_continue': 'میری عمر 18+ ہے اور میں شرائط تسلیم کرتا ہوں',
+      // 18+ Age Verification Gate
+      'age_gate_title': '18+ عمر کی توثیق لازمی ہے',
+      'age_gate_badge': 'لازمی تعمیل',
+      'age_gate_desc':
+          'پوپو لائیو بالغان کے لیے ایک لائیو اسٹریمنگ پلیٹ فارم ہے۔ آگے بڑھنے کے لیے آپ کی عمر کم از کم 18 سال ہونی چاہیے اور سروس کی شرائط سے متفق ہونا ضروری ہے۔',
+      'age_gate_checkbox':
+          'میں تصدیق کرتا ہوں کہ میری عمر کم از کم 18 سال ہے اور میں سروس کی شرائط اور پرائیویسی پالیسی سے متفق ہوں۔',
+      'accept_and_continue': 'قبول کریں اور آگے بڑھیں',
+      'age_gate_decline': 'انکار اور خروج',
+      'age_gate_declined_msg':
+          'پوپو لائیو تک رسائی صرف 18 سال یا اس سے زیادہ عمر کے افراد کے لیے مخصوص ہے۔ آپ بغیر تصدیق کے داخل نہیں ہو سکتے۔',
 
+      // Login
+      'login_title': 'خوش آمدید',
+      'login_subtitle': 'دنیا بھر کے لائیو ہوسٹس اور دوستوں کے ساتھ جڑنے کے لیے لاگ ان کریں',
+      'email_or_phone': 'ای میل، فون نمبر یا پوپو آئی ڈی',
+      'password': 'پاس ورڈ',
+      'forgot_password': 'پاس ورڈ بھول گئے؟',
+      'login_btn': 'لاگ ان کریں',
+      'dont_have_account': 'اکاؤنٹ نہیں ہے؟ نیا اکاؤنٹ بنائیں',
+      'or_continue_with': 'یا ان کے ساتھ لاگ ان کریں',
+      'oauth_coming_soon': 'سوشل لاگ ان آئندہ پرامپٹ میں فعال کیا جائے گا۔',
+
+      // Register
+      'register_title': 'نیا اکاؤنٹ بنائیں',
+      'register_subtitle': 'آج ہی پوپو لائیو کمیونٹی کا حصہ بنیں',
+      'nickname': 'عرفیت / نام',
+      'nickname_hint': '3-20 حروف (حروف، اعداد، _)',
+      'email': 'ای میل ایڈریس',
+      'confirm_password': 'پاس ورڈ کی تصدیق',
+      'register_btn': 'اکاؤنٹ بنائیں',
+      'already_have_account': 'پہلے سے اکاؤنٹ ہے؟ لاگ ان کریں',
+
+      // Validation
+      'err_empty_identifier': 'براہ کرم اپنی ای میل، فون یا پوپو آئی ڈی درج کریں۔',
+      'err_empty_password': 'براہ کرم اپنا پاس ورڈ درج کریں۔',
+      'err_password_short': 'پاس ورڈ کم از کم 8 حروف کا ہونا چاہیے۔',
+      'err_password_mismatch': 'پاس ورڈ ایک جیسے نہیں ہیں۔',
+      'err_invalid_email': 'براہ کرم ایک درست ای میل پتہ درج کریں۔',
+      'err_nickname_short': 'نام کم از کم 3 حروف کا ہونا چاہیے۔',
+      'err_terms_required': 'آپ کا 18+ عمر کی تصدیق کرنا اور شرائط تسلیم کرنا لازمی ہے۔',
+
+      // Forgot Password
+      'forgot_password_title': 'پاس ورڈ ری سیٹ کریں',
+      'forgot_password_desc': 'ہدایات حاصل کرنے کے لیے اپنی رجسٹرڈ ای میل درج کریں۔',
+      'send_reset_link': 'ہدایات بھیجیں',
+      'reset_link_sent':
+          'اگر اکاؤنٹ موجود ہے تو پاس ورڈ ری سیٹ کرنے کی ہدایات بھیج دی گئی ہیں۔',
+
+      // Profile & Settings
       'profile_title': 'می سینٹر',
       'user_id': 'آئی ڈی',
       'copied_to_clipboard': 'یوزر آئی ڈی کاپی ہو گئی!',
@@ -124,6 +216,7 @@ class PopoStrings {
       'language': 'زبان',
       'logout': 'لاگ آؤٹ',
 
+      // Errors
       'error_network':
           'سرور سے رابطہ ممکن نہیں ہو سکا۔ برائے مہربانی انٹرنیٹ چیک کریں۔',
       'error_unknown': 'ایک غیر متوقع مسئلہ پیش آیا۔ دوبارہ کوشش کریں۔',
