@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
-import '../../api/api.dart';
+import '../../models/models.dart';
+import '../../repositories/discovery_repository.dart';
 import '../../widgets/popo_loading_indicator.dart';
 
 /// Reusable horizontally scrollable country filter chips component
@@ -20,10 +21,9 @@ class CountryChips extends StatefulWidget {
 }
 
 class _CountryChipsState extends State<CountryChips> {
-  final CountryService _countryService = CountryService();
-  List<Map<String, dynamic>> _countries = [];
+  final DiscoveryRepository _repository = DiscoveryRepository.instance;
+  List<DiscoveryCountry> _countries = [];
   bool _isLoading = true;
-  String? _errorMessage;
 
   @override
   void initState() {
@@ -32,41 +32,11 @@ class _CountryChipsState extends State<CountryChips> {
   }
 
   Future<void> _fetchCountries() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    final response = await _countryService.getPopularCountries();
+    final list = await _repository.fetchPopularCountries();
     if (!mounted) return;
 
-    if (response.isSuccess && response.data is Map) {
-      final list = response.data['popular'] as List?;
-      if (list != null) {
-        setState(() {
-          _countries = list
-              .map((item) => Map<String, dynamic>.from(item as Map))
-              .toList();
-          _isLoading = false;
-        });
-        return;
-      }
-    }
-
-    // Fallback default list if backend list unavailable
     setState(() {
-      _countries = [
-        {'code': 'ALL', 'name': 'Popular', 'flag': '🔥', 'activeRooms': 0},
-        {'code': 'PK', 'name': 'Pakistan', 'flag': '🇵🇰', 'activeRooms': 0},
-        {'code': 'IN', 'name': 'India', 'flag': '🇮🇳', 'activeRooms': 0},
-        {'code': 'PH', 'name': 'Philippines', 'flag': '🇵🇭', 'activeRooms': 0},
-        {
-          'code': 'US',
-          'name': 'United States',
-          'flag': '🇺🇸',
-          'activeRooms': 0,
-        },
-      ];
+      _countries = list;
       _isLoading = false;
     });
   }
@@ -92,13 +62,10 @@ class _CountryChipsState extends State<CountryChips> {
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final country = _countries[index];
-          final code = country['code']?.toString() ?? 'ALL';
-          final name = country['name']?.toString() ?? code;
-          final flag = country['flag']?.toString() ?? '';
-          final isSelected = widget.selectedCountryCode == code;
+          final isSelected = widget.selectedCountryCode == country.code;
 
           return GestureDetector(
-            onTap: () => widget.onCountrySelected(code),
+            onTap: () => widget.onCountrySelected(country.code),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeOutCubic,
@@ -127,12 +94,12 @@ class _CountryChipsState extends State<CountryChips> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (flag.isNotEmpty) ...[
-                    Text(flag, style: const TextStyle(fontSize: 13)),
+                  if (country.flag.isNotEmpty) ...[
+                    Text(country.flag, style: const TextStyle(fontSize: 13)),
                     const SizedBox(width: 6),
                   ],
                   Text(
-                    name,
+                    country.name,
                     style: TextStyle(
                       color: isSelected
                           ? PopoTheme.textPrimary

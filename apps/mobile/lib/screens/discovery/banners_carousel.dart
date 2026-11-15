@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
+import '../../models/models.dart';
+import '../../repositories/discovery_repository.dart';
 import '../../api/api.dart';
 
 /// Reusable promotional Hero Banner Carousel for Explore Home
@@ -14,9 +16,11 @@ class BannersCarousel extends StatefulWidget {
 }
 
 class _BannersCarouselState extends State<BannersCarousel> {
+  final DiscoveryRepository _repository = DiscoveryRepository.instance;
   final BannerService _bannerService = BannerService();
   final PageController _pageController = PageController();
-  List<Map<String, dynamic>> _banners = [];
+
+  List<DiscoveryBanner> _banners = [];
   int _currentPage = 0;
   bool _isLoading = true;
   Timer? _autoPlayTimer;
@@ -35,27 +39,17 @@ class _BannersCarouselState extends State<BannersCarousel> {
   }
 
   Future<void> _fetchBanners() async {
-    final response = await _bannerService.getBanners();
+    final list = await _repository.fetchBanners();
     if (!mounted) return;
 
-    if (response.isSuccess && response.data is Map) {
-      final list = response.data['banners'] as List?;
-      if (list != null && list.isNotEmpty) {
-        setState(() {
-          _banners = list
-              .map((item) => Map<String, dynamic>.from(item as Map))
-              .toList();
-          _isLoading = false;
-        });
-        _startAutoPlay();
-        return;
-      }
-    }
-
     setState(() {
+      _banners = list;
       _isLoading = false;
-      _banners = [];
     });
+
+    if (_banners.length > 1) {
+      _startAutoPlay();
+    }
   }
 
   void _startAutoPlay() {
@@ -73,18 +67,14 @@ class _BannersCarouselState extends State<BannersCarousel> {
     });
   }
 
-  void _handleBannerTap(Map<String, dynamic> banner) {
-    final bannerId = banner['id']?.toString();
-    final title = banner['title']?.toString() ?? 'Campaign';
-    final destination = banner['destination']?.toString() ?? '';
-
-    if (bannerId != null && bannerId.isNotEmpty) {
-      _bannerService.recordBannerClick(bannerId);
+  void _handleBannerTap(DiscoveryBanner banner) {
+    if (banner.id.isNotEmpty) {
+      _bannerService.recordBannerClick(banner.id);
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('$title ($destination)'),
+        content: Text('${banner.title} (${banner.destination})'),
         backgroundColor: PopoTheme.surface,
         duration: const Duration(seconds: 2),
       ),
@@ -121,13 +111,7 @@ class _BannersCarouselState extends State<BannersCarousel> {
             },
             itemBuilder: (context, index) {
               final banner = _banners[index];
-              final title = banner['title']?.toString() ?? '';
-              final desc = banner['description']?.toString() ?? '';
-              final badge = banner['badgeText']?.toString() ?? '';
-              final cta = banner['ctaText']?.toString() ?? 'Explore >';
-              final imageUrl =
-                  banner['mobileImageUrl']?.toString() ??
-                  banner['desktopImageUrl']?.toString();
+              final imageUrl = banner.effectiveImageUrl;
 
               return GestureDetector(
                 onTap: () => _handleBannerTap(banner),
@@ -183,7 +167,7 @@ class _BannersCarouselState extends State<BannersCarousel> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            if (badge.isNotEmpty) ...[
+                            if (banner.badgeText.isNotEmpty) ...[
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 6,
@@ -194,7 +178,7 @@ class _BannersCarouselState extends State<BannersCarousel> {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  badge,
+                                  banner.badgeText,
                                   style: const TextStyle(
                                     color: Colors.black,
                                     fontSize: 9,
@@ -205,7 +189,7 @@ class _BannersCarouselState extends State<BannersCarousel> {
                               const SizedBox(height: 5),
                             ],
                             Text(
-                              title,
+                              banner.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
@@ -214,10 +198,10 @@ class _BannersCarouselState extends State<BannersCarousel> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            if (desc.isNotEmpty) ...[
+                            if (banner.description.isNotEmpty) ...[
                               const SizedBox(height: 3),
                               Text(
-                                desc,
+                                banner.description,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
@@ -228,7 +212,7 @@ class _BannersCarouselState extends State<BannersCarousel> {
                             ],
                             const SizedBox(height: 6),
                             Text(
-                              cta,
+                              banner.ctaText,
                               style: const TextStyle(
                                 color: PopoTheme.cyan,
                                 fontSize: 11,

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
 import '../../l10n/strings.dart';
-import '../../api/api.dart';
+import '../../models/models.dart';
+import '../../repositories/discovery_repository.dart';
 import '../../widgets/popo_loading_indicator.dart';
 import '../../widgets/popo_empty_state.dart';
 import '../../widgets/popo_icon_button.dart';
@@ -26,13 +27,12 @@ class RankingsBottomSheet extends StatefulWidget {
 }
 
 class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
-  final RankingsService _rankingsService = RankingsService();
+  final DiscoveryRepository _repository = DiscoveryRepository.instance;
 
-  List<Map<String, dynamic>> _doors = [];
-  Map<String, dynamic>? _podium;
-  List<Map<String, dynamic>> _rankings = [];
+  List<RankingDoor> _doors = [];
+  RankingPodium? _podium;
+  List<RankingUser> _rankings = [];
   bool _isLoading = true;
-  String? _errorMessage;
 
   @override
   void initState() {
@@ -43,39 +43,21 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
   Future<void> _fetchRankingsData() async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
     });
 
-    final results = await Future.wait([
-      _rankingsService.getRankDoors(),
-      _rankingsService.getRankingsPreview(),
-    ]);
+    final doorsFuture = _repository.fetchRankDoors();
+    final previewFuture = _repository.fetchRankingsPreview();
 
+    final results = await Future.wait([doorsFuture, previewFuture]);
     if (!mounted) return;
 
-    final doorsRes = results[0];
-    final previewRes = results[1];
-
-    if (doorsRes.isSuccess && doorsRes.data is Map) {
-      final list = doorsRes.data['doors'] as List?;
-      if (list != null) {
-        _doors = list.map((d) => Map<String, dynamic>.from(d as Map)).toList();
-      }
-    }
-
-    if (previewRes.isSuccess && previewRes.data is Map) {
-      if (previewRes.data['podium'] is Map) {
-        _podium = Map<String, dynamic>.from(previewRes.data['podium'] as Map);
-      }
-      final rankList = previewRes.data['rankings'] as List?;
-      if (rankList != null) {
-        _rankings = rankList
-            .map((r) => Map<String, dynamic>.from(r as Map))
-            .toList();
-      }
-    }
+    final doors = results[0] as List<RankingDoor>;
+    final preview = results[1] as RankingsPreviewResult;
 
     setState(() {
+      _doors = doors;
+      _podium = preview.podium;
+      _rankings = preview.rankings;
       _isLoading = false;
     });
   }
@@ -194,14 +176,10 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
     );
   }
 
-  Widget _buildDoorItem(Map<String, dynamic> door) {
-    final title = door['title']?.toString() ?? '';
-    final iconType = door['iconType']?.toString() ?? '';
-    final hasNotification = door['hasNotificationDot'] == true;
-
+  Widget _buildDoorItem(RankingDoor door) {
     IconData icon;
     Color color;
-    switch (iconType) {
+    switch (door.iconType) {
       case 'event':
         icon = Icons.celebration_rounded;
         color = const Color(0xFFA855F7);
@@ -226,7 +204,9 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
         onTap: () {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('$title Portal activates in upcoming sprint.'),
+              content: Text(
+                '${door.title} Portal activates in upcoming sprint.',
+              ),
               backgroundColor: PopoTheme.surface,
               duration: const Duration(seconds: 2),
             ),
@@ -247,7 +227,7 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
                 clipBehavior: Clip.none,
                 children: [
                   Icon(icon, color: color, size: 24),
-                  if (hasNotification)
+                  if (door.hasNotificationDot)
                     Positioned(
                       right: -3,
                       top: -3,
@@ -264,7 +244,7 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
               ),
               const SizedBox(height: 6),
               Text(
-                title,
+                door.title,
                 style: const TextStyle(
                   color: PopoTheme.textPrimary,
                   fontSize: 11,
@@ -278,11 +258,7 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
     );
   }
 
-  Widget _buildPodiumView(Map<String, dynamic> podium) {
-    final first = podium['first'] as Map?;
-    final second = podium['second'] as Map?;
-    final third = podium['third'] as Map?;
-
+  Widget _buildPodiumView(RankingPodium podium) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
@@ -297,7 +273,7 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
           // 2nd Place (Left)
           Expanded(
             child: _buildPodiumColumn(
-              user: second,
+              user: podium.second,
               rank: 2,
               color: const Color(0xFF94A3B8), // Silver
               badge: '2',
@@ -308,7 +284,7 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
           // 1st Place (Center - Prominent)
           Expanded(
             child: _buildPodiumColumn(
-              user: first,
+              user: podium.first,
               rank: 1,
               color: PopoTheme.gold, // Gold
               badge: '1',
@@ -319,7 +295,7 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
           // 3rd Place (Right)
           Expanded(
             child: _buildPodiumColumn(
-              user: third,
+              user: podium.third,
               rank: 3,
               color: const Color(0xFFB45309), // Bronze
               badge: '3',
@@ -332,7 +308,7 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
   }
 
   Widget _buildPodiumColumn({
-    required Map? user,
+    required RankingUser? user,
     required int rank,
     required Color color,
     required String badge,
@@ -342,23 +318,20 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
       return const SizedBox.shrink();
     }
 
-    final nickname = user['nickname']?.toString() ?? '';
-    final avatarUrl = user['avatarUrl']?.toString();
-    final scoreFormatted = user['scoreFormatted']?.toString() ?? '0';
-
     return GestureDetector(
       onTap: () {
-        final id = user['id']?.toString() ?? user['poppoId']?.toString();
-        if (id != null) {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => PublicProfileScreen(userId: id)),
-          );
-        }
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => PublicProfileScreen(
+              userId: user.id.isNotEmpty ? user.id : user.poppoId,
+            ),
+          ),
+        );
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Crown / Badge
+          // Crown / Star
           if (rank == 1)
             const Icon(Icons.star_rounded, color: PopoTheme.gold, size: 20),
 
@@ -376,20 +349,20 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
                 child: CircleAvatar(
                   radius: avatarSize,
                   backgroundImage:
-                      avatarUrl != null &&
-                          avatarUrl.isNotEmpty &&
-                          !avatarUrl.contains('default.png') &&
-                          avatarUrl.startsWith('http')
-                      ? NetworkImage(avatarUrl)
+                      user.avatarUrl.isNotEmpty &&
+                          !user.avatarUrl.contains('default.png') &&
+                          user.avatarUrl.startsWith('http')
+                      ? NetworkImage(user.avatarUrl)
                       : null,
                   backgroundColor: PopoTheme.surface,
                   child:
-                      (avatarUrl == null ||
-                          avatarUrl.isEmpty ||
-                          avatarUrl.contains('default.png') ||
-                          !avatarUrl.startsWith('http'))
+                      (user.avatarUrl.isEmpty ||
+                          user.avatarUrl.contains('default.png') ||
+                          !user.avatarUrl.startsWith('http'))
                       ? Text(
-                          nickname.isNotEmpty ? nickname[0].toUpperCase() : 'P',
+                          user.nickname.isNotEmpty
+                              ? user.nickname[0].toUpperCase()
+                              : 'P',
                           style: TextStyle(
                             color: color,
                             fontWeight: FontWeight.bold,
@@ -427,7 +400,7 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
 
           // Nickname
           Text(
-            nickname,
+            user.nickname,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -441,7 +414,7 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
 
           // Score
           Text(
-            '🪙 $scoreFormatted',
+            '🪙 ${user.scoreFormatted}',
             style: TextStyle(
               color: color,
               fontSize: 11,
@@ -453,19 +426,13 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
     );
   }
 
-  Widget _buildRankItem(Map<String, dynamic> item) {
-    final rank = item['rank']?.toString() ?? '•';
-    final nickname = item['nickname']?.toString() ?? 'Host';
-    final poppoId = item['poppoId']?.toString() ?? '';
-    final avatarUrl = item['avatarUrl']?.toString();
-    final score = item['scoreFormatted']?.toString() ?? '0';
-
+  Widget _buildRankItem(RankingUser user) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
       leading: SizedBox(
         width: 32,
         child: Text(
-          rank,
+          user.rank.toString(),
           textAlign: TextAlign.center,
           style: const TextStyle(
             color: PopoTheme.textSecondary,
@@ -479,20 +446,20 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
           CircleAvatar(
             radius: 16,
             backgroundImage:
-                avatarUrl != null &&
-                    avatarUrl.isNotEmpty &&
-                    !avatarUrl.contains('default.png') &&
-                    avatarUrl.startsWith('http')
-                ? NetworkImage(avatarUrl)
+                user.avatarUrl.isNotEmpty &&
+                    !user.avatarUrl.contains('default.png') &&
+                    user.avatarUrl.startsWith('http')
+                ? NetworkImage(user.avatarUrl)
                 : null,
             backgroundColor: PopoTheme.surfaceLight,
             child:
-                (avatarUrl == null ||
-                    avatarUrl.isEmpty ||
-                    avatarUrl.contains('default.png') ||
-                    !avatarUrl.startsWith('http'))
+                (user.avatarUrl.isEmpty ||
+                    user.avatarUrl.contains('default.png') ||
+                    !user.avatarUrl.startsWith('http'))
                 ? Text(
-                    nickname.isNotEmpty ? nickname[0].toUpperCase() : 'P',
+                    user.nickname.isNotEmpty
+                        ? user.nickname[0].toUpperCase()
+                        : 'P',
                     style: const TextStyle(
                       color: PopoTheme.cyan,
                       fontSize: 12,
@@ -504,7 +471,7 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              nickname,
+              user.nickname,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
@@ -519,12 +486,12 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
       subtitle: Padding(
         padding: const EdgeInsets.only(left: 42),
         child: Text(
-          'ID: $poppoId',
+          'ID: ${user.poppoId}',
           style: const TextStyle(color: PopoTheme.textTertiary, fontSize: 11),
         ),
       ),
       trailing: Text(
-        '🪙 $score',
+        '🪙 ${user.scoreFormatted}',
         style: const TextStyle(
           color: PopoTheme.gold,
           fontSize: 12,
@@ -532,7 +499,7 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
         ),
       ),
       onTap: () {
-        final id = item['id']?.toString() ?? poppoId;
+        final id = user.id.isNotEmpty ? user.id : user.poppoId;
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => PublicProfileScreen(userId: id)),
         );

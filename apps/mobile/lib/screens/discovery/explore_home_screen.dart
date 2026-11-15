@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
 import '../../l10n/strings.dart';
-import '../../api/api.dart';
+import '../../models/models.dart';
+import '../../repositories/discovery_repository.dart';
 import '../../widgets/popo_loading_indicator.dart';
 import '../../widgets/popo_empty_state.dart';
 import '../../widgets/popo_error_state.dart';
@@ -15,6 +16,7 @@ import 'search_screen.dart';
 import 'rankings_bottom_sheet.dart';
 
 /// Premium Explore Home Screen with 4 Discovery Tabs: Follow, Explore (Default), New, PK
+/// Powered by DiscoveryRepository with pagination, caching, and pull-to-refresh
 class ExploreHomeScreen extends StatefulWidget {
   const ExploreHomeScreen({Key? key}) : super(key: key);
 
@@ -25,26 +27,25 @@ class ExploreHomeScreen extends StatefulWidget {
 class _ExploreHomeScreenState extends State<ExploreHomeScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final DiscoveryService _discoveryService = DiscoveryService();
+  final DiscoveryRepository _repository = DiscoveryRepository.instance;
+  final ScrollController _exploreScrollController = ScrollController();
 
-  // Explore Tab State
-  List<Map<String, dynamic>> _exploreRooms = [];
+  // Tab State Collections
+  List<DiscoveryRoom> _exploreRooms = [];
   bool _isLoadingExplore = true;
+  bool _isLoadingMoreExplore = false;
   String? _exploreError;
   String _selectedCountry = 'ALL';
 
-  // Following Tab State
-  List<Map<String, dynamic>> _followingRooms = [];
+  List<DiscoveryRoom> _followingRooms = [];
   bool _isLoadingFollowing = true;
   String? _followingError;
 
-  // New Tab State
-  List<Map<String, dynamic>> _newCreators = [];
+  List<DiscoveryRoom> _newCreators = [];
   bool _isLoadingNew = true;
   String? _newError;
 
-  // PK Tab State
-  List<Map<String, dynamic>> _pkBattles = [];
+  List<DiscoveryRoom> _pkBattles = [];
   bool _isLoadingPk = true;
   String? _pkError;
 
@@ -54,6 +55,7 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
     // 4 Top Tabs: 0: Follow, 1: Explore (DEFAULT), 2: New, 3: PK
     _tabController = TabController(length: 4, vsync: this, initialIndex: 1);
     _tabController.addListener(_handleTabChange);
+    _exploreScrollController.addListener(_onExploreScroll);
 
     // Initial load
     _fetchExploreFeed();
@@ -64,6 +66,8 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
 
   @override
   void dispose() {
+    _exploreScrollController.removeListener(_onExploreScroll);
+    _exploreScrollController.dispose();
     _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     super.dispose();
@@ -74,115 +78,131 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
     setState(() {});
   }
 
-  Future<void> _fetchExploreFeed() async {
+  void _onExploreScroll() {
+    if (!_exploreScrollController.hasClients) return;
+    final maxScroll = _exploreScrollController.position.maxScrollExtent;
+    final currentScroll = _exploreScrollController.position.pixels;
+
+    if (currentScroll >= (maxScroll - 250) &&
+        _repository.hasMoreExplore &&
+        !_isLoadingMoreExplore &&
+        !_isLoadingExplore) {
+      _loadMoreExplore();
+    }
+  }
+
+  // ==========================================
+  // DATA FETCHING & PAGINATION
+  // ==========================================
+  Future<void> _fetchExploreFeed({bool refresh = false}) async {
     setState(() {
       _isLoadingExplore = true;
       _exploreError = null;
     });
 
-    final response = await _discoveryService.getExplore(
-      country: _selectedCountry == 'ALL' ? null : _selectedCountry,
-      limit: 20,
-    );
-
-    if (!mounted) return;
-
-    if (response.isSuccess && response.data is Map) {
-      final list = response.data['rooms'] as List?;
+    try {
+      final rooms = await _repository.fetchExplore(
+        refresh: refresh,
+        countryCode: _selectedCountry,
+      );
+      if (!mounted) return;
       setState(() {
-        _exploreRooms = list != null
-            ? list.map((r) => Map<String, dynamic>.from(r as Map)).toList()
-            : [];
+        _exploreRooms = rooms;
         _isLoadingExplore = false;
       });
-      return;
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingExplore = false;
+        _exploreError = e.toString();
+      });
     }
-
-    setState(() {
-      _isLoadingExplore = false;
-      _exploreError = response.message ?? 'Failed to load live rooms.';
-    });
   }
 
-  Future<void> _fetchFollowingFeed() async {
+  Future<void> _loadMoreExplore() async {
+    setState(() {
+      _isLoadingMoreExplore = true;
+    });
+
+    try {
+      final rooms = await _repository.loadMoreExplore();
+      if (!mounted) return;
+      setState(() {
+        _exploreRooms = rooms;
+        _isLoadingMoreExplore = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingMoreExplore = false;
+      });
+    }
+  }
+
+  Future<void> _fetchFollowingFeed({bool refresh = false}) async {
     setState(() {
       _isLoadingFollowing = true;
       _followingError = null;
     });
 
-    final response = await _discoveryService.getFollowing();
-    if (!mounted) return;
-
-    if (response.isSuccess && response.data is Map) {
-      final list =
-          (response.data['liveRooms'] ?? response.data['rooms']) as List?;
+    try {
+      final rooms = await _repository.fetchFollowing(refresh: refresh);
+      if (!mounted) return;
       setState(() {
-        _followingRooms = list != null
-            ? list.map((r) => Map<String, dynamic>.from(r as Map)).toList()
-            : [];
+        _followingRooms = rooms;
         _isLoadingFollowing = false;
       });
-      return;
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingFollowing = false;
+        _followingError = e.toString();
+      });
     }
-
-    setState(() {
-      _isLoadingFollowing = false;
-      _followingError = response.message ?? 'Failed to load following feed.';
-    });
   }
 
-  Future<void> _fetchNewFeed() async {
+  Future<void> _fetchNewFeed({bool refresh = false}) async {
     setState(() {
       _isLoadingNew = true;
       _newError = null;
     });
 
-    final response = await _discoveryService.getNewHosts();
-    if (!mounted) return;
-
-    if (response.isSuccess && response.data is Map) {
-      final list =
-          (response.data['creators'] ?? response.data['rooms']) as List?;
+    try {
+      final rooms = await _repository.fetchNewCreators(refresh: refresh);
+      if (!mounted) return;
       setState(() {
-        _newCreators = list != null
-            ? list.map((c) => Map<String, dynamic>.from(c as Map)).toList()
-            : [];
+        _newCreators = rooms;
         _isLoadingNew = false;
       });
-      return;
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingNew = false;
+        _newError = e.toString();
+      });
     }
-
-    setState(() {
-      _isLoadingNew = false;
-      _newError = response.message ?? 'Failed to load new creators.';
-    });
   }
 
-  Future<void> _fetchPkFeed() async {
+  Future<void> _fetchPkFeed({bool refresh = false}) async {
     setState(() {
       _isLoadingPk = true;
       _pkError = null;
     });
 
-    final response = await _discoveryService.getPkRooms();
-    if (!mounted) return;
-
-    if (response.isSuccess && response.data is Map) {
-      final list =
-          (response.data['battles'] ?? response.data['rooms']) as List?;
+    try {
+      final rooms = await _repository.fetchPkBattles(refresh: refresh);
+      if (!mounted) return;
       setState(() {
-        _pkBattles = list != null
-            ? list.map((p) => Map<String, dynamic>.from(p as Map)).toList()
-            : [];
+        _pkBattles = rooms;
         _isLoadingPk = false;
       });
-      return;
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingPk = false;
+        _pkError = e.toString();
+      });
     }
-
-    setState(() {
-      _isLoadingPk = false;
-      _pkError = response.message ?? 'Failed to load PK arena.';
-    });
   }
 
   void _onCountryFilterChanged(String code) {
@@ -190,15 +210,14 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
     setState(() {
       _selectedCountry = code;
     });
-    _fetchExploreFeed();
+    _fetchExploreFeed(refresh: true);
   }
 
-  void _openRoomPreview(Map<String, dynamic> room) {
-    final roomId = room['roomId']?.toString() ?? room['id']?.toString() ?? '';
+  void _openRoomPreview(DiscoveryRoom room) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) =>
-            RoomPreviewScreen(roomId: roomId, initialRoomData: room),
+            RoomPreviewScreen(roomId: room.roomId, initialRoom: room),
       ),
     );
   }
@@ -219,7 +238,6 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
               titleSpacing: 16,
               title: Row(
                 children: [
-                  // Logo / App Name
                   Text(
                     PopoStrings.get('app_name'),
                     style: const TextStyle(
@@ -329,13 +347,13 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
     if (_followingError != null) {
       return PopoErrorState(
         message: _followingError,
-        onRetry: _fetchFollowingFeed,
+        onRetry: () => _fetchFollowingFeed(refresh: true),
       );
     }
 
     if (_followingRooms.isEmpty) {
       return RefreshIndicator(
-        onRefresh: _fetchFollowingFeed,
+        onRefresh: () => _fetchFollowingFeed(refresh: true),
         color: PopoTheme.primary,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -353,7 +371,7 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
     }
 
     return RefreshIndicator(
-      onRefresh: _fetchFollowingFeed,
+      onRefresh: () => _fetchFollowingFeed(refresh: true),
       color: PopoTheme.primary,
       child: _buildRoomGrid(_followingRooms),
     );
@@ -364,9 +382,10 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
   // ==========================================
   Widget _buildExploreTab() {
     return RefreshIndicator(
-      onRefresh: _fetchExploreFeed,
+      onRefresh: () => _fetchExploreFeed(refresh: true),
       color: PopoTheme.primary,
       child: CustomScrollView(
+        controller: _exploreScrollController,
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
@@ -403,7 +422,7 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
               hasScrollBody: false,
               child: PopoErrorState(
                 message: _exploreError,
-                onRetry: _fetchExploreFeed,
+                onRetry: () => _fetchExploreFeed(refresh: true),
               ),
             )
           else if (_exploreRooms.isEmpty)
@@ -415,7 +434,7 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
                 icon: Icons.live_tv_rounded,
               ),
             )
-          else
+          else ...[
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               sliver: SliverGrid(
@@ -435,6 +454,21 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
               ),
             ),
 
+            // Pagination Loading Indicator
+            if (_isLoadingMoreExplore)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Center(
+                    child: PopoLoadingIndicator(
+                      size: 24,
+                      color: PopoTheme.primary,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
       ),
@@ -450,12 +484,15 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
     }
 
     if (_newError != null) {
-      return PopoErrorState(message: _newError, onRetry: _fetchNewFeed);
+      return PopoErrorState(
+        message: _newError,
+        onRetry: () => _fetchNewFeed(refresh: true),
+      );
     }
 
     if (_newCreators.isEmpty) {
       return RefreshIndicator(
-        onRefresh: _fetchNewFeed,
+        onRefresh: () => _fetchNewFeed(refresh: true),
         color: PopoTheme.cyan,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -472,7 +509,7 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
     }
 
     return RefreshIndicator(
-      onRefresh: _fetchNewFeed,
+      onRefresh: () => _fetchNewFeed(refresh: true),
       color: PopoTheme.cyan,
       child: _buildRoomGrid(_newCreators),
     );
@@ -489,12 +526,15 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
     }
 
     if (_pkError != null) {
-      return PopoErrorState(message: _pkError, onRetry: _fetchPkFeed);
+      return PopoErrorState(
+        message: _pkError,
+        onRetry: () => _fetchPkFeed(refresh: true),
+      );
     }
 
     if (_pkBattles.isEmpty) {
       return RefreshIndicator(
-        onRefresh: _fetchPkFeed,
+        onRefresh: () => _fetchPkFeed(refresh: true),
         color: const Color(0xFF8B5CF6),
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -511,13 +551,13 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
     }
 
     return RefreshIndicator(
-      onRefresh: _fetchPkFeed,
+      onRefresh: () => _fetchPkFeed(refresh: true),
       color: const Color(0xFF8B5CF6),
       child: _buildRoomGrid(_pkBattles),
     );
   }
 
-  Widget _buildRoomGrid(List<Map<String, dynamic>> rooms) {
+  Widget _buildRoomGrid(List<DiscoveryRoom> rooms) {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       physics: const AlwaysScrollableScrollPhysics(

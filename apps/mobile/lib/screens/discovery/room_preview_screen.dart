@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
 import '../../l10n/strings.dart';
-import '../../api/api.dart';
+import '../../models/models.dart';
+import '../../repositories/discovery_repository.dart';
 import '../../widgets/popo_loading_indicator.dart';
 import '../../widgets/popo_primary_button.dart';
 import '../../widgets/popo_icon_button.dart';
@@ -13,21 +14,32 @@ import '../../widgets/popo_card.dart';
 /// Video playback activates in Sprint 2 (M3).
 class RoomPreviewScreen extends StatefulWidget {
   final String roomId;
-  final Map<String, dynamic>? initialRoomData;
+  final DiscoveryRoom? initialRoom;
 
-  const RoomPreviewScreen({
+  const RoomPreviewScreen({Key? key, required this.roomId, this.initialRoom})
+    : super(key: key);
+
+  factory RoomPreviewScreen.fromMap({
     Key? key,
-    required this.roomId,
-    this.initialRoomData,
-  }) : super(key: key);
+    required String roomId,
+    Map<String, dynamic>? initialRoomData,
+  }) {
+    return RoomPreviewScreen(
+      key: key,
+      roomId: roomId,
+      initialRoom: initialRoomData != null
+          ? DiscoveryRoom.fromJson(initialRoomData)
+          : null,
+    );
+  }
 
   @override
   State<RoomPreviewScreen> createState() => _RoomPreviewScreenState();
 }
 
 class _RoomPreviewScreenState extends State<RoomPreviewScreen> {
-  final RoomService _roomService = RoomService();
-  Map<String, dynamic>? _room;
+  final DiscoveryRepository _repository = DiscoveryRepository.instance;
+  DiscoveryRoom? _room;
   bool _isLoading = true;
   String? _errorMessage;
   bool _isFollowing = false;
@@ -35,33 +47,31 @@ class _RoomPreviewScreenState extends State<RoomPreviewScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialRoomData != null) {
-      _room = widget.initialRoomData;
+    if (widget.initialRoom != null) {
+      _room = widget.initialRoom;
+      _isFollowing = _room!.isFollowing;
       _isLoading = false;
     }
     _fetchRoomDetails();
   }
 
   Future<void> _fetchRoomDetails() async {
-    final response = await _roomService.getRoomDetails(widget.roomId);
+    final room = await _repository.fetchRoomDetails(widget.roomId);
     if (!mounted) return;
 
-    if (response.isSuccess && response.data is Map) {
-      final roomData = response.data['room'];
-      if (roomData is Map) {
-        setState(() {
-          _room = Map<String, dynamic>.from(roomData);
-          _isFollowing = _room?['isFollowing'] == true;
-          _isLoading = false;
-        });
-        return;
-      }
+    if (room != null) {
+      setState(() {
+        _room = room;
+        _isFollowing = room.isFollowing;
+        _isLoading = false;
+      });
+      return;
     }
 
     if (_room == null) {
       setState(() {
         _isLoading = false;
-        _errorMessage = response.message ?? 'Failed to load live room preview.';
+        _errorMessage = 'Live room is currently offline or unavailable.';
       });
     }
   }
@@ -121,38 +131,19 @@ class _RoomPreviewScreenState extends State<RoomPreviewScreen> {
   }
 
   Widget _buildContentView() {
-    final room = _room ?? {};
-    final title = room['title']?.toString() ?? 'Live Stream';
-    final coverUrl = room['coverUrl']?.toString();
-    final roomNumber = room['roomNumber']?.toString() ?? widget.roomId;
-    final viewers =
-        room['viewersFormatted']?.toString() ??
-        (room['viewerCount']?.toString() ?? '0');
-    final coins =
-        room['coinsFormatted']?.toString() ??
-        (room['coinsEarned']?.toString() ?? '0');
-    final flag = room['flagEmoji']?.toString() ?? '🌐';
-    final country = room['country']?.toString() ?? '';
-    final isPk = room['isPk'] == true || room['category'] == 'pk';
-
-    final host = room['host'] is Map ? room['host'] as Map : {};
-    final hostNickname = host['nickname']?.toString() ?? 'Broadcaster';
-    final hostPoppoId = host['poppoId']?.toString() ?? '';
-    final hostAvatar = host['avatarUrl']?.toString();
-    final hostLevel = host['hostLevel']?.toString() ?? '1';
-    final wealthLevel = host['wealthLevel']?.toString() ?? '1';
-
-    final pkBattle = room['pkBattle'] is Map ? room['pkBattle'] as Map : null;
+    final room = _room!;
+    final host = room.host;
+    final pkBattle = room.pkBattle;
 
     return Stack(
       children: [
         // 1. Background Cover with Dark Overlay
         Positioned.fill(
-          child: coverUrl != null && coverUrl.isNotEmpty
+          child: room.coverUrl.isNotEmpty
               ? Image.network(
-                  coverUrl.startsWith('http')
-                      ? coverUrl
-                      : 'https://kigolive.com$coverUrl',
+                  room.coverUrl.startsWith('http')
+                      ? room.coverUrl
+                      : 'https://kigolive.com${room.coverUrl}',
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => _buildFallbackCover(),
                 )
@@ -198,7 +189,7 @@ class _RoomPreviewScreenState extends State<RoomPreviewScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Room #$roomNumber',
+                          'Room #${room.roomNumber}',
                           style: const TextStyle(
                             color: PopoTheme.textSecondary,
                             fontSize: 12,
@@ -248,7 +239,7 @@ class _RoomPreviewScreenState extends State<RoomPreviewScreen> {
                           ),
                           const SizedBox(width: 5),
                           Text(
-                            '$viewers ${PopoStrings.get('viewers')}',
+                            '${room.viewersFormatted} ${PopoStrings.get('viewers')}',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
@@ -310,7 +301,7 @@ class _RoomPreviewScreenState extends State<RoomPreviewScreen> {
                       // Host Row
                       Row(
                         children: [
-                          _buildAvatar(hostAvatar, hostNickname),
+                          _buildAvatar(host.avatarUrl, host.nickname),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -320,7 +311,7 @@ class _RoomPreviewScreenState extends State<RoomPreviewScreen> {
                                   children: [
                                     Flexible(
                                       child: Text(
-                                        hostNickname,
+                                        host.nickname,
                                         style: const TextStyle(
                                           color: PopoTheme.textPrimary,
                                           fontSize: 15,
@@ -328,10 +319,10 @@ class _RoomPreviewScreenState extends State<RoomPreviewScreen> {
                                         ),
                                       ),
                                     ),
-                                    if (flag.isNotEmpty) ...[
+                                    if (room.flagEmoji.isNotEmpty) ...[
                                       const SizedBox(width: 6),
                                       Text(
-                                        flag,
+                                        room.flagEmoji,
                                         style: const TextStyle(fontSize: 14),
                                       ),
                                     ],
@@ -339,7 +330,7 @@ class _RoomPreviewScreenState extends State<RoomPreviewScreen> {
                                 ),
                                 const SizedBox(height: 3),
                                 Text(
-                                  'ID: $hostPoppoId',
+                                  'ID: ${host.poppoId}',
                                   style: const TextStyle(
                                     color: PopoTheme.textSecondary,
                                     fontSize: 12,
@@ -388,7 +379,7 @@ class _RoomPreviewScreenState extends State<RoomPreviewScreen> {
 
                       // Room Title
                       Text(
-                        title,
+                        room.title,
                         style: const TextStyle(
                           color: PopoTheme.textPrimary,
                           fontSize: 13,
@@ -404,20 +395,20 @@ class _RoomPreviewScreenState extends State<RoomPreviewScreen> {
                         runSpacing: 6,
                         children: [
                           _buildBadge(
-                            'Host Lv.$hostLevel',
+                            'Host Lv.${host.hostLevel}',
                             const Color(0xFFF59E0B),
                           ),
                           _buildBadge(
-                            'Wealth Lv.$wealthLevel',
+                            'Wealth Lv.${host.wealthLevel}',
                             PopoTheme.primary,
                           ),
-                          if (country.isNotEmpty)
-                            _buildBadge(country, PopoTheme.cyan),
+                          if (room.country.isNotEmpty)
+                            _buildBadge(room.country, PopoTheme.cyan),
                           _buildBadge(
-                            '🪙 $coins Coins',
+                            '🪙 ${room.coinsFormatted} Coins',
                             const Color(0xFFFFD700),
                           ),
-                          if (isPk)
+                          if (room.isPk)
                             _buildBadge(
                               '⚔️ PK Active',
                               const Color(0xFF8B5CF6),
@@ -426,7 +417,7 @@ class _RoomPreviewScreenState extends State<RoomPreviewScreen> {
                       ),
 
                       // PK Opponent Preview (if PK active)
-                      if (pkBattle != null && pkBattle['opponent'] is Map) ...[
+                      if (pkBattle != null && pkBattle.opponent != null) ...[
                         const SizedBox(height: 14),
                         Container(
                           padding: const EdgeInsets.all(10),
@@ -449,7 +440,7 @@ class _RoomPreviewScreenState extends State<RoomPreviewScreen> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  'Opponent: ${pkBattle['opponent']['nickname'] ?? 'Host'}',
+                                  'Opponent: ${pkBattle.opponent!.nickname}',
                                   style: const TextStyle(
                                     color: PopoTheme.textPrimary,
                                     fontSize: 12,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:popo_live/l10n/strings.dart';
+import 'package:popo_live/models/models.dart';
+import 'package:popo_live/repositories/discovery_repository.dart';
 import 'package:popo_live/screens/discovery/explore_home_screen.dart';
 import 'package:popo_live/screens/discovery/room_card.dart';
 import 'package:popo_live/screens/discovery/country_chips.dart';
@@ -10,6 +12,106 @@ import 'package:popo_live/screens/discovery/search_screen.dart';
 void main() {
   setUp(() {
     PopoStrings.setLanguage('en');
+  });
+
+  group('M2 Strongly Typed Model Parsing Tests', () {
+    test('DiscoveryRoom parses full JSON payload correctly', () {
+      final json = {
+        'id': 'uuid-1234',
+        'roomId': '100068',
+        'roomNumber': '100068',
+        'title': 'Popo Arena Championship',
+        'coverUrl': 'https://kigolive.com/covers/arena.jpg',
+        'category': 'pk',
+        'isLive': true,
+        'isPk': true,
+        'viewerCount': 35000,
+        'viewersFormatted': '35K',
+        'coinsEarned': 82000,
+        'coinsFormatted': '82K',
+        'country': 'Pakistan',
+        'countryCode': 'PK',
+        'flagEmoji': '🇵🇰',
+        'tags': ['PK', 'Battle'],
+        'host': {
+          'id': 'host-99',
+          'poppoId': '9000001',
+          'nickname': 'StarBroadcaster',
+          'avatarUrl': 'https://kigolive.com/avatars/host.jpg',
+          'hostLevel': 50,
+          'wealthLevel': 25,
+          'isVerified': true,
+        },
+        'pkDetails': {
+          'pkId': 'pk-battle-77',
+          'title': 'PK Championship',
+          'status': 'active',
+          'votesHost': 1200,
+          'votesOpponent': 980,
+          'pointsHost': '52K',
+          'pointsOpponent': '45K',
+          'opponent': {
+            'id': 'opp-55',
+            'nickname': 'RivalHost',
+            'avatarUrl': 'https://kigolive.com/avatars/opp.jpg',
+            'poppoId': '888777',
+          },
+        },
+      };
+
+      final room = DiscoveryRoom.fromJson(json);
+
+      expect(room.id, equals('uuid-1234'));
+      expect(room.roomId, equals('100068'));
+      expect(room.title, equals('Popo Arena Championship'));
+      expect(room.isPk, isTrue);
+      expect(room.viewerCount, equals(35000));
+      expect(room.viewersFormatted, equals('35K'));
+      expect(room.host.nickname, equals('StarBroadcaster'));
+      expect(room.host.isVerified, isTrue);
+      expect(room.pkBattle, isNotNull);
+      expect(room.pkBattle!.opponent!.nickname, equals('RivalHost'));
+    });
+
+    test('DiscoveryBanner parses JSON and computes effective image URL', () {
+      final json = {
+        'id': 'banner-01',
+        'title': 'Top Hosts Campaign',
+        'description': 'Monthly leaderboard rewards',
+        'desktopImageUrl': 'https://kigolive.com/desktop.jpg',
+        'mobileImageUrl': 'https://kigolive.com/mobile.jpg',
+        'destination': '/ranking/host',
+        'ctaText': 'Join Now >',
+        'badgeText': 'MONTHLY',
+      };
+
+      final banner = DiscoveryBanner.fromJson(json);
+      expect(banner.id, equals('banner-01'));
+      expect(
+        banner.effectiveImageUrl,
+        equals('https://kigolive.com/mobile.jpg'),
+      );
+      expect(banner.badgeText, equals('MONTHLY'));
+    });
+
+    test('DiscoveryCountry identifies Popular vs Regional filters', () {
+      final popular = DiscoveryCountry.fromJson({
+        'code': 'ALL',
+        'name': 'Popular',
+        'flag': '🔥',
+        'activeRooms': 25,
+      });
+      final regional = DiscoveryCountry.fromJson({
+        'code': 'PK',
+        'name': 'Pakistan',
+        'flag': '🇵🇰',
+        'activeRooms': 18,
+      });
+
+      expect(popular.isPopular, isTrue);
+      expect(regional.isPopular, isFalse);
+      expect(regional.code, equals('PK'));
+    });
   });
 
   group('M2 ExploreHomeScreen Navigation & Tabs Tests', () {
@@ -67,7 +169,10 @@ void main() {
               body: Center(
                 child: SizedBox(
                   width: 200,
-                  child: RoomCard(room: roomData, onTap: () => tapped = true),
+                  child: RoomCard.fromMap(
+                    roomMap: roomData,
+                    onTap: () => tapped = true,
+                  ),
                 ),
               ),
             ),
@@ -130,7 +235,7 @@ void main() {
 
         await tester.pumpWidget(
           MaterialApp(
-            home: RoomPreviewScreen(
+            home: RoomPreviewScreen.fromMap(
               roomId: '100068',
               initialRoomData: roomData,
             ),

@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
 import '../../l10n/strings.dart';
-import '../../api/api.dart';
+import '../../models/models.dart';
+import '../../repositories/discovery_repository.dart';
 import '../../widgets/popo_loading_indicator.dart';
 import '../../widgets/popo_empty_state.dart';
 import '../../widgets/popo_error_state.dart';
@@ -23,7 +24,7 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  final DiscoveryService _discoveryService = DiscoveryService();
+  final DiscoveryRepository _repository = DiscoveryRepository.instance;
   Timer? _debounceTimer;
 
   String _currentQuery = '';
@@ -31,8 +32,8 @@ class _SearchScreenState extends State<SearchScreen> {
   bool _isLoading = false;
   String? _errorMessage;
 
-  List<Map<String, dynamic>> _users = [];
-  List<Map<String, dynamic>> _rooms = [];
+  List<SearchUser> _users = [];
+  List<DiscoveryRoom> _rooms = [];
 
   @override
   void dispose() {
@@ -69,37 +70,27 @@ class _SearchScreenState extends State<SearchScreen> {
       _errorMessage = null;
     });
 
-    final response = await _discoveryService.search(
-      _currentQuery,
-      type: _selectedType,
-      limit: 20,
-    );
+    try {
+      final result = await _repository.search(
+        _currentQuery,
+        type: _selectedType,
+        limit: 20,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (response.isSuccess && response.data is Map) {
-      final results = response.data['results'];
-      if (results is Map) {
-        final usersList = results['users'] as List? ?? [];
-        final roomsList = results['rooms'] as List? ?? [];
-
-        setState(() {
-          _users = usersList
-              .map((u) => Map<String, dynamic>.from(u as Map))
-              .toList();
-          _rooms = roomsList
-              .map((r) => Map<String, dynamic>.from(r as Map))
-              .toList();
-          _isLoading = false;
-        });
-        return;
-      }
+      setState(() {
+        _users = result.users;
+        _rooms = result.rooms;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.toString();
+      });
     }
-
-    setState(() {
-      _isLoading = false;
-      _errorMessage = response.message ?? 'Search query failed.';
-    });
   }
 
   void _clearSearch() {
@@ -326,15 +317,11 @@ class _SearchScreenState extends State<SearchScreen> {
                 return RoomCard(
                   room: room,
                   onTap: () {
-                    final roomId =
-                        room['roomId']?.toString() ??
-                        room['id']?.toString() ??
-                        '';
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => RoomPreviewScreen(
-                          roomId: roomId,
-                          initialRoomData: room,
+                          roomId: room.roomId,
+                          initialRoom: room,
                         ),
                       ),
                     );
@@ -348,14 +335,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildUserRow(Map<String, dynamic> user) {
-    final nickname = user['nickname']?.toString() ?? 'User';
-    final poppoId = user['poppoId']?.toString() ?? '';
-    final avatarUrl = user['avatarUrl']?.toString();
-    final hostLevel = user['hostLevel']?.toString() ?? '1';
-    final isLive = user['isLive'] == true;
-    final liveRoomId = user['liveRoomId']?.toString();
-
+  Widget _buildUserRow(SearchUser user) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       leading: Stack(
@@ -364,19 +344,19 @@ class _SearchScreenState extends State<SearchScreen> {
             radius: 20,
             backgroundColor: PopoTheme.surfaceLight,
             backgroundImage:
-                avatarUrl != null &&
-                    avatarUrl.isNotEmpty &&
-                    !avatarUrl.contains('default.png') &&
-                    avatarUrl.startsWith('http')
-                ? NetworkImage(avatarUrl)
+                user.avatarUrl.isNotEmpty &&
+                    !user.avatarUrl.contains('default.png') &&
+                    user.avatarUrl.startsWith('http')
+                ? NetworkImage(user.avatarUrl)
                 : null,
             child:
-                (avatarUrl == null ||
-                    avatarUrl.isEmpty ||
-                    avatarUrl.contains('default.png') ||
-                    !avatarUrl.startsWith('http'))
+                (user.avatarUrl.isEmpty ||
+                    user.avatarUrl.contains('default.png') ||
+                    !user.avatarUrl.startsWith('http'))
                 ? Text(
-                    nickname.isNotEmpty ? nickname[0].toUpperCase() : 'P',
+                    user.nickname.isNotEmpty
+                        ? user.nickname[0].toUpperCase()
+                        : 'P',
                     style: const TextStyle(
                       color: PopoTheme.cyan,
                       fontWeight: FontWeight.bold,
@@ -384,7 +364,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   )
                 : null,
           ),
-          if (isLive)
+          if (user.isLive)
             Positioned(
               right: 0,
               bottom: 0,
@@ -404,7 +384,7 @@ class _SearchScreenState extends State<SearchScreen> {
         children: [
           Flexible(
             child: Text(
-              nickname,
+              user.nickname,
               style: const TextStyle(
                 color: PopoTheme.textPrimary,
                 fontSize: 13,
@@ -420,7 +400,7 @@ class _SearchScreenState extends State<SearchScreen> {
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
-              'Lv.$hostLevel',
+              'Lv.${user.hostLevel}',
               style: const TextStyle(
                 color: PopoTheme.gold,
                 fontSize: 9,
@@ -431,15 +411,15 @@ class _SearchScreenState extends State<SearchScreen> {
         ],
       ),
       subtitle: Text(
-        'ID: $poppoId',
+        'ID: ${user.poppoId}',
         style: const TextStyle(color: PopoTheme.textSecondary, fontSize: 11),
       ),
-      trailing: isLive && liveRoomId != null
+      trailing: user.isLive && user.liveRoomId != null
           ? ElevatedButton(
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => RoomPreviewScreen(roomId: liveRoomId),
+                    builder: (_) => RoomPreviewScreen(roomId: user.liveRoomId!),
                   ),
                 );
               },
@@ -460,7 +440,7 @@ class _SearchScreenState extends State<SearchScreen> {
             )
           : null,
       onTap: () {
-        final userId = user['id']?.toString() ?? poppoId;
+        final userId = user.id.isNotEmpty ? user.id : user.poppoId;
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => PublicProfileScreen(userId: userId),

@@ -1,31 +1,29 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
+import '../../models/models.dart';
 
 /// Reusable 3:4 aspect-ratio Live Stream Room Card for Discovery feeds
 class RoomCard extends StatelessWidget {
-  final Map<String, dynamic> room;
+  final DiscoveryRoom room;
   final VoidCallback? onTap;
 
   const RoomCard({Key? key, required this.room, this.onTap}) : super(key: key);
 
+  factory RoomCard.fromMap({
+    Key? key,
+    required Map<String, dynamic> roomMap,
+    VoidCallback? onTap,
+  }) {
+    return RoomCard(
+      key: key,
+      room: DiscoveryRoom.fromJson(roomMap),
+      onTap: onTap,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final title = room['title']?.toString() ?? 'Live Stream';
-    final coverUrl = room['coverUrl']?.toString();
-    final isPk = room['isPk'] == true || room['category'] == 'pk';
-    final isLive = room['isLive'] != false;
-    final viewers =
-        room['viewersFormatted']?.toString() ??
-        (room['viewerCount']?.toString() ?? '0');
-    final country = room['country']?.toString() ?? '';
-    final flagEmoji = room['flagEmoji']?.toString() ?? '🌐';
-
-    final host = room['host'] is Map ? room['host'] as Map : null;
-    final hostNickname = host?['nickname']?.toString() ?? 'Broadcaster';
-    final hostAvatar = host?['avatarUrl']?.toString();
-    final isVerified = host?['isVerified'] == true;
-
     return AspectRatio(
       aspectRatio: 3 / 4,
       child: GestureDetector(
@@ -48,7 +46,7 @@ class RoomCard extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               // 1. Cover Image with Fallback
-              _buildCoverImage(coverUrl),
+              _buildCoverImage(room.coverUrl),
 
               // 2. Gradient Overlay for Text Readability
               Container(
@@ -79,7 +77,7 @@ class RoomCard extends StatelessWidget {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (isLive)
+                        if (room.isLive)
                           Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 7,
@@ -115,7 +113,7 @@ class RoomCard extends StatelessWidget {
                               ],
                             ),
                           ),
-                        if (isPk) ...[
+                        if (room.isPk) ...[
                           const SizedBox(width: 4),
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -161,7 +159,7 @@ class RoomCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            viewers,
+                            room.viewersFormatted,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -186,7 +184,7 @@ class RoomCard extends StatelessWidget {
                   children: [
                     // Title
                     Text(
-                      title,
+                      room.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -208,7 +206,10 @@ class RoomCard extends StatelessWidget {
                     Row(
                       children: [
                         // Host Avatar
-                        _buildHostAvatar(hostAvatar, hostNickname),
+                        _buildHostAvatar(
+                          room.host.avatarUrl,
+                          room.host.nickname,
+                        ),
                         const SizedBox(width: 6),
 
                         // Host Nickname
@@ -217,7 +218,7 @@ class RoomCard extends StatelessWidget {
                             children: [
                               Flexible(
                                 child: Text(
-                                  hostNickname,
+                                  room.host.nickname,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
@@ -227,7 +228,7 @@ class RoomCard extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              if (isVerified) ...[
+                              if (room.host.isVerified) ...[
                                 const SizedBox(width: 3),
                                 const Icon(
                                   Icons.verified,
@@ -240,8 +241,11 @@ class RoomCard extends StatelessWidget {
                         ),
 
                         // Country Flag
-                        if (flagEmoji.isNotEmpty)
-                          Text(flagEmoji, style: const TextStyle(fontSize: 12)),
+                        if (room.flagEmoji.isNotEmpty)
+                          Text(
+                            room.flagEmoji,
+                            style: const TextStyle(fontSize: 12),
+                          ),
                       ],
                     ),
                   ],
