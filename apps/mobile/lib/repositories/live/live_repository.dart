@@ -112,6 +112,56 @@ class LiveRepository {
     };
   }
 
+  /// Queries pre-live configuration from backend
+  Future<PreLiveConfig> fetchPreLiveConfig({bool isDemo = false}) async {
+    try {
+      final res = await _apiService.getPreLiveConfig(isDemo: isDemo);
+      if (res.isSuccess && res.data != null) {
+        final data = res.data as Map<String, dynamic>;
+        return PreLiveConfig.fromJson(data);
+      }
+    } catch (_) {}
+    return PreLiveConfig.fallback();
+  }
+
+  /// Submits pre-live configuration to create/stage live room
+  Future<PreLiveSetupResult> submitPreLiveSetup({
+    required String title,
+    required String categoryId,
+    String? category,
+    String? coverUrl,
+    List<String> tags = const [],
+  }) async {
+    final res = await _apiService.setupPreLive(
+      title: title,
+      categoryId: categoryId,
+      category: category,
+      coverUrl: coverUrl,
+      tags: tags,
+    );
+
+    if (res.isSuccess && res.data != null) {
+      final data = res.data as Map<String, dynamic>;
+      return PreLiveSetupResult.fromJson(data, tags: tags);
+    }
+
+    return PreLiveSetupResult(
+      success: false,
+      message: res.errorMessage ?? 'Failed to stage pre-live studio.',
+      roomId: '',
+      roomNumber: '',
+      title: title,
+      category: category ?? 'Live Chat',
+      categoryId: categoryId,
+      tags: tags,
+      hostNickname: 'Host',
+      hostPoppoId: '',
+      status: 'error',
+      nextStep: '',
+      error: res.errorMessage,
+    );
+  }
+
   /// Clears in-memory caches upon logout
   void clearCache() {
     _cachedGatesStatus = null;

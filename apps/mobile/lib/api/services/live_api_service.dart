@@ -72,18 +72,22 @@ class LiveApiService {
     );
   }
 
-  /// Saves broadcast title, category, and cover before launching
+  /// Saves broadcast title, category, tags, and cover before launching
   Future<ApiResponse<dynamic>> setupPreLive({
     required String title,
-    required String category,
+    required String categoryId,
+    String? category,
     String? coverUrl,
+    List<String>? tags,
   }) async {
     return _client.post(
       '/api/live/pre-live/setup',
       body: {
         'title': title,
-        'category': category,
+        'categoryId': categoryId,
+        if (category != null) 'category': category,
         if (coverUrl != null) 'coverUrl': coverUrl,
+        if (tags != null) 'tags': tags,
       },
     );
   }
