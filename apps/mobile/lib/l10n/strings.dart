@@ -196,6 +196,25 @@ class PopoStrings {
       'language': 'Language',
       'logout': 'Log Out',
 
+      // Discovery & Live Rooms
+      'tab_follow': 'Follow',
+      'tab_explore': 'Explore',
+      'tab_new': 'New',
+      'tab_pk': 'PK',
+      'search_hint': 'Search Host ID, Username, or Tag',
+      'search_title': 'Search',
+      'search_users': 'Hosts / Users',
+      'search_rooms': 'Live Rooms',
+      'no_results_found': 'No results found matching your query.',
+      'rankings_title': 'Rankings & Leaderboards',
+      'filter_popular': 'Popular',
+      'live_now': 'LIVE',
+      'viewers': 'viewers',
+      'room_preview': 'Room Preview',
+      'room_preview_note': 'Live video stream activates in Sprint 2 (M3).',
+      'no_live_rooms': 'No live streams currently active.',
+      'pull_to_refresh': 'Pull down to refresh',
+
       // Errors
       'error_network':
           'Unable to connect to server. Please check your internet connection.',
@@ -351,6 +370,25 @@ class PopoStrings {
       'settings': 'سیٹنگز',
       'language': 'زبان',
       'logout': 'لاگ آؤٹ',
+
+      // Discovery & Live Rooms
+      'tab_follow': 'فالو',
+      'tab_explore': 'دریافت',
+      'tab_new': 'نیا',
+      'tab_pk': 'پی کے',
+      'search_hint': 'ہوسٹ آئی ڈی، نام یا ٹیگ تلاش کریں',
+      'search_title': 'تلاش',
+      'search_users': 'ہوسٹس اور صارفین',
+      'search_rooms': 'لائیو رومز',
+      'no_results_found': 'کوئی نتیجہ دستیاب نہیں ہے۔',
+      'rankings_title': 'لیڈر بورڈ اور رینکنگز',
+      'filter_popular': 'مقبول',
+      'live_now': 'لائیو',
+      'viewers': 'ناظرین',
+      'room_preview': 'روم کا پیش نظارہ',
+      'room_preview_note': 'لائیو ویڈیو سلسلہ سپرنٹ 2 (M3) میں شروع ہوگا۔',
+      'no_live_rooms': 'فی الوقت کوئی لائیو اسٹریم دستیاب نہیں ہے۔',
+      'pull_to_refresh': 'تازہ کاری کے لیے نیچے کھینچیں',
 
       // Errors
       'error_network':

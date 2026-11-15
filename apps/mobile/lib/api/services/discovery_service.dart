@@ -71,4 +71,16 @@ class DiscoveryService {
       queryParameters: {'page': page, 'limit': limit},
     );
   }
+
+  /// Searches live hosts, live rooms, and party rooms by keyword or numeric ID
+  Future<ApiResponse<dynamic>> search(
+    String query, {
+    String type = 'all', // 'all', 'users', 'rooms', 'party'
+    int limit = 20,
+  }) async {
+    return _client.get(
+      '/api/search',
+      queryParameters: {'q': query, 'type': type, 'limit': limit},
+    );
+  }
 }

@@ -9,6 +9,7 @@ import '../widgets/popo_card.dart';
 import '../widgets/popo_empty_state.dart';
 import '../widgets/popo_secondary_button.dart';
 import '../screens/profile/me_screen.dart';
+import '../screens/discovery/explore_home_screen.dart';
 
 /// Master 5-Tab Application Shell for Popo Live
 /// Tabs: [0: Home] [1: Party] [2: Go Live] [3: Inbox] [4: Me]
@@ -49,7 +50,7 @@ class _AppShellState extends State<AppShell> {
           body: IndexedStack(
             index: _currentIndex,
             children: [
-              _buildHomeTab(),
+              const ExploreHomeScreen(),
               _buildLockedTab(
                 title: PopoStrings.tabParty,
                 subtitle: PopoStrings.partyOpensSprint2,
@@ -81,8 +82,8 @@ class _AppShellState extends State<AppShell> {
   }
 
   PreferredSizeWidget? _buildAppBarForCurrentTab() {
-    // Tab 4 (Me) has its own dedicated App Bar with settings action
-    if (_currentIndex == 4) {
+    // Tab 0 (Home/Explore) and Tab 4 (Me) have their own custom AppBars
+    if (_currentIndex == 0 || _currentIndex == 4) {
       return null;
     }
 
@@ -113,67 +114,6 @@ class _AppShellState extends State<AppShell> {
           onPressed: PopoStrings.toggleLanguage,
         ),
       ],
-    );
-  }
-
-  /// Tab 0: Home / Explore Entry Point (Activates in Sprint 1 - M2 Explore)
-  Widget _buildHomeTab() {
-    return SafeArea(
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              PopoCard(
-                hasGlow: true,
-                glowColor: PopoTheme.primary,
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: PopoTheme.primary.withOpacity(0.15),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: PopoTheme.primary.withOpacity(0.4),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.explore_rounded,
-                        color: PopoTheme.primary,
-                        size: 32,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      PopoStrings.explorePopular,
-                      style: const TextStyle(
-                        color: PopoTheme.textPrimary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Ready for M2 Explore: Next.js live streaming room feeds, banners, country filters, and rankings.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: PopoTheme.textSecondary,
-                        fontSize: 13,
-                        height: 1.45,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 

@@ -19,4 +19,9 @@ class RankingsService {
       queryParameters: {'category': category, 'period': period},
     );
   }
+
+  /// Fetches discovery ranking navigation doors (Event, Rank, Agency, Notice)
+  Future<ApiResponse<dynamic>> getRankDoors() async {
+    return _client.get('/api/discovery/rank-doors');
+  }
 }
