@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../theme/popo_theme.dart';
 import '../l10n/strings.dart';
 
@@ -149,7 +150,9 @@ class PopoBottomNavigation extends StatelessWidget {
                 gradient: PopoTheme.primaryGradient,
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? Colors.white : Colors.white.withOpacity(0.2),
+                  color: isSelected
+                      ? Colors.white
+                      : Colors.white.withOpacity(0.2),
                   width: 1.5,
                 ),
                 boxShadow: [

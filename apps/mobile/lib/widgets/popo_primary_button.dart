@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/popo_theme.dart';
 
 /// Premium CTA Button with Popo Live Rose Pink gradient and glowing shadow
@@ -73,7 +74,9 @@ class PopoPrimaryButton extends StatelessWidget {
                       Text(
                         text,
                         style: TextStyle(
-                          color: enabled ? Colors.white : PopoTheme.textSecondary,
+                          color: enabled
+                              ? Colors.white
+                              : PopoTheme.textSecondary,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.3,

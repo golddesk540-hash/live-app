@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/popo_theme.dart';
 import 'popo_primary_button.dart';
 
@@ -52,11 +53,7 @@ class PopoEmptyState extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(
-                icon,
-                color: effectiveColor,
-                size: 38,
-              ),
+              child: Icon(icon, color: effectiveColor, size: 38),
             ),
             const SizedBox(height: 20),
             Text(

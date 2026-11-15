@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/popo_theme.dart';
 
 /// Secondary / Outlined Button with subtle surface styling and optional icon
@@ -32,7 +33,9 @@ class PopoSecondaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool enabled = onPressed != null && !isLoading;
     final Color effectiveBorder = borderColor ?? PopoTheme.borderSubtle;
-    final Color effectiveText = textColor ?? (enabled ? PopoTheme.textPrimary : PopoTheme.textSecondary);
+    final Color effectiveText =
+        textColor ??
+        (enabled ? PopoTheme.textPrimary : PopoTheme.textSecondary);
     final Color effectiveBg = backgroundColor ?? PopoTheme.surface;
 
     return Container(

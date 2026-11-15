@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/popo_theme.dart';
 import '../l10n/strings.dart';
 import 'popo_primary_button.dart';
@@ -49,11 +50,7 @@ class PopoErrorState extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(
-                icon,
-                color: PopoTheme.danger,
-                size: 38,
-              ),
+              child: Icon(icon, color: PopoTheme.danger, size: 38),
             ),
             const SizedBox(height: 20),
             Text(

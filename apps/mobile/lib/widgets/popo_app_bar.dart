@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/popo_theme.dart';
 import 'popo_icon_button.dart';
 
@@ -100,12 +101,7 @@ class PopoAppBar extends StatelessWidget implements PreferredSizeWidget {
       leadingWidth: displayBack ? 52 : (showBrandLogo ? 48 : null),
       title: effectiveTitle,
       titleSpacing: (displayBack || showBrandLogo) ? 4.0 : 16.0,
-      actions: actions != null
-          ? [
-              ...actions!,
-              const SizedBox(width: 8),
-            ]
-          : null,
+      actions: actions != null ? [...actions!, const SizedBox(width: 8)] : null,
       bottom: bottom != null
           ? PreferredSize(
               preferredSize: Size.fromHeight(bottomHeight),
@@ -113,10 +109,7 @@ class PopoAppBar extends StatelessWidget implements PreferredSizeWidget {
             )
           : null,
       shape: const Border(
-        bottom: BorderSide(
-          color: PopoTheme.borderSubtle,
-          width: 1.0,
-        ),
+        bottom: BorderSide(color: PopoTheme.borderSubtle, width: 1.0),
       ),
     );
   }

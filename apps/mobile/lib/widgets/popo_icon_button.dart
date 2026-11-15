@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/popo_theme.dart';
 
 /// Accessible, branded icon button with touch target >= 44dp and optional badge counter
@@ -62,15 +63,23 @@ class PopoIconButton extends StatelessWidget {
                 top: -2,
                 right: -2,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1.5,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 16,
+                    minHeight: 16,
+                  ),
                   decoration: BoxDecoration(
                     color: badgeColor ?? PopoTheme.primary,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: PopoTheme.surface, width: 1.5),
                     boxShadow: [
                       BoxShadow(
-                        color: (badgeColor ?? PopoTheme.primary).withOpacity(0.4),
+                        color: (badgeColor ?? PopoTheme.primary).withOpacity(
+                          0.4,
+                        ),
                         blurRadius: 4,
                         offset: const Offset(0, 1),
                       ),
@@ -94,10 +103,7 @@ class PopoIconButton extends StatelessWidget {
     );
 
     if (tooltip != null && tooltip!.isNotEmpty) {
-      button = Tooltip(
-        message: tooltip!,
-        child: button,
-      );
+      button = Tooltip(message: tooltip!, child: button);
     }
 
     return Semantics(

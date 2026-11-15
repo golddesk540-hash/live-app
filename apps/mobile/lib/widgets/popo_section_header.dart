@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/popo_theme.dart';
 
 /// Clean, consistent section header with optional icon, badge, and trailing action
@@ -72,12 +73,18 @@ class PopoSectionHeader extends StatelessWidget {
                     if (badgeText != null) ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color: (badgeColor ?? PopoTheme.primary).withOpacity(0.18),
+                          color: (badgeColor ?? PopoTheme.primary).withOpacity(
+                            0.18,
+                          ),
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: (badgeColor ?? PopoTheme.primary).withOpacity(0.4),
+                            color: (badgeColor ?? PopoTheme.primary)
+                                .withOpacity(0.4),
                             width: 0.8,
                           ),
                         ),

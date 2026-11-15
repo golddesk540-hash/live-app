@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../theme/popo_theme.dart';
 
 /// Premium dark surface card with subtle borders, optional glow, and tap interactions
@@ -76,10 +77,7 @@ class PopoCard extends StatelessWidget {
             ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: effectiveBorderRadius,
-        child: cardContent,
-      ),
+      child: ClipRRect(borderRadius: effectiveBorderRadius, child: cardContent),
     );
   }
 }

@@ -1,5 +1,7 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+
 import '../theme/popo_theme.dart';
 
 /// Branded dual-ring pulsing loading indicator in Neon Rose Pink and Electric Cyan
