@@ -42,3 +42,6 @@ Popo_Live_Phase_*/
 # Private runtime finance export artifacts
 apps/web/storage/finance_exports/*
 !apps/web/storage/finance_exports/.gitkeep
+
+# Mobile Screen Safety Backups
+apps/mobile/lib/screens_backup_*/
