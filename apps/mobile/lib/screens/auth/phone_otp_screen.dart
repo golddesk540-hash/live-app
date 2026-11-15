@@ -10,6 +10,7 @@ import '../../widgets/popo_icon_button.dart';
 import '../../widgets/popo_card.dart';
 import '../../auth/auth_state.dart';
 import '../../shell/app_shell.dart';
+import '../profile/complete_profile_screen.dart';
 
 /// Supported country dial code model
 class CountryDialCode {
@@ -193,8 +194,13 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
     if (!mounted) return;
 
     if (success) {
+      final isCompleted =
+          AuthState.instance.currentUser?['isProfileCompleted'] == true;
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const AppShell()),
+        MaterialPageRoute(
+          builder: (_) =>
+              isCompleted ? const AppShell() : const CompleteProfileScreen(),
+        ),
         (route) => false,
       );
     } else {

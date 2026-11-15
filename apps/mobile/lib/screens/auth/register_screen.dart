@@ -6,6 +6,7 @@ import '../../widgets/popo_primary_button.dart';
 import '../../widgets/popo_icon_button.dart';
 import '../../auth/auth_state.dart';
 import '../../shell/app_shell.dart';
+import '../profile/complete_profile_screen.dart';
 
 /// Premium Popo Live User Registration Screen
 class RegisterScreen extends StatefulWidget {
@@ -96,8 +97,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
 
     if (success) {
+      final isCompleted =
+          AuthState.instance.currentUser?['isProfileCompleted'] == true;
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const AppShell()),
+        MaterialPageRoute(
+          builder: (_) =>
+              isCompleted ? const AppShell() : const CompleteProfileScreen(),
+        ),
         (route) => false,
       );
     } else {

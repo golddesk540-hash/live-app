@@ -109,11 +109,24 @@ class AuthState extends ChangeNotifier {
         language: language,
       );
 
-      final token = response.isSuccess && response.data is Map
-          ? response.data['token']?.toString()
-          : 'local_accepted_${DateTime.now().millisecondsSinceEpoch}';
+      if (!response.isSuccess) {
+        _errorMessage =
+            response.message ?? 'Failed to submit terms acceptance.';
+        notifyListeners();
+        return false;
+      }
 
-      await TokenStorage.saveTermsConsentToken(token ?? 'local_accepted');
+      // Check if signed cookie was already extracted and saved by ApiClient
+      final savedCookie = await TokenStorage.getTermsConsentToken();
+      if (savedCookie == null ||
+          savedCookie.isEmpty ||
+          savedCookie.startsWith('local_accepted')) {
+        final token = response.data is Map
+            ? (response.data['token'] ?? response.data['consentId'])?.toString()
+            : 'local_accepted_${DateTime.now().millisecondsSinceEpoch}';
+        await TokenStorage.saveTermsConsentToken(token ?? 'local_accepted');
+      }
+
       _isTermsAccepted = true;
       _status = AuthStatus.unauthenticated;
       notifyListeners();

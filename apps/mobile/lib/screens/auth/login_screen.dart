@@ -10,6 +10,7 @@ import '../../widgets/popo_secondary_button.dart';
 import '../../widgets/popo_icon_button.dart';
 import '../../auth/auth_state.dart';
 import '../../shell/app_shell.dart';
+import '../profile/complete_profile_screen.dart';
 import 'register_screen.dart';
 import 'forgot_password_sheet.dart';
 import 'age_gate_screen.dart';
@@ -69,8 +70,13 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
+      final isCompleted =
+          AuthState.instance.currentUser?['isProfileCompleted'] == true;
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const AppShell()),
+        MaterialPageRoute(
+          builder: (_) =>
+              isCompleted ? const AppShell() : const CompleteProfileScreen(),
+        ),
         (route) => false,
       );
     } else {

@@ -5,6 +5,7 @@ import '../../l10n/strings.dart';
 import '../../widgets/popo_loading_indicator.dart';
 import '../../auth/auth_state.dart';
 import '../../shell/app_shell.dart';
+import '../profile/complete_profile_screen.dart';
 import 'age_gate_screen.dart';
 import 'login_screen.dart';
 
@@ -66,9 +67,15 @@ class _SplashScreenState extends State<SplashScreen>
         MaterialPageRoute(builder: (_) => const AgeGateScreen()),
       );
     } else if (status == AuthStatus.authenticated) {
-      // Valid session restored
-      Navigator.of(context)
-          .pushReplacement(MaterialPageRoute(builder: (_) => const AppShell()));
+      // Valid session restored: route based on profile completion
+      final isCompleted =
+          AuthState.instance.currentUser?['isProfileCompleted'] == true;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) =>
+              isCompleted ? const AppShell() : const CompleteProfileScreen(),
+        ),
+      );
     } else {
       // 18+ accepted, but unauthenticated -> proceed to Login
       Navigator.of(

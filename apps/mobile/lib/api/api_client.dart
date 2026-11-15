@@ -77,7 +77,7 @@ class ApiClient {
   }
 
   /// Extracts session and consent cookies from response headers
-  void _extractCookies(http.Response response) {
+  Future<void> _extractCookies(http.Response response) async {
     final rawCookie = response.headers['set-cookie'];
     if (rawCookie == null || rawCookie.isEmpty) return;
 
@@ -86,7 +86,7 @@ class ApiClient {
     if (sessionMatch != null && sessionMatch.group(1) != null) {
       final token = sessionMatch.group(1)!;
       if (token != 'deleted' && token.isNotEmpty) {
-        TokenStorage.saveSessionToken(token);
+        await TokenStorage.saveSessionToken(token);
       }
     }
 
@@ -96,14 +96,14 @@ class ApiClient {
     if (termsMatch != null && termsMatch.group(1) != null) {
       final token = termsMatch.group(1)!;
       if (token != 'deleted' && token.isNotEmpty) {
-        TokenStorage.saveTermsConsentToken(token);
+        await TokenStorage.saveTermsConsentToken(token);
       }
     }
   }
 
   /// Parses HTTP response into structured ApiResponse
-  ApiResponse<dynamic> _processResponse(http.Response response) {
-    _extractCookies(response);
+  Future<ApiResponse<dynamic>> _processResponse(http.Response response) async {
+    await _extractCookies(response);
     final statusCode = response.statusCode;
 
     dynamic decodedData;
@@ -233,7 +233,7 @@ class ApiClient {
       final response = await _client
           .get(uri, headers: requestHeaders)
           .timeout(timeout ?? ApiConfig.receiveTimeout);
-      return _processResponse(response);
+      return await _processResponse(response);
     } catch (e) {
       return _handleException(e);
     }
@@ -254,7 +254,7 @@ class ApiClient {
       final response = await _client
           .post(uri, headers: requestHeaders, body: encodedBody)
           .timeout(timeout ?? ApiConfig.receiveTimeout);
-      return _processResponse(response);
+      return await _processResponse(response);
     } catch (e) {
       return _handleException(e);
     }
@@ -275,7 +275,7 @@ class ApiClient {
       final response = await _client
           .put(uri, headers: requestHeaders, body: encodedBody)
           .timeout(timeout ?? ApiConfig.receiveTimeout);
-      return _processResponse(response);
+      return await _processResponse(response);
     } catch (e) {
       return _handleException(e);
     }
@@ -296,7 +296,7 @@ class ApiClient {
       final response = await _client
           .patch(uri, headers: requestHeaders, body: encodedBody)
           .timeout(timeout ?? ApiConfig.receiveTimeout);
-      return _processResponse(response);
+      return await _processResponse(response);
     } catch (e) {
       return _handleException(e);
     }
@@ -315,7 +315,7 @@ class ApiClient {
       final response = await _client
           .delete(uri, headers: requestHeaders)
           .timeout(timeout ?? ApiConfig.receiveTimeout);
-      return _processResponse(response);
+      return await _processResponse(response);
     } catch (e) {
       return _handleException(e);
     }
