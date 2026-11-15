@@ -32,14 +32,17 @@ class LiveSessionManager extends ChangeNotifier {
   LiveStreamRole? get currentRole => _currentRole;
   List<LiveChatMessage> get chatMessages => _chatMessages;
   bool get isBroadcasting =>
-      _currentSession != null && _currentRole == LiveStreamRole.host;
+      _currentSession != null &&
+      _currentRole == LiveStreamRole.host &&
+      _agoraService.isBroadcasting;
   bool get isWatching =>
       _currentSession != null && _currentRole == LiveStreamRole.viewer;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  /// Starts a live broadcast studio session
+  /// Starts a live broadcast studio session and publishes host video/audio
   Future<bool> startBroadcast({
+    String? roomId,
     String? title,
     String? category,
     String? coverUrl,
@@ -51,6 +54,7 @@ class LiveSessionManager extends ChangeNotifier {
 
     try {
       final res = await _apiService.startStudio(
+        roomId: roomId,
         title: title,
         category: category,
         coverUrl: coverUrl,
@@ -68,7 +72,7 @@ class LiveSessionManager extends ChangeNotifier {
       _currentSession = LiveRoomSession.fromJson(data);
       _currentRole = LiveStreamRole.host;
 
-      // Connect to Agora channel
+      // Connect to Agora channel & publish host video/audio
       if (_currentSession?.agora != null) {
         await _agoraService.joinChannel(
           config: _currentSession!.agora!,
@@ -88,7 +92,46 @@ class LiveSessionManager extends ChangeNotifier {
     }
   }
 
-  /// Ends the current broadcast studio session
+  /// Synchronizes active host studio session with backend
+  Future<void> refreshStudioSession({
+    String? roomId,
+    bool isDemo = false,
+  }) async {
+    try {
+      final res = await _apiService.getStudioSession(
+        roomId: roomId ?? _currentSession?.id,
+        isDemo: isDemo,
+      );
+
+      if (res.isSuccess && res.data != null) {
+        final data = res.data as Map<String, dynamic>;
+        _currentSession = LiveRoomSession.fromJson(data);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('[LiveSessionManager] Session sync warning: $e');
+    }
+  }
+
+  /// Mutes or unmutes host camera video track
+  Future<void> muteVideo(bool mute) async {
+    await _agoraService.muteLocalVideo(mute);
+    notifyListeners();
+  }
+
+  /// Mutes or unmutes host microphone audio track
+  Future<void> muteAudio(bool mute) async {
+    await _agoraService.muteLocalAudio(mute);
+    notifyListeners();
+  }
+
+  /// Switches between front and rear cameras
+  Future<void> switchCamera() async {
+    await _agoraService.switchCamera();
+    notifyListeners();
+  }
+
+  /// Ends the current broadcast studio session and frees all Agora/hardware resources
   Future<LiveEndSummary?> endBroadcast({bool isDemo = false}) async {
     if (_currentSession == null) return null;
 
@@ -103,6 +146,14 @@ class LiveSessionManager extends ChangeNotifier {
       notifyListeners();
 
       if (res.isSuccess && res.data != null) {
+        final data = res.data as Map<String, dynamic>;
+        if (data['summary'] != null) {
+          return LiveEndSummary.fromJson(
+            data['summary'] as Map<String, dynamic>,
+          );
+        }
+
+        // Secondary fallback to summary endpoint
         final summaryRes = await _apiService.getEndScreenSummary(
           roomId: roomId,
           isDemo: isDemo,
@@ -153,7 +204,7 @@ class LiveSessionManager extends ChangeNotifier {
       _currentSession = LiveRoomSession.fromJson(data);
       _currentRole = LiveStreamRole.viewer;
 
-      // 3. Connect as audience subscriber
+      // 3. Connect to Agora channel as audience
       if (_currentSession?.agora != null) {
         await _agoraService.joinChannel(
           config: _currentSession!.agora!,
@@ -161,22 +212,23 @@ class LiveSessionManager extends ChangeNotifier {
         );
       }
 
-      _startChatPolling(roomId);
+      // 4. Start heartbeat and chat polling
       _startHeartbeat(roomId);
+      _startChatPolling(roomId);
 
       _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = 'Error joining live room: $e';
+      _errorMessage = 'Error joining live stream: $e';
       _isLoading = false;
       notifyListeners();
       return false;
     }
   }
 
-  /// Leaves the viewer room
-  Future<void> leaveViewerRoom() async {
+  /// Leaves viewer room and cleans up resources
+  Future<void> leaveViewer({bool isDemo = false}) async {
     if (_currentSession == null) return;
 
     final roomId = _currentSession!.id;
@@ -185,9 +237,9 @@ class LiveSessionManager extends ChangeNotifier {
     await _agoraService.leaveChannel();
 
     try {
-      await _apiService.leaveViewer(roomId: roomId);
+      await _apiService.leaveViewer(roomId: roomId, isDemo: isDemo);
     } catch (e) {
-      debugPrint('[LiveSessionManager] Error leaving room: $e');
+      debugPrint('[LiveSessionManager] Error leaving viewer: $e');
     }
 
     _currentSession = null;
@@ -196,37 +248,39 @@ class LiveSessionManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Sends a real-time message in the active live room
-  Future<bool> sendMessage(String text, {String? emoji}) async {
-    if (_currentSession == null) return false;
+  /// Sends a chat message to the current room
+  Future<bool> sendChatMessage(String content) async {
+    if (_currentSession == null || content.trim().isEmpty) return false;
 
-    try {
-      final res = await _apiService.sendChatMessage(
-        roomId: _currentSession!.id,
-        text: text,
-        emoji: emoji,
+    final res = await _apiService.sendChatMessage(
+      roomId: _currentSession!.id,
+      content: content.trim(),
+    );
+
+    if (res.isSuccess) {
+      final msg = LiveChatMessage(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        userId: 'self',
+        nickname: 'You',
+        content: content.trim(),
+        sentAt: DateTime.now(),
+        type: LiveMessageType.chat,
       );
-
-      if (res.isSuccess && res.data != null) {
-        final newMsg = LiveChatMessage.fromJson(
-          res.data as Map<String, dynamic>,
-        );
-        _chatMessages.add(newMsg);
-        notifyListeners();
-        return true;
-      }
-    } catch (e) {
-      debugPrint('[LiveSessionManager] Error sending chat message: $e');
+      _chatMessages.add(msg);
+      notifyListeners();
+      return true;
     }
     return false;
   }
 
   void _startHeartbeat(String roomId) {
     _heartbeatTimer?.cancel();
-    _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (_) async {
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
       try {
-        await _apiService.joinViewer(roomId: roomId);
-      } catch (_) {}
+        await _apiService.heartbeat(roomId: roomId);
+      } catch (e) {
+        debugPrint('[LiveSessionManager] Heartbeat error: $e');
+      }
     });
   }
 
@@ -236,25 +290,22 @@ class LiveSessionManager extends ChangeNotifier {
   }
 
   void _startChatPolling(String roomId) {
-    _stopChatPolling();
-    _fetchChat(roomId);
-    _chatPollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      _fetchChat(roomId);
-    });
-  }
-
-  Future<void> _fetchChat(String roomId) async {
-    try {
-      final res = await _apiService.getChatMessages(roomId: roomId);
-      if (res.isSuccess && res.data != null) {
-        final data = res.data as Map<String, dynamic>;
-        final rawMessages = data['messages'] as List<dynamic>? ?? [];
-        _chatMessages = rawMessages
-            .map((m) => LiveChatMessage.fromJson(m as Map<String, dynamic>))
-            .toList();
-        notifyListeners();
+    _chatPollingTimer?.cancel();
+    _chatPollingTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
+      try {
+        final res = await _apiService.getChatMessages(roomId: roomId);
+        if (res.isSuccess && res.data != null) {
+          final data = res.data as Map<String, dynamic>;
+          final rawMessages = data['messages'] as List<dynamic>? ?? [];
+          _chatMessages = rawMessages
+              .map((m) => LiveChatMessage.fromJson(m as Map<String, dynamic>))
+              .toList();
+          notifyListeners();
+        }
+      } catch (e) {
+        debugPrint('[LiveSessionManager] Chat poll error: $e');
       }
-    } catch (_) {}
+    });
   }
 
   void _stopChatPolling() {
