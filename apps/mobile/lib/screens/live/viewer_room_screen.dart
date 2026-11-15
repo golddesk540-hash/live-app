@@ -9,6 +9,9 @@ import '../../services/live/live_session_manager.dart';
 import '../../widgets/popo_loading_indicator.dart';
 import '../../widgets/popo_error_state.dart';
 import '../../widgets/popo_primary_button.dart';
+import 'widgets/live_chat_overlay.dart';
+import 'widgets/live_safety_modal.dart';
+import 'live_rules_screen.dart';
 
 /// Viewer Room Screen — Live Audience Experience & Real-Time Video Playback
 /// Implemented in Phase 2 Prompt 05/10 according to NEXT IMPLEMENTATION PLAN v1.1
@@ -372,118 +375,133 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen> {
                 ),
                 child: Row(
                   children: [
-                    // Host Profile Badge
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: PopoTheme.surface.withOpacity(0.85),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: PopoTheme.primary.withOpacity(0.6),
-                          width: 1.2,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 17,
-                            backgroundColor: PopoTheme.primary,
-                            backgroundImage:
-                                host?.avatarUrl != null &&
-                                    host!.avatarUrl!.startsWith('http')
-                                ? NetworkImage(host.avatarUrl!)
-                                : null,
-                            child:
-                                host?.avatarUrl == null ||
-                                    !host!.avatarUrl!.startsWith('http')
-                                ? Text(
-                                    (host?.nickname.isNotEmpty ?? false)
-                                        ? host!.nickname[0].toUpperCase()
-                                        : 'H',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                  )
-                                : null,
+                    // Host Profile Badge with Moderation / Safety trigger
+                    GestureDetector(
+                      onTap: () {
+                        if (host != null) {
+                          LiveSafetyModal.show(
+                            context: context,
+                            targetUserId: host.id,
+                            targetNickname: host.nickname,
+                            targetAvatarUrl: host.avatarUrl,
+                            targetRole: 'host',
+                            targetWealthLevel: host.wealthLevel,
+                            isHostViewer: false,
+                          );
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: PopoTheme.surface.withOpacity(0.85),
+                          borderRadius: BorderRadius.circular(24),
+                          border: Border.all(
+                            color: PopoTheme.primary.withOpacity(0.6),
+                            width: 1.2,
                           ),
-                          const SizedBox(width: 8),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                host?.nickname ??
-                                    widget.initialHostNickname ??
-                                    'Live Broadcaster',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: PopoTheme.gold,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      'Lv.${host?.wealthLevel ?? 5}',
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 17,
+                              backgroundColor: PopoTheme.primary,
+                              backgroundImage:
+                                  host?.avatarUrl != null &&
+                                      host!.avatarUrl!.startsWith('http')
+                                  ? NetworkImage(host.avatarUrl!)
+                                  : null,
+                              child:
+                                  host?.avatarUrl == null ||
+                                      !host!.avatarUrl!.startsWith('http')
+                                  ? Text(
+                                      (host?.nickname.isNotEmpty ?? false)
+                                          ? host!.nickname[0].toUpperCase()
+                                          : 'H',
                                       style: const TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  host?.nickname ??
+                                      widget.initialHostNickname ??
+                                      'Live Broadcaster',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 1,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: PopoTheme.gold,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        'Lv.${host?.wealthLevel ?? 5}',
+                                        style: const TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w900,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'ID: ${session?.roomNumber ?? "880219"}',
-                                    style: const TextStyle(
-                                      color: PopoTheme.textSecondary,
-                                      fontSize: 10,
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'ID: ${session?.roomNumber ?? "880219"}',
+                                      style: const TextStyle(
+                                        color: PopoTheme.textSecondary,
+                                        fontSize: 10,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: 8),
-                          // Follow Toggle
-                          GestureDetector(
-                            onTap: _toggleFollow,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _isFollowing
-                                    ? Colors.white24
-                                    : PopoTheme.primary,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Text(
-                                _isFollowing ? 'Following' : '+ Follow',
-                                style: TextStyle(
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(width: 8),
+                            // Follow Toggle
+                            GestureDetector(
+                              onTap: _toggleFollow,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
                                   color: _isFollowing
-                                      ? Colors.white70
-                                      : Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
+                                      ? Colors.white24
+                                      : PopoTheme.primary,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  _isFollowing ? 'Following' : '+ Follow',
+                                  style: TextStyle(
+                                    color: _isFollowing
+                                        ? Colors.white70
+                                        : Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                        ],
+                            const SizedBox(width: 4),
+                          ],
+                        ),
                       ),
                     ),
 
@@ -526,6 +544,19 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen> {
                       ),
                     ),
                     const SizedBox(width: 8),
+
+                    // Community Rules & Policy
+                    _buildIconButton(
+                      icon: Icons.shield_outlined,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const LiveRulesScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 6),
 
                     // Audio Mute/Unmute
                     _buildIconButton(
@@ -604,132 +635,24 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen> {
               ),
             ),
 
-            // 7. Live Chat Messages Area
+            // 7. Live Chat Stream & Moderation Overlay
             Positioned(
-              left: 16,
-              right: 80,
-              bottom: 80,
-              height: 220,
-              child: ShaderMask(
-                shaderCallback: (Rect bounds) {
-                  return LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.8),
-                      Colors.black,
-                    ],
-                    stops: const [0.0, 0.15, 1.0],
-                  ).createShader(bounds);
-                },
-                blendMode: BlendMode.dstIn,
-                child: ListView.builder(
-                  controller: _chatScrollController,
-                  padding: const EdgeInsets.only(bottom: 8),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = messages[index];
-                    return _buildChatMessageItem(msg);
-                  },
-                ),
-              ),
-            ),
-
-            // 8. Bottom Action & Chat Input Bar
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
+              left: 0,
+              right: 0,
+              bottom: 12,
               child: SafeArea(
                 top: false,
-                child: Row(
-                  children: [
-                    // Chat Input Field
-                    Expanded(
-                      child: Container(
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.65),
-                          borderRadius: BorderRadius.circular(22),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.18),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: TextField(
-                                controller: _chatController,
-                                maxLength: 300,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                ),
-                                decoration: const InputDecoration(
-                                  counterText: '',
-                                  hintText: 'Say something nice...',
-                                  hintStyle: TextStyle(
-                                    color: PopoTheme.textSecondary,
-                                    fontSize: 13,
-                                  ),
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                ),
-                                onSubmitted: (_) => _handleSendMessage(),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.send_rounded,
-                                color: PopoTheme.cyan,
-                                size: 18,
-                              ),
-                              onPressed: _handleSendMessage,
-                              tooltip: 'Send Message',
-                            ),
-                          ],
-                        ),
+                child: LiveChatOverlay(
+                  isHost: false,
+                  onHeartTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Sent love to broadcaster! ❤️'),
+                        duration: Duration(milliseconds: 800),
+                        backgroundColor: PopoTheme.surface,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-
-                    // Floating Gift Tray Action Placeholder
-                    GestureDetector(
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Gift Tray and animations activate in Milestone 4! 🎁',
-                            ),
-                            duration: Duration(seconds: 1),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFFF1493), Color(0xFFFF8800)],
-                          ),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: PopoTheme.primary.withOpacity(0.4),
-                              blurRadius: 8,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.card_giftcard_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
             ),

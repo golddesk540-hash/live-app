@@ -198,11 +198,21 @@ class LiveApiService {
   // LIVE CHAT
   // ==========================================
 
-  /// Retrieves recent live chat messages
-  Future<ApiResponse<dynamic>> getChatMessages({required String roomId}) async {
+  /// Retrieves recent live chat messages with optional pagination
+  Future<ApiResponse<dynamic>> getChatMessages({
+    required String roomId,
+    String? after,
+    int limit = 50,
+    bool isDemo = false,
+  }) async {
     return _client.get(
       '/api/live/chat/messages',
-      queryParameters: {'roomId': roomId},
+      queryParameters: {
+        'roomId': roomId,
+        if (after != null) 'after': after,
+        'limit': limit.toString(),
+        if (isDemo) 'preview': 'demo',
+      },
     );
   }
 
@@ -211,6 +221,7 @@ class LiveApiService {
     required String roomId,
     required String text,
     String? emoji,
+    String? senderRole,
   }) async {
     return _client.post(
       '/api/live/chat/send',
@@ -218,6 +229,7 @@ class LiveApiService {
         'roomId': roomId,
         'text': text,
         if (emoji != null && emoji.isNotEmpty) 'emoji': emoji,
+        if (senderRole != null) 'senderRole': senderRole,
       },
     );
   }
@@ -230,7 +242,8 @@ class LiveApiService {
   Future<ApiResponse<dynamic>> reportUser({
     required String roomId,
     required String reason,
-    String? reportedUserId,
+    required String reportedUserId,
+    String? reportedNickname,
     String? description,
   }) async {
     return _client.post(
@@ -238,14 +251,91 @@ class LiveApiService {
       body: {
         'roomId': roomId,
         'reason': reason,
-        if (reportedUserId != null) 'reportedUserId': reportedUserId,
-        if (description != null) 'description': description,
+        'reportedUserId': reportedUserId,
+        if (reportedNickname != null) 'reportedNickname': reportedNickname,
+        if (description != null && description.isNotEmpty)
+          'description': description,
       },
     );
   }
 
+  /// Blocks selected user in live room
+  Future<ApiResponse<dynamic>> blockUser({
+    required String targetUserId,
+    String? targetNickname,
+    String? roomId,
+  }) async {
+    return _client.post(
+      '/api/live/safety/block',
+      body: {
+        'targetUserId': targetUserId,
+        if (targetNickname != null) 'targetNickname': targetNickname,
+        if (roomId != null) 'roomId': roomId,
+      },
+    );
+  }
+
+  /// Unblocks selected user
+  Future<ApiResponse<dynamic>> unblockUser({
+    required String targetUserId,
+  }) async {
+    return _client.delete(
+      '/api/live/safety/block',
+      queryParameters: {'targetUserId': targetUserId},
+    );
+  }
+
+  /// Fetches currently blocked user IDs
+  Future<ApiResponse<dynamic>> getBlockedUsers() async {
+    return _client.get('/api/live/safety/block');
+  }
+
+  /// Mutes participant in live room (viewer_local or room_global)
+  Future<ApiResponse<dynamic>> muteUser({
+    required String roomId,
+    required String targetUserId,
+    String? targetNickname,
+    String muteType = 'viewer_local',
+    String requesterRole = 'viewer',
+  }) async {
+    return _client.post(
+      '/api/live/safety/mute',
+      body: {
+        'roomId': roomId,
+        'targetUserId': targetUserId,
+        if (targetNickname != null) 'targetNickname': targetNickname,
+        'muteType': muteType,
+        'requesterRole': requesterRole,
+      },
+    );
+  }
+
+  /// Unmutes participant in live room
+  Future<ApiResponse<dynamic>> unmuteUser({
+    required String roomId,
+    required String targetUserId,
+    String muteType = 'viewer_local',
+  }) async {
+    return _client.delete(
+      '/api/live/safety/mute',
+      queryParameters: {
+        'roomId': roomId,
+        'targetUserId': targetUserId,
+        'muteType': muteType,
+      },
+    );
+  }
+
+  /// Fetches list of active mutes for room
+  Future<ApiResponse<dynamic>> getMutedUsers({required String roomId}) async {
+    return _client.get(
+      '/api/live/safety/mute',
+      queryParameters: {'roomId': roomId},
+    );
+  }
+
   // ==========================================
-  // HOST RULES & END SCREEN
+  // HOST RULES & POLICY
   // ==========================================
 
   /// Fetches canonical streaming community rules
@@ -253,11 +343,31 @@ class LiveApiService {
     return _client.get('/api/live/rules');
   }
 
+  /// Checks rules acceptance status
+  Future<ApiResponse<dynamic>> getRulesStatus({
+    String? userId,
+    String? hostId,
+  }) async {
+    return _client.get(
+      '/api/live/rules/status',
+      queryParameters: {
+        if (userId != null) 'userId': userId,
+        if (hostId != null) 'hostId': hostId,
+      },
+    );
+  }
+
   /// Submits acknowledgement and agreement of host streaming rules
-  Future<ApiResponse<dynamic>> acceptRules({String? policyVersion}) async {
+  Future<ApiResponse<dynamic>> acceptRules({
+    String? policyVersion,
+    bool acknowledgedCheckbox = true,
+  }) async {
     return _client.post(
       '/api/live/rules/accept',
-      body: {if (policyVersion != null) 'policyVersion': policyVersion},
+      body: {
+        if (policyVersion != null) 'policyVersion': policyVersion,
+        'acknowledgedCheckbox': acknowledgedCheckbox,
+      },
     );
   }
 

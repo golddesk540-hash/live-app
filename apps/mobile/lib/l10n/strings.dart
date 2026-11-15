@@ -215,6 +215,13 @@ class PopoStrings {
       'no_live_rooms': 'No live streams currently active.',
       'pull_to_refresh': 'Pull down to refresh',
 
+      'live_chat': 'Live Chat',
+      'chat_hint': 'Say something nice...',
+      'community_rules': 'Live Community Rules',
+      'report_user': 'Report User',
+      'block_user': 'Block User',
+      'mute_user': 'Mute User',
+
       // Errors
       'error_network':
           'Unable to connect to server. Please check your internet connection.',
@@ -389,6 +396,13 @@ class PopoStrings {
       'room_preview_note': 'لائیو ویڈیو سلسلہ سپرنٹ 2 (M3) میں شروع ہوگا۔',
       'no_live_rooms': 'فی الوقت کوئی لائیو اسٹریم دستیاب نہیں ہے۔',
       'pull_to_refresh': 'تازہ کاری کے لیے نیچے کھینچیں',
+
+      'live_chat': 'لائیو چیٹ',
+      'chat_hint': 'کچھ اچھا کہیں...',
+      'community_rules': 'کمیونٹی لائیو رولز',
+      'report_user': 'رپورٹ کریں',
+      'block_user': 'بلاک کریں',
+      'mute_user': 'میوٹ کریں',
 
       // Errors
       'error_network':

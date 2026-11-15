@@ -8,6 +8,9 @@ import '../../services/live/agora_rtc_service.dart';
 import '../../services/live/live_session_manager.dart';
 import '../../services/live/live_permission_service.dart';
 import '../../widgets/popo_primary_button.dart';
+import 'widgets/live_chat_overlay.dart';
+import 'widgets/live_safety_modal.dart';
+import 'live_rules_screen.dart';
 
 /// Host Studio Screen — Actual Live Broadcasting Using Agora SDK
 /// Implemented in Phase 2 Prompt 04/10 according to NEXT IMPLEMENTATION PLAN v1.1
@@ -697,6 +700,31 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
 
                     const SizedBox(width: 8),
 
+                    // Community Rules & Safety
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.shield_outlined,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const LiveRulesScreen(),
+                            ),
+                          );
+                        },
+                        tooltip: 'Community Rules',
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
                     // End Live / Exit Button
                     Container(
                       decoration: BoxDecoration(
@@ -783,130 +811,98 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Stream Details Pill
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: PopoTheme.surface.withOpacity(0.85),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: PopoTheme.borderSubtle,
-                          width: 1,
+                    // Broadcast State: Chat Overlay (when live) or Pre-Live Staging (when preparing)
+                    if (_isLive) ...[
+                      const LiveChatOverlay(isHost: true),
+                    ] else ...[
+                      // Stream Details Pill
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: PopoTheme.surface.withOpacity(0.85),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: PopoTheme.borderSubtle,
+                            width: 1,
+                          ),
                         ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: PopoTheme.primary.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(
-                                    color: PopoTheme.primary,
-                                    width: 0.8,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: PopoTheme.primary.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: PopoTheme.primary,
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    session.category,
+                                    style: const TextStyle(
+                                      color: PopoTheme.primary,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
-                                child: Text(
-                                  session.category,
-                                  style: const TextStyle(
-                                    color: PopoTheme.primary,
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'READY TO GO LIVE',
+                                  style: TextStyle(
+                                    color: PopoTheme.textSecondary,
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              session.title,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                _isLive ? 'BROADCASTING' : 'READY TO GO LIVE',
-                                style: TextStyle(
-                                  color: _isLive
-                                      ? const Color(0xFF00C853)
-                                      : PopoTheme.textSecondary,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (session.tags.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Wrap(
+                                spacing: 6,
+                                children: session.tags
+                                    .map(
+                                      (tag) => Text(
+                                        tag,
+                                        style: const TextStyle(
+                                          color: PopoTheme.cyan,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            session.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (session.tags.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Wrap(
-                              spacing: 6,
-                              children: session.tags
-                                  .map(
-                                    (tag) => Text(
-                                      tag,
-                                      style: const TextStyle(
-                                        color: PopoTheme.cyan,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
                           ],
-                        ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Primary Action: Start Live (if not live) or End Live (if live)
-                    if (!_isLive)
+                      const SizedBox(height: 16),
                       PopoPrimaryButton(
                         text: 'Go Live Now',
                         isLoading: _isConnecting,
                         onPressed: _startBroadcasting,
-                      )
-                    else
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFE50914),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size.fromHeight(50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 4,
-                        ),
-                        onPressed: _isEnding ? null : _confirmEndLive,
-                        icon: _isEnding
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                              )
-                            : const Icon(Icons.call_end_rounded, size: 20),
-                        label: Text(
-                          _isEnding ? 'Ending Broadcast...' : 'End Live Stream',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                       ),
+                    ],
                   ],
                 ),
               ),

@@ -8,7 +8,8 @@ import 'agora_rtc_service.dart';
 import 'live_permission_service.dart';
 
 /// Central Controller for Active Live Streaming Sessions
-/// Orchestrates backend API operations, Agora RTC streaming, heartbeats, and viewer presence
+/// Orchestrates backend API operations, Agora RTC streaming, heartbeats,
+/// viewer presence, live chat polling, and user safety/moderation.
 class LiveSessionManager extends ChangeNotifier {
   static final LiveSessionManager instance = LiveSessionManager._internal();
   LiveSessionManager._internal();
@@ -24,13 +25,26 @@ class LiveSessionManager extends ChangeNotifier {
   LiveStreamRole? _currentRole;
   Timer? _heartbeatTimer;
   Timer? _chatPollingTimer;
+
   List<LiveChatMessage> _chatMessages = [];
+  final Set<String> _seenMessageIds = {};
+  final Set<String> _blockedUserIds = {};
+  final Set<String> _mutedUserIds = {};
+
+  String? _lastMessageTimestamp;
+  bool _isChatLoading = false;
+  String? _chatError;
   bool _isLoading = false;
   String? _errorMessage;
 
   LiveRoomSession? get currentSession => _currentSession;
   LiveStreamRole? get currentRole => _currentRole;
-  List<LiveChatMessage> get chatMessages => _chatMessages;
+  List<LiveChatMessage> get chatMessages => List.unmodifiable(_chatMessages);
+  Set<String> get blockedUserIds => Set.unmodifiable(_blockedUserIds);
+  Set<String> get mutedUserIds => Set.unmodifiable(_mutedUserIds);
+  bool get isChatLoading => _isChatLoading;
+  String? get chatError => _chatError;
+
   bool get isBroadcasting =>
       _currentSession != null &&
       _currentRole == LiveStreamRole.host &&
@@ -39,6 +53,9 @@ class LiveSessionManager extends ChangeNotifier {
       _currentSession != null && _currentRole == LiveStreamRole.viewer;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+
+  bool isUserBlocked(String userId) => _blockedUserIds.contains(userId);
+  bool isUserMuted(String userId) => _mutedUserIds.contains(userId);
 
   /// Starts a live broadcast studio session and publishes host video/audio
   Future<bool> startBroadcast({
@@ -80,6 +97,7 @@ class LiveSessionManager extends ChangeNotifier {
         );
       }
 
+      await loadSafetyFilters(_currentSession!.id);
       _startChatPolling(_currentSession!.id);
       _isLoading = false;
       notifyListeners();
@@ -137,6 +155,7 @@ class LiveSessionManager extends ChangeNotifier {
 
     final roomId = _currentSession!.id;
     _stopChatPolling();
+    _resetChatState();
     await _agoraService.leaveChannel();
 
     try {
@@ -212,7 +231,8 @@ class LiveSessionManager extends ChangeNotifier {
         );
       }
 
-      // 4. Start heartbeat and chat polling
+      // 4. Load safety lists, start heartbeat and chat polling
+      await loadSafetyFilters(roomId);
       _startHeartbeat(roomId);
       _startChatPolling(roomId);
 
@@ -234,6 +254,7 @@ class LiveSessionManager extends ChangeNotifier {
     final roomId = _currentSession!.id;
     _stopHeartbeat();
     _stopChatPolling();
+    _resetChatState();
     await _agoraService.leaveChannel();
 
     try {
@@ -244,34 +265,214 @@ class LiveSessionManager extends ChangeNotifier {
 
     _currentSession = null;
     _currentRole = null;
-    _chatMessages = [];
     notifyListeners();
   }
 
-  /// Sends a chat message to the current room
-  Future<bool> sendChatMessage(String content, {String? emoji}) async {
-    if (_currentSession == null || content.trim().isEmpty) return false;
+  // ==========================================
+  // SAFETY & MODERATION FILTERS
+  // ==========================================
 
-    final res = await _apiService.sendChatMessage(
-      roomId: _currentSession!.id,
-      text: content.trim(),
-      emoji: emoji,
+  /// Loads active blocklist and room mute list to filter messages
+  Future<void> loadSafetyFilters(String roomId) async {
+    try {
+      // 1. Load user blocklist
+      final blockRes = await _apiService.getBlockedUsers();
+      if (blockRes.isSuccess && blockRes.data != null) {
+        final data = blockRes.data as Map<String, dynamic>;
+        final rawBlocks = data['blockedUserIds'] as List<dynamic>? ?? [];
+        _blockedUserIds.clear();
+        _blockedUserIds.addAll(rawBlocks.map((id) => id.toString()));
+      }
+
+      // 2. Load active mutes for room
+      final muteRes = await _apiService.getMutedUsers(roomId: roomId);
+      if (muteRes.isSuccess && muteRes.data != null) {
+        final data = muteRes.data as Map<String, dynamic>;
+        final rawMutes = data['mutedUserIds'] as List<dynamic>? ?? [];
+        _mutedUserIds.clear();
+        _mutedUserIds.addAll(rawMutes.map((id) => id.toString()));
+      }
+
+      _filterExistingMessages();
+    } catch (e) {
+      debugPrint('[LiveSessionManager] Error loading safety filters: $e');
+    }
+  }
+
+  void _filterExistingMessages() {
+    _chatMessages.removeWhere(
+      (m) =>
+          _blockedUserIds.contains(m.senderId) ||
+          _mutedUserIds.contains(m.senderId),
+    );
+    notifyListeners();
+  }
+
+  /// Mutes a user (viewer_local for audience, room_global for host)
+  Future<LiveMuteResult> muteUser({
+    required String targetUserId,
+    String? targetNickname,
+    String muteType = 'viewer_local',
+  }) async {
+    final roomId = _currentSession?.id ?? '880219';
+    final role = _currentRole == LiveStreamRole.host ? 'host' : 'viewer';
+
+    final res = await _apiService.muteUser(
+      roomId: roomId,
+      targetUserId: targetUserId,
+      targetNickname: targetNickname,
+      muteType: muteType,
+      requesterRole: role,
+    );
+
+    if (res.isSuccess && res.data != null) {
+      _mutedUserIds.add(targetUserId);
+      _filterExistingMessages();
+      return LiveMuteResult.fromJson(res.data as Map<String, dynamic>);
+    }
+
+    return LiveMuteResult(
+      success: false,
+      muted: false,
+      targetUserId: targetUserId,
+      muteType: muteType,
+      error: res.errorMessage ?? 'Failed to mute participant',
+    );
+  }
+
+  /// Unmutes a user
+  Future<bool> unmuteUser({
+    required String targetUserId,
+    String muteType = 'viewer_local',
+  }) async {
+    final roomId = _currentSession?.id ?? '880219';
+    final res = await _apiService.unmuteUser(
+      roomId: roomId,
+      targetUserId: targetUserId,
+      muteType: muteType,
     );
 
     if (res.isSuccess) {
-      final msg = LiveChatMessage(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+      _mutedUserIds.remove(targetUserId);
+      notifyListeners();
+      return true;
+    }
+    return false;
+  }
+
+  /// Blocks a user and filters their messages out
+  Future<LiveBlockResult> blockUser({
+    required String targetUserId,
+    String? targetNickname,
+  }) async {
+    final res = await _apiService.blockUser(
+      targetUserId: targetUserId,
+      targetNickname: targetNickname,
+      roomId: _currentSession?.id,
+    );
+
+    if (res.isSuccess && res.data != null) {
+      _blockedUserIds.add(targetUserId);
+      _filterExistingMessages();
+      return LiveBlockResult.fromJson(res.data as Map<String, dynamic>);
+    }
+
+    return LiveBlockResult(
+      success: false,
+      blocked: false,
+      targetUserId: targetUserId,
+      error: res.errorMessage ?? 'Failed to block user',
+    );
+  }
+
+  /// Unblocks a user
+  Future<bool> unblockUser({required String targetUserId}) async {
+    final res = await _apiService.unblockUser(targetUserId: targetUserId);
+    if (res.isSuccess) {
+      _blockedUserIds.remove(targetUserId);
+      notifyListeners();
+      return true;
+    }
+    return false;
+  }
+
+  /// Submits safety/abuse report with verified reason
+  Future<LiveReportResult> reportUser({
+    required String reportedUserId,
+    required String reason,
+    String? reportedNickname,
+    String? description,
+  }) async {
+    final roomId = _currentSession?.id ?? '880219';
+    final res = await _apiService.reportUser(
+      roomId: roomId,
+      reason: reason,
+      reportedUserId: reportedUserId,
+      reportedNickname: reportedNickname,
+      description: description,
+    );
+
+    if (res.isSuccess && res.data != null) {
+      return LiveReportResult.fromJson(res.data as Map<String, dynamic>);
+    }
+
+    return LiveReportResult(
+      success: false,
+      error: res.errorMessage ?? 'Failed to submit report',
+    );
+  }
+
+  // ==========================================
+  // LIVE CHAT & POLLED SYNCHRONIZATION
+  // ==========================================
+
+  /// Sends a chat message to the current room
+  Future<bool> sendChatMessage(
+    String content, {
+    String? emoji,
+    String? senderRole,
+  }) async {
+    if (_currentSession == null) return false;
+    final trimmed = content.trim();
+    if (trimmed.isEmpty || trimmed.length > 300) return false;
+
+    final role =
+        senderRole ?? (_currentRole == LiveStreamRole.host ? 'host' : 'viewer');
+
+    final res = await _apiService.sendChatMessage(
+      roomId: _currentSession!.id,
+      text: trimmed,
+      emoji: emoji,
+      senderRole: role,
+    );
+
+    if (res.isSuccess && res.data != null) {
+      final data = res.data as Map<String, dynamic>;
+      LiveChatMessage? created;
+      if (data['message'] != null && data['message'] is Map<String, dynamic>) {
+        created = LiveChatMessage.fromJson(
+          data['message'] as Map<String, dynamic>,
+        );
+      }
+
+      created ??= LiveChatMessage(
+        id: 'self_${DateTime.now().millisecondsSinceEpoch}',
         roomId: _currentSession!.id,
         senderId: 'self',
-        senderNickname: 'You',
+        senderNickname: role == 'host' ? 'Host' : 'You',
         senderAvatarUrl: null,
-        senderRole: 'viewer',
-        text: content.trim(),
+        senderRole: role,
+        text: trimmed,
         emoji: emoji,
         createdAt: DateTime.now(),
       );
-      _chatMessages.add(msg);
-      notifyListeners();
+
+      if (!_seenMessageIds.contains(created.id)) {
+        _seenMessageIds.add(created.id);
+        _chatMessages.add(created);
+        _lastMessageTimestamp = created.createdAt.toIso8601String();
+        notifyListeners();
+      }
       return true;
     }
     return false;
@@ -295,21 +496,71 @@ class LiveSessionManager extends ChangeNotifier {
 
   void _startChatPolling(String roomId) {
     _chatPollingTimer?.cancel();
-    _chatPollingTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
-      try {
-        final res = await _apiService.getChatMessages(roomId: roomId);
-        if (res.isSuccess && res.data != null) {
-          final data = res.data as Map<String, dynamic>;
-          final rawMessages = data['messages'] as List<dynamic>? ?? [];
-          _chatMessages = rawMessages
-              .map((m) => LiveChatMessage.fromJson(m as Map<String, dynamic>))
-              .toList();
+
+    // Initial immediate fetch
+    _fetchNewChatMessages(roomId, isInitial: true);
+
+    // Synchronize every 2.5 seconds
+    _chatPollingTimer = Timer.periodic(
+      const Duration(milliseconds: 2500),
+      (_) => _fetchNewChatMessages(roomId),
+    );
+  }
+
+  Future<void> _fetchNewChatMessages(
+    String roomId, {
+    bool isInitial = false,
+  }) async {
+    try {
+      if (isInitial) {
+        _isChatLoading = true;
+        _chatError = null;
+      }
+
+      final res = await _apiService.getChatMessages(
+        roomId: roomId,
+        after: isInitial ? null : _lastMessageTimestamp,
+        limit: 50,
+      );
+
+      if (res.isSuccess && res.data != null) {
+        final data = res.data as Map<String, dynamic>;
+        final rawMessages = data['messages'] as List<dynamic>? ?? [];
+
+        bool hasNew = false;
+        for (final item in rawMessages) {
+          if (item is Map<String, dynamic>) {
+            final msg = LiveChatMessage.fromJson(item);
+            if (!_seenMessageIds.contains(msg.id)) {
+              _seenMessageIds.add(msg.id);
+              if (!_blockedUserIds.contains(msg.senderId) &&
+                  !_mutedUserIds.contains(msg.senderId)) {
+                _chatMessages.add(msg);
+                hasNew = true;
+              }
+              _lastMessageTimestamp = msg.createdAt.toIso8601String();
+            }
+          }
+        }
+
+        if (hasNew || isInitial) {
+          _chatMessages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          _isChatLoading = false;
           notifyListeners();
         }
-      } catch (e) {
-        debugPrint('[LiveSessionManager] Chat poll error: $e');
+      } else if (isInitial) {
+        _chatError = res.errorMessage ?? 'Failed to load messages';
+        _isChatLoading = false;
+        notifyListeners();
       }
-    });
+    } catch (e) {
+      if (isInitial) {
+        _chatError = 'Chat connection error: $e';
+        _isChatLoading = false;
+        notifyListeners();
+      }
+      debugPrint('[LiveSessionManager] Chat poll error: $e');
+    }
   }
 
   void _stopChatPolling() {
@@ -317,10 +568,21 @@ class LiveSessionManager extends ChangeNotifier {
     _chatPollingTimer = null;
   }
 
+  void _resetChatState() {
+    _chatMessages = [];
+    _seenMessageIds.clear();
+    _blockedUserIds.clear();
+    _mutedUserIds.clear();
+    _lastMessageTimestamp = null;
+    _isChatLoading = false;
+    _chatError = null;
+  }
+
   @override
   void dispose() {
     _stopHeartbeat();
     _stopChatPolling();
+    _resetChatState();
     super.dispose();
   }
 }
