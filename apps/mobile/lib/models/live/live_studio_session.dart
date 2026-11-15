@@ -48,7 +48,7 @@ class LiveRoomSession {
     final viewerCount = (room['viewerCount'] as num?)?.toInt() ?? 0;
     String display = room['viewerDisplay']?.toString() ?? '$viewerCount';
     if (viewerCount >= 1000 && room['viewerDisplay'] == null) {
-      display = '${(viewerCount / 1000).toFixed(1)}K';
+      display = '${(viewerCount / 1000).toStringAsFixed(1)}K';
     }
 
     DateTime? started;

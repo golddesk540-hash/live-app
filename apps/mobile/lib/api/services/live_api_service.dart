@@ -381,4 +381,31 @@ class LiveApiService {
       queryParameters: {'roomId': roomId, if (isDemo) 'demo': 'true'},
     );
   }
+
+  /// Terminates broadcast session with explicit duration tracking
+  Future<ApiResponse<dynamic>> endBroadcastSession({
+    required String roomId,
+    int? durationSeconds,
+    bool isDemo = false,
+  }) async {
+    return _client.post(
+      '/api/live/end-screen/end',
+      body: {
+        'roomId': roomId,
+        if (durationSeconds != null) 'durationSeconds': durationSeconds,
+        if (isDemo) 'isDemo': true,
+      },
+    );
+  }
+
+  /// Retrieves host broadcast session history and aggregated KPIs
+  Future<ApiResponse<dynamic>> getLiveHistory({
+    String filter = 'all',
+    bool isDemo = false,
+  }) async {
+    return _client.get(
+      '/api/live/center/history',
+      queryParameters: {'filter': filter, if (isDemo) 'preview': 'demo'},
+    );
+  }
 }

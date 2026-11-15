@@ -222,6 +222,22 @@ class PopoStrings {
       'block_user': 'Block User',
       'mute_user': 'Mute User',
 
+      // Live End Screen & History
+      'broadcast_ended': 'Broadcast Ended',
+      'live_duration': 'Live Duration',
+      'total_viewers': 'Total Viewers',
+      'peak_viewers': 'Peak Viewers',
+      'new_followers': 'New Followers',
+      'points_received': 'Points Received',
+      'total_likes': 'Total Likes',
+      'view_history': 'Live Center History',
+      'back_to_home': 'Back to Home',
+      'live_history_title': 'Live Center History',
+      'history_filter_all': 'All',
+      'history_filter_week': 'Past Week',
+      'history_filter_month': 'Past Month',
+      'total_sessions': 'Total Sessions',
+
       // Errors
       'error_network':
           'Unable to connect to server. Please check your internet connection.',
@@ -403,6 +419,22 @@ class PopoStrings {
       'report_user': 'رپورٹ کریں',
       'block_user': 'بلاک کریں',
       'mute_user': 'میوٹ کریں',
+
+      // Live End Screen & History
+      'broadcast_ended': 'لائیو نشریات ختم ہو گئی',
+      'live_duration': 'دورانیہ',
+      'total_viewers': 'کل ناظرین',
+      'peak_viewers': 'زیادہ سے زیادہ ناظرین',
+      'new_followers': 'نئے فالورز',
+      'points_received': 'کمائے گئے پوائنٹس',
+      'total_likes': 'کل لائکس',
+      'view_history': 'نشریات کی تاریخ',
+      'back_to_home': 'ہوم پر واپس جائیں',
+      'live_history_title': 'لائیو ہسٹری',
+      'history_filter_all': 'تمام',
+      'history_filter_week': 'پچھلا ہفتہ',
+      'history_filter_month': 'پچھلا مہینہ',
+      'total_sessions': 'کل نشریات',
 
       // Errors
       'error_network':

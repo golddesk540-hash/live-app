@@ -11,6 +11,7 @@ import '../../widgets/popo_primary_button.dart';
 import 'widgets/live_chat_overlay.dart';
 import 'widgets/live_safety_modal.dart';
 import 'live_rules_screen.dart';
+import 'live_end_screen.dart';
 
 /// Host Studio Screen — Actual Live Broadcasting Using Agora SDK
 /// Implemented in Phase 2 Prompt 04/10 according to NEXT IMPLEMENTATION PLAN v1.1
@@ -175,17 +176,20 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
   }
 
   void _confirmEndLive() {
+    if (_isEnding) return;
+
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         backgroundColor: PopoTheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: const [
             Icon(
               Icons.warning_amber_rounded,
               color: PopoTheme.primary,
-              size: 24,
+              size: 26,
             ),
             SizedBox(width: 10),
             Text(
@@ -205,7 +209,7 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
           style: const TextStyle(
             color: PopoTheme.textSecondary,
             fontSize: 14,
-            height: 1.35,
+            height: 1.4,
           ),
         ),
         actions: [
@@ -213,15 +217,19 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: const Text(
               'Cancel',
-              style: TextStyle(color: PopoTheme.textSecondary),
+              style: TextStyle(
+                color: PopoTheme.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: PopoTheme.primary,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             ),
             onPressed: () {
               Navigator.pop(ctx);
@@ -232,7 +240,7 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
               }
             },
             child: Text(
-              _isLive ? 'End Stream' : 'Exit Studio',
+              _isLive ? 'End Live' : 'Exit Studio',
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -245,6 +253,7 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
   }
 
   Future<void> _executeEndLive() async {
+    if (_isEnding) return;
     setState(() => _isEnding = true);
     _durationTimer?.cancel();
     _syncTimer?.cancel();
@@ -257,11 +266,13 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
       _isLive = false;
     });
 
-    if (summary != null) {
-      _showSummaryDialog(summary);
-    } else {
-      Navigator.pop(context);
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            LiveEndScreen(summary: summary, roomId: widget.setupResult.roomId),
+      ),
+    );
   }
 
   void _showSummaryDialog(LiveEndSummary summary) {

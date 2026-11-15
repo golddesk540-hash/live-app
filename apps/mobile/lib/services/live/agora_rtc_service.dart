@@ -207,9 +207,34 @@ class AgoraRtcService {
     }
   }
 
+  /// Safely releases all Agora audio/video hardware resources,
+  /// stops preview, mutes microphone & camera tracks, leaves the RTC channel,
+  /// and resets hardware capture pipelines to prevent camera/mic leaks.
+  Future<void> releaseHardwareResources() async {
+    try {
+      debugPrint(
+        '[AgoraRtcService] Releasing all camera & microphone hardware resources...',
+      );
+      await muteLocalVideo(true);
+      await muteLocalAudio(true);
+      await leaveChannel();
+      _isBroadcasting = false;
+      _isVideoMuted = true;
+      _isAudioMuted = true;
+      _remoteViewerCount = 0;
+      _updateStatus(
+        LiveConnectionStatus.disconnected,
+        'Hardware resources safely released',
+      );
+      debugPrint('[AgoraRtcService] Hardware resources teardown complete.');
+    } catch (e) {
+      debugPrint('[AgoraRtcService] Error releasing hardware resources: $e');
+    }
+  }
+
   /// Releases all engine resources upon app termination or logout
   Future<void> release() async {
-    await leaveChannel();
+    await releaseHardwareResources();
     debugPrint('[AgoraRtcService] Agora RTC resources released.');
   }
 

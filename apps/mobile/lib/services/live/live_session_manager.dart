@@ -12,7 +12,9 @@ import 'live_permission_service.dart';
 /// viewer presence, live chat polling, and user safety/moderation.
 class LiveSessionManager extends ChangeNotifier {
   static final LiveSessionManager instance = LiveSessionManager._internal();
-  LiveSessionManager._internal();
+  LiveSessionManager._internal() {
+    _initConnectionStateListener();
+  }
 
   factory LiveSessionManager() => instance;
 
@@ -23,8 +25,15 @@ class LiveSessionManager extends ChangeNotifier {
 
   LiveRoomSession? _currentSession;
   LiveStreamRole? _currentRole;
+  LiveSessionState _sessionState = LiveSessionState.idle;
   Timer? _heartbeatTimer;
   Timer? _chatPollingTimer;
+  Timer? _reconnectTimer;
+  int _reconnectAttempts = 0;
+  static const int _maxReconnectAttempts = 3;
+
+  /// Callback fired when viewer detects host has ended the room
+  void Function()? onStreamEndedByHost;
 
   List<LiveChatMessage> _chatMessages = [];
   final Set<String> _seenMessageIds = {};
@@ -39,6 +48,7 @@ class LiveSessionManager extends ChangeNotifier {
 
   LiveRoomSession? get currentSession => _currentSession;
   LiveStreamRole? get currentRole => _currentRole;
+  LiveSessionState get sessionState => _sessionState;
   List<LiveChatMessage> get chatMessages => List.unmodifiable(_chatMessages);
   Set<String> get blockedUserIds => Set.unmodifiable(_blockedUserIds);
   Set<String> get mutedUserIds => Set.unmodifiable(_mutedUserIds);
@@ -52,10 +62,78 @@ class LiveSessionManager extends ChangeNotifier {
   bool get isWatching =>
       _currentSession != null && _currentRole == LiveStreamRole.viewer;
   bool get isLoading => _isLoading;
+  bool get isEnding => _sessionState == LiveSessionState.ending;
+  bool get isEnded => _sessionState == LiveSessionState.ended;
   String? get errorMessage => _errorMessage;
 
   bool isUserBlocked(String userId) => _blockedUserIds.contains(userId);
   bool isUserMuted(String userId) => _mutedUserIds.contains(userId);
+
+  void resetSessionState() {
+    _sessionState = LiveSessionState.idle;
+    _errorMessage = null;
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  void _initConnectionStateListener() {
+    _agoraService.onConnectionStateChanged = (status, message) {
+      if (_sessionState == LiveSessionState.active &&
+          (status == LiveConnectionStatus.disconnected ||
+              status == LiveConnectionStatus.error)) {
+        _handleNetworkDisconnect();
+      }
+    };
+  }
+
+  void _handleNetworkDisconnect() {
+    if (_sessionState != LiveSessionState.active &&
+        _sessionState != LiveSessionState.disconnected) {
+      return;
+    }
+
+    if (_reconnectAttempts >= _maxReconnectAttempts) {
+      debugPrint(
+        '[LiveSessionManager] Max reconnection attempts ($_maxReconnectAttempts) reached. Marking session failed.',
+      );
+      _sessionState = LiveSessionState.failed;
+      _errorMessage =
+          'Network connection lost. Please check your internet connection.';
+      notifyListeners();
+      return;
+    }
+
+    _sessionState = LiveSessionState.disconnected;
+    _reconnectAttempts++;
+    debugPrint(
+      '[LiveSessionManager] Connection interrupted. Reconnect attempt $_reconnectAttempts/$_maxReconnectAttempts in ${_reconnectAttempts * 2}s...',
+    );
+    notifyListeners();
+
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(
+      Duration(seconds: _reconnectAttempts * 2),
+      () async {
+        if (_currentSession?.agora != null && _currentRole != null) {
+          final success = await _agoraService.joinChannel(
+            config: _currentSession!.agora!,
+            role: _currentRole!,
+          );
+          if (success) {
+            debugPrint(
+              '[LiveSessionManager] Successfully reconnected to RTC channel.',
+            );
+            _sessionState = LiveSessionState.active;
+            _reconnectAttempts = 0;
+            _errorMessage = null;
+            notifyListeners();
+          } else {
+            _handleNetworkDisconnect();
+          }
+        }
+      },
+    );
+  }
 
   /// Starts a live broadcast studio session and publishes host video/audio
   Future<bool> startBroadcast({
@@ -67,6 +145,7 @@ class LiveSessionManager extends ChangeNotifier {
   }) async {
     _isLoading = true;
     _errorMessage = null;
+    _sessionState = LiveSessionState.connecting;
     notifyListeners();
 
     try {
@@ -81,6 +160,7 @@ class LiveSessionManager extends ChangeNotifier {
       if (!res.isSuccess || res.data == null) {
         _errorMessage = res.errorMessage ?? 'Failed to start broadcast';
         _isLoading = false;
+        _sessionState = LiveSessionState.failed;
         notifyListeners();
         return false;
       }
@@ -88,6 +168,7 @@ class LiveSessionManager extends ChangeNotifier {
       final data = res.data as Map<String, dynamic>;
       _currentSession = LiveRoomSession.fromJson(data);
       _currentRole = LiveStreamRole.host;
+      _reconnectAttempts = 0;
 
       // Connect to Agora channel & publish host video/audio
       if (_currentSession?.agora != null) {
@@ -100,11 +181,13 @@ class LiveSessionManager extends ChangeNotifier {
       await loadSafetyFilters(_currentSession!.id);
       _startChatPolling(_currentSession!.id);
       _isLoading = false;
+      _sessionState = LiveSessionState.active;
       notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = 'Error starting broadcast: $e';
       _isLoading = false;
+      _sessionState = LiveSessionState.failed;
       notifyListeners();
       return false;
     }
@@ -150,37 +233,57 @@ class LiveSessionManager extends ChangeNotifier {
   }
 
   /// Ends the current broadcast studio session and frees all Agora/hardware resources
+  /// Includes accidental and duplicate termination protection
   Future<LiveEndSummary?> endBroadcast({bool isDemo = false}) async {
-    if (_currentSession == null) return null;
+    if (_sessionState == LiveSessionState.ending ||
+        _sessionState == LiveSessionState.ended) {
+      debugPrint(
+        '[LiveSessionManager] Duplicate endBroadcast call ignored (state: $_sessionState).',
+      );
+      return null;
+    }
+
+    if (_currentSession == null) {
+      _sessionState = LiveSessionState.idle;
+      notifyListeners();
+      return null;
+    }
 
     final roomId = _currentSession!.id;
-    _stopChatPolling();
-    _resetChatState();
-    await _agoraService.leaveChannel();
+    _sessionState = LiveSessionState.ending;
+    _isLoading = true;
+    notifyListeners();
 
+    _reconnectTimer?.cancel();
+    _stopChatPolling();
+    _stopHeartbeat();
+    _resetChatState();
+
+    // Release camera, mic and Agora channel resources
+    await _agoraService.releaseHardwareResources();
+
+    LiveEndSummary? summary;
     try {
       final res = await _apiService.endStudio(roomId: roomId, isDemo: isDemo);
-      _currentSession = null;
-      _currentRole = null;
-      notifyListeners();
-
       if (res.isSuccess && res.data != null) {
         final data = res.data as Map<String, dynamic>;
         if (data['summary'] != null) {
-          return LiveEndSummary.fromJson(
+          summary = LiveEndSummary.fromJson(
             data['summary'] as Map<String, dynamic>,
           );
         }
+      }
 
-        // Secondary fallback to summary endpoint
+      // Enrich or fallback with end-screen summary endpoint
+      if (summary == null ||
+          (summary.newFollowers == 0 && summary.totalViewers == 0)) {
         final summaryRes = await _apiService.getEndScreenSummary(
           roomId: roomId,
           isDemo: isDemo,
         );
         if (summaryRes.isSuccess && summaryRes.data != null) {
-          return LiveEndSummary.fromJson(
-            summaryRes.data as Map<String, dynamic>,
-          );
+          final summaryData = summaryRes.data as Map<String, dynamic>;
+          summary = LiveEndSummary.fromJson(summaryData);
         }
       }
     } catch (e) {
@@ -189,8 +292,10 @@ class LiveSessionManager extends ChangeNotifier {
 
     _currentSession = null;
     _currentRole = null;
+    _isLoading = false;
+    _sessionState = LiveSessionState.ended;
     notifyListeners();
-    return null;
+    return summary;
   }
 
   /// Joins a room as an audience viewer
@@ -200,6 +305,7 @@ class LiveSessionManager extends ChangeNotifier {
   }) async {
     _isLoading = true;
     _errorMessage = null;
+    _sessionState = LiveSessionState.connecting;
     notifyListeners();
 
     try {
@@ -215,6 +321,7 @@ class LiveSessionManager extends ChangeNotifier {
       if (!sessionRes.isSuccess || sessionRes.data == null) {
         _errorMessage = sessionRes.errorMessage ?? 'Failed to join live room';
         _isLoading = false;
+        _sessionState = LiveSessionState.failed;
         notifyListeners();
         return false;
       }
@@ -222,6 +329,7 @@ class LiveSessionManager extends ChangeNotifier {
       final data = sessionRes.data as Map<String, dynamic>;
       _currentSession = LiveRoomSession.fromJson(data);
       _currentRole = LiveStreamRole.viewer;
+      _reconnectAttempts = 0;
 
       // 3. Connect to Agora channel as audience
       if (_currentSession?.agora != null) {
@@ -237,11 +345,13 @@ class LiveSessionManager extends ChangeNotifier {
       _startChatPolling(roomId);
 
       _isLoading = false;
+      _sessionState = LiveSessionState.active;
       notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = 'Error joining live stream: $e';
       _isLoading = false;
+      _sessionState = LiveSessionState.failed;
       notifyListeners();
       return false;
     }
@@ -249,13 +359,20 @@ class LiveSessionManager extends ChangeNotifier {
 
   /// Leaves viewer room and cleans up resources
   Future<void> leaveViewer({bool isDemo = false}) async {
-    if (_currentSession == null) return;
+    if (_currentSession == null) {
+      _sessionState = LiveSessionState.idle;
+      return;
+    }
 
     final roomId = _currentSession!.id;
+    _sessionState = LiveSessionState.ending;
+    notifyListeners();
+
+    _reconnectTimer?.cancel();
     _stopHeartbeat();
     _stopChatPolling();
     _resetChatState();
-    await _agoraService.leaveChannel();
+    await _agoraService.releaseHardwareResources();
 
     try {
       await _apiService.leaveViewer(roomId: roomId, isDemo: isDemo);
@@ -265,6 +382,7 @@ class LiveSessionManager extends ChangeNotifier {
 
     _currentSession = null;
     _currentRole = null;
+    _sessionState = LiveSessionState.ended;
     notifyListeners();
   }
 
@@ -482,11 +600,36 @@ class LiveSessionManager extends ChangeNotifier {
     _heartbeatTimer?.cancel();
     _heartbeatTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
       try {
-        await _apiService.heartbeat(roomId: roomId);
+        final res = await _apiService.heartbeat(roomId: roomId);
+        if (!res.isSuccess) {
+          if (res.statusCode == 404 ||
+              (res.errorMessage != null &&
+                  res.errorMessage!.toLowerCase().contains('ended'))) {
+            await _handleHostEndedStream();
+          }
+        }
       } catch (e) {
         debugPrint('[LiveSessionManager] Heartbeat error: $e');
       }
     });
+  }
+
+  /// Called when viewer detects that the live stream has been terminated by the host
+  Future<void> _handleHostEndedStream() async {
+    if (_currentRole == LiveStreamRole.viewer &&
+        (_sessionState == LiveSessionState.active ||
+            _sessionState == LiveSessionState.disconnected)) {
+      debugPrint(
+        '[LiveSessionManager] Host has ended broadcast stream. Cleaning up viewer resources.',
+      );
+      _sessionState = LiveSessionState.ended;
+      _reconnectTimer?.cancel();
+      _stopHeartbeat();
+      _stopChatPolling();
+      await _agoraService.releaseHardwareResources();
+      onStreamEndedByHost?.call();
+      notifyListeners();
+    }
   }
 
   void _stopHeartbeat() {
@@ -580,6 +723,7 @@ class LiveSessionManager extends ChangeNotifier {
 
   @override
   void dispose() {
+    _reconnectTimer?.cancel();
     _stopHeartbeat();
     _stopChatPolling();
     _resetChatState();

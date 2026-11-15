@@ -57,8 +57,18 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen> {
   void initState() {
     super.initState();
     _sessionManager.addListener(_onSessionStateChanged);
+    _sessionManager.onStreamEndedByHost = _handleHostEndedStreamNotification;
     _setupAgoraListeners();
     _joinLiveRoom();
+  }
+
+  void _handleHostEndedStreamNotification() {
+    if (!mounted) return;
+    _durationTimer?.cancel();
+    setState(() {
+      _errorMessage =
+          'The host has ended this live broadcast. Thank you for watching!';
+    });
   }
 
   @override
@@ -67,6 +77,10 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen> {
     _chatController.dispose();
     _chatScrollController.dispose();
     _sessionManager.removeListener(_onSessionStateChanged);
+    if (_sessionManager.onStreamEndedByHost ==
+        _handleHostEndedStreamNotification) {
+      _sessionManager.onStreamEndedByHost = null;
+    }
     _rtcService.onConnectionStateChanged = null;
     _rtcService.onNetworkQuality = null;
 
@@ -77,7 +91,17 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen> {
 
   void _onSessionStateChanged() {
     if (!mounted) return;
-    setState(() {});
+    if (_sessionManager.sessionState == LiveSessionState.ended &&
+        !_isLoading &&
+        _errorMessage == null) {
+      _durationTimer?.cancel();
+      setState(() {
+        _errorMessage =
+            'The host has ended this live broadcast. Thank you for watching!';
+      });
+    } else {
+      setState(() {});
+    }
     _scrollToBottomChat();
   }
 
