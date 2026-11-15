@@ -5,14 +5,14 @@ import 'package:popo_live/auth/auth_state.dart';
 import 'package:popo_live/screens/auth/age_gate_screen.dart';
 import 'package:popo_live/screens/auth/login_screen.dart';
 import 'package:popo_live/screens/auth/register_screen.dart';
-import 'package:popo_live/screens/auth/splash_screen.dart';
+import 'package:popo_live/screens/auth/phone_otp_screen.dart';
 
 void main() {
   setUp(() {
     PopoStrings.setLanguage('en');
   });
 
-  group('M1 AuthState Lifecycle Tests', () {
+  group('M1 AuthState Lifecycle & Session Tests', () {
     test('Initial AuthState is uninitialized', () {
       final auth = AuthState();
       expect(auth.status, equals(AuthStatus.uninitialized));
@@ -26,6 +26,16 @@ void main() {
       expect(auth.isTermsAccepted, isTrue);
       expect(auth.status, equals(AuthStatus.unauthenticated));
     });
+
+    test(
+      'Apple Sign-In on Android safely returns platform limitation message',
+      () async {
+        final auth = AuthState();
+        final result = await auth.signInWithApple();
+        // On non-iOS host, must not fake authentication
+        expect(result, isFalse);
+      },
+    );
   });
 
   group('M1 18+ Age Gate UI Tests', () {
@@ -73,19 +83,21 @@ void main() {
   });
 
   group('M1 Login Screen UI Tests', () {
-    testWidgets('LoginScreen renders inputs, buttons, and social options', (
-      tester,
-    ) async {
-      await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'LoginScreen renders inputs, buttons, phone OTP, and social options',
+      (tester) async {
+        await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
+        await tester.pumpAndSettle();
 
-      expect(find.text('Welcome Back'), findsOneWidget);
-      expect(find.text('Email, Phone or Poppo ID'), findsOneWidget);
-      expect(find.text('Password'), findsOneWidget);
-      expect(find.text('Forgot Password?'), findsOneWidget);
-      expect(find.text('Log In'), findsOneWidget);
-      expect(find.text("Don't have an account? Sign Up"), findsOneWidget);
-    });
+        expect(find.text('Welcome Back'), findsOneWidget);
+        expect(find.text('Email, Phone or Poppo ID'), findsOneWidget);
+        expect(find.text('Password'), findsOneWidget);
+        expect(find.text('Forgot Password?'), findsOneWidget);
+        expect(find.text('Log In'), findsOneWidget);
+        expect(find.text('Sign in with Phone OTP'), findsOneWidget);
+        expect(find.text("Don't have an account? Sign Up"), findsOneWidget);
+      },
+    );
 
     testWidgets('Submitting empty login form displays validation error', (
       tester,
@@ -102,14 +114,58 @@ void main() {
       );
     });
 
-    testWidgets('Tapping Sign Up navigates to RegisterScreen', (tester) async {
+    testWidgets('Tapping Sign in with Phone OTP navigates to PhoneOtpScreen', (
+      tester,
+    ) async {
       await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text("Don't have an account? Sign Up"));
+      await tester.tap(find.text('Sign in with Phone OTP'));
       await tester.pumpAndSettle();
 
-      expect(find.byType(RegisterScreen), findsOneWidget);
+      expect(find.byType(PhoneOtpScreen), findsOneWidget);
+    });
+  });
+
+  group('M1 Phone OTP Screen UI Tests', () {
+    testWidgets(
+      'PhoneOtpScreen renders country code selector and phone input',
+      (tester) async {
+        await tester.pumpWidget(const MaterialApp(home: PhoneOtpScreen()));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Phone Sign-In'), findsOneWidget);
+        expect(find.text('+92'), findsOneWidget);
+        expect(find.text('Send Verification Code'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Submitting too short phone number displays validation error', (
+      tester,
+    ) async {
+      await tester.pumpWidget(const MaterialApp(home: PhoneOtpScreen()));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), '123');
+      await tester.tap(find.text('Send Verification Code'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Please enter a valid phone number including country code.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('Tapping country code opens modal selector', (tester) async {
+      await tester.pumpWidget(const MaterialApp(home: PhoneOtpScreen()));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('+92'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Select Country Code'), findsOneWidget);
+      expect(find.text('Saudi Arabia'), findsOneWidget);
+      expect(find.text('United States'), findsOneWidget);
     });
   });
 

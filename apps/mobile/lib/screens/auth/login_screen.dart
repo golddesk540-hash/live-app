@@ -1,14 +1,19 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
 import '../../l10n/strings.dart';
 import '../../widgets/popo_primary_button.dart';
+import '../../widgets/popo_secondary_button.dart';
 import '../../widgets/popo_icon_button.dart';
 import '../../auth/auth_state.dart';
 import '../../shell/app_shell.dart';
 import 'register_screen.dart';
 import 'forgot_password_sheet.dart';
 import 'age_gate_screen.dart';
+import 'phone_otp_screen.dart';
 
 /// Premium Popo Live Authentication / Login Screen
 class LoginScreen extends StatefulWidget {
@@ -86,16 +91,74 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _showSocialLoginNotice(String provider) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$provider login: ${PopoStrings.get('oauth_coming_soon')}',
+  Future<void> _handleGoogleSignIn() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final success = await AuthState.instance.signInWithGoogle();
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (success) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const AppShell()),
+        (route) => false,
+      );
+    } else if (AuthState.instance.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AuthState.instance.errorMessage!),
+          backgroundColor: PopoTheme.surface,
+          duration: const Duration(seconds: 3),
         ),
-        backgroundColor: PopoTheme.surface,
-        duration: const Duration(seconds: 2),
-      ),
-    );
+      );
+    }
+  }
+
+  Future<void> _handleAppleSignIn() async {
+    // Check if on Android
+    if (!kIsWeb && Platform.isAndroid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(PopoStrings.get('apple_signin_ios_only')),
+          backgroundColor: PopoTheme.surface,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final success = await AuthState.instance.signInWithApple();
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (success) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const AppShell()),
+        (route) => false,
+      );
+    } else if (AuthState.instance.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AuthState.instance.errorMessage!),
+          backgroundColor: PopoTheme.surface,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   @override
@@ -342,6 +405,20 @@ class _LoginScreenState extends State<LoginScreen> {
                         isLoading: _isLoading,
                         onPressed: _isLoading ? null : _handleLogin,
                       ),
+                      const SizedBox(height: 12),
+
+                      // Phone OTP Button
+                      PopoSecondaryButton(
+                        text: PopoStrings.get('sign_in_with_phone'),
+                        icon: Icons.phone_android_rounded,
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const PhoneOtpScreen(),
+                            ),
+                          );
+                        },
+                      ),
                       const SizedBox(height: 24),
 
                       // Social Logins Divider
@@ -376,13 +453,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           _buildSocialButton(
                             label: 'Google',
                             icon: Icons.g_mobiledata_rounded,
-                            onTap: () => _showSocialLoginNotice('Google'),
+                            onTap: _handleGoogleSignIn,
                           ),
                           const SizedBox(width: 16),
                           _buildSocialButton(
                             label: 'Apple',
                             icon: Icons.apple_rounded,
-                            onTap: () => _showSocialLoginNotice('Apple'),
+                            onTap: _handleAppleSignIn,
                           ),
                         ],
                       ),

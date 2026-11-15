@@ -1,8 +1,9 @@
 import '../api_client.dart';
+import '../api_config.dart';
 import '../api_response.dart';
 import '../token_storage.dart';
 
-/// Service managing user authentication, sessions, and 18+ terms gate consent
+/// Service managing user authentication, sessions, phone OTP, and 18+ terms gate consent
 class AuthService {
   final ApiClient _client;
 
@@ -51,6 +52,7 @@ class AuthService {
         if (phone != null && phone.isNotEmpty) 'phone': phone,
         'gender': gender,
         if (birthdate != null) 'birthdate': birthdate,
+        'isAdultConfirmed': true,
       },
     );
 
@@ -62,6 +64,42 @@ class AuthService {
     }
 
     return response;
+  }
+
+  /// Requests a 6-digit verification code dispatched to the given phone number
+  Future<ApiResponse<dynamic>> sendPhoneOtp(String phone) async {
+    return _client.post('/api/auth/phone/send-otp', body: {'phone': phone});
+  }
+
+  /// Verifies 6-digit phone OTP code and authenticates/provisions user
+  Future<ApiResponse<dynamic>> verifyPhoneOtp({
+    required String phone,
+    required String otp,
+    bool rememberMe = true,
+  }) async {
+    final response = await _client.post(
+      '/api/auth/phone/verify-otp',
+      body: {'phone': phone, 'otp': otp, 'rememberMe': rememberMe},
+    );
+
+    if (response.isSuccess && response.data is Map) {
+      final user = response.data['user'];
+      if (user != null && user['id'] != null) {
+        await TokenStorage.saveUserId(user['id'].toString());
+      }
+    }
+
+    return response;
+  }
+
+  /// Resolves the Google OAuth initiation URL
+  String getGoogleAuthUrl() {
+    return '${ApiConfig.baseUrl}/api/auth/google';
+  }
+
+  /// Resolves the Apple OAuth initiation URL
+  String getAppleAuthUrl() {
+    return '${ApiConfig.baseUrl}/api/auth/apple';
   }
 
   /// Terminate active session and purge secure local credentials
