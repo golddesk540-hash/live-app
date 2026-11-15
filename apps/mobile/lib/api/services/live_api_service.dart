@@ -45,6 +45,16 @@ class LiveApiService {
     );
   }
 
+  /// Removes uploaded live broadcast cover photo
+  Future<ApiResponse<dynamic>> deleteCover() async {
+    return _client.delete('/api/live/gates/cover-upload');
+  }
+
+  /// Resets biometric face verification status (for testing)
+  Future<ApiResponse<dynamic>> resetFaceVerification() async {
+    return _client.delete('/api/live/gates/face-verify');
+  }
+
   /// Validates all 3 Go-Live gates on the backend
   Future<ApiResponse<dynamic>> verifyEligibility() async {
     return _client.post('/api/live/gates/verify-eligibility', body: {});

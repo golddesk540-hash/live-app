@@ -72,6 +72,26 @@ class LiveRepository {
     return false;
   }
 
+  /// Removes uploaded live cover image
+  Future<bool> removeCoverImage() async {
+    final res = await _apiService.deleteCover();
+    if (res.isSuccess) {
+      await fetchGatesStatus(forceRefresh: true);
+      return true;
+    }
+    return false;
+  }
+
+  /// Resets face verification status
+  Future<bool> resetFaceVerification() async {
+    final res = await _apiService.resetFaceVerification();
+    if (res.isSuccess) {
+      await fetchGatesStatus(forceRefresh: true);
+      return true;
+    }
+    return false;
+  }
+
   /// Validates all 3 Go-Live gates on server
   Future<Map<String, dynamic>> verifyEligibilityOnServer() async {
     final res = await _apiService.verifyEligibility();
