@@ -1,0 +1,38 @@
+{
+  "project_info": {
+    "project_number": "918237465012",
+    "project_id": "popolive-live-stream-2026",
+    "storage_bucket": "popolive-live-stream-2026.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:918237465012:android:c4b8e2190f84a1e938f20b",
+        "android_client_info": {
+          "package_name": "com.popolive.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "918237465012-android.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.popolive.app",
+            "certificate_hash": "2a34bc89f10e4726b9a84210d7e82930f1489e21"
+          }
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyPopoLiveOfficialKey2026AndroidFCMSecret"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

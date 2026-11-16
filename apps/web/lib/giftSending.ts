@@ -1356,6 +1356,18 @@ export async function sendRealTimeGift(params: {
   const sWallet = transferRes.senderWallet!;
   const hWallet = transferRes.hostWallet!;
 
+  // Dispatch Push Notification to Recipient Host
+  try {
+    const { dispatchGiftPushNotification } = await import('@/lib/pushNotifications');
+    await dispatchGiftPushNotification({
+      recipientHostId: hostOption.hostId,
+      senderUserId: params.senderUserId,
+      giftName: gift.name,
+      coinPrice: totalCoins,
+      roomId: stage.roomId || undefined,
+    });
+  } catch (_) {}
+
   return {
     success: true,
     deduplicated: false,

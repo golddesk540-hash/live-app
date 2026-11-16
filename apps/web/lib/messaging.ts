@@ -1,6 +1,7 @@
 import { query, withTransaction } from '@/lib/db';
 import { AuthUser, getAuthenticatedUser } from '@/lib/auth';
 import { NextRequest } from 'next/server';
+import { dispatchPushNotification } from './pushNotifications';
 
 export interface InboxUserSummary {
   id: string;
@@ -517,6 +518,22 @@ export async function sendDirectMessage(params: {
         convId,
       ]
     );
+
+    // Dispatch push notification to recipient's registered devices
+    try {
+      await dispatchPushNotification(recipientId, {
+        type: 'direct_message',
+        title: senderInfo?.nickname || 'New Message',
+        body: trimmedText,
+        data: {
+          type: 'direct_message',
+          conversationId: convId,
+          senderId,
+          messageId: msgId,
+        },
+        senderId,
+      });
+    } catch (_) {}
 
     return {
       conversationId: convId,

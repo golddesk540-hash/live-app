@@ -7,6 +7,7 @@ import '../../widgets/popo_secondary_button.dart';
 import '../../widgets/popo_card.dart';
 import '../../auth/auth_state.dart';
 import '../auth/login_screen.dart';
+import '../../services/notifications/notification_preferences_service.dart';
 
 /// Settings screen managing language preference, application information, and secure logout
 class SettingsScreen extends StatelessWidget {
@@ -155,6 +156,10 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
+                // Push Notification Preferences Card
+                const _NotificationPreferencesCard(),
+                const SizedBox(height: 16),
+
                 // App Info Card
                 PopoCard(
                   padding: const EdgeInsets.all(16),
@@ -219,6 +224,131 @@ class SettingsScreen extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _NotificationPreferencesCard extends StatefulWidget {
+  const _NotificationPreferencesCard({Key? key}) : super(key: key);
+
+  @override
+  State<_NotificationPreferencesCard> createState() => _NotificationPreferencesCardState();
+}
+
+class _NotificationPreferencesCardState extends State<_NotificationPreferencesCard> {
+  UserNotificationPreferences _prefs = const UserNotificationPreferences();
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  Future<void> _loadPreferences() async {
+    final fetched = await NotificationPreferencesService.instance.fetchPreferences();
+    if (mounted) {
+      setState(() {
+        _prefs = fetched;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _updatePref(UserNotificationPreferences updated) async {
+    setState(() => _prefs = updated);
+    await NotificationPreferencesService.instance.updatePreferences(updated);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isUrdu = PopoStrings.currentLanguage.value == 'ur';
+
+    return PopoCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.notifications_active_outlined, color: PopoTheme.primary, size: 20),
+              const SizedBox(width: 10),
+              Text(
+                isUrdu ? 'نوٹیفیکیشن ترجیحات' : 'Notification Preferences',
+                style: const TextStyle(
+                  color: PopoTheme.textPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (_isLoading)
+            const Center(child: Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator(color: PopoTheme.primary)))
+          else ...[
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(isUrdu ? 'ڈائریکٹ میسجز' : 'Direct Messages', style: const TextStyle(color: Colors.white, fontSize: 13)),
+              subtitle: Text(isUrdu ? 'پرائیویٹ پیغامات کے الرٹس' : 'Alerts for private chats', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+              value: _prefs.directMessages,
+              activeColor: PopoTheme.primary,
+              onChanged: (val) => _updatePref(UserNotificationPreferences(
+                directMessages: val,
+                giftAlerts: _prefs.giftAlerts,
+                liveBroadcasts: _prefs.liveBroadcasts,
+                systemAnnouncements: _prefs.systemAnnouncements,
+                promotional: _prefs.promotional,
+              )),
+            ),
+            const Divider(color: PopoTheme.borderSubtle, height: 12),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(isUrdu ? 'گفٹس کے الرٹس' : 'Gift Received Alerts', style: const TextStyle(color: Colors.white, fontSize: 13)),
+              subtitle: Text(isUrdu ? 'موصول ہونے والے ورچوئل تحائف' : 'Alerts when supporters send gifts', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+              value: _prefs.giftAlerts,
+              activeColor: PopoTheme.gold,
+              onChanged: (val) => _updatePref(UserNotificationPreferences(
+                directMessages: _prefs.directMessages,
+                giftAlerts: val,
+                liveBroadcasts: _prefs.liveBroadcasts,
+                systemAnnouncements: _prefs.systemAnnouncements,
+                promotional: _prefs.promotional,
+              )),
+            ),
+            const Divider(color: PopoTheme.borderSubtle, height: 12),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(isUrdu ? 'فالوورز کے لائیو براڈکاسٹس' : 'Followed Host Live Alerts', style: const TextStyle(color: Colors.white, fontSize: 13)),
+              subtitle: Text(isUrdu ? 'پسندیدہ ہوسٹس کے لائیو آنے پر الرٹ' : 'Alerts when hosts you follow go live', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+              value: _prefs.liveBroadcasts,
+              activeColor: PopoTheme.cyan,
+              onChanged: (val) => _updatePref(UserNotificationPreferences(
+                directMessages: _prefs.directMessages,
+                giftAlerts: _prefs.giftAlerts,
+                liveBroadcasts: val,
+                systemAnnouncements: _prefs.systemAnnouncements,
+                promotional: _prefs.promotional,
+              )),
+            ),
+            const Divider(color: PopoTheme.borderSubtle, height: 12),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(isUrdu ? 'سسٹم اعلانات' : 'System Announcements', style: const TextStyle(color: Colors.white, fontSize: 13)),
+              subtitle: Text(isUrdu ? 'پلیٹ فارم اور سیکیورٹی نوٹس' : 'Platform & security notices', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+              value: _prefs.systemAnnouncements,
+              activeColor: PopoTheme.primary,
+              onChanged: (val) => _updatePref(UserNotificationPreferences(
+                directMessages: _prefs.directMessages,
+                giftAlerts: _prefs.giftAlerts,
+                liveBroadcasts: _prefs.liveBroadcasts,
+                systemAnnouncements: val,
+                promotional: _prefs.promotional,
+              )),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth';
+import { resolveMessagingActor } from '@/lib/messaging';
 import { query } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await getAuthenticatedUser(req);
+    const user = await resolveMessagingActor(req);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
     }
@@ -14,7 +15,8 @@ export async function GET(req: NextRequest) {
     let row = (
       await query(
         `SELECT account_notifications, security_notifications, 
-                system_announcements, promotional_notifications
+                system_announcements, promotional_notifications,
+                direct_messages, gift_alerts, live_broadcasts
          FROM popolive.user_notification_settings WHERE user_id = $1`,
         [user.id]
       )
@@ -30,6 +32,9 @@ export async function GET(req: NextRequest) {
         security_notifications: true,
         system_announcements: true,
         promotional_notifications: false,
+        direct_messages: true,
+        gift_alerts: true,
+        live_broadcasts: true,
       };
     }
 
@@ -40,6 +45,9 @@ export async function GET(req: NextRequest) {
         security: Boolean(row.security_notifications),
         system: Boolean(row.system_announcements),
         promotional: Boolean(row.promotional_notifications),
+        direct_messages: row.direct_messages !== false,
+        gift_alerts: row.gift_alerts !== false,
+        live_broadcasts: row.live_broadcasts !== false,
       },
     });
   } catch (err: any) {
@@ -48,15 +56,23 @@ export async function GET(req: NextRequest) {
   }
 }
 
+export async function POST(req: NextRequest) {
+  return handleUpdate(req);
+}
+
 export async function PATCH(req: NextRequest) {
+  return handleUpdate(req);
+}
+
+async function handleUpdate(req: NextRequest) {
   try {
-    const user = await getAuthenticatedUser(req);
+    const user = await resolveMessagingActor(req);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
     }
 
     const body = await req.json().catch(() => ({}));
-    const { account, security, system, promotional } = body;
+    const { account, security, system, promotional, direct_messages, gift_alerts, live_broadcasts } = body;
 
     const updates: string[] = [];
     const values: any[] = [];
@@ -77,6 +93,18 @@ export async function PATCH(req: NextRequest) {
     if (typeof promotional === 'boolean') {
       updates.push(`promotional_notifications = $${idx++}`);
       values.push(promotional);
+    }
+    if (typeof direct_messages === 'boolean') {
+      updates.push(`direct_messages = $${idx++}`);
+      values.push(direct_messages);
+    }
+    if (typeof gift_alerts === 'boolean') {
+      updates.push(`gift_alerts = $${idx++}`);
+      values.push(gift_alerts);
+    }
+    if (typeof live_broadcasts === 'boolean') {
+      updates.push(`live_broadcasts = $${idx++}`);
+      values.push(live_broadcasts);
     }
 
     if (updates.length > 0) {
@@ -99,10 +127,10 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Notification preferences updated successfully.',
+      message: 'Notification settings updated successfully.',
     });
   } catch (err: any) {
-    console.error('Error in PATCH /api/settings/notifications:', err);
+    console.error('Error in updating notification settings:', err);
     return NextResponse.json({ error: 'Failed to update notification settings.' }, { status: 500 });
   }
 }

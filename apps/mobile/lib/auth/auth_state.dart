@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../api/api.dart';
 import '../l10n/strings.dart';
+import '../services/notifications/push_notification_service.dart';
 
 /// Enumeration of authentication and compliance lifecycle states
 enum AuthStatus {
@@ -78,6 +79,7 @@ class AuthState extends ChangeNotifier {
           _currentUser = Map<String, dynamic>.from(userData);
           _status = AuthStatus.authenticated;
           _isRestoringSession = false;
+          PushNotificationService.instance.registerTokenWithBackend();
           notifyListeners();
           return;
         }
@@ -160,6 +162,7 @@ class AuthState extends ChangeNotifier {
           : null;
       _status = AuthStatus.authenticated;
       _errorMessage = null;
+      PushNotificationService.instance.registerTokenWithBackend();
       notifyListeners();
       return true;
     } else {
@@ -199,6 +202,7 @@ class AuthState extends ChangeNotifier {
           : null;
       _status = AuthStatus.authenticated;
       _errorMessage = null;
+      PushNotificationService.instance.registerTokenWithBackend();
       notifyListeners();
       return true;
     } else {
@@ -250,6 +254,7 @@ class AuthState extends ChangeNotifier {
           : null;
       _status = AuthStatus.authenticated;
       _errorMessage = null;
+      PushNotificationService.instance.registerTokenWithBackend();
       notifyListeners();
       return true;
     } else {
@@ -347,6 +352,10 @@ class AuthState extends ChangeNotifier {
 
   /// Terminates user session
   Future<void> logout() async {
+    try {
+      await PushNotificationService.instance.unregisterTokenFromBackend();
+    } catch (_) {}
+
     final termsToken = await TokenStorage.getTermsConsentToken();
     try {
       await _authService.logout();

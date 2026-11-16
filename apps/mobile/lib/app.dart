@@ -3,10 +3,22 @@ import 'package:flutter/material.dart';
 import 'theme/popo_theme.dart';
 import 'screens/auth/splash_screen.dart';
 import 'l10n/strings.dart';
+import 'services/notifications/push_notification_service.dart';
 
 /// Root Widget for Popo Live Application
-class PopoLiveApp extends StatelessWidget {
+class PopoLiveApp extends StatefulWidget {
   const PopoLiveApp({Key? key}) : super(key: key);
+
+  @override
+  State<PopoLiveApp> createState() => _PopoLiveAppState();
+}
+
+class _PopoLiveAppState extends State<PopoLiveApp> {
+  @override
+  void initState() {
+    super.initState();
+    PushNotificationService.instance.initialize();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +27,7 @@ class PopoLiveApp extends StatelessWidget {
       builder: (context, lang, _) {
         final isUrdu = lang == 'ur';
         return MaterialApp(
+          navigatorKey: PushNotificationService.navigatorKey,
           title: 'Popo Live',
           debugShowCheckedModeBanner: false,
           theme: PopoTheme.darkTheme,
