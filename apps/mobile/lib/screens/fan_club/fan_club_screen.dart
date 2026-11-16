@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/square/square_service.dart';
 
 class FanClubScreen extends StatefulWidget {
   const FanClubScreen({super.key});
@@ -38,6 +39,27 @@ class _FanClubScreenState extends State<FanClubScreen> {
       badge: 'Mina Crown',
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBackendFanClubs();
+  }
+
+  Future<void> _loadBackendFanClubs() async {
+    try {
+      final clubs = await SquareService.instance.fetchFanClubs();
+      if (clubs.isNotEmpty && mounted) {
+        setState(() {
+          for (final c in clubs) {
+            if (c['isJoined'] == true) {
+              _joinedIds.add(c['id'].toString());
+            }
+          }
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -92,6 +114,7 @@ class _FanClubScreenState extends State<FanClubScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
                   ),
                   onPressed: () {
+                    final willJoin = !isJoined;
                     setState(() {
                       if (isJoined) {
                         _joinedIds.remove(activeClub.id);
@@ -99,6 +122,11 @@ class _FanClubScreenState extends State<FanClubScreen> {
                         _joinedIds.add(activeClub.id);
                       }
                     });
+                    if (willJoin) {
+                      SquareService.instance.joinFanClub(activeClub.id).catchError((_) => <String, dynamic>{});
+                    } else {
+                      SquareService.instance.leaveFanClub(activeClub.id).catchError((_) => <String, dynamic>{});
+                    }
                   },
                   child: Text(isJoined ? 'Joined · Leave Club' : 'Join Fan Club'),
                 ),

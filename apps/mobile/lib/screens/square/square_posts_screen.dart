@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/square/square_service.dart';
 
 /// Popo Live — Phase 8.3: Square Posts Frontend
 /// Frontend-only local state matching 08_03_square_posts.png dark purple theme.
@@ -87,6 +88,21 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
   void initState() {
     super.initState();
     _initSamplePosts();
+    _loadBackendPosts();
+  }
+
+  Future<void> _loadBackendPosts() async {
+    try {
+      final backendPosts = await SquareService.instance.fetchSquareFeed(
+        tab: _activeTab,
+        search: _searchQuery,
+      );
+      if (backendPosts.isNotEmpty && mounted) {
+        setState(() {
+          _posts = backendPosts;
+        });
+      }
+    } catch (_) {}
   }
 
   void _initSamplePosts() {
@@ -370,6 +386,7 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
                           });
                           setSheetState(() {});
                           controller.clear();
+                          SquareService.instance.addComment(post.id, content: txt).catchError((_) => <String, dynamic>{});
                         },
                         child: const Icon(Icons.send_rounded, size: 18, color: Colors.white),
                       ),
@@ -518,10 +535,15 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.flag_outlined, color: Colors.amber),
-              title: const Text('Report post (Module 8.5)', style: TextStyle(color: Colors.amber)),
+              title: const Text('Report post', style: TextStyle(color: Colors.amber)),
               onTap: () {
                 Navigator.pop(ctx);
-                _showSnack('Post reported locally');
+                SquareService.instance.submitReport(
+                  targetType: 'post',
+                  targetId: post.id,
+                  reason: 'Inappropriate content',
+                ).catchError((_) => <String, dynamic>{});
+                _showSnack('Report submitted to moderation team');
               },
             ),
             ListTile(
@@ -778,6 +800,7 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
                     post.isLiked = !post.isLiked;
                     post.likesCount += post.isLiked ? 1 : -1;
                   });
+                  SquareService.instance.togglePostLike(post.id, unlike: !post.isLiked).catchError((_) => <String, dynamic>{});
                 },
                 child: Row(
                   children: [

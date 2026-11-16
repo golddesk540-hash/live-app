@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/square/square_service.dart';
 
 /// Popo Live — Phase 8.4: Create Tools Frontend (Text, Photo, Video Posts)
 /// Frontend-only local state implementation aligned with 08_04_create_tools.png.
@@ -78,6 +79,49 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     return true;
   }
 
+  Future<void> _publishToBackend() async {
+    if (!_validate() || _isSubmitting) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final content = _captionController.text.trim();
+      final List<String> hashtags = [];
+      final matches = RegExp(r'#[a-zA-Z0-9_]+').allMatches(content);
+      for (final m in matches) {
+        hashtags.add(m.group(0)!);
+      }
+
+      await SquareService.instance.createPost(
+        content: content.isEmpty ? 'Shared via Popo Live Square ✨' : content,
+        mediaType: _postType == 'photo'
+            ? (_selectedPhotos.length > 1 ? 'multi_images' : 'single_image')
+            : (_postType == 'video' ? 'video' : 'none'),
+        images: _selectedPhotos,
+        videoTitle: _videoTitleController.text.trim().isNotEmpty
+            ? _videoTitleController.text.trim()
+            : _selectedVideoName,
+        videoDuration: _selectedVideoDuration,
+        visibility: _audience,
+        hashtags: hashtags,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isPublished = true;
+          _isPreview = false;
+          _isSubmitting = false;
+        });
+        _showSnack('Post published to Popo Live Square!');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        _showSnack(e.toString().replaceAll('Exception: ', ''));
+      }
+    }
+  }
+
   void _clearAll() {
     setState(() {
       _captionController.clear();
@@ -130,15 +174,14 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               padding: const EdgeInsets.only(right: 10),
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: _neonPink, shape: const StadiumBorder()),
-                onPressed: () {
-                  if (!_validate()) return;
-                  setState(() {
-                    _isPublished = true;
-                    _isPreview = false;
-                  });
-                  _showSnack('Published demo post locally to Square');
-                },
-                child: const Text('Publish', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                onPressed: _isSubmitting ? null : _publishToBackend,
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Publish', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
               ),
             ),
         ],

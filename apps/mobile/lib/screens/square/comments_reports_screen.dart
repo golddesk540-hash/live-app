@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/square/square_service.dart';
 
 class CommentsReportsScreen extends StatefulWidget {
   const CommentsReportsScreen({super.key});
@@ -135,10 +136,16 @@ class _CommentsReportsScreenState extends State<CommentsReportsScreen> {
                     onPressed: selectedReason == null
                         ? null
                         : () {
+                            final reason = selectedReason!;
                             setState(() => _reportedIds.add('$targetType:$targetId'));
                             Navigator.pop(ctx);
+                            SquareService.instance.submitReport(
+                              targetType: targetType.toLowerCase().contains('comment') ? 'comment' : 'post',
+                              targetId: targetId,
+                              reason: reason,
+                            ).catchError((_) => <String, dynamic>{});
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Demo report logged locally ($selectedReason)')),
+                              SnackBar(content: Text('Report submitted for $targetType ($reason)')),
                             );
                           },
                     child: const Text('Submit Report'),
