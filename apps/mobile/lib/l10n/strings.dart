@@ -17,10 +17,11 @@ class PopoStrings {
     currentLanguage.value = currentLanguage.value == 'en' ? 'ur' : 'en';
   }
 
-  static String get(String key) {
+  static String get(dynamic keyOrContext, [String? key]) {
+    final effectiveKey = key ?? (keyOrContext is String ? keyOrContext : '');
     final lang = currentLanguage.value;
     final dict = _strings[lang] ?? _strings['en']!;
-    return dict[key] ?? _strings['en']![key] ?? key;
+    return dict[effectiveKey] ?? _strings['en']![effectiveKey] ?? effectiveKey;
   }
 
   // Common UI getters
@@ -476,3 +477,6 @@ class PopoStrings {
     },
   };
 }
+
+/// Convenience alias for brevity in screens
+typedef Strings = PopoStrings;

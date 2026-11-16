@@ -511,7 +511,7 @@ class _LiveEndScreenState extends State<LiveEndScreen> {
           height: 50,
           child: OutlinedButton(
             style: OutlinedButton.styleFrom(
-              side: Border.all(color: PopoTheme.borderSubtle, width: 1.2),
+              side: const BorderSide(color: PopoTheme.borderSubtle, width: 1.2),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),

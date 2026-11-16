@@ -207,9 +207,9 @@ class _LiveChatOverlayState extends State<LiveChatOverlay> {
                               maxLength: 300,
                               buildCounter: (
                                 _, {
-                                required currentLength,
-                                isFocused,
-                                maxLength,
+                                required int currentLength,
+                                required bool isFocused,
+                                int? maxLength,
                               }) => null,
                               decoration: InputDecoration(
                                 hintText: widget.isHost

@@ -11,13 +11,16 @@ class PopoTheme {
   static const Color background = Color(0xFF0D0D12); // Pitch Black / Obsidian
   static const Color surface = Color(0xFF161622); // Deep Charcoal
   static const Color surfaceCardHover = Color(0xFF222232);
+  static const Color surfaceLight = Color(0xFF222232);
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFF9E9EB0);
+  static const Color textTertiary = Color(0xFF6B6B80);
   static const Color borderSubtle = Color(
     0x14FFFFFF,
   ); // rgba(255, 255, 255, 0.08)
   static const Color success = Color(0xFF00E676);
   static const Color danger = Color(0xFFFF3B30);
+  static const Color warning = Color(0xFFFFB800);
 
   // Linear Gradients
   static const LinearGradient primaryGradient = LinearGradient(
@@ -87,7 +90,7 @@ class PopoTheme {
           fontWeight: FontWeight.normal,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: surface,
         elevation: 4,
         shape: RoundedRectangleBorder(
@@ -95,7 +98,7 @@ class PopoTheme {
           side: const BorderSide(color: borderSubtle, width: 1),
         ),
       ),
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),

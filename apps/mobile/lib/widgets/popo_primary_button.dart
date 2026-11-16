@@ -11,12 +11,14 @@ class PopoPrimaryButton extends StatelessWidget {
   final double? width;
   final double height;
   final bool isFullWidth;
+  final bool? enabled;
 
   const PopoPrimaryButton({
     Key? key,
     required this.text,
     required this.onPressed,
     this.isLoading = false,
+    this.enabled,
     this.icon,
     this.width,
     this.height = 48,
@@ -25,17 +27,17 @@ class PopoPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool enabled = onPressed != null && !isLoading;
+    final bool canPress = (enabled ?? true) && onPressed != null && !isLoading;
 
     return Container(
       width: isFullWidth ? (width ?? double.infinity) : width,
       height: height,
       decoration: BoxDecoration(
-        gradient: enabled ? PopoTheme.primaryGradient : null,
-        color: enabled ? null : PopoTheme.surface,
+        gradient: canPress ? PopoTheme.primaryGradient : null,
+        color: canPress ? null : PopoTheme.surface,
         borderRadius: BorderRadius.circular(height / 2),
-        border: enabled ? null : Border.all(color: PopoTheme.borderSubtle),
-        boxShadow: enabled
+        border: canPress ? null : Border.all(color: PopoTheme.borderSubtle),
+        boxShadow: canPress
             ? [
                 BoxShadow(
                   color: PopoTheme.primary.withOpacity(0.35),
@@ -49,7 +51,7 @@ class PopoPrimaryButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: enabled ? onPressed : null,
+          onTap: canPress ? onPressed : null,
           borderRadius: BorderRadius.circular(height / 2),
           splashColor: Colors.white.withOpacity(0.2),
           highlightColor: Colors.transparent,
@@ -74,7 +76,7 @@ class PopoPrimaryButton extends StatelessWidget {
                       Text(
                         text,
                         style: TextStyle(
-                          color: enabled
+                          color: canPress
                               ? Colors.white
                               : PopoTheme.textSecondary,
                           fontSize: 14,

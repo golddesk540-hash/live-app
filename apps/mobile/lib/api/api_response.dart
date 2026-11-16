@@ -56,6 +56,7 @@ class ApiResponse<T> {
   }
 
   /// Convenience getters
+  String? get errorMessage => message;
   bool get isUnauthorized => statusCode == 401;
   bool get isForbidden => statusCode == 403;
   bool get isNotFound => statusCode == 404;

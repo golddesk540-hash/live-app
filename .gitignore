@@ -35,6 +35,18 @@ Thumbs.db
 build/
 ios/Pods/
 android/.gradle/
+apps/mobile/android/.gradle/
+.flutter-plugins
+.flutter-plugins-dependencies
+apps/mobile/android/local.properties
+apps/mobile/android/gradle/
+apps/mobile/android/gradlew*
+apps/mobile/android/gradle.properties
+apps/mobile/ios/Flutter/
+apps/mobile/ios/Flutter/Generated.xcconfig
+apps/mobile/ios/Flutter/flutter_export_environment.sh
+apps/mobile/ios/Runner/GeneratedPluginRegistrant.*
+apps/mobile/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 
 # Extracted design assets
 Popo_Live_Phase_*/

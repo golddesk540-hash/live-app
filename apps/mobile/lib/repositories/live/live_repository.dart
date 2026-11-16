@@ -106,7 +106,7 @@ class LiveRepository {
     final errData = res.data is Map ? res.data as Map<String, dynamic> : {};
     return {
       'eligible': false,
-      'error': res.errorMessage ?? 'You do not meet all Go-Live requirements.',
+      'error': res.message ?? 'You do not meet all Go-Live requirements.',
       'missingGates': errData['missingGates'] ?? [],
       'reasons': errData['reasons'] ?? [],
     };
@@ -147,7 +147,7 @@ class LiveRepository {
 
     return PreLiveSetupResult(
       success: false,
-      message: res.errorMessage ?? 'Failed to stage pre-live studio.',
+      message: res.message ?? 'Failed to stage pre-live studio.',
       roomId: '',
       roomNumber: '',
       title: title,
@@ -158,7 +158,7 @@ class LiveRepository {
       hostPoppoId: '',
       status: 'error',
       nextStep: '',
-      error: res.errorMessage,
+      error: res.message,
     );
   }
 

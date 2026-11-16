@@ -10,6 +10,7 @@ class PopoLoadingIndicator extends StatefulWidget {
   final String? message;
   final Color? primaryColor;
   final Color? secondaryColor;
+  final Color? color;
 
   const PopoLoadingIndicator({
     Key? key,
@@ -17,6 +18,7 @@ class PopoLoadingIndicator extends StatefulWidget {
     this.message,
     this.primaryColor,
     this.secondaryColor,
+    this.color,
   }) : super(key: key);
 
   @override
@@ -44,7 +46,7 @@ class _PopoLoadingIndicatorState extends State<PopoLoadingIndicator>
 
   @override
   Widget build(BuildContext context) {
-    final pink = widget.primaryColor ?? PopoTheme.primary;
+    final pink = widget.primaryColor ?? widget.color ?? PopoTheme.primary;
     final cyan = widget.secondaryColor ?? PopoTheme.cyan;
 
     return Center(
