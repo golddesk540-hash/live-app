@@ -8,6 +8,9 @@ import '../../models/party/party_models.dart';
 import '../../services/party/party_session_manager.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
+import '../gifts/widgets/universal_gift_panel.dart';
+import '../gifts/widgets/gift_animation_banner.dart';
+import '../../services/gifts/gift_session_manager.dart';
 
 /// 9-Seat Party Room Interface
 /// Implements verified Next.js backend endpoints:
@@ -52,10 +55,14 @@ class _PartyRoomScreenState extends State<PartyRoomScreen> {
     // Initialize with current authenticated user
     final currentUser = AuthState.instance.currentUser;
     _manager.joinRoom(roomId: widget.roomId, userProfile: currentUser);
+
+    // Start listening to real-time incoming party gifts via SSE
+    GiftSessionManager.instance.startListeningToRoomGifts(widget.roomId);
   }
 
   @override
   void dispose() {
+    GiftSessionManager.instance.stopListeningToRoomGifts();
     _manager.removeListener(_onSessionStateChanged);
     _manager.leaveRoom();
     _manager.dispose();
@@ -1096,43 +1103,52 @@ class _PartyRoomScreenState extends State<PartyRoomScreen> {
       },
       child: Scaffold(
         backgroundColor: PopoTheme.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              // 1. Room Header HUD
-              _buildRoomHeader(),
+        body: Stack(
+          children: [
+            SafeArea(
+              child: Column(
+                children: [
+                  // 1. Room Header HUD
+                  _buildRoomHeader(),
 
-              // 2. Audience Presence Bar
-              _buildAudienceBar(),
+                  // 2. Audience Presence Bar
+                  _buildAudienceBar(),
 
-              // 3. 9-Seat Adaptive Layout & Chat Section
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
+                  // 3. 9-Seat Adaptive Layout & Chat Section
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      child: Column(
+                        children: [
+                          // Host Seat (Seat #1)
+                          if (hostSeat != null) _buildHostSeatCard(hostSeat),
+                          const SizedBox(height: 14),
+
+                          // Guest Seats (Seats #2 to #9) — 2 rows of 4 seats
+                          _buildGuestSeatsGrid(guestSeats),
+                          const SizedBox(height: 16),
+
+                          // Live Party Chat Stream
+                          _buildLiveChatSection(),
+                        ],
+                      ),
+                    ),
                   ),
-                  child: Column(
-                    children: [
-                      // Host Seat (Seat #1)
-                      if (hostSeat != null) _buildHostSeatCard(hostSeat),
-                      const SizedBox(height: 14),
 
-                      // Guest Seats (Seats #2 to #9) — 2 rows of 4 seats
-                      _buildGuestSeatsGrid(guestSeats),
-                      const SizedBox(height: 16),
-
-                      // Live Party Chat Stream
-                      _buildLiveChatSection(),
-                    ],
-                  ),
-                ),
+                  // 4. Bottom Action Bar
+                  _buildBottomBar(),
+                ],
               ),
+            ),
 
-              // 4. Bottom Action Bar
-              _buildBottomBar(),
-            ],
-          ),
+            // 5. Universal Floating Gift Animation Overlay (non-blocking)
+            const Positioned.fill(
+              child: GiftAnimationBanner(),
+            ),
+          ],
         ),
       ),
     );
@@ -1958,6 +1974,38 @@ class _PartyRoomScreenState extends State<PartyRoomScreen> {
                 ),
                 const SizedBox(width: 6),
               ],
+
+              // Universal Gift Button
+              IconButton(
+                tooltip: 'Send Gift',
+                icon: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: PopoTheme.gold.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: PopoTheme.gold.withOpacity(0.5),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.card_giftcard_rounded,
+                    color: PopoTheme.gold,
+                    size: 16,
+                  ),
+                ),
+                onPressed: () {
+                  final hostUserId = _manager.roomDetails?.hostUserId ?? 'host_user';
+                  final hostNickname = _manager.roomDetails?.hostNickname ?? 'Host';
+                  UniversalGiftPanel.show(
+                    context: context,
+                    recipientHostId: hostUserId,
+                    recipientNickname: hostNickname,
+                    liveRoomId: widget.roomId,
+                  );
+                },
+              ),
+              const SizedBox(width: 6),
 
               // Leave Room Button
               OutlinedButton.icon(

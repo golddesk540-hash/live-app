@@ -16,6 +16,8 @@ import '../pk/widgets/pk_invitation_dialog.dart';
 import 'widgets/live_chat_overlay.dart';
 import 'live_rules_screen.dart';
 import 'live_end_screen.dart';
+import '../gifts/widgets/gift_animation_banner.dart';
+import '../../services/gifts/gift_session_manager.dart';
 
 /// Host Studio Screen — Actual Live Broadcasting Using Agora SDK
 /// Implemented in Phase 2 Prompt 04/10 according to NEXT IMPLEMENTATION PLAN v1.1
@@ -72,6 +74,7 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
     _rtcService.onNetworkQuality = null;
     _pkSessionManager.removeListener(_onPkSessionStateChanged);
     _pkSessionManager.stopListeningForIncomingInvitations();
+    GiftSessionManager.instance.stopListeningToRoomGifts();
     super.dispose();
   }
 
@@ -193,6 +196,9 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
         hostId: hostId,
         roomNumber: widget.setupResult.roomNumber,
       );
+
+      // Start listening for real-time incoming gifts via SSE
+      GiftSessionManager.instance.startListeningToRoomGifts(widget.setupResult.roomNumber);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -933,6 +939,11 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
                   ],
                 ),
               ),
+            ),
+
+            // 8. Universal Floating Gift Animation Overlay (non-blocking)
+            const Positioned.fill(
+              child: GiftAnimationBanner(),
             ),
           ],
         ),

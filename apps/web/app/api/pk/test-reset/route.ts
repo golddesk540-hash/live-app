@@ -19,6 +19,10 @@ export async function POST(req: NextRequest) {
       SET status = 'cancelled', updated_at = NOW() 
       WHERE status = 'pending';
 
+      UPDATE popolive.user_wallets
+      SET coins = 10000
+      WHERE user_id IN ('user_viewer_9001', 'user_wallet_demo_701', 'user_viewer_pk_test_01');
+
       DELETE FROM popolive.pk_matchmaking_queue;
     `);
 

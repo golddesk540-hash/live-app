@@ -10,9 +10,14 @@ import 'live_safety_modal.dart';
 class LiveChatOverlay extends StatefulWidget {
   final bool isHost;
   final VoidCallback? onHeartTap;
+  final VoidCallback? onGiftTap;
 
-  const LiveChatOverlay({Key? key, this.isHost = false, this.onHeartTap})
-    : super(key: key);
+  const LiveChatOverlay({
+    Key? key,
+    this.isHost = false,
+    this.onHeartTap,
+    this.onGiftTap,
+  }) : super(key: key);
 
   @override
   State<LiveChatOverlay> createState() => _LiveChatOverlayState();
@@ -266,6 +271,37 @@ class _LiveChatOverlayState extends State<LiveChatOverlay> {
                         child: const Icon(
                           Icons.favorite_rounded,
                           color: PopoTheme.primary,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  // Gift Sending action button
+                  if (widget.onGiftTap != null) ...[
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: widget.onGiftTap,
+                      child: Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF251F38),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFFFB800).withOpacity(0.6),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFFB800).withOpacity(0.2),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.card_giftcard_rounded,
+                          color: Color(0xFFFFB800),
                           size: 20,
                         ),
                       ),

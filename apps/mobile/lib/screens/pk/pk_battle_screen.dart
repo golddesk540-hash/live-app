@@ -8,6 +8,7 @@ import '../../widgets/widgets.dart';
 import 'widgets/pk_gift_sheet_dialog.dart';
 import 'widgets/pk_gift_animation_overlay.dart';
 import 'pk_result_screen.dart';
+import '../gifts/widgets/gift_animation_banner.dart';
 
 /// 1v1 PK Battle Screen
 /// Implements Section 10 of Phase 3 Prompt 02/08
@@ -705,6 +706,9 @@ class _PkBattleScreenState extends State<PkBattleScreen>
             // 6. Real-Time Floating Gift Animation Overlay (Non-blocking)
             const Positioned.fill(
               child: PkGiftAnimationOverlay(),
+            ),
+            const Positioned.fill(
+              child: GiftAnimationBanner(),
             ),
 
             // 7. Bottom Controls Toolbar

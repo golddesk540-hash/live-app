@@ -12,6 +12,9 @@ import '../../widgets/popo_primary_button.dart';
 import 'widgets/live_chat_overlay.dart';
 import 'widgets/live_safety_modal.dart';
 import 'live_rules_screen.dart';
+import '../gifts/widgets/universal_gift_panel.dart';
+import '../gifts/widgets/gift_animation_banner.dart';
+import '../../services/gifts/gift_session_manager.dart';
 
 /// Viewer Room Screen — Live Audience Experience & Real-Time Video Playback
 /// Implemented in Phase 2 Prompt 05/10 according to NEXT IMPLEMENTATION PLAN v1.1
@@ -84,7 +87,8 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen> {
     _rtcService.onConnectionStateChanged = null;
     _rtcService.onNetworkQuality = null;
 
-    // Leave live room on screen exit
+    // Stop listening to room gifts & leave live room on screen exit
+    GiftSessionManager.instance.stopListeningToRoomGifts();
     _sessionManager.leaveViewer();
     super.dispose();
   }
@@ -152,6 +156,9 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen> {
           setState(() => _elapsedSeconds++);
         }
       });
+
+      // Start listening to live gifts via SSE
+      GiftSessionManager.instance.startListeningToRoomGifts(session?.roomNumber ?? widget.roomId);
     } else {
       setState(() {
         _isLoading = false;
@@ -668,6 +675,19 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen> {
                 top: false,
                 child: LiveChatOverlay(
                   isHost: false,
+                  onGiftTap: () {
+                    final targetHostId = session?.host?.id ?? widget.roomId;
+                    final targetHostNickname = host?.nickname ?? widget.initialHostNickname ?? 'Host';
+                    final targetHostAvatar = host?.avatarUrl ?? widget.initialCoverUrl;
+                    final targetRoomId = session?.roomNumber ?? widget.roomId;
+                    UniversalGiftPanel.show(
+                      context: context,
+                      recipientHostId: targetHostId,
+                      recipientNickname: targetHostNickname,
+                      recipientAvatarUrl: targetHostAvatar,
+                      liveRoomId: targetRoomId,
+                    );
+                  },
                   onHeartTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -679,6 +699,11 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen> {
                   },
                 ),
               ),
+            ),
+
+            // 8. Universal Floating Gift Animation Overlay (non-blocking)
+            const Positioned.fill(
+              child: GiftAnimationBanner(),
             ),
           ],
         ),
