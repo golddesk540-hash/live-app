@@ -8,6 +8,11 @@ import '../../widgets/popo_icon_button.dart';
 import '../../widgets/popo_loading_indicator.dart';
 import '../../api/api.dart';
 import '../../auth/auth_state.dart';
+import '../../services/host/host_task_service.dart';
+import '../daily_tasks/daily_host_tasks_screen.dart';
+import '../task_level/task_level_screen.dart';
+import '../new_host_pack/new_host_pack_screen.dart';
+import '../earning_identity/earning_identity_screen.dart';
 import 'edit_profile_screen.dart';
 import 'public_profile_screen.dart';
 import 'settings_screen.dart';
@@ -25,6 +30,7 @@ class _MeScreenState extends State<MeScreen> {
 
   bool _isLoading = false;
   Map<String, dynamic>? _profileData;
+  bool _isHostEligible = false;
 
   @override
   void initState() {
@@ -54,6 +60,17 @@ class _MeScreenState extends State<MeScreen> {
         _profileData = AuthState.instance.currentUser;
         _isLoading = false;
       });
+    }
+
+    try {
+      final eligibility = await HostTaskService.instance.checkEligibility();
+      if (mounted) {
+        setState(() {
+          _isHostEligible = eligibility['eligible'] == true;
+        });
+      }
+    } catch (_) {
+      // Keep false if error or viewer
     }
   }
 
@@ -297,6 +314,130 @@ class _MeScreenState extends State<MeScreen> {
               ),
               const SizedBox(height: 16),
 
+              // Creator & Host Center (Strictly visible only for eligible hosts)
+              if (_isHostEligible) ...[
+                PopoCard(
+                  padding: const EdgeInsets.all(16),
+                  hasGlow: true,
+                  glowColor: PopoTheme.primary,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: const [
+                              Icon(
+                                Icons.workspace_premium_rounded,
+                                color: PopoTheme.primary,
+                                size: 20,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Host & Creator Center',
+                                style: TextStyle(
+                                  color: PopoTheme.textPrimary,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: PopoTheme.primary.withOpacity(0.18),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Text(
+                              'ACTIVE HOST',
+                              style: TextStyle(
+                                color: PopoTheme.primary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildHostToolButton(
+                              icon: Icons.checklist_rounded,
+                              label: 'Daily Tasks',
+                              color: const Color(0xFFFF1A6C),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const DailyHostTasksScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildHostToolButton(
+                              icon: Icons.trending_up_rounded,
+                              label: 'Task Level',
+                              color: const Color(0xFFFFC107),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const TaskLevelScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildHostToolButton(
+                              icon: Icons.card_giftcard_rounded,
+                              label: 'Starter Pack',
+                              color: const Color(0xFF00E5FF),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const NewHostPackScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildHostToolButton(
+                              icon: Icons.verified_user_rounded,
+                              label: 'Earning KYC',
+                              color: const Color(0xFF34D399),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const EarningIdentityScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
               // Quick Actions List
               PopoCard(
                 padding: EdgeInsets.zero,
@@ -454,6 +595,42 @@ class _MeScreenState extends State<MeScreen> {
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildHostToolButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withOpacity(0.25)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 22),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

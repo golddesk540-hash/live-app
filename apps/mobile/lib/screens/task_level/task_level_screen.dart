@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../services/host/host_task_service.dart';
 
-/// Popo Live — Phase 9.3 Task Level Screen (Frontend Preview Only)
+/// Popo Live — Phase 4 Module 8: Host Task Level Screen
+/// Dynamic task level tracking, points progress, tier benefits and milestone roadmap.
 class TaskLevelScreen extends StatefulWidget {
   const TaskLevelScreen({super.key});
 
@@ -9,23 +11,40 @@ class TaskLevelScreen extends StatefulWidget {
 }
 
 class _TaskLevelScreenState extends State<TaskLevelScreen> {
-  int _demoPoints = 650;
+  bool _isLoading = true;
+  String? _errorMessage;
+  Map<String, dynamic>? _levelData;
 
-  static const _levels = [
-    _SampleLevelTier(number: 1, name: 'Starter', points: 100),
-    _SampleLevelTier(number: 2, name: 'Active Host', points: 300),
-    _SampleLevelTier(number: 3, name: 'Rising Creator', points: 900),
-    _SampleLevelTier(number: 4, name: 'Popular Host', points: 1500),
-    _SampleLevelTier(number: 5, name: 'Star Creator', points: 2500),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadTaskLevel();
+  }
+
+  Future<void> _loadTaskLevel() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final data = await HostTaskService.instance.fetchTaskLevel();
+      if (!mounted) return;
+      setState(() {
+        _levelData = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final currentIdx = _levels.indexWhere((l) => _demoPoints < l.points);
-    final activeIdx = currentIdx == -1 ? _levels.length - 1 : currentIdx;
-    final activeTier = _levels[activeIdx];
-    final ratio = (_demoPoints / activeTier.points).clamp(0.0, 1.0);
-
     return Scaffold(
       backgroundColor: const Color(0xFF0D031B),
       appBar: AppBar(
@@ -33,165 +52,349 @@ class _TaskLevelScreenState extends State<TaskLevelScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: const Text(
-          'Task Level',
+          'Host Task Level',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'Track your host progress · Frontend preview only',
-            style: TextStyle(color: Color(0xFFBBA9D6), fontSize: 13),
+      body: RefreshIndicator(
+        onRefresh: _loadTaskLevel,
+        color: const Color(0xFFFF1A6C),
+        backgroundColor: const Color(0xFF160830),
+        child: _buildBody(),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFFFF1A6C)),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.shield_outlined, color: Color(0xFFFF1A6C), size: 48),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFFCBB9E6), fontSize: 14),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF1A6C),
+                  foregroundColor: Colors.white,
+                  shape: const StadiumBorder(),
+                ),
+                onPressed: _loadTaskLevel,
+                child: const Text('Retry'),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF160830),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.purple.withOpacity(0.28)),
+        ),
+      );
+    }
+
+    final data = _levelData ?? {};
+    final currentLevel = data['currentLevel'] ?? 1;
+    final levelName = data['levelName'] ?? 'Starter';
+    final taskPoints = data['taskPoints'] ?? 0;
+    final nextLevel = data['nextLevel'];
+    final nextLevelName = data['nextLevelName'];
+    final pointsToNext = data['pointsToNext'] ?? 0;
+    final double ratio = (data['progressRatio'] is num)
+        ? (data['progressRatio'] as num).toDouble().clamp(0.0, 1.0)
+        : 0.0;
+
+    final benefits = (data['benefits'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+    final allLevels = (data['allLevels'] as List<dynamic>?) ?? [];
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text(
+          'Track your creator milestones and unlock tier rewards',
+          style: TextStyle(color: Color(0xFFBBA9D6), fontSize: 13),
+        ),
+        const SizedBox(height: 16),
+
+        // Active Level Card
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF220C46), Color(0xFF160830)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'CURRENT TASK LEVEL',
-                  style: TextStyle(
-                    color: Color(0xFFC3B1DF),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'LEVEL 0${activeTier.number}',
-                  style: const TextStyle(
-                    color: Color(0xFFFFC107),
-                    fontSize: 30,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  activeTier.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: ratio,
-                    minHeight: 12,
-                    backgroundColor: const Color(0xFF2B174A),
-                    valueColor: const AlwaysStoppedAnimation(Color(0xFFFF1A6C)),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '$_demoPoints / ${activeTier.points} points (${(ratio * 100).round()}%)',
-                  style: const TextStyle(color: Color(0xFFCBB9E6), fontSize: 12),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF1A6C),
-                        foregroundColor: Colors.white,
-                      ),
-                      onPressed: () {
-                        setState(() => _demoPoints += 150);
-                      },
-                      child: const Text('+150 Demo Pts'),
-                    ),
-                    const SizedBox(width: 8),
-                    TextButton(
-                      onPressed: () {
-                        setState(() => _demoPoints = 650);
-                      },
-                      child: const Text('Reset (650)'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.purple.withOpacity(0.35)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF1A6C).withOpacity(0.12),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
-          const SizedBox(height: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'CURRENT TASK LEVEL',
+                    style: TextStyle(
+                      color: Color(0xFFC3B1DF),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0x33FFB800),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0xFFFFC107)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.star_rounded, color: Color(0xFFFFC107), size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$taskPoints PTS',
+                          style: const TextStyle(
+                            color: Color(0xFFFFC107),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'LEVEL 0$currentLevel',
+                style: const TextStyle(
+                  color: Color(0xFFFFC107),
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                levelName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 14),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  value: ratio,
+                  minHeight: 12,
+                  backgroundColor: const Color(0xFF2B174A),
+                  valueColor: const AlwaysStoppedAnimation(Color(0xFFFF1A6C)),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    nextLevel != null
+                        ? '$pointsToNext pts to Level 0$nextLevel ($nextLevelName)'
+                        : 'Max Tier Reached!',
+                    style: const TextStyle(color: Color(0xFFCBB9E6), fontSize: 12),
+                  ),
+                  Text(
+                    '${(ratio * 100).round()}%',
+                    style: const TextStyle(
+                      color: Color(0xFFFF85B3),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Tier Benefits Card
+        if (benefits.isNotEmpty) ...[
           const Text(
-            'Level Progress',
+            'Current Tier Benefits',
             style: TextStyle(
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 12),
-          ..._levels.map((lvl) {
-            final isDone = _demoPoints >= lvl.points;
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF130728),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: isDone
-                      ? const Color(0xFF34D399).withOpacity(0.45)
-                      : Colors.purple.withOpacity(0.24),
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF160830),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.purple.withOpacity(0.24)),
+            ),
+            child: Column(
+              children: benefits.map((benefit) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6.0),
+                  child: Row(
                     children: [
-                      Text(
-                        'Level 0${lvl.number} · ${lvl.name}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${lvl.points} points',
-                        style: const TextStyle(
-                          color: Color(0xFFBBA9D6),
-                          fontSize: 12,
+                      const Icon(Icons.check_circle_rounded, color: Color(0xFF34D399), size: 18),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          benefit,
+                          style: const TextStyle(color: Colors.white, fontSize: 13),
                         ),
                       ),
                     ],
                   ),
-                  Icon(
-                    isDone ? Icons.check_circle : Icons.radio_button_unchecked,
-                    color: isDone ? const Color(0xFF34D399) : Colors.white54,
-                  ),
-                ],
-              ),
-            );
-          }),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 20),
         ],
-      ),
+
+        // Roadmap of All Levels
+        const Text(
+          'Level Progression Roadmap',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...allLevels.map((lvl) {
+          final int lvlNumber = lvl['levelNumber'] ?? 1;
+          final String lvlName = lvl['name'] ?? '';
+          final int minPts = lvl['minPoints'] ?? 0;
+          final bool isAchieved = taskPoints >= minPts;
+          final bool isCurrent = lvlNumber == currentLevel;
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isCurrent
+                  ? const Color(0xFF220E44)
+                  : const Color(0xFF130728),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isCurrent
+                    ? const Color(0xFFFF1A6C)
+                    : (isAchieved
+                        ? const Color(0xFF34D399).withOpacity(0.5)
+                        : Colors.purple.withOpacity(0.22)),
+                width: isCurrent ? 1.5 : 1.0,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isAchieved
+                            ? const Color(0x3334D399)
+                            : const Color(0x22FFFFFF),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '0$lvlNumber',
+                          style: TextStyle(
+                            color: isAchieved ? const Color(0xFF34D399) : Colors.white70,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              lvlName,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            if (isCurrent) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFF1A6C),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: const Text(
+                                  'CURRENT',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '$minPts points required',
+                          style: const TextStyle(
+                            color: Color(0xFFBBA9D6),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                Icon(
+                  isAchieved ? Icons.check_circle_rounded : Icons.lock_outline_rounded,
+                  color: isAchieved ? const Color(0xFF34D399) : Colors.white38,
+                  size: 22,
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
     );
   }
-}
-
-class _SampleLevelTier {
-  final int number;
-  final String name;
-  final int points;
-
-  const _SampleLevelTier({
-    required this.number,
-    required this.name,
-    required this.points,
-  });
 }
