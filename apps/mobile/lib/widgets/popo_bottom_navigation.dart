@@ -9,11 +9,13 @@ import '../l10n/strings.dart';
 class PopoBottomNavigation extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTabSelected;
+  final int inboxBadgeCount;
 
   const PopoBottomNavigation({
     Key? key,
     required this.currentIndex,
     required this.onTabSelected,
+    this.inboxBadgeCount = 0,
   }) : super(key: key);
 
   void _handleTap(int index) {
@@ -68,6 +70,7 @@ class PopoBottomNavigation extends StatelessWidget {
             icon: Icons.mail_outline_rounded,
             activeIcon: Icons.mail_rounded,
             label: PopoStrings.tabInbox,
+            badgeCount: inboxBadgeCount,
           ),
           _buildNavItem(
             index: 4,
@@ -85,6 +88,7 @@ class PopoBottomNavigation extends StatelessWidget {
     required IconData icon,
     required IconData activeIcon,
     required String label,
+    int badgeCount = 0,
   }) {
     final isSelected = currentIndex == index;
 
@@ -100,15 +104,33 @@ class PopoBottomNavigation extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedScale(
-              scale: isSelected ? 1.12 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOutCubic,
-              child: Icon(
-                isSelected ? activeIcon : icon,
-                color: isSelected ? PopoTheme.primary : PopoTheme.textSecondary,
-                size: 22,
-              ),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                AnimatedScale(
+                  scale: isSelected ? 1.12 : 1.0,
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCubic,
+                  child: Icon(
+                    isSelected ? activeIcon : icon,
+                    color: isSelected ? PopoTheme.primary : PopoTheme.textSecondary,
+                    size: 22,
+                  ),
+                ),
+                if (badgeCount > 0)
+                  Positioned(
+                    top: -2,
+                    right: -6,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: PopoTheme.primary,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 3),
             Text(

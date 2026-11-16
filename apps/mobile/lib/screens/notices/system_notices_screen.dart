@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Popo Live — Phase 8.2: System Notices Frontend
-/// Frontend-only local state aligned with 08_02_system_notices.png.
+import '../../l10n/strings.dart';
+import '../../services/messaging/notices_service.dart';
+
+/// Popo Live — Phase 8.2: System Notices
+/// Connected to Next.js backend with live mark-as-read and categories
 class SystemNoticeModel {
   final String id;
   final String referenceCode;
@@ -49,129 +52,60 @@ class _SystemNoticesScreenState extends State<SystemNoticesScreen> {
   bool _unreadOnly = false;
   bool _showSearch = false;
   String _searchQuery = '';
+  bool _isLoading = false;
+  String? _errorMessage;
 
-  late List<SystemNoticeModel> _notices;
+  List<SystemNoticeModel> _notices = [];
 
   static const _categories = <Map<String, String>>[
-    {'id': 'all', 'label': 'All Notices'},
-    {'id': 'account', 'label': 'Account Updates'},
-    {'id': 'security_safety', 'label': 'Security & Safety'},
-    {'id': 'platform', 'label': 'Platform Updates'},
-    {'id': 'feature', 'label': 'Feature Announcements'},
-    {'id': 'wallet_gift', 'label': 'Wallet & Gift Updates'},
-    {'id': 'important', 'label': 'Important Notices'},
+    {'id': 'all', 'label': 'All Notices', 'labelUr': 'تمام نوٹس'},
+    {'id': 'account', 'label': 'Account Updates', 'labelUr': 'اکاؤنٹ اپ ڈیٹس'},
+    {'id': 'security_safety', 'label': 'Security & Safety', 'labelUr': 'تحفظ و سیکیورٹی'},
+    {'id': 'platform', 'label': 'Platform Updates', 'labelUr': 'پلیٹ فارم اپ ڈیٹس'},
+    {'id': 'feature', 'label': 'Feature Announcements', 'labelUr': 'نئے فیچرز'},
+    {'id': 'wallet_gift', 'label': 'Wallet & Gift Updates', 'labelUr': 'والیٹ و گفٹس'},
+    {'id': 'important', 'label': 'Important Notices', 'labelUr': 'اہم اعلانات'},
   ];
 
   @override
   void initState() {
     super.initState();
-    _initSampleNotices();
+    _loadNotices();
   }
 
-  void _initSampleNotices() {
-    _notices = [
-      SystemNoticeModel(
-        id: 'n1',
-        referenceCode: 'SYS-2026-8104',
-        category: 'account',
-        badgeLabel: 'ACCOUNT',
-        title: 'Your profile is ready',
-        shortDesc: 'Your profile information has been updated. Add a photo and bio so people can find you.',
-        fullMessage:
-            'Your Popo Live profile information has been synced across web and mobile discovery. Add a profile picture and short bio to help friends discover you faster.',
-        pubDate: 'Nov 12, 2026',
-        pubTime: '09:30 AM',
-        displayTimestamp: 'Today · 09:30',
-      ),
-      SystemNoticeModel(
-        id: 'n2',
-        referenceCode: 'SEC-2026-4491',
-        category: 'security_safety',
-        badgeLabel: 'SECURITY',
-        title: 'A new login was detected',
-        shortDesc: 'Review your active sessions if you did not sign in on Web Browser recently.',
-        fullMessage:
-            'A new sign-in was detected on Popo Live Web. If this looks unfamiliar, inspect Active Sessions and update your security credentials.',
-        pubDate: 'Nov 12, 2026',
-        pubTime: '08:15 AM',
-        displayTimestamp: 'Today · 08:15',
-        isImportant: true,
-      ),
-      SystemNoticeModel(
-        id: 'n3',
-        referenceCode: 'IMP-2026-0092',
-        category: 'important',
-        badgeLabel: 'IMPORTANT',
-        title: 'Official Account & Recharge Protection',
-        shortDesc: 'Only recharge Coins and activate VIP perks inside official Popo Live screens.',
-        fullMessage:
-            'Popo Live never asks for verification codes or external payment transfers via private chat. Official purchases issue PL-RCP receipts inside Finance Center.',
-        pubDate: 'Nov 12, 2026',
-        pubTime: '07:00 AM',
-        displayTimestamp: 'Today · 07:00',
-        isImportant: true,
-      ),
-      SystemNoticeModel(
-        id: 'n4',
-        referenceCode: 'SAF-2026-3910',
-        category: 'security_safety',
-        badgeLabel: 'SAFETY',
-        title: 'Community reminder',
-        shortDesc: 'Keep chats respectful. Report content that breaks the rules.',
-        fullMessage:
-            'Please follow Popo Live Community Guidelines in live rooms and Inbox chats. Use Report tools whenever you spot spam or harassment.',
-        pubDate: 'Nov 11, 2026',
-        pubTime: '06:40 PM',
-        displayTimestamp: 'Yesterday',
-        isRead: true,
-      ),
-      SystemNoticeModel(
-        id: 'n5',
-        referenceCode: 'FEA-2026-7120',
-        category: 'feature',
-        badgeLabel: 'FEATURE',
-        title: 'Square is here',
-        shortDesc: 'Explore the new Square section! Share a post and see what the community is doing.',
-        fullMessage:
-            'Explore the upcoming Square experience to stay connected with creators between live broadcasts.',
-        pubDate: 'Nov 11, 2026',
-        pubTime: '03:15 PM',
-        displayTimestamp: 'Yesterday',
-      ),
-      SystemNoticeModel(
-        id: 'n6',
-        referenceCode: 'WAL-2026-6043',
-        category: 'wallet_gift',
-        badgeLabel: 'WALLET',
-        title: 'Gift points updated',
-        shortDesc: 'Your latest gift activity and non-cash Host Points balance are ready to view.',
-        fullMessage:
-            'Your gift activity has been updated in your wallet ledger, keeping Coins separate from non-cash Host Points (70% creator share).',
-        pubDate: 'Nov 10, 2026',
-        pubTime: '05:22 PM',
-        displayTimestamp: 'Nov 10',
-        isRead: true,
-      ),
-      SystemNoticeModel(
-        id: 'n7',
-        referenceCode: 'PLT-2026-5081',
-        category: 'platform',
-        badgeLabel: 'PLATFORM',
-        title: 'New features are available on Popo Live',
-        shortDesc: 'Updated dark-purple Inbox lounge and improved live party controls.',
-        fullMessage:
-            'Enjoy faster room navigation, dark purple Phase 8 UI refresh, and structured Inbox + System Notices management.',
-        pubDate: 'Nov 09, 2026',
-        pubTime: '11:00 AM',
-        displayTimestamp: 'Nov 9',
-        isRead: true,
-      ),
-    ];
+  Future<void> _loadNotices() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final fetched = await NoticesService.instance.fetchNotices(
+        category: _selectedCategory,
+        unreadOnly: _unreadOnly,
+      );
+      if (mounted) {
+        setState(() {
+          _notices = fetched;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception:', '').trim();
+          _isLoading = false;
+        });
+      }
+    }
   }
 
-  void _openNoticeDetail(SystemNoticeModel notice) {
+  void _openNoticeDetail(SystemNoticeModel notice) async {
     setState(() => notice.isRead = true);
-    Navigator.of(context).push(
+    NoticesService.instance.markNoticeRead(notice.id);
+
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => _NoticeDetailPage(
           notice: notice,
@@ -183,8 +117,20 @@ class _SystemNoticesScreenState extends State<SystemNoticesScreen> {
     );
   }
 
+  Future<void> _markAllRead() async {
+    setState(() {
+      for (final n in _notices) {
+        n.isRead = true;
+      }
+    });
+    try {
+      await NoticesService.instance.markAllNoticesRead();
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isUrdu = PopoStrings.currentLanguage.value == 'ur';
     final q = _searchQuery.trim().toLowerCase();
     final filtered = _notices.where((n) {
       if (_selectedCategory != 'all' && n.category != _selectedCategory) return false;
@@ -198,7 +144,14 @@ class _SystemNoticesScreenState extends State<SystemNoticesScreen> {
       appBar: AppBar(
         backgroundColor: _bgDeep,
         elevation: 0,
-        title: const Text('Popo Live', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          isUrdu ? 'سسٹم نوٹس' : 'System Notices',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+        ),
         actions: [
           IconButton(
             icon: Icon(_showSearch ? Icons.close : Icons.search, color: Colors.white70),
@@ -208,131 +161,213 @@ class _SystemNoticesScreenState extends State<SystemNoticesScreen> {
             }),
           ),
           TextButton(
-            onPressed: () => setState(() {
-              for (final n in _notices) {
-                n.isRead = true;
-              }
-            }),
-            child: const Text('Mark All Read', style: TextStyle(color: _neonPink, fontWeight: FontWeight.bold, fontSize: 12)),
+            onPressed: _markAllRead,
+            child: Text(
+              isUrdu ? 'سب پڑھیں' : 'Mark All Read',
+              style: const TextStyle(color: _neonPink, fontWeight: FontWeight.bold, fontSize: 12),
+            ),
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('System Notices', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 2),
-            const Text('Updates from Popo Live', style: TextStyle(color: Colors.white60, fontSize: 13)),
-            const SizedBox(height: 12),
-            if (_showSearch) ...[
-              TextField(
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: 'Search notices...',
-                  hintStyle: const TextStyle(color: Colors.white38),
-                  filled: true,
-                  fillColor: _cardBg,
-                  prefixIcon: const Icon(Icons.search, color: Colors.white54),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+      body: RefreshIndicator(
+        color: _neonPink,
+        backgroundColor: _cardBg,
+        onRefresh: _loadNotices,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isUrdu ? 'دفتری اعلانات' : 'Official Notices',
+                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                isUrdu ? 'پلیٹ فارم کی اہم اپ ڈیٹس اور سیکیورٹی نوٹس' : 'Important platform updates & security alerts',
+                style: const TextStyle(fontSize: 13, color: Colors.white60),
+              ),
+              const SizedBox(height: 12),
+              if (_showSearch) ...[
+                TextField(
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: isUrdu ? 'نوٹس تلاش کریں...' : 'Search notices...',
+                    hintStyle: const TextStyle(color: Colors.white38),
+                    filled: true,
+                    fillColor: _cardBg,
+                    prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(28), borderSide: BorderSide.none),
+                  ),
+                  onChanged: (v) => setState(() => _searchQuery = v),
                 ),
-                onChanged: (v) => setState(() => _searchQuery = v),
+                const SizedBox(height: 10),
+              ],
+              SizedBox(
+                height: 38,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _categories.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (_, idx) {
+                    final cat = _categories[idx];
+                    final active = _selectedCategory == cat['id'];
+                    final label = isUrdu ? (cat['labelUr'] ?? cat['label']!) : cat['label']!;
+                    return ChoiceChip(
+                      label: Text(label, style: TextStyle(color: active ? Colors.white : Colors.white70, fontSize: 12, fontWeight: active ? FontWeight.bold : FontWeight.normal)),
+                      selected: active,
+                      selectedColor: _neonPink,
+                      backgroundColor: _cardBg,
+                      side: BorderSide.none,
+                      shape: const StadiumBorder(),
+                      onSelected: (_) {
+                        setState(() => _selectedCategory = cat['id']!);
+                        _loadNotices();
+                      },
+                    );
+                  },
+                ),
               ),
               const SizedBox(height: 10),
-            ],
-            SizedBox(
-              height: 36,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _categories.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (_, idx) {
-                  final cat = _categories[idx];
-                  final active = _selectedCategory == cat['id'];
-                  return ChoiceChip(
-                    label: Text(cat['label']!, style: TextStyle(color: active ? Colors.white : Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
-                    selected: active,
-                    selectedColor: cat['id'] == 'important' ? _gold : _neonPink,
-                    backgroundColor: _cardBg,
-                    onSelected: (_) => setState(() => _selectedCategory = cat['id']!),
-                  );
-                },
+              Row(
+                children: [
+                  Checkbox(
+                    value: _unreadOnly,
+                    activeColor: _neonPink,
+                    onChanged: (val) {
+                      setState(() => _unreadOnly = val ?? false);
+                      _loadNotices();
+                    },
+                  ),
+                  Text(isUrdu ? 'صرف نہ پڑھے گئے' : 'Unread only', style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                  const Spacer(),
+                  Text(
+                    '${filtered.length} ${isUrdu ? 'نوٹس' : 'Notices'}',
+                    style: const TextStyle(color: Colors.white38, fontSize: 12),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 8),
-            FilterChip(
-              label: const Text('Unread Only', style: TextStyle(color: Colors.white, fontSize: 12)),
-              selected: _unreadOnly,
-              selectedColor: _neonPink,
-              backgroundColor: _cardBg,
-              onSelected: (v) => setState(() => _unreadOnly = v),
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: filtered.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.notifications_off_outlined, color: _neonPink, size: 42),
-                          const SizedBox(height: 10),
-                          Text(
-                            _unreadOnly
-                                ? 'No unread notices'
-                                : q.isNotEmpty
-                                    ? 'No search results'
-                                    : 'No notices in selected category',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                        ],
+              if (_errorMessage != null)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.redAccent, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(_errorMessage!, style: const TextStyle(color: Colors.redAccent, fontSize: 11)),
                       ),
-                    )
-                  : ListView.builder(
-                      itemCount: filtered.length,
-                      itemBuilder: (_, idx) {
-                        final n = filtered[idx];
-                        return GestureDetector(
-                          onTap: () => _openNoticeDetail(n),
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: _cardBg,
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: n.isImportant ? _gold.withOpacity(0.55) : Colors.purpleAccent.withOpacity(0.25),
-                              ),
+                      TextButton(
+                        onPressed: _loadNotices,
+                        child: Text(isUrdu ? 'دوبارہ کوشش' : 'Retry', style: const TextStyle(color: Colors.white, fontSize: 11)),
+                      ),
+                    ],
+                  ),
+                ),
+              Expanded(
+                child: _isLoading && _notices.isEmpty
+                    ? const Center(child: CircularProgressIndicator(color: _neonPink))
+                    : filtered.isEmpty
+                        ? Center(
+                            child: Text(
+                              isUrdu ? 'کوئی نوٹس دستیاب نہیں ہیں' : 'No notices match your selection',
+                              style: const TextStyle(color: Colors.white54),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(color: const Color(0xFF2B184F), borderRadius: BorderRadius.circular(14)),
-                                      child: Text(n.badgeLabel, style: TextStyle(color: n.isImportant ? _gold : _neonPink, fontSize: 10, fontWeight: FontWeight.w800)),
+                          )
+                        : ListView.separated(
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 12),
+                            itemBuilder: (_, idx) {
+                              final n = filtered[idx];
+                              return GestureDetector(
+                                onTap: () => _openNoticeDetail(n),
+                                child: Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: _cardBg,
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color: n.isImportant
+                                          ? _gold.withOpacity(0.4)
+                                          : (n.isRead ? Colors.white10 : _neonPink.withOpacity(0.35)),
+                                      width: n.isRead ? 1 : 1.5,
                                     ),
-                                    const Spacer(),
-                                    if (!n.isRead)
-                                      Container(width: 9, height: 9, decoration: const BoxDecoration(color: _neonPink, shape: BoxShape.circle)),
-                                  ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: n.isImportant
+                                                  ? _gold.withOpacity(0.2)
+                                                  : _neonPink.withOpacity(0.15),
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              n.badgeLabel,
+                                              style: TextStyle(
+                                                color: n.isImportant ? _gold : _neonPink,
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.w900,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            n.referenceCode,
+                                            style: const TextStyle(color: Colors.white38, fontSize: 10, fontFamily: 'monospace'),
+                                          ),
+                                          const Spacer(),
+                                          Text(
+                                            n.displayTimestamp,
+                                            style: const TextStyle(color: Colors.white54, fontSize: 11),
+                                          ),
+                                          if (!n.isRead) ...[
+                                            const SizedBox(width: 6),
+                                            Container(
+                                              width: 7,
+                                              height: 7,
+                                              decoration: const BoxDecoration(
+                                                color: _neonPink,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        n.title,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 15,
+                                          fontWeight: n.isRead ? FontWeight.w600 : FontWeight.w800,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        n.shortDesc,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(color: Colors.white60, fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                const SizedBox(height: 10),
-                                Text(n.title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
-                                const SizedBox(height: 6),
-                                Text(n.shortDesc, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                                const SizedBox(height: 10),
-                                Text(n.displayTimestamp, style: const TextStyle(color: Colors.white54, fontSize: 11)),
-                              ],
-                            ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -350,32 +385,56 @@ class _NoticeDetailPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF0C041C),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF180A33),
-        title: const Text('Popo Live Official', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-        actions: [
-          TextButton(
-            onPressed: () {
-              onToggleUnread();
-              Navigator.of(context).pop();
-            },
-            child: const Text('Mark Unread', style: TextStyle(color: Color(0xFFFF1A6C), fontSize: 12)),
+        backgroundColor: const Color(0xFF140728),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          notice.referenceCode,
+          style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(18),
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: notice.isImportant ? const Color(0xFFFBBF24).withOpacity(0.2) : const Color(0xFFFF1A6C).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  notice.badgeLabel,
+                  style: TextStyle(
+                    color: notice.isImportant ? const Color(0xFFFBBF24) : const Color(0xFFFF1A6C),
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${notice.pubDate} • ${notice.pubTime}',
+                style: const TextStyle(color: Colors.white54, fontSize: 12),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            notice.title,
+            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 12),
+          const Divider(color: Colors.white12),
+          const SizedBox(height: 12),
+          Text(
+            notice.fullMessage,
+            style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
           ),
         ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(notice.badgeLabel, style: const TextStyle(color: Color(0xFFFF1A6C), fontWeight: FontWeight.bold, fontSize: 12)),
-            const SizedBox(height: 8),
-            Text(notice.title, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 8),
-            Text('${notice.pubDate} • ${notice.pubTime} • ${notice.referenceCode}', style: const TextStyle(color: Colors.white54, fontSize: 12)),
-            const SizedBox(height: 18),
-            Text(notice.fullMessage, style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.6)),
-          ],
-        ),
       ),
     );
   }

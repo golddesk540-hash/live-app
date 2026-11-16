@@ -1,7 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
-/// Popo Live — Phase 8.1: Inbox Frontend (Chats, Contacts, Requests, 1:1 Chat)
-/// Frontend-only local state implementation aligned with 08_01_inbox.png.
+import '../../l10n/strings.dart';
+import '../../services/messaging/inbox_service.dart';
+import '../notices/system_notices_screen.dart';
+import '../notifications/notifications_screen.dart';
+
+/// Popo Live — Phase 8.1: Inbox & 1:1 Direct Messaging
+/// Connected to Next.js backend with real-time SSE synchronization
 class InboxUserModel {
   final String id;
   final String name;
@@ -86,169 +92,139 @@ class _InboxScreenState extends State<InboxScreen> {
   int _tabIndex = 0; // 0: Chats, 1: Contacts, 2: Requests
   String _searchQuery = '';
   bool _showSearch = false;
+  bool _isLoading = false;
+  String? _errorMessage;
 
-  late List<InboxConversationModel> _conversations;
-  late List<InboxUserModel> _contacts;
-  late List<InboxRequestModel> _requests;
+  List<InboxConversationModel> _conversations = [];
+  List<InboxUserModel> _contacts = [];
+  List<InboxRequestModel> _requests = [];
+
+  int _unreadNotices = 0;
+  int _unreadNotifications = 0;
+
+  StreamSubscription? _sseSub;
 
   @override
   void initState() {
     super.initState();
-    _initMockData();
+    _loadData();
+    _initRealtimeSubscription();
   }
 
-  void _initMockData() {
-    const ayesha = InboxUserModel(
-      id: 'u1',
-      name: 'Ayesha Khan',
-      poppoId: '10489210',
-      status: 'online',
-      lastSeen: 'Online now',
-      ringColor: Color(0xFFFF1A6C),
-    );
-    const hamza = InboxUserModel(
-      id: 'u2',
-      name: 'Hamza Ali',
-      poppoId: '20834119',
-      status: 'live',
-      lastSeen: 'In Live Room',
-      ringColor: Color(0xFF3B82F6),
-    );
-    const sara = InboxUserModel(
-      id: 'u3',
-      name: 'Sara Noor',
-      poppoId: '33910284',
-      status: 'online',
-      lastSeen: 'Active 4m ago',
-      ringColor: Color(0xFF9333EA),
-    );
-    const popoTeam = InboxUserModel(
-      id: 'u4',
-      name: 'Popo Live Team',
-      poppoId: '10000001',
-      status: 'online',
-      lastSeen: 'Official Support',
-      ringColor: Color(0xFFFBBF24),
-      isOfficial: true,
-    );
-    const mina = InboxUserModel(
-      id: 'u5',
-      name: 'Mina Official',
-      poppoId: '44981203',
-      status: 'offline',
-      lastSeen: 'Last seen yesterday',
-      ringColor: Color(0xFF10B981),
-    );
+  @override
+  void dispose() {
+    _sseSub?.cancel();
+    super.dispose();
+  }
 
-    _conversations = [
-      InboxConversationModel(
-        id: 'c1',
-        user: ayesha,
-        lastMessage: 'Hey! Are you live tonight?',
-        lastTime: '2m',
-        unreadCount: 2,
-        messages: const [
-          InboxMessageModel(id: 'm1', senderId: 'u1', text: 'Hey! Are you live tonight?', time: '21:14'),
-        ],
-      ),
-      InboxConversationModel(
-        id: 'c2',
-        user: hamza,
-        lastMessage: 'Thanks for the gift ♥',
-        lastTime: '18m',
-        unreadCount: 0,
-        messages: const [
-          InboxMessageModel(id: 'm2', senderId: 'u2', text: 'Thanks for the gift ♥', time: '20:56'),
-        ],
-      ),
-      InboxConversationModel(
-        id: 'c3',
-        user: sara,
-        lastMessage: 'Sent you a photo',
-        lastTime: '1h',
-        unreadCount: 1,
-        messages: const [
-          InboxMessageModel(id: 'm3', senderId: 'u3', text: 'Sent you a photo', time: '19:46'),
-        ],
-      ),
-      InboxConversationModel(
-        id: 'c4',
-        user: popoTeam,
-        lastMessage: 'Welcome to Popo Live!',
-        lastTime: '3h',
-        unreadCount: 0,
-        messages: const [
-          InboxMessageModel(id: 'm4', senderId: 'u4', text: 'Welcome to Popo Live!', time: '18:05'),
-        ],
-      ),
-      InboxConversationModel(
-        id: 'c5',
-        user: mina,
-        lastMessage: "Let's join the party room",
-        lastTime: 'Yesterday',
-        unreadCount: 0,
-        messages: const [
-          InboxMessageModel(id: 'm5', senderId: 'u5', text: "Let's join the party room", time: 'Yesterday'),
-        ],
-      ),
-    ];
+  Future<void> _loadData() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-    _contacts = [ayesha, hamza, sara, popoTeam, mina];
-    _requests = [
-      const InboxRequestModel(
-        id: 'r1',
-        user: InboxUserModel(
-          id: 'ur1',
-          name: 'Tariq Beats',
-          poppoId: '77412093',
+    try {
+      final convs = await InboxService.instance.fetchConversations();
+      final summary = await InboxService.instance.fetchInboxSummary();
+
+      // Extract unique contacts from conversations and reference contacts
+      final contactsMap = <String, InboxUserModel>{};
+      for (final c in convs) {
+        contactsMap[c.user.id] = c.user;
+      }
+
+      // Add default official contact if not present
+      if (!contactsMap.containsKey('official_support')) {
+        contactsMap['official_support'] = const InboxUserModel(
+          id: '00000000-0000-0000-0000-000000000099',
+          name: 'Popo Live Team',
+          poppoId: '10000001',
           status: 'online',
-          lastSeen: 'Online now',
-          ringColor: Color(0xFF9333EA),
-        ),
-        preview: 'Hi! Would love to team up for this weekend PK tournament.',
-        timeAgo: '12m ago',
-      ),
-      const InboxRequestModel(
-        id: 'r2',
-        user: InboxUserModel(
-          id: 'ur2',
-          name: 'Nadia Grace',
-          poppoId: '88201944',
-          status: 'live',
-          lastSeen: 'Live now',
-          ringColor: Color(0xFFFF1A6C),
-        ),
-        preview: 'Loved your Square clip, mind if we connect?',
-        timeAgo: '48m ago',
-      ),
-    ];
+          lastSeen: 'Official Support',
+          ringColor: Color(0xFFFBBF24),
+          isOfficial: true,
+        );
+      }
+
+      if (mounted) {
+        setState(() {
+          _conversations = convs;
+          _contacts = contactsMap.values.toList();
+          _unreadNotices = summary['unreadNotices'] ?? 0;
+          _unreadNotifications = summary['unreadNotifications'] ?? 0;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception:', '').trim();
+          _isLoading = false;
+        });
+      }
+    }
   }
 
-  void _openConversation(InboxConversationModel conv) {
+  void _initRealtimeSubscription() {
+    InboxService.instance.subscribeRealtimeEvents();
+    _sseSub = InboxService.instance.onMessageEvent.listen((evt) {
+      if (!mounted) return;
+
+      if (evt.eventType == 'new_message') {
+        final text = evt.payload['text']?.toString() ?? '';
+        final senderId = evt.senderId;
+        final convId = evt.conversationId;
+
+        setState(() {
+          final idx = _conversations.indexWhere((c) => c.id == convId);
+          if (idx != -1) {
+            final target = _conversations.removeAt(idx);
+            target.lastMessage = text;
+            target.lastTime = 'Just now';
+            target.unreadCount += 1;
+            _conversations.insert(0, target);
+          } else {
+            // New conversation incoming
+            _loadData();
+          }
+        });
+      } else if (evt.eventType == 'message_read') {
+        final convId = evt.conversationId;
+        setState(() {
+          final target = _conversations.where((c) => c.id == convId).firstOrNull;
+          if (target != null) {
+            target.unreadCount = 0;
+          }
+        });
+      }
+    });
+  }
+
+  void _openConversation(InboxConversationModel conv) async {
     setState(() {
       conv.unreadCount = 0;
     });
-    Navigator.of(context).push(
+
+    // Mark as read in backend
+    InboxService.instance.markConversationRead(conv.id);
+
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => _InboxChatDetailScreen(
           conversation: conv,
           onSend: (txt) {
             setState(() {
-              conv.messages.add(
-                InboxMessageModel(
-                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                  senderId: 'me',
-                  text: txt,
-                  time: 'Just now',
-                ),
-              );
               conv.lastMessage = txt;
-              conv.lastTime = 'Now';
+              conv.lastTime = 'Just now';
             });
           },
         ),
       ),
     );
+
+    // Refresh inbox summary on return
+    _loadData();
   }
 
   void _acceptRequest(InboxRequestModel req) {
@@ -276,12 +252,19 @@ class _InboxScreenState extends State<InboxScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isUrdu = PopoStrings.currentLanguage.value == 'ur';
     final q = _searchQuery.trim().toLowerCase();
     final filteredChats = _conversations
-        .where((c) => q.isEmpty || c.user.name.toLowerCase().contains(q) || c.lastMessage.toLowerCase().contains(q))
+        .where((c) =>
+            q.isEmpty ||
+            c.user.name.toLowerCase().contains(q) ||
+            c.lastMessage.toLowerCase().contains(q))
         .toList();
     final filteredContacts = _contacts
-        .where((u) => q.isEmpty || u.name.toLowerCase().contains(q) || u.poppoId.contains(q))
+        .where((u) =>
+            q.isEmpty ||
+            u.name.toLowerCase().contains(q) ||
+            u.poppoId.contains(q))
         .toList();
 
     return Scaffold(
@@ -289,14 +272,73 @@ class _InboxScreenState extends State<InboxScreen> {
       appBar: AppBar(
         backgroundColor: _bgDeep,
         elevation: 0,
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.radio_button_checked, color: Colors.white, size: 20),
-            SizedBox(width: 8),
-            Text('Popo Live', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white)),
+            const Icon(Icons.radio_button_checked, color: Colors.white, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              PopoStrings.appName,
+              style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
+            ),
           ],
         ),
         actions: [
+          // System Notices shortcut with badge
+          Stack(
+            alignment: Alignment.topRight,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.campaign_outlined, color: Colors.white70),
+                tooltip: isUrdu ? 'سسٹم نوٹس' : 'System Notices',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const SystemNoticesScreen()),
+                  ).then((_) => _loadData());
+                },
+              ),
+              if (_unreadNotices > 0)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: _neonPink,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(minWidth: 8, minHeight: 8),
+                  ),
+                ),
+            ],
+          ),
+          // Notifications shortcut with badge
+          Stack(
+            alignment: Alignment.topRight,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_none_rounded, color: Colors.white70),
+                tooltip: isUrdu ? 'اطلاعات' : 'Notifications',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                  ).then((_) => _loadData());
+                },
+              ),
+              if (_unreadNotifications > 0)
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(
+                      color: _gold,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(minWidth: 8, minHeight: 8),
+                  ),
+                ),
+            ],
+          ),
           IconButton(
             icon: Icon(_showSearch ? Icons.close : Icons.search, color: Colors.white70),
             onPressed: () => setState(() {
@@ -306,165 +348,352 @@ class _InboxScreenState extends State<InboxScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Inbox', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white)),
-            const SizedBox(height: 2),
-            const Text('Your chats and messages', style: TextStyle(fontSize: 13, color: Colors.white60)),
-            const SizedBox(height: 16),
-            if (_showSearch) ...[
-              TextField(
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: 'Search chats or contacts...',
-                  hintStyle: const TextStyle(color: Colors.white38),
-                  filled: true,
-                  fillColor: _surface,
-                  prefixIcon: const Icon(Icons.search, color: Colors.white54),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(28), borderSide: BorderSide.none),
+      body: RefreshIndicator(
+        color: _neonPink,
+        backgroundColor: _surface,
+        onRefresh: _loadData,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isUrdu ? 'ان باکس' : 'Inbox',
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
                 ),
-                onChanged: (v) => setState(() => _searchQuery = v),
               ),
-              const SizedBox(height: 12),
-            ],
-            Row(
-              children: [
-                _buildTabPill(0, 'Chats'),
-                const SizedBox(width: 8),
-                _buildTabPill(1, 'Contacts'),
-                const SizedBox(width: 8),
-                _buildTabPill(2, 'Requests${_requests.isNotEmpty ? ' (${_requests.length})' : ''}'),
+              const SizedBox(height: 2),
+              Text(
+                isUrdu ? 'آپ کے پیغامات اور چیٹس' : 'Your chats and messages',
+                style: const TextStyle(fontSize: 13, color: Colors.white60),
+              ),
+              const SizedBox(height: 16),
+              if (_showSearch) ...[
+                TextField(
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: isUrdu
+                        ? 'چیٹس یا رابطے تلاش کریں...'
+                        : 'Search chats or contacts...',
+                    hintStyle: const TextStyle(color: Colors.white38),
+                    filled: true,
+                    fillColor: _surface,
+                    prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(28),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onChanged: (v) => setState(() => _searchQuery = v),
+                ),
+                const SizedBox(height: 12),
               ],
-            ),
-            const SizedBox(height: 14),
-            Expanded(
-              child: _tabIndex == 0
-                  ? (filteredChats.isEmpty
-                      ? const Center(child: Text('No conversations found', style: TextStyle(color: Colors.white54)))
-                      : ListView.separated(
-                          itemCount: filteredChats.length,
-                          separatorBuilder: (_, __) => const Divider(color: Colors.white12),
-                          itemBuilder: (_, idx) {
-                            final conv = filteredChats[idx];
-                            return ListTile(
-                              onTap: () => _openConversation(conv),
-                              contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                              leading: CircleAvatar(
-                                radius: 26,
-                                backgroundColor: conv.user.ringColor,
-                                child: CircleAvatar(
-                                  radius: 23,
-                                  backgroundColor: _surface,
-                                  child: Text(conv.user.name[0], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              Row(
+                children: [
+                  _buildTabPill(0, isUrdu ? 'چیٹس' : 'Chats'),
+                  const SizedBox(width: 8),
+                  _buildTabPill(1, isUrdu ? 'رابطے' : 'Contacts'),
+                  const SizedBox(width: 8),
+                  _buildTabPill(
+                    2,
+                    isUrdu
+                        ? 'درخواستیں${_requests.isNotEmpty ? ' (${_requests.length})' : ''}'
+                        : 'Requests${_requests.isNotEmpty ? ' (${_requests.length})' : ''}',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              if (_errorMessage != null)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline, color: Colors.redAccent, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _loadData,
+                        child: Text(
+                          isUrdu ? 'دوبارہ کوشش' : 'Retry',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Expanded(
+                child: _isLoading && _conversations.isEmpty
+                    ? const Center(
+                        child: CircularProgressIndicator(color: _neonPink),
+                      )
+                    : _tabIndex == 0
+                        ? (filteredChats.isEmpty
+                            ? Center(
+                                child: Text(
+                                  isUrdu ? 'کوئی گفتگو موجود نہیں ہے' : 'No conversations found',
+                                  style: const TextStyle(color: Colors.white54),
                                 ),
-                              ),
-                              title: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(conv.user.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-                                  ),
-                                  Text(conv.lastTime, style: const TextStyle(color: Colors.white54, fontSize: 11)),
-                                ],
-                              ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(conv.lastMessage, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white60, fontSize: 12)),
-                              ),
-                              trailing: conv.unreadCount > 0
-                                  ? Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                      decoration: const BoxDecoration(color: _neonPink, shape: BoxShape.circle),
-                                      child: Text('${conv.unreadCount}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                                    )
-                                  : null,
-                            );
-                          },
-                        ))
-                  : _tabIndex == 1
-                      ? (filteredContacts.isEmpty
-                          ? const Center(child: Text('No contacts match search', style: TextStyle(color: Colors.white54)))
-                          : ListView.builder(
-                              itemCount: filteredContacts.length,
-                              itemBuilder: (_, idx) {
-                                final u = filteredContacts[idx];
-                                return ListTile(
-                                  leading: CircleAvatar(backgroundColor: u.ringColor, child: Text(u.name[0], style: const TextStyle(color: Colors.white))),
-                                  title: Text(u.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                  subtitle: Text('${u.lastSeen} • ID ${u.poppoId}', style: TextStyle(color: u.status == 'online' ? Colors.greenAccent : Colors.white54, fontSize: 12)),
-                                  trailing: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(backgroundColor: _neonPink, foregroundColor: Colors.white, shape: const StadiumBorder()),
-                                    onPressed: () {
-                                      final existing = _conversations.firstWhere(
-                                        (c) => c.user.id == u.id,
-                                        orElse: () {
-                                          final nc = InboxConversationModel(id: 'c_${u.id}', user: u, lastMessage: 'Say hello!', lastTime: 'Now', messages: []);
-                                          _conversations.insert(0, nc);
-                                          return nc;
-                                        },
+                              )
+                            : ListView.separated(
+                                itemCount: filteredChats.length,
+                                separatorBuilder: (_, __) =>
+                                    const Divider(color: Colors.white12, height: 1),
+                                itemBuilder: (_, idx) {
+                                  final conv = filteredChats[idx];
+                                  return ListTile(
+                                    onTap: () => _openConversation(conv),
+                                    contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                                    leading: CircleAvatar(
+                                      radius: 26,
+                                      backgroundColor: conv.user.ringColor,
+                                      child: CircleAvatar(
+                                        radius: 23,
+                                        backgroundColor: _surface,
+                                        child: Text(
+                                          conv.user.name.isNotEmpty ? conv.user.name[0].toUpperCase() : 'P',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    title: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            conv.user.name,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ),
+                                        Text(
+                                          conv.lastTime,
+                                          style: const TextStyle(color: Colors.white54, fontSize: 11),
+                                        ),
+                                      ],
+                                    ),
+                                    subtitle: Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        conv.lastMessage,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(color: Colors.white60, fontSize: 12),
+                                      ),
+                                    ),
+                                    trailing: conv.unreadCount > 0
+                                        ? Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                            decoration: const BoxDecoration(
+                                              color: _neonPink,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Text(
+                                              '${conv.unreadCount}',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          )
+                                        : null,
+                                  );
+                                },
+                              ))
+                        : _tabIndex == 1
+                            ? (filteredContacts.isEmpty
+                                ? Center(
+                                    child: Text(
+                                      isUrdu ? 'کوئی رابطہ نہیں ملا' : 'No contacts match search',
+                                      style: const TextStyle(color: Colors.white54),
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    itemCount: filteredContacts.length,
+                                    itemBuilder: (_, idx) {
+                                      final u = filteredContacts[idx];
+                                      return ListTile(
+                                        leading: CircleAvatar(
+                                          backgroundColor: u.ringColor,
+                                          child: Text(
+                                            u.name.isNotEmpty ? u.name[0].toUpperCase() : 'U',
+                                            style: const TextStyle(color: Colors.white),
+                                          ),
+                                        ),
+                                        title: Text(
+                                          u.name,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        subtitle: Text(
+                                          '${u.lastSeen} • ID ${u.poppoId}',
+                                          style: TextStyle(
+                                            color: u.status == 'online'
+                                                ? Colors.greenAccent
+                                                : Colors.white54,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        trailing: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: _neonPink,
+                                            foregroundColor: Colors.white,
+                                            shape: const StadiumBorder(),
+                                          ),
+                                          onPressed: () async {
+                                            final existing = _conversations.where((c) => c.user.id == u.id).firstOrNull;
+                                            if (existing != null) {
+                                              _openConversation(existing);
+                                            } else {
+                                              try {
+                                                final res = await InboxService.instance.startConversation(u.id);
+                                                final convId = res['conversationId']?.toString() ?? 'conv_${u.id}';
+                                                final newConv = InboxConversationModel(
+                                                  id: convId,
+                                                  user: u,
+                                                  lastMessage: isUrdu ? 'سلام کہو!' : 'Say hello!',
+                                                  lastTime: 'Now',
+                                                  messages: [],
+                                                );
+                                                setState(() {
+                                                  _conversations.insert(0, newConv);
+                                                });
+                                                _openConversation(newConv);
+                                              } catch (_) {
+                                                final localConv = InboxConversationModel(
+                                                  id: 'conv_${u.id}',
+                                                  user: u,
+                                                  lastMessage: isUrdu ? 'سلام کہو!' : 'Say hello!',
+                                                  lastTime: 'Now',
+                                                  messages: [],
+                                                );
+                                                _openConversation(localConv);
+                                              }
+                                            }
+                                          },
+                                          child: Text(
+                                            isUrdu ? 'میسج' : 'Message',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
                                       );
-                                      _openConversation(existing);
                                     },
-                                    child: const Text('Message', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                  ),
-                                );
-                              },
-                            ))
-                      : (_requests.isEmpty
-                          ? const Center(child: Text('No message requests', style: TextStyle(color: Colors.white54)))
-                          : ListView.builder(
-                              itemCount: _requests.length,
-                              itemBuilder: (_, idx) {
-                                final r = _requests[idx];
-                                return Container(
-                                  margin: const EdgeInsets.only(bottom: 10),
-                                  padding: const EdgeInsets.all(14),
-                                  decoration: BoxDecoration(
-                                    color: _surface,
-                                    borderRadius: BorderRadius.circular(18),
-                                    border: Border.all(color: Colors.purpleAccent.withOpacity(0.25)),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Text(r.user.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                                          const Spacer(),
-                                          Text(r.timeAgo, style: const TextStyle(color: Colors.white54, fontSize: 11)),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(r.preview, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                                      const SizedBox(height: 10),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: ElevatedButton(
-                                              style: ElevatedButton.styleFrom(backgroundColor: _neonPink, foregroundColor: Colors.white, shape: const StadiumBorder()),
-                                              onPressed: () => _acceptRequest(r),
-                                              child: const Text('Accept', style: TextStyle(fontWeight: FontWeight.bold)),
-                                            ),
+                                  ))
+                            : (_requests.isEmpty
+                                ? Center(
+                                    child: Text(
+                                      isUrdu ? 'کوئی میسج درخواست نہیں ہے' : 'No message requests',
+                                      style: const TextStyle(color: Colors.white54),
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    itemCount: _requests.length,
+                                    itemBuilder: (_, idx) {
+                                      final r = _requests[idx];
+                                      return Container(
+                                        margin: const EdgeInsets.only(bottom: 10),
+                                        padding: const EdgeInsets.all(14),
+                                        decoration: BoxDecoration(
+                                          color: _surface,
+                                          borderRadius: BorderRadius.circular(18),
+                                          border: Border.all(
+                                            color: Colors.purpleAccent.withOpacity(0.25),
                                           ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: OutlinedButton(
-                                              style: OutlinedButton.styleFrom(foregroundColor: _gold, side: const BorderSide(color: Colors.white24), shape: const StadiumBorder()),
-                                              onPressed: () => setState(() => _requests.removeWhere((x) => x.id == r.id)),
-                                              child: const Text('Delete'),
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  r.user.name,
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 15,
+                                                  ),
+                                                ),
+                                                const Spacer(),
+                                                Text(
+                                                  r.timeAgo,
+                                                  style: const TextStyle(
+                                                    color: Colors.white54,
+                                                    fontSize: 11,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            )),
-            ),
-          ],
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              r.preview,
+                                              style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: ElevatedButton(
+                                                    style: ElevatedButton.styleFrom(
+                                                      backgroundColor: _neonPink,
+                                                      foregroundColor: Colors.white,
+                                                      shape: const StadiumBorder(),
+                                                    ),
+                                                    onPressed: () => _acceptRequest(r),
+                                                    child: Text(
+                                                      isUrdu ? 'قبول کریں' : 'Accept',
+                                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: OutlinedButton(
+                                                    style: OutlinedButton.styleFrom(
+                                                      foregroundColor: _gold,
+                                                      side: const BorderSide(color: Colors.white24),
+                                                      shape: const StadiumBorder(),
+                                                    ),
+                                                    onPressed: () => setState(
+                                                        () => _requests.removeWhere((x) => x.id == r.id)),
+                                                    child: Text(isUrdu ? 'حذف کریں' : 'Delete'),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  )),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -482,7 +711,14 @@ class _InboxScreenState extends State<InboxScreen> {
             borderRadius: BorderRadius.circular(24),
           ),
           alignment: Alignment.center,
-          child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 12,
+            ),
+          ),
         ),
       ),
     );
@@ -501,80 +737,290 @@ class _InboxChatDetailScreen extends StatefulWidget {
 
 class _InboxChatDetailScreenState extends State<_InboxChatDetailScreen> {
   final TextEditingController _ctrl = TextEditingController();
+  final ScrollController _scrollCtrl = ScrollController();
+  bool _isSending = false;
+  bool _isLoadingMessages = false;
+  String? _chatError;
+  List<InboxMessageModel> _messages = [];
+  StreamSubscription? _chatSseSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _messages = List.from(widget.conversation.messages);
+    _loadMessages();
+    _listenRealtimeMessages();
+  }
 
   @override
   void dispose() {
     _ctrl.dispose();
+    _scrollCtrl.dispose();
+    _chatSseSub?.cancel();
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _loadMessages() async {
+    setState(() => _isLoadingMessages = true);
+    try {
+      final history = await InboxService.instance.fetchMessages(widget.conversation.id);
+      if (mounted) {
+        setState(() {
+          _messages = history;
+          _isLoadingMessages = false;
+        });
+        _scrollToBottom();
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoadingMessages = false);
+      }
+    }
+  }
+
+  void _listenRealtimeMessages() {
+    _chatSseSub = InboxService.instance.onMessageEvent.listen((evt) {
+      if (!mounted) return;
+      if (evt.eventType == 'new_message' && evt.conversationId == widget.conversation.id) {
+        final text = evt.payload['text']?.toString() ?? '';
+        final msgId = evt.payload['messageId']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString();
+
+        setState(() {
+          _messages.add(
+            InboxMessageModel(
+              id: msgId,
+              senderId: widget.conversation.user.id,
+              text: text,
+              time: 'Just now',
+            ),
+          );
+        });
+        _scrollToBottom();
+      }
+    });
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollCtrl.hasClients) {
+        _scrollCtrl.animateTo(
+          _scrollCtrl.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  Future<void> _submit() async {
     final txt = _ctrl.text.trim();
-    if (txt.isEmpty) return;
-    widget.onSend(txt);
-    _ctrl.clear();
-    setState(() {});
+    if (txt.isEmpty || _isSending) return;
+
+    setState(() {
+      _isSending = true;
+      _chatError = null;
+    });
+
+    try {
+      final sent = await InboxService.instance.sendMessage(
+        recipientId: widget.conversation.user.id,
+        text: txt,
+        conversationId: widget.conversation.id,
+      );
+
+      widget.onSend(txt);
+      _ctrl.clear();
+
+      if (mounted) {
+        setState(() {
+          _messages.add(sent);
+          _isSending = false;
+        });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+          _chatError = e.toString().replaceAll('Exception:', '').trim();
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isUrdu = PopoStrings.currentLanguage.value == 'ur';
+
     return Scaffold(
       backgroundColor: const Color(0xFF0C041C),
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: const Color(0xFF170931),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Row(
           children: [
-            Text(widget.conversation.user.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
-            Text(widget.conversation.user.lastSeen, style: const TextStyle(fontSize: 11, color: Colors.greenAccent)),
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: widget.conversation.user.ringColor,
+              child: Text(
+                widget.conversation.user.name.isNotEmpty
+                    ? widget.conversation.user.name[0].toUpperCase()
+                    : 'U',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.conversation.user.name,
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  Text(
+                    widget.conversation.user.lastSeen,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: widget.conversation.user.status == 'online'
+                          ? Colors.greenAccent
+                          : Colors.white54,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(14),
-              itemCount: widget.conversation.messages.length,
-              itemBuilder: (_, idx) {
-                final m = widget.conversation.messages[idx];
-                final isMine = m.senderId == 'me';
-                return Align(
-                  alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: isMine ? const Color(0xFFFF1A6C) : const Color(0xFF1D0F39),
-                      borderRadius: BorderRadius.circular(16),
+      body: SafeArea(
+        child: Column(
+          children: [
+            if (_chatError != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                color: Colors.redAccent.withOpacity(0.2),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: Colors.redAccent, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _chatError!,
+                        style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+                      ),
                     ),
-                    child: Text(m.text, style: const TextStyle(color: Colors.white, fontSize: 13)),
-                  ),
-                );
-              },
-            ),
-          ),
-          Container(
-            color: const Color(0xFF170931),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _ctrl,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(hintText: 'Write a message...', hintStyle: TextStyle(color: Colors.white38), border: InputBorder.none),
-                    onSubmitted: (_) => _submit(),
-                  ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.redAccent, size: 14),
+                      onPressed: () => setState(() => _chatError = null),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.send, color: Color(0xFFFF1A6C)),
-                  onPressed: _submit,
-                ),
-              ],
+              ),
+            Expanded(
+              child: _isLoadingMessages
+                  ? const Center(
+                      child: CircularProgressIndicator(color: Color(0xFFFF1A6C)),
+                    )
+                  : _messages.isEmpty
+                      ? Center(
+                          child: Text(
+                            isUrdu ? 'ابھی کوئی پیغام نہیں ہے' : 'No messages yet. Say hello!',
+                            style: const TextStyle(color: Colors.white38, fontSize: 13),
+                          ),
+                        )
+                      : ListView.builder(
+                          controller: _scrollCtrl,
+                          padding: const EdgeInsets.all(14),
+                          itemCount: _messages.length,
+                          itemBuilder: (_, idx) {
+                            final m = _messages[idx];
+                            final isMine = m.senderId == 'me';
+                            return Align(
+                              alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                constraints: BoxConstraints(
+                                  maxWidth: MediaQuery.of(context).size.width * 0.75,
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: isMine ? const Color(0xFFFF1A6C) : const Color(0xFF1D0F39),
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: const Radius.circular(16),
+                                    topRight: const Radius.circular(16),
+                                    bottomLeft: isMine ? const Radius.circular(16) : Radius.zero,
+                                    bottomRight: isMine ? Radius.zero : const Radius.circular(16),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      m.text,
+                                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          m.time,
+                                          style: const TextStyle(color: Colors.white54, fontSize: 10),
+                                        ),
+                                        if (isMine) ...[
+                                          const SizedBox(width: 4),
+                                          const Icon(Icons.done_all_rounded, color: Colors.white70, size: 12),
+                                        ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
             ),
-          ),
-        ],
+            Container(
+              color: const Color(0xFF170931),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _ctrl,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: isUrdu ? 'پیغام لکھیں...' : 'Write a message...',
+                        hintStyle: const TextStyle(color: Colors.white38),
+                        border: InputBorder.none,
+                      ),
+                      onSubmitted: (_) => _submit(),
+                    ),
+                  ),
+                  _isSending
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFFFF1A6C),
+                          ),
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.send_rounded, color: Color(0xFFFF1A6C)),
+                          onPressed: _submit,
+                        ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

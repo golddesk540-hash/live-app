@@ -12,6 +12,7 @@ import '../screens/profile/me_screen.dart';
 import '../screens/discovery/explore_home_screen.dart';
 import '../screens/live/go_live_gate_screen.dart';
 import '../screens/party/party_discovery_screen.dart';
+import '../screens/inbox/inbox_screen.dart';
 
 /// Master 5-Tab Application Shell for Popo Live
 /// Tabs: [0: Home] [1: Party] [2: Go Live] [3: Inbox] [4: Me]
@@ -55,12 +56,7 @@ class _AppShellState extends State<AppShell> {
               const ExploreHomeScreen(),
               const PartyDiscoveryScreen(),
               const GoLiveGateScreen(),
-              _buildLockedTab(
-                title: PopoStrings.tabInbox,
-                subtitle: PopoStrings.inboxOpensSprint4,
-                icon: Icons.mail_rounded,
-                accentColor: PopoTheme.gold,
-              ),
+              const InboxScreen(),
               const MeScreen(),
             ],
           ),
@@ -74,42 +70,8 @@ class _AppShellState extends State<AppShell> {
   }
 
   PreferredSizeWidget? _buildAppBarForCurrentTab() {
-    // Tab 0 (Home/Explore), Tab 1 (Party Discovery), Tab 2 (Go Live Gate), and Tab 4 (Me) have their own custom AppBars
-    if (_currentIndex == 0 ||
-        _currentIndex == 1 ||
-        _currentIndex == 2 ||
-        _currentIndex == 4) {
-      return null;
-    }
-
-    String title = PopoStrings.appName;
-    bool showBrandLogo = true;
-
-    if (_currentIndex == 1) {
-      title = PopoStrings.tabParty;
-      showBrandLogo = false;
-    } else if (_currentIndex == 2) {
-      title = PopoStrings.tabGoLive;
-      showBrandLogo = false;
-    } else if (_currentIndex == 3) {
-      title = PopoStrings.tabInbox;
-      showBrandLogo = false;
-    }
-
-    return PopoAppBar(
-      title: title,
-      showBrandLogo: showBrandLogo,
-      showBackButton: false,
-      actions: [
-        PopoIconButton(
-          icon: Icons.translate_rounded,
-          color: PopoTheme.cyan,
-          iconSize: 20,
-          tooltip: 'Switch Language (English / اردو)',
-          onPressed: PopoStrings.toggleLanguage,
-        ),
-      ],
-    );
+    // All 5 tabs (Explore, Party, Go Live, Inbox, Me) manage their own specialized AppBars
+    return null;
   }
 
   /// Placeholder for tabs locked until future sprints
