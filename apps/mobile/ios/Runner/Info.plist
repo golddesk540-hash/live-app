@@ -48,13 +48,19 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 
+	<!-- Export Compliance (App Store Connect) -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+
 	<!-- Privacy Permissions for Popo Live -->
 	<key>NSCameraUsageDescription</key>
-	<string>Popo Live requires camera access to enable live video broadcasting and video calls.</string>
+	<string>Popo Live requires camera access to enable real-time live streaming broadcasts and video interactions.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Popo Live requires microphone access for audio streaming in live broadcasts and party rooms.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Popo Live requires photo library access to upload user avatars and profile banners.</string>
+	<string>Popo Live requires photo library access to upload user avatars, post images, and profile banners.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Popo Live requires permission to save photos and live stream snapshots to your photo library.</string>
 
 	<!-- Audio & Push Notification Background Modes -->
 	<key>UIBackgroundModes</key>
@@ -62,6 +68,21 @@
 		<string>audio</string>
 		<string>fetch</string>
 		<string>remote-notification</string>
+	</array>
+
+	<!-- URL Schemes for Deep Linking & OAuth -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.popolive.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>popolive</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

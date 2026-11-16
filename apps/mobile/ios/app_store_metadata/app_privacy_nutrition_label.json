@@ -1,0 +1,90 @@
+{
+  "privacy_policy_url": "https://popolive.com/privacy-policy",
+  "data_tracking": {
+    "tracks_users": false,
+    "description": "Popo Live does NOT track users across third-party apps or websites for targeted advertising."
+  },
+  "data_collection": [
+    {
+      "category": "Contact Info",
+      "types": ["Name", "Email Address", "Phone Number"],
+      "linked_to_user": true,
+      "used_for_tracking": false,
+      "purposes": [
+        "App Functionality",
+        "Account Security & Authentication",
+        "Customer Support"
+      ]
+    },
+    {
+      "category": "Purchases",
+      "types": ["Purchase History"],
+      "linked_to_user": true,
+      "used_for_tracking": false,
+      "purposes": [
+        "App Functionality",
+        "Financial Accounting & Coin Balance Reconciliation",
+        "Fraud Prevention"
+      ]
+    },
+    {
+      "category": "User Content",
+      "types": ["Photos or Videos", "Audio Data", "Customer Support Communications"],
+      "linked_to_user": true,
+      "used_for_tracking": false,
+      "purposes": [
+        "App Functionality (Live Streaming, Party Lounges, Square Feed)",
+        "Content Moderation & Safety"
+      ]
+    },
+    {
+      "category": "Identifiers",
+      "types": ["User ID", "Device ID"],
+      "linked_to_user": true,
+      "used_for_tracking": false,
+      "purposes": [
+        "App Functionality",
+        "Push Notifications (APNs / FCM)",
+        "Account Security & Multi-Account Abuse Prevention"
+      ]
+    },
+    {
+      "category": "Usage Data",
+      "types": ["Product Interaction", "Advertising Data"],
+      "linked_to_user": true,
+      "used_for_tracking": false,
+      "purposes": [
+        "App Functionality",
+        "Analytics & Stream Optimization"
+      ]
+    },
+    {
+      "category": "Diagnostics",
+      "types": ["Crash Data", "Performance Data"],
+      "linked_to_user": false,
+      "used_for_tracking": false,
+      "purposes": [
+        "App Stability & Performance Optimization"
+      ]
+    }
+  ],
+  "security_and_compliance": {
+    "encryption_in_transit": "TLS 1.3 enforced for all network communications",
+    "encryption_at_rest": "AES-256 for persistent database storage",
+    "account_deletion_flow": {
+      "supported": true,
+      "in_app_path": "Me > Settings > Account Security > Delete Account",
+      "compliance_standard": "App Store Review Guideline 5.1.1(v) Account Deletion Requirement"
+    },
+    "ugc_moderation": {
+      "supported": true,
+      "features": [
+        "Instant user reporting for posts, comments, live streams, and chat",
+        "Instant user blocking with immediate stream and message suppression",
+        "AI automated keyword filtering for harmful content",
+        "24/7 human reviewer escalation queue"
+      ],
+      "compliance_standard": "App Store Review Guideline 1.2 User Generated Content"
+    }
+  }
+}

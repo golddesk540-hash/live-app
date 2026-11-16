@@ -1,0 +1,9 @@
+# =================================================================
+# Popo Live - Android Release Signing Configuration Template
+# DO NOT COMMIT ACTUAL PASSWORDS TO SOURCE CONTROL
+# Copy this file to 'key.properties' in the same directory (ignored by git)
+# =================================================================
+storePassword=YOUR_KEYSTORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=popolive-upload-key
+storeFile=../app/upload-keystore.jks

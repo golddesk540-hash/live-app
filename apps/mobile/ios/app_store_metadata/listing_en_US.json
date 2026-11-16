@@ -1,0 +1,41 @@
+{
+  "name": "Popo Live",
+  "subtitle": "Live Stream, Party & PK",
+  "bundle_id": "com.popolive.app",
+  "primary_category": "ENTERTAINMENT",
+  "secondary_category": "SOCIAL_NETWORKING",
+  "content_rating": "17+",
+  "content_rating_reasons": [
+    "Infrequent/Mild Profanity or Crude Humor",
+    "Infrequent/Mild Mature/Suggestive Themes",
+    "Unrestricted Web Access",
+    "User-Generated Content & Interaction"
+  ],
+  "promotional_text": "Join the global live broadcasting community! Watch live streams, host voice party rooms, challenge creators in PK battles, and send luxury 3D gifts.",
+  "description": "Welcome to Popo Live — the premier real-time live streaming, audio party room, and social creator entertainment ecosystem!\n\nJoin thousands of talented broadcasters, entertainers, and vibrant communities worldwide. Connect, interact, and share unforgettable moments in real time with high-definition video, crystal-clear voice audio, interactive PK battles, and luxury virtual gifting!\n\nKEY HIGHLIGHTS:\n\n★ 24/7 REAL-TIME LIVE BROADCASTING\nWatch top streamers from around the globe or start your own broadcast with a single tap. Showcase your singing, dancing, comedy, or daily life. Interact directly with broadcasters through real-time bullet chat, flying comments, and live reactions.\n\n★ MULTI-SEAT VOICE PARTY ROOMS\nHost or pull up a chair in interactive 8-seat and 12-seat voice chat lounges. Play party games, listen to music together, discuss trending topics, and make lifelong friends in a cozy social environment.\n\n★ 1v1 REAL-TIME PK BATTLES\nExperience heart-pounding PK challenges! Two broadcasters face off head-to-head in a timed showdown. Support your favorite host by sending battle gifts, boosting their real-time score bar, and securing victory before the clock runs out.\n\n★ LUXURY VIRTUAL GIFTS & ANIMATED EFFECTS\nExpress your love and appreciation with premium animated gifts — from glowing roses and exotic supercars to luxury yachts and imperial crowns. Trigger screen-clearing animations and support your favorite creators.\n\n★ SQUARE SOCIAL COMMUNITY & FAN CLUBS\nShare lifestyle photos, status updates, and highlights on the Square community feed. Connect with other fans, like and comment on posts, and join official host Fan Clubs to unlock custom badges, exclusive perks, and fan lounges.\n\n★ CREATOR ECONOMY & TRANSPARENT WALLET\nRecharge coins easily through official Apple In-App Purchases or authorized coin sellers. Creators can track daily tasks, earn rewards, level up host status, and manage their earnings with transparent audit logging.\n\n★ USER SAFETY, PRIVACY & 24/7 MODERATION\nWe maintain a zero-tolerance policy against inappropriate content, harassment, and abuse. Features include AI-assisted moderation, real-time reporting, instant user blocking, and one-tap in-app account deletion under Settings > Account Security.\n\nDownload Popo Live today and step into the center stage of live social entertainment!",
+  "keywords": "live stream,party room,pk battle,broadcasting,voice chat,creator,social,gifts,audio lounge,streamer",
+  "support_url": "https://popolive.com/support",
+  "marketing_url": "https://popolive.com",
+  "privacy_policy_url": "https://popolive.com/privacy-policy",
+  "terms_of_service_url": "https://popolive.com/terms",
+  "app_store_review_notes": {
+    "demo_host_account": {
+      "email": "zara.live@popolive.com",
+      "password": "ZaraLive@Popo2026!",
+      "role": "Verified Host (Wealth Level 6)",
+      "purpose": "Test Go Live video streaming, 1v1 PK battles, host tasks, and ranking dashboard."
+    },
+    "demo_viewer_account": {
+      "email": "sana.khan@popolive.com",
+      "password": "SanaKhan@Popo2026!",
+      "role": "VIP Level 2 Viewer",
+      "purpose": "Test viewing live streams, voice party seats, gifting, Square feed posts, and coin top-up."
+    },
+    "hardware_requirements_note": "Camera and Microphone permissions are requested dynamically only when starting a live broadcast or joining a party seat. Video calling is disabled platform-wide.",
+    "guideline_compliance": {
+      "ugc_1_2": "All user content has instantaneous Report and Block actions. Moderation queue operates 24/7.",
+      "in_app_purchases_3_1_1": "All digital goods (coins, gifts, VIP) use official Apple In-App Purchases on iOS.",
+      "account_deletion_5_1_1_v": "Users can initiate immediate account deletion in-app via Me > Settings > Account Security > Delete Account."
+    }
+  }
+}

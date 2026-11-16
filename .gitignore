@@ -60,3 +60,10 @@ apps/web/public/uploads/
 
 # Mobile Screen Safety Backups
 apps/mobile/lib/screens_backup_*/
+
+# Android Keystore & Release Signing Secrets
+*.keystore
+*.jks
+**/android/key.properties
+**/android/app/key.properties
+
