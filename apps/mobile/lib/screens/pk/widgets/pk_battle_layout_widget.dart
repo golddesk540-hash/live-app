@@ -260,7 +260,9 @@ class PkBattleLayoutWidget extends StatelessWidget {
                       const Icon(Icons.diamond_rounded, color: PopoTheme.gold, size: 13),
                       const SizedBox(width: 4),
                       Text(
-                        '${participant.score}',
+                        sideLabel == 'HOST A'
+                            ? '${PkSessionManager.instance.scoreA}'
+                            : '${PkSessionManager.instance.scoreB}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -432,11 +434,16 @@ class PkBattleLayoutWidget extends StatelessWidget {
     );
   }
 
-  /// Initial balanced 50/50 score bar
+  /// Dynamic synchronized score bar with authoritative ratio
   Widget _buildInitialScoreBar({
     required PkParticipant hostA,
     required PkParticipant hostB,
   }) {
+    final scoreA = PkSessionManager.instance.scoreA;
+    final scoreB = PkSessionManager.instance.scoreB;
+    final ratioA = PkSessionManager.instance.ratioA;
+    final ratioB = PkSessionManager.instance.ratioB;
+
     return Container(
       height: 18,
       decoration: BoxDecoration(
@@ -450,12 +457,13 @@ class PkBattleLayoutWidget extends StatelessWidget {
           children: [
             // Left Half: Host A Score (Pink)
             Expanded(
+              flex: ratioA.toInt(),
               child: Container(
                 color: PopoTheme.primary,
                 alignment: Alignment.centerLeft,
                 padding: const EdgeInsets.only(left: 8),
                 child: Text(
-                  '${hostA.score}',
+                  '$scoreA',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,
@@ -466,12 +474,13 @@ class PkBattleLayoutWidget extends StatelessWidget {
             ),
             // Right Half: Host B Score (Cyan)
             Expanded(
+              flex: ratioB.toInt(),
               child: Container(
                 color: PopoTheme.cyan,
                 alignment: Alignment.centerRight,
                 padding: const EdgeInsets.only(right: 8),
                 child: Text(
-                  '${hostB.score}',
+                  '$scoreB',
                   style: const TextStyle(
                     color: Colors.black,
                     fontSize: 10,

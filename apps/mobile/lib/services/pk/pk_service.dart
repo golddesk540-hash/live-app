@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../../api/api_client.dart';
 import '../../api/api_response.dart';
 import '../../models/pk/pk_models.dart';
@@ -232,5 +235,149 @@ class PkService {
       statusCode: res.statusCode,
       errorCode: res.errorCode,
     );
+  }
+
+  /// 8. Retrieve server-authoritative score and timer state
+  Future<ApiResponse<PkScoreTimerState>> getScoreTimer(String battleId) async {
+    final res = await _client.get('/api/pk/battle/$battleId/score-timer');
+    if (res.isSuccess && res.data is Map) {
+      final map = res.data as Map<String, dynamic>;
+      final state = PkScoreTimerState.fromJson(map);
+      return ApiResponse.success(state, statusCode: res.statusCode);
+    }
+
+    return ApiResponse.failure(
+      res.errorMessage ?? 'Failed to retrieve score and timer state.',
+      statusCode: res.statusCode,
+      errorCode: res.errorCode,
+    );
+  }
+
+  /// 9. Send validated score point event to designated host side
+  Future<ApiResponse<bool>> sendScorePoint({
+    required String battleId,
+    required String hostSide, // 'host_a' | 'host_b'
+    required String targetHostId,
+    required String senderId,
+    required String senderName,
+    required int points,
+    String giftName = 'Diamond Star',
+    required String idempotencyKey,
+  }) async {
+    final payload = <String, dynamic>{
+      'hostSide': hostSide,
+      'targetHostId': targetHostId,
+      'senderId': senderId,
+      'senderName': senderName,
+      'points': points,
+      'giftName': giftName,
+      'idempotencyKey': idempotencyKey,
+    };
+
+    final res = await _client.post(
+      '/api/pk/battle/$battleId/score/send',
+      body: payload,
+    );
+    if (res.isSuccess) {
+      return ApiResponse.success(true, statusCode: res.statusCode);
+    }
+
+    return ApiResponse.failure(
+      res.errorMessage ?? 'Failed to record score event.',
+      statusCode: res.statusCode,
+      errorCode: res.errorCode,
+    );
+  }
+
+  /// 10. Finalize battle (voluntary exit, surrender, or time expired)
+  Future<ApiResponse<PkBattleResult>> finalizeBattle({
+    required String battleId,
+    String action = 'end_battle',
+    String reason = 'timer_expired',
+  }) async {
+    final payload = <String, dynamic>{
+      'action': action,
+      'reason': reason,
+    };
+
+    final res = await _client.post(
+      '/api/pk/battle/$battleId/result',
+      body: payload,
+    );
+    if (res.isSuccess && res.data is Map) {
+      final map = res.data as Map<String, dynamic>;
+      final resData = map['result'] as Map<String, dynamic>? ?? map;
+      final result = PkBattleResult.fromJson(resData);
+      return ApiResponse.success(result, statusCode: res.statusCode);
+    }
+
+    return ApiResponse.failure(
+      res.errorMessage ?? 'Failed to finalize battle result.',
+      statusCode: res.statusCode,
+      errorCode: res.errorCode,
+    );
+  }
+
+  /// 11. Retrieve calculated battle result
+  Future<ApiResponse<PkBattleResult>> getBattleResult(String battleId) async {
+    final res = await _client.get('/api/pk/battle/$battleId/result');
+    if (res.isSuccess && res.data is Map) {
+      final map = res.data as Map<String, dynamic>;
+      if (map['isCalculated'] == true && map['result'] is Map) {
+        final result = PkBattleResult.fromJson(map['result'] as Map<String, dynamic>);
+        return ApiResponse.success(result, statusCode: res.statusCode);
+      }
+    }
+
+    return ApiResponse.failure(
+      res.errorMessage ?? 'Battle result not yet finalized.',
+      statusCode: res.statusCode,
+      errorCode: res.errorCode,
+    );
+  }
+
+  /// 12. Listen to real-time Server-Sent Events (SSE) stream for battle events
+  Stream<Map<String, dynamic>> listenToBattleEvents(String battleId) async* {
+    final client = http.Client();
+    final baseUrl = _client.baseUrl;
+    final url = Uri.parse('$baseUrl/api/pk/battle/$battleId/events');
+
+    try {
+      final request = http.Request('GET', url)
+        ..headers['Accept'] = 'text/event-stream'
+        ..headers['Cache-Control'] = 'no-cache';
+
+      final response = await client.send(request);
+      if (response.statusCode == 200) {
+        String currentEvent = 'message';
+        final lineStream = response.stream
+            .transform(utf8.decoder)
+            .transform(const LineSplitter());
+
+        await for (final line in lineStream) {
+          if (line.startsWith('event:')) {
+            currentEvent = line.substring(6).trim();
+          } else if (line.startsWith('data:')) {
+            final dataStr = line.substring(5).trim();
+            try {
+              final parsed = jsonDecode(dataStr);
+              yield {
+                'event': currentEvent,
+                'data': parsed,
+              };
+            } catch (_) {
+              yield {
+                'event': currentEvent,
+                'data': dataStr,
+              };
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // Stream error handled gracefully by caller fallback
+    } finally {
+      client.close();
+    }
   }
 }

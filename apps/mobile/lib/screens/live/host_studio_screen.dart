@@ -10,6 +10,7 @@ import '../../services/live/live_session_manager.dart';
 import '../../services/pk/pk_session_manager.dart';
 import '../../widgets/popo_primary_button.dart';
 import '../pk/pk_setup_screen.dart';
+import '../pk/pk_battle_screen.dart';
 import '../pk/widgets/pk_battle_layout_widget.dart';
 import '../pk/widgets/pk_invitation_dialog.dart';
 import 'widgets/live_chat_overlay.dart';
@@ -339,6 +340,29 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
         const SnackBar(
           content: Text('You must be broadcasting live to enter a 1v1 PK Battle!'),
           backgroundColor: PopoTheme.primary,
+        ),
+      );
+      return;
+    }
+
+    // If already in an active battle, open the full-screen PK Battle Arena
+    if (_pkSessionManager.currentBattle != null &&
+        (_pkSessionManager.state == PkState.active ||
+            _pkSessionManager.state == PkState.preparing)) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PkBattleScreen(
+            battle: _pkSessionManager.currentBattle!,
+            currentHostId: widget.setupResult.hostId.isNotEmpty
+                ? widget.setupResult.hostId
+                : widget.setupResult.hostPoppoId,
+            localVideoView: _buildCameraPreviewArea(),
+            onExitBattle: () {
+              Navigator.pop(context);
+              _pkSessionManager.cleanupBattle();
+            },
+          ),
         ),
       );
       return;
