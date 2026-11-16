@@ -62,6 +62,27 @@ class PkSessionManager extends ChangeNotifier {
   PkBattleResult? _battleResult;
   PkBattleResult? get battleResult => _battleResult;
 
+  // PK Gift & Wallet Integration (Phase 3 Prompt 03)
+  List<PkGiftItem> _giftCatalog = [];
+  List<PkGiftItem> get giftCatalog => _giftCatalog;
+
+  bool _isLoadingGifts = false;
+  bool get isLoadingGifts => _isLoadingGifts;
+
+  PkUserWallet? _wallet;
+  PkUserWallet? get wallet => _wallet;
+
+  List<PkGiftTransaction> _recentGifts = [];
+  List<PkGiftTransaction> get recentGifts => _recentGifts;
+
+  final StreamController<PkGiftAnimationEvent> _giftAnimationController =
+      StreamController<PkGiftAnimationEvent>.broadcast();
+  Stream<PkGiftAnimationEvent> get giftAnimationStream =>
+      _giftAnimationController.stream;
+
+  PkGiftAnimationEvent? _lastGiftAnimation;
+  PkGiftAnimationEvent? get lastGiftAnimation => _lastGiftAnimation;
+
   // Active Battle Synchronization
   StreamSubscription? _sseSubscription;
   Timer? _scoreTimerPollTimer;
@@ -508,6 +529,23 @@ class PkSessionManager extends ChangeNotifier {
               ratioB: ratioB,
               recentEvents: updatedEvents,
             );
+
+            // Handle Gift Animation broadcast
+            if (data['animation'] != null && data['animation'] is Map) {
+              final anim = data['animation'] as Map<String, dynamic>;
+              final animEvent = PkGiftAnimationEvent(
+                type: anim['type']?.toString() ?? 'banner_flash',
+                targetSide: anim['targetSide']?.toString() ?? 'host_a',
+                senderName: anim['senderName']?.toString() ?? 'Viewer',
+                giftName: anim['giftName']?.toString() ?? 'Gift',
+                quantity: (data['gift']?['quantity'] as num?)?.toInt() ?? 1,
+                pointsAwarded: (data['pkScore']?['pointsAdded'] as num?)?.toInt() ?? 100,
+                imageUrl: data['gift']?['imageUrl']?.toString(),
+              );
+              _lastGiftAnimation = animEvent;
+              _giftAnimationController.add(animEvent);
+            }
+
             notifyListeners();
           }
         } else if (eventType == 'pk:timer_warning') {
@@ -635,7 +673,117 @@ class PkSessionManager extends ChangeNotifier {
     return false;
   }
 
-  /// 16. Disconnection state recovery
+  /// 16. Load active PK gift catalog
+  Future<void> loadGiftCatalog([String? battleId]) async {
+    final bId = battleId ?? _currentBattle?.id;
+    if (bId == null) return;
+
+    _isLoadingGifts = true;
+    notifyListeners();
+
+    final res = await _service.getGiftCatalog(bId);
+    if (res.isSuccess && res.data != null) {
+      _giftCatalog = res.data!;
+    }
+
+    _isLoadingGifts = false;
+    notifyListeners();
+  }
+
+  /// 17. Load user wallet balance
+  Future<void> loadWallet({String? battleId, String? userId}) async {
+    final bId = battleId ?? _currentBattle?.id ?? '00000000-0000-0000-0000-000000000001';
+    final res = await _service.getGiftWallet(bId, userId: userId);
+    if (res.isSuccess && res.data != null) {
+      _wallet = res.data;
+      notifyListeners();
+    }
+  }
+
+  /// 18. Load recent gift transactions for active battle
+  Future<void> loadGiftTransactions([String? battleId]) async {
+    final bId = battleId ?? _currentBattle?.id;
+    if (bId == null) return;
+
+    final res = await _service.getGiftTransactions(bId);
+    if (res.isSuccess && res.data != null) {
+      _recentGifts = res.data!;
+      notifyListeners();
+    }
+  }
+
+  /// 19. Send gift to Host A or Host B
+  /// Authoritative server transaction (1 Coin = 1 PK Point, Host receives 70% in diamonds)
+  Future<bool> sendGiftToHost({
+    required String receiverSide, // 'host_a' | 'host_b'
+    required PkGiftItem gift,
+    int quantity = 1,
+    required String senderId,
+    required String senderName,
+    String? idempotencyKey,
+  }) async {
+    if (_currentBattle == null) return false;
+    final bId = _currentBattle!.id;
+
+    final key = idempotencyKey ??
+        'idemp_${bId}_${DateTime.now().millisecondsSinceEpoch}_${gift.id}';
+
+    final res = await _service.sendGift(
+      battleId: bId,
+      senderId: senderId,
+      senderName: senderName,
+      receiverSide: receiverSide,
+      giftId: gift.id,
+      quantity: quantity,
+      idempotencyKey: key,
+    );
+
+    if (res.isSuccess && res.data != null) {
+      final totalCoins = gift.coinPrice * quantity;
+
+      // Deduct coins locally in wallet
+      if (_wallet != null) {
+        final newCoinBalance = (_wallet!.coins - totalCoins).clamp(0, 99999999);
+        _wallet = _wallet!.copyWith(
+          coins: newCoinBalance,
+          totalSpentCoins: _wallet!.totalSpentCoins + totalCoins,
+        );
+      }
+
+      // Trigger local floating animation
+      final animEvent = PkGiftAnimationEvent(
+        type: gift.animationName,
+        targetSide: receiverSide,
+        senderName: senderName,
+        giftName: gift.name,
+        quantity: quantity,
+        pointsAwarded: totalCoins,
+        imageUrl: gift.imageUrl,
+      );
+      _lastGiftAnimation = animEvent;
+      _giftAnimationController.add(animEvent);
+
+      // Trigger immediate score sync & reload transactions
+      await syncScoreTimer(bId);
+      loadGiftTransactions(bId);
+      notifyListeners();
+      return true;
+    }
+
+    return false;
+  }
+
+  /// 20. Retrieve host past PK battle history
+  Future<List<PkBattleHistory>> fetchBattleHistory({String? hostId}) async {
+    final hId = hostId ?? _currentHostId;
+    final res = await _service.getBattleHistory(hostId: hId);
+    if (res.isSuccess && res.data != null) {
+      return res.data!;
+    }
+    return [];
+  }
+
+  /// 21. Disconnection state recovery
   Future<void> recoverBattleState(String battleId) async {
     _isReconnecting = true;
     notifyListeners();
@@ -692,6 +840,7 @@ class PkSessionManager extends ChangeNotifier {
     _prepTimer?.cancel();
     _sseSubscription?.cancel();
     _scoreTimerPollTimer?.cancel();
+    _giftAnimationController.close();
     super.dispose();
   }
 }

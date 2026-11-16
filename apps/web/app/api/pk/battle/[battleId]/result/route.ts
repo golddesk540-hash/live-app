@@ -208,6 +208,21 @@ async function calculateAndSaveResult(battle: any, reason: string = 'timer_expir
     [outcome.winnerHostId, savedResult.id, outcome.resultType, endedAt, battle.id]
   );
 
+  // Release hosts and live rooms from PK battle state
+  await query(
+    `UPDATE popolive.users 
+     SET in_pk_battle = false, current_pk_battle_id = NULL, updated_at = NOW() 
+     WHERE id::text IN ($1, $2) OR poppo_id IN ($1, $2)`,
+    [hostA.id, hostB.id]
+  ).catch(() => {});
+
+  await query(
+    `UPDATE popolive.live_rooms 
+     SET in_pk_battle = false, is_pk = false, current_pk_id = NULL, updated_at = NOW() 
+     WHERE room_number IN ($1, $2)`,
+    [battle.host_a_room, battle.host_b_room]
+  ).catch(() => {});
+
   return mapResultRow(savedResult);
 }
 

@@ -5,6 +5,9 @@ import '../../services/live/agora_rtc_service.dart';
 import '../../services/pk/pk_session_manager.dart';
 import '../../theme/popo_theme.dart';
 import '../../widgets/widgets.dart';
+import 'widgets/pk_gift_sheet_dialog.dart';
+import 'widgets/pk_gift_animation_overlay.dart';
+import 'pk_result_screen.dart';
 
 /// 1v1 PK Battle Screen
 /// Implements Section 10 of Phase 3 Prompt 02/08
@@ -66,6 +69,10 @@ class _PkBattleScreenState extends State<PkBattleScreen>
 
     // Initial score/timer sync
     _manager.syncScoreTimer(widget.battle.id);
+
+    // Initial gift catalog & wallet balance
+    _manager.loadGiftCatalog(widget.battle.id);
+    _manager.loadWallet(battleId: widget.battle.id, userId: widget.currentHostId);
   }
 
   @override
@@ -313,6 +320,44 @@ class _PkBattleScreenState extends State<PkBattleScreen>
               ),
             ),
             const SizedBox(height: 24),
+
+            // View Detailed Result Screen
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFFFB800),
+                  side: const BorderSide(color: Color(0xFFFFB800), width: 1.5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PKResultScreen(
+                        battleId: widget.battle.id,
+                        initialResult: result,
+                        onClose: () {
+                          Navigator.pop(context);
+                          if (widget.onExitBattle != null) {
+                            widget.onExitBattle!();
+                          } else {
+                            Navigator.of(context).pop();
+                          }
+                        },
+                      ),
+                    ),
+                  );
+                },
+                child: Text(
+                  _isUrdu ? 'تفصیلی نتیجہ دیکھیں 🏅' : 'View Full Result 🏅',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
 
             // Exit Button
             SizedBox(
@@ -657,7 +702,12 @@ class _PkBattleScreenState extends State<PkBattleScreen>
               ),
             ),
 
-            // 6. Bottom Controls Toolbar
+            // 6. Real-Time Floating Gift Animation Overlay (Non-blocking)
+            const Positioned.fill(
+              child: PkGiftAnimationOverlay(),
+            ),
+
+            // 7. Bottom Controls Toolbar
             Positioned(
               left: 16,
               right: 16,
@@ -681,6 +731,21 @@ class _PkBattleScreenState extends State<PkBattleScreen>
                       label: _isCameraMuted ? 'Cam Off' : 'Cam',
                       color: _isCameraMuted ? const Color(0xFFFF1768) : const Color(0xFF00E5FF),
                       onTap: _toggleCamera,
+                    ),
+
+                    // Send Gift Button
+                    _buildRoundButton(
+                      icon: Icons.volunteer_activism_rounded,
+                      label: _isUrdu ? 'تحفہ' : 'Gift',
+                      color: const Color(0xFFFFB800),
+                      onTap: () => PkGiftSheetDialog.show(
+                        context: context,
+                        battle: widget.battle,
+                        senderId: widget.currentHostId,
+                        senderName: widget.battle.isHostA(widget.currentHostId)
+                            ? widget.battle.hostA.nickname
+                            : widget.battle.hostB.nickname,
+                      ),
                     ),
 
                     // Flip Camera

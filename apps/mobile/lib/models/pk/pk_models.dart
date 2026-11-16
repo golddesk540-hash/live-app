@@ -602,3 +602,225 @@ class PkBattleResult {
   bool isDraw() => resultType == 'draw';
 }
 
+/// Catalog gift available to send during 1v1 PK battle
+class PkGiftItem {
+  final String id;
+  final String name;
+  final String nameUr;
+  final int coinPrice;
+  final String currencyIcon;
+  final String imageUrl;
+  final String animationName;
+  final String category;
+  final int displayOrder;
+
+  const PkGiftItem({
+    required this.id,
+    required this.name,
+    required this.nameUr,
+    required this.coinPrice,
+    required this.currencyIcon,
+    required this.imageUrl,
+    required this.animationName,
+    required this.category,
+    required this.displayOrder,
+  });
+
+  factory PkGiftItem.fromJson(Map<String, dynamic> json) {
+    return PkGiftItem(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'Gift',
+      nameUr: json['nameUr']?.toString() ?? json['name_ur']?.toString() ?? 'تحفہ',
+      coinPrice: (json['coinPrice'] ?? json['coin_price'] as num?)?.toInt() ?? 10,
+      currencyIcon: json['currencyIcon']?.toString() ?? json['currency_icon']?.toString() ?? '🪙',
+      imageUrl: json['imageUrl']?.toString() ?? json['image_url']?.toString() ?? '',
+      animationName: json['animationName']?.toString() ?? json['animation_name']?.toString() ?? 'banner_flash',
+      category: json['category']?.toString() ?? 'popular',
+      displayOrder: (json['displayOrder'] ?? json['display_order'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'nameUr': nameUr,
+      'coinPrice': coinPrice,
+      'currencyIcon': currencyIcon,
+      'imageUrl': imageUrl,
+      'animationName': animationName,
+      'category': category,
+      'displayOrder': displayOrder,
+    };
+  }
+
+  /// 1 Coin = 1 PK Point (Backend authoritative conversion rate)
+  int get pkScorePoints => coinPrice;
+}
+
+/// Record of an executed PK gift transaction
+class PkGiftTransaction {
+  final String transactionId;
+  final String battleId;
+  final String senderId;
+  final String senderName;
+  final String receiverId;
+  final String receiverName;
+  final String receiverSide; // 'host_a' | 'host_b'
+  final String giftId;
+  final String giftName;
+  final int coinPrice;
+  final int quantity;
+  final int totalCoins;
+  final int hostPoints;
+  final int pkScoreAdded;
+  final String status;
+  final DateTime? createdAt;
+
+  const PkGiftTransaction({
+    required this.transactionId,
+    required this.battleId,
+    required this.senderId,
+    required this.senderName,
+    required this.receiverId,
+    required this.receiverName,
+    required this.receiverSide,
+    required this.giftId,
+    required this.giftName,
+    required this.coinPrice,
+    required this.quantity,
+    required this.totalCoins,
+    required this.hostPoints,
+    required this.pkScoreAdded,
+    required this.status,
+    this.createdAt,
+  });
+
+  factory PkGiftTransaction.fromJson(Map<String, dynamic> json) {
+    return PkGiftTransaction(
+      transactionId: json['transactionId']?.toString() ?? json['transaction_id']?.toString() ?? '',
+      battleId: json['battleId']?.toString() ?? json['battle_id']?.toString() ?? '',
+      senderId: json['senderId']?.toString() ?? json['sender_id']?.toString() ?? '',
+      senderName: json['senderName']?.toString() ?? json['sender_name']?.toString() ?? 'Viewer',
+      receiverId: json['receiverId']?.toString() ?? json['receiver_id']?.toString() ?? '',
+      receiverName: json['receiverName']?.toString() ?? json['receiver_name']?.toString() ?? 'Host',
+      receiverSide: json['receiverSide']?.toString() ?? json['receiver_side']?.toString() ?? 'host_a',
+      giftId: json['giftId']?.toString() ?? json['gift_id']?.toString() ?? '',
+      giftName: json['giftName']?.toString() ?? json['gift_name']?.toString() ?? '',
+      coinPrice: (json['coinPrice'] ?? json['coin_price'] as num?)?.toInt() ?? 0,
+      quantity: (json['quantity'] as num?)?.toInt() ?? 1,
+      totalCoins: (json['totalCoins'] ?? json['total_coins'] as num?)?.toInt() ?? 0,
+      hostPoints: (json['hostPoints'] ?? json['host_points'] as num?)?.toInt() ?? 0,
+      pkScoreAdded: (json['pkScoreAdded'] ?? json['pk_score_added'] as num?)?.toInt() ?? 0,
+      status: json['status']?.toString() ?? 'completed',
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString())
+          : (json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null),
+    );
+  }
+}
+
+/// User Coin/Diamond Balance from Wallet Engine
+class PkUserWallet {
+  final String userId;
+  final int coins;
+  final int diamondPoints;
+  final int totalSpentCoins;
+  final int totalReceivedPoints;
+
+  const PkUserWallet({
+    required this.userId,
+    required this.coins,
+    required this.diamondPoints,
+    this.totalSpentCoins = 0,
+    this.totalReceivedPoints = 0,
+  });
+
+  factory PkUserWallet.fromJson(Map<String, dynamic> json) {
+    return PkUserWallet(
+      userId: json['userId']?.toString() ?? json['user_id']?.toString() ?? '',
+      coins: (json['coins'] as num?)?.toInt() ?? 0,
+      diamondPoints: (json['diamondPoints'] ?? json['diamond_points'] as num?)?.toInt() ?? 0,
+      totalSpentCoins: (json['totalSpentCoins'] ?? json['total_spent_coins'] as num?)?.toInt() ?? 0,
+      totalReceivedPoints: (json['totalReceivedPoints'] ?? json['total_received_points'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  PkUserWallet copyWith({
+    String? userId,
+    int? coins,
+    int? diamondPoints,
+    int? totalSpentCoins,
+    int? totalReceivedPoints,
+  }) {
+    return PkUserWallet(
+      userId: userId ?? this.userId,
+      coins: coins ?? this.coins,
+      diamondPoints: diamondPoints ?? this.diamondPoints,
+      totalSpentCoins: totalSpentCoins ?? this.totalSpentCoins,
+      totalReceivedPoints: totalReceivedPoints ?? this.totalReceivedPoints,
+    );
+  }
+}
+
+/// Floating real-time gift animation event
+class PkGiftAnimationEvent {
+  final String type; // e.g. 'crown_burst', 'rocket_launch', 'rose_cascade'
+  final String targetSide; // 'host_a' | 'host_b'
+  final String senderName;
+  final String giftName;
+  final int quantity;
+  final int pointsAwarded;
+  final String? imageUrl;
+
+  const PkGiftAnimationEvent({
+    required this.type,
+    required this.targetSide,
+    required this.senderName,
+    required this.giftName,
+    this.quantity = 1,
+    required this.pointsAwarded,
+    this.imageUrl,
+  });
+}
+
+/// PK Battle Past History Record returned by GET /api/pk/history
+class PkBattleHistory {
+  final String battleId;
+  final String opponentId;
+  final String opponentName;
+  final String opponentAvatar;
+  final int myScore;
+  final int opponentScore;
+  final String outcome; // 'win' | 'loss' | 'draw'
+  final String battleDate;
+  final String durationFormatted;
+
+  const PkBattleHistory({
+    required this.battleId,
+    required this.opponentId,
+    required this.opponentName,
+    required this.opponentAvatar,
+    required this.myScore,
+    required this.opponentScore,
+    required this.outcome,
+    required this.battleDate,
+    required this.durationFormatted,
+  });
+
+  factory PkBattleHistory.fromJson(Map<String, dynamic> json) {
+    return PkBattleHistory(
+      battleId: json['battleId']?.toString() ?? '',
+      opponentId: json['opponentId']?.toString() ?? '',
+      opponentName: json['opponentName']?.toString() ?? 'Opponent',
+      opponentAvatar: json['opponentAvatar']?.toString() ?? '',
+      myScore: (json['myScore'] as num?)?.toInt() ?? 0,
+      opponentScore: (json['opponentScore'] as num?)?.toInt() ?? 0,
+      outcome: json['outcome']?.toString() ?? 'draw',
+      battleDate: json['battleDate']?.toString() ?? '',
+      durationFormatted: json['durationFormatted']?.toString() ?? '5m',
+    );
+  }
+}
+
+

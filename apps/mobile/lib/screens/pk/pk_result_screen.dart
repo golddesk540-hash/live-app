@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../../api/api_client.dart';
+import '../../models/pk/pk_models.dart';
 
 /// ============================================================================
 /// Popo Live — Phase 6 Module 6.4: PK Battle Result and Winner Declaration
@@ -11,12 +13,14 @@ import 'package:http/http.dart' as http;
 class PKResultScreen extends StatefulWidget {
   final String battleId;
   final String apiBaseUrl;
+  final PkBattleResult? initialResult;
   final VoidCallback? onClose;
 
   const PKResultScreen({
     Key? key,
     this.battleId = '00000000-0000-0000-0000-000000000604',
     this.apiBaseUrl = 'https://kigolive.com',
+    this.initialResult,
     this.onClose,
   }) : super(key: key);
 
@@ -48,12 +52,29 @@ class _PKResultScreenState extends State<PKResultScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchResult();
+    if (widget.initialResult != null) {
+      final r = widget.initialResult!;
+      _winnerNickname = r.winnerNickname ?? _winnerNickname;
+      _winnerAvatar = r.winnerAvatar ?? _winnerAvatar;
+      _winnerScore = r.winnerScore ?? r.hostAScore;
+      _loserScore = r.loserScore ?? r.hostBScore;
+      _resultType = r.resultType;
+      _hostAName = r.hostANickname;
+      _hostBName = r.hostBNickname;
+      _hostAAvatar = r.hostAAvatar;
+      _hostBAvatar = r.hostBAvatar;
+      _isLoading = false;
+    } else {
+      _fetchResult();
+    }
   }
 
   Future<void> _fetchResult() async {
     try {
-      final url = Uri.parse('${widget.apiBaseUrl}/api/pk/battle/${widget.battleId}/result');
+      final base = widget.apiBaseUrl == 'https://kigolive.com'
+          ? ApiClient.instance.baseUrl
+          : widget.apiBaseUrl;
+      final url = Uri.parse('$base/api/pk/battle/${widget.battleId}/result');
       final res = await http.get(url).timeout(const Duration(seconds: 4));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);

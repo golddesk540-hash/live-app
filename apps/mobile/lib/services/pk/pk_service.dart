@@ -380,4 +380,150 @@ class PkService {
       client.close();
     }
   }
+
+  /// 13. Retrieve active gift catalog for PK battle
+  /// Authoritative conversion: 1 Coin = 1 PK Point
+  Future<ApiResponse<List<PkGiftItem>>> getGiftCatalog(String battleId) async {
+    final res = await _client.get('/api/pk/battle/$battleId/gifts/catalog');
+    if (res.isSuccess && res.data is Map) {
+      final map = res.data as Map<String, dynamic>;
+      final rawList = (map['gifts'] ?? map['catalog']) as List<dynamic>? ?? [];
+      final catalog = rawList
+          .map((item) => PkGiftItem.fromJson(item as Map<String, dynamic>))
+          .toList();
+      return ApiResponse.success(catalog, statusCode: res.statusCode);
+    }
+
+    return ApiResponse.failure(
+      res.errorMessage ?? 'Failed to retrieve PK gift catalog.',
+      statusCode: res.statusCode,
+      errorCode: res.errorCode,
+    );
+  }
+
+  /// 14. Send gift in 1v1 PK battle to support Host A or Host B
+  /// Executes atomic coin deduction, host diamond credit (70%), and authoritative score increment
+  Future<ApiResponse<Map<String, dynamic>>> sendGift({
+    required String battleId,
+    required String senderId,
+    required String senderName,
+    required String receiverSide, // 'host_a' | 'host_b'
+    required String giftId,
+    int quantity = 1,
+    required String idempotencyKey,
+  }) async {
+    final payload = {
+      'senderId': senderId,
+      'senderName': senderName,
+      'receiverSide': receiverSide,
+      'giftId': giftId,
+      'quantity': quantity,
+      'idempotencyKey': idempotencyKey,
+    };
+
+    final res = await _client.post(
+      '/api/pk/battle/$battleId/gifts/send',
+      body: payload,
+    );
+
+    if (res.isSuccess && res.data is Map) {
+      return ApiResponse.success(
+        res.data as Map<String, dynamic>,
+        statusCode: res.statusCode,
+      );
+    }
+
+    return ApiResponse.failure(
+      res.errorMessage ?? 'Failed to send PK gift.',
+      statusCode: res.statusCode,
+      errorCode: res.errorCode,
+    );
+  }
+
+  /// 15. Retrieve user wallet coin & diamond balance
+  Future<ApiResponse<PkUserWallet>> getGiftWallet(
+    String battleId, {
+    String? userId,
+  }) async {
+    final queryParams = <String, dynamic>{};
+    if (userId != null && userId.isNotEmpty) {
+      queryParams['userId'] = userId;
+    }
+
+    final res = await _client.get(
+      '/api/pk/battle/$battleId/gifts/wallet',
+      queryParameters: queryParams,
+    );
+
+    if (res.isSuccess && res.data is Map) {
+      final map = res.data as Map<String, dynamic>;
+      final walletData = map['wallet'] as Map<String, dynamic>? ?? {};
+      return ApiResponse.success(
+        PkUserWallet.fromJson(walletData),
+        statusCode: res.statusCode,
+      );
+    }
+
+    return ApiResponse.failure(
+      res.errorMessage ?? 'Failed to retrieve wallet balance.',
+      statusCode: res.statusCode,
+      errorCode: res.errorCode,
+    );
+  }
+
+  /// 16. Retrieve recent gift transaction history for PK battle
+  Future<ApiResponse<List<PkGiftTransaction>>> getGiftTransactions(
+    String battleId, {
+    int limit = 20,
+  }) async {
+    final res = await _client.get(
+      '/api/pk/battle/$battleId/gifts/transactions',
+      queryParameters: {'limit': limit.toString()},
+    );
+
+    if (res.isSuccess && res.data is Map) {
+      final map = res.data as Map<String, dynamic>;
+      final rawList = map['transactions'] as List<dynamic>? ?? [];
+      final list = rawList
+          .map((t) => PkGiftTransaction.fromJson(t as Map<String, dynamic>))
+          .toList();
+      return ApiResponse.success(list, statusCode: res.statusCode);
+    }
+
+    return ApiResponse.failure(
+      res.errorMessage ?? 'Failed to retrieve gift transactions.',
+      statusCode: res.statusCode,
+      errorCode: res.errorCode,
+    );
+  }
+
+  /// 17. Retrieve host past PK battle history
+  Future<ApiResponse<List<PkBattleHistory>>> getBattleHistory({
+    String? hostId,
+  }) async {
+    final queryParams = <String, dynamic>{};
+    if (hostId != null && hostId.isNotEmpty) {
+      queryParams['hostId'] = hostId;
+    }
+
+    final res = await _client.get(
+      '/api/pk/history',
+      queryParameters: queryParams,
+    );
+
+    if (res.isSuccess && res.data is Map) {
+      final map = res.data as Map<String, dynamic>;
+      final rawList = map['history'] as List<dynamic>? ?? [];
+      final history = rawList
+          .map((h) => PkBattleHistory.fromJson(h as Map<String, dynamic>))
+          .toList();
+      return ApiResponse.success(history, statusCode: res.statusCode);
+    }
+
+    return ApiResponse.failure(
+      res.errorMessage ?? 'Failed to retrieve PK history.',
+      statusCode: res.statusCode,
+      errorCode: res.errorCode,
+    );
+  }
 }

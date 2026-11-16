@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
            host_b_id, host_b_room, host_b_nickname, host_b_avatar,
            match_method, invitation_id, status, created_at, started_at
          )
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'invite', $10, 'confirmed', NOW(), NOW())
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'invite', $10, 'active', NOW(), NOW())
          RETURNING *`,
         [
           invite.battle_type,

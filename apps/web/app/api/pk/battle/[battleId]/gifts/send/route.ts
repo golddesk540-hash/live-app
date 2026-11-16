@@ -45,7 +45,7 @@ export async function POST(
     }
 
     const battle = battleRows[0];
-    if (battle.status !== 'active') {
+    if (battle.status !== 'active' && battle.status !== 'confirmed') {
       return NextResponse.json(
         {
           success: false,
