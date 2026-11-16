@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
 import '../../models/live/live_models.dart';
+import '../../models/pk/pk_models.dart';
 import '../../services/live/agora_rtc_service.dart';
 import '../../services/live/live_session_manager.dart';
-import '../../services/live/live_permission_service.dart';
+import '../../services/pk/pk_session_manager.dart';
 import '../../widgets/popo_primary_button.dart';
+import '../pk/pk_setup_screen.dart';
+import '../pk/widgets/pk_battle_layout_widget.dart';
+import '../pk/widgets/pk_invitation_dialog.dart';
 import 'widgets/live_chat_overlay.dart';
-import 'widgets/live_safety_modal.dart';
 import 'live_rules_screen.dart';
 import 'live_end_screen.dart';
 
@@ -30,8 +33,7 @@ class HostStudioScreen extends StatefulWidget {
 class _HostStudioScreenState extends State<HostStudioScreen> {
   final LiveSessionManager _sessionManager = LiveSessionManager.instance;
   final AgoraRtcService _rtcService = AgoraRtcService.instance;
-  final LivePermissionService _permissionService =
-      LivePermissionService.instance;
+  final PkSessionManager _pkSessionManager = PkSessionManager.instance;
 
   bool _isLive = false;
   bool _isConnecting = false;
@@ -39,6 +41,7 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
   bool _isCameraOn = true;
   bool _isMicOn = true;
   bool _isFrontCamera = true;
+  bool _isShowingInvitationDialog = false;
   int _networkQuality = 1; // 1 = Excellent, 2 = Good, 3 = Poor, 4 = Bad
   String? _connectionWarning;
 
@@ -57,6 +60,7 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
     _isFrontCamera = _rtcService.isFrontCamera;
 
     _setupAgoraListeners();
+    _pkSessionManager.addListener(_onPkSessionStateChanged);
   }
 
   @override
@@ -65,7 +69,47 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
     _syncTimer?.cancel();
     _rtcService.onConnectionStateChanged = null;
     _rtcService.onNetworkQuality = null;
+    _pkSessionManager.removeListener(_onPkSessionStateChanged);
+    _pkSessionManager.stopListeningForIncomingInvitations();
     super.dispose();
+  }
+
+  void _onPkSessionStateChanged() {
+    if (!mounted) return;
+    setState(() {});
+
+    // Prompt host when an incoming PK invitation arrives
+    if (_pkSessionManager.state == PkState.invitationReceived &&
+        _pkSessionManager.receivedInvitation != null &&
+        !_isShowingInvitationDialog) {
+      _showIncomingInvitationDialog(_pkSessionManager.receivedInvitation!);
+    }
+  }
+
+  void _showIncomingInvitationDialog(PkInvitation invitation) {
+    _isShowingInvitationDialog = true;
+    PkInvitationDialog.show(
+      context: context,
+      invitation: invitation,
+      onAccepted: () async {
+        Navigator.pop(context);
+        final ok = await _pkSessionManager.acceptIncomingInvitation();
+        if (ok && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('PK Battle Accepted! Entering 1v1 Arena... ⚔️'),
+              backgroundColor: Color(0xFF00C853),
+            ),
+          );
+        }
+      },
+      onRejected: () async {
+        Navigator.pop(context);
+        await _pkSessionManager.rejectIncomingInvitation();
+      },
+    ).whenComplete(() {
+      _isShowingInvitationDialog = false;
+    });
   }
 
   void _setupAgoraListeners() {
@@ -135,6 +179,19 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
           );
         }
       });
+
+      // Start listening for incoming PK battle invitations
+      final hostId = widget.setupResult.hostId.isNotEmpty
+          ? widget.setupResult.hostId
+          : widget.setupResult.hostPoppoId;
+      _pkSessionManager.setHostContext(
+        hostId: hostId,
+        roomNumber: widget.setupResult.roomNumber,
+      );
+      _pkSessionManager.startListeningForIncomingInvitations(
+        hostId: hostId,
+        roomNumber: widget.setupResult.roomNumber,
+      );
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -257,6 +314,7 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
     setState(() => _isEnding = true);
     _durationTimer?.cancel();
     _syncTimer?.cancel();
+    _pkSessionManager.reset();
 
     final summary = await _sessionManager.endBroadcast();
 
@@ -275,130 +333,34 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
     );
   }
 
-  void _showSummaryDialog(LiveEndSummary summary) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: PopoTheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: PopoTheme.gold.withOpacity(0.15),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.emoji_events_rounded,
-                color: PopoTheme.gold,
-                size: 36,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Broadcast Summary',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Stream ended successfully',
-              style: const TextStyle(
-                color: PopoTheme.textSecondary,
-                fontSize: 12,
-              ),
-            ),
-          ],
+  void _openPkSetup() {
+    if (!_isLive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You must be broadcasting live to enter a 1v1 PK Battle!'),
+          backgroundColor: PopoTheme.primary,
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1B1B28),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: PopoTheme.borderSubtle, width: 1),
-              ),
-              child: Column(
-                children: [
-                  _buildSummaryMetricRow(
-                    icon: Icons.timer_outlined,
-                    label: 'Stream Duration',
-                    value: summary.durationFormatted.isNotEmpty
-                        ? summary.durationFormatted
-                        : _formattedDuration,
-                    valueColor: Colors.white,
-                  ),
-                  const Divider(color: PopoTheme.borderSubtle, height: 18),
-                  _buildSummaryMetricRow(
-                    icon: Icons.people_outline_rounded,
-                    label: 'Peak Viewers',
-                    value: summary.peakViewersFormatted.isNotEmpty
-                        ? summary.peakViewersFormatted
-                        : '${summary.peakViewers}',
-                    valueColor: PopoTheme.cyan,
-                  ),
-                  const Divider(color: PopoTheme.borderSubtle, height: 18),
-                  _buildSummaryMetricRow(
-                    icon: Icons.diamond_outlined,
-                    label: 'Diamonds Earned',
-                    value: '+${summary.pointsReceivedFormatted}',
-                    valueColor: PopoTheme.gold,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            PopoPrimaryButton(
-              text: 'Back to Home',
-              onPressed: () {
-                Navigator.pop(ctx);
-                Navigator.pop(context);
-              },
-            ),
-          ],
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PkSetupScreen.fromSetupResult(
+          setupResult: widget.setupResult,
+          onBattleConfirmed: (battle) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('1v1 PK Battle Started! Prepare for battle! ⚔️'),
+                  backgroundColor: Color(0xFF00C853),
+                ),
+              );
+            }
+          },
         ),
       ),
-    );
-  }
-
-  Widget _buildSummaryMetricRow({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color valueColor,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: PopoTheme.textSecondary, size: 18),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                color: PopoTheme.textSecondary,
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            color: valueColor,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ],
     );
   }
 
@@ -417,8 +379,24 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
         backgroundColor: PopoTheme.background,
         body: Stack(
           children: [
-            // 1. Camera Viewfinder Canvas
-            Positioned.fill(child: _buildCameraPreviewArea()),
+            // 1. Camera Viewfinder Canvas / 1v1 PK Battle Arena Split-Screen
+            Positioned.fill(
+              child: (_pkSessionManager.currentBattle != null &&
+                      (_pkSessionManager.state == PkState.preparing ||
+                          _pkSessionManager.state == PkState.active))
+                  ? PkBattleLayoutWidget(
+                      battle: _pkSessionManager.currentBattle!,
+                      currentHostId: widget.setupResult.hostId.isNotEmpty
+                          ? widget.setupResult.hostId
+                          : widget.setupResult.hostPoppoId,
+                      localVideoView: _buildCameraPreviewArea(),
+                      remoteVideoView: null,
+                      onExitBattle: () {
+                        _pkSessionManager.reset();
+                      },
+                    )
+                  : _buildCameraPreviewArea(),
+            ),
 
             // 2. Top Protection Gradient
             Positioned(
@@ -807,6 +785,20 @@ class _HostStudioScreenState extends State<HostStudioScreen> {
                       );
                     },
                   ),
+                  if (_isLive) ...[
+                    const SizedBox(height: 16),
+                    _buildToolButton(
+                      icon: Icons.sports_kabaddi_rounded,
+                      label: _pkSessionManager.isBattleActive
+                          ? 'In PK'
+                          : '1v1 PK',
+                      isActive: true,
+                      activeColor: _pkSessionManager.isBattleActive
+                          ? PopoTheme.primary
+                          : PopoTheme.gold,
+                      onTap: _openPkSetup,
+                    ),
+                  ],
                 ],
               ),
             ),

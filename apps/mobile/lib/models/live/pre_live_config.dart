@@ -205,6 +205,7 @@ class PreLiveSetupResult {
   final List<String> tags;
   final String hostNickname;
   final String hostPoppoId;
+  final String hostId;
   final String status;
   final String nextStep;
   final String? error;
@@ -221,6 +222,7 @@ class PreLiveSetupResult {
     required this.tags,
     required this.hostNickname,
     required this.hostPoppoId,
+    this.hostId = '',
     required this.status,
     required this.nextStep,
     this.error,
@@ -244,6 +246,7 @@ class PreLiveSetupResult {
       tags: tags,
       hostNickname: session['hostNickname']?.toString() ?? 'Host',
       hostPoppoId: session['hostPoppoId']?.toString() ?? '',
+      hostId: session['hostId']?.toString() ?? session['hostPoppoId']?.toString() ?? '',
       status: session['status']?.toString() ?? 'setup',
       nextStep: json['nextStep']?.toString() ?? '/live/studio',
       error: json['error']?.toString(),
