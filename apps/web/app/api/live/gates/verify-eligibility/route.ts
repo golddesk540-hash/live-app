@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
               COALESCE(is_face_verified, false) as is_face_verified,
               live_cover_url,
               COALESCE(wealth_level, 1) as wealth_level,
-              role, is_staff
+              role, is_staff, status
        FROM popolive.users
        WHERE id = $1
        LIMIT 1`,
@@ -39,6 +39,11 @@ export async function POST(req: NextRequest) {
 
     const reasons: string[] = [];
     const missingGates: string[] = [];
+
+    if (u.status === 'banned' || u.status === 'suspended') {
+      reasons.push(`Account Status: Your account is currently ${u.status}. You are strictly banned from broadcasting.`);
+      missingGates.push('account_status');
+    }
 
     if (!isFaceVerified) {
       reasons.push('Face Check: Real face biometric verification must be completed.');

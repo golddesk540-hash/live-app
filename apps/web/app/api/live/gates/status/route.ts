@@ -56,7 +56,8 @@ export async function GET(req: NextRequest) {
       `SELECT id, poppo_id, nickname, COALESCE(wealth_level, 1) as wealth_level,
               COALESCE(is_face_verified, false) as is_face_verified,
               face_verified_at, live_cover_url,
-              COALESCE(go_live_eligible, false) as go_live_eligible
+              COALESCE(go_live_eligible, false) as go_live_eligible,
+              status
        FROM popolive.users
        WHERE id = $1
        LIMIT 1`,
@@ -72,13 +73,15 @@ export async function GET(req: NextRequest) {
     const isFaceVerified = Boolean(u.is_face_verified);
     const hasCoverImage = Boolean(u.live_cover_url && u.live_cover_url.trim().length > 0);
     const wealthPassed = wealthLevel >= 5;
+    const isBanned = u.status === 'banned' || u.status === 'suspended';
 
     const missingRequirements: string[] = [];
+    if (isBanned) missingRequirements.push('account_status');
     if (!isFaceVerified) missingRequirements.push('face_check');
     if (!hasCoverImage) missingRequirements.push('cover_image');
     if (!wealthPassed) missingRequirements.push('wealth_level');
 
-    const isEligible = isFaceVerified && hasCoverImage && wealthPassed;
+    const isEligible = !isBanned && isFaceVerified && hasCoverImage && wealthPassed;
 
     return NextResponse.json({
       success: true,
