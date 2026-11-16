@@ -9,6 +9,8 @@ import 'topup_screen.dart';
 import 'coin_packages_screen.dart';
 import 'purchase_history_screen.dart';
 import 'transaction_history_screen.dart';
+import 'financial_transactions_screen.dart';
+import 'transaction_details_screen.dart';
 import '../vip/vip_screen.dart';
 import '../recognition/recognition_screen.dart';
 import '../store/store_screen.dart';
@@ -848,6 +850,33 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
             subtitle: Text(
               _isUrdu ? 'مستند رسیدیں اور ٹرانزیکشن ہسٹری' : 'Official Receipts & Financial Records',
+              style: const TextStyle(color: Colors.white54, fontSize: 11),
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+          ),
+          Divider(color: Colors.white.withOpacity(0.08), height: 1, indent: 16, endIndent: 16),
+          ListTile(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => FinancialTransactionsScreen(
+                    apiBaseUrl: widget.apiBaseUrl,
+                  ),
+                ),
+              );
+            },
+            leading: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(color: const Color(0xFF7C4DFF).withOpacity(0.16), shape: BoxShape.circle),
+              child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF7C4DFF), size: 20),
+            ),
+            title: Text(
+              _isUrdu ? 'مالیاتی لیجر اور رسیدیں' : 'Financial Ledger & Audit',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+            ),
+            subtitle: Text(
+              _isUrdu ? 'تمام ٹاپ اپ، وی آئی پی، گفٹس اور ریفنڈز کی جانچ' : 'Top-ups, VIP, Gifts, Refunds & Reconciliation',
               style: const TextStyle(color: Colors.white54, fontSize: 11),
             ),
             trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),

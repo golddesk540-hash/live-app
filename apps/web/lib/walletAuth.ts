@@ -34,12 +34,17 @@ export async function resolveWalletActor(req: NextRequest): Promise<WalletActorC
     };
   }
 
+  const headerRole = req.headers.get('x-user-role');
+  const role = headerRole || 'anonymous';
+  const isFinance = isAuthorizedFinanceAdmin(role);
+  const isAdmin = role === 'admin' || role === 'staff' || isFinance;
+
   return {
     user: null,
     actorId: req.headers.get('x-viewer-id') || 'anonymous',
-    actorRole: 'anonymous',
-    isFinanceAdmin: false,
-    isAdminReadOnly: false,
+    actorRole: role,
+    isFinanceAdmin: isFinance,
+    isAdminReadOnly: isAdmin,
     ipAddress,
   };
 }

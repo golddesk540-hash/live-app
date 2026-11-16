@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import '../../models/wallet/wallet_models.dart';
+import '../../models/wallet/financial_models.dart';
 import 'wallet_service.dart';
+import 'financial_service.dart';
 
 /// Billing transaction states
 enum BillingState {
@@ -225,6 +227,31 @@ class InAppBillingService {
 
     _setState(BillingState.failed, historyRes.errorMessage ?? 'Restoration failed');
     return false;
+  }
+
+  /// 4. Safe Interrupted Purchase Recovery
+  Future<PurchaseRecoveryResult?> recoverInterruptedPurchases({
+    required String userId,
+    String? authToken,
+    bool isSandbox = false,
+  }) async {
+    _setState(BillingState.verifyingWithServer);
+    final financialService = FinancialService(baseUrl: _walletService.baseUrl);
+    financialService.setAuthToken(authToken);
+
+    final res = await financialService.recoverPendingPurchases(
+      userId: userId,
+      simulateRecovery: isSandbox,
+      previewDemo: isSandbox,
+    );
+
+    if (res.isSuccess && res.data != null) {
+      _setState(BillingState.idle);
+      return res.data;
+    }
+
+    _setState(BillingState.failed, res.errorMessage ?? 'Recovery failed.');
+    return null;
   }
 
   void reset() {
