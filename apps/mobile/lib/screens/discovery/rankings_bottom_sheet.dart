@@ -8,6 +8,10 @@ import '../../widgets/popo_loading_indicator.dart';
 import '../../widgets/popo_empty_state.dart';
 import '../../widgets/popo_icon_button.dart';
 import '../profile/public_profile_screen.dart';
+import '../host_rankings/host_rankings_screen.dart';
+import '../event_leaderboard/event_leaderboard_screen.dart';
+import '../agency_management/agency_management_screen.dart';
+import '../system_notices/system_notices_screen.dart';
 
 /// Modal Bottom Sheet displaying Leaderboards and Ranking Doors
 class RankingsBottomSheet extends StatefulWidget {
@@ -202,15 +206,24 @@ class _RankingsBottomSheetState extends State<RankingsBottomSheet> {
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '${door.title} Portal activates in upcoming sprint.',
-              ),
-              backgroundColor: PopoTheme.surface,
-              duration: const Duration(seconds: 2),
-            ),
-          );
+          Navigator.of(context).pop();
+          if (door.id == 'event') {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const EventLeaderboardScreen()),
+            );
+          } else if (door.id == 'rank') {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const HostRankingsScreen()),
+            );
+          } else if (door.id == 'agency') {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AgencyManagementScreen()),
+            );
+          } else if (door.id == 'notice') {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SystemNoticesScreen()),
+            );
+          }
         },
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 4),

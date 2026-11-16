@@ -15,3 +15,5 @@ export 'services/rankings_service.dart';
 export 'services/room_service.dart';
 export 'services/live_api_service.dart';
 export 'services/party_api_service.dart';
+export 'services/event_service.dart';
+export 'services/agency_service.dart';

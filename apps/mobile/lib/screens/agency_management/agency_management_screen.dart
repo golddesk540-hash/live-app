@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../api/api.dart';
+import '../profile/public_profile_screen.dart';
 
+/// Popo Live — Phase 4 Module 8: Agency Management Screen
+/// Guild & Agency Administration, Member Host Management, Approval Workflow, and Agency Registration.
 class AgencyManagementScreen extends StatefulWidget {
   const AgencyManagementScreen({super.key});
 
@@ -8,267 +12,805 @@ class AgencyManagementScreen extends StatefulWidget {
 }
 
 class _AgencyManagementScreenState extends State<AgencyManagementScreen> {
-  String _agencyName = 'Star Creators Agency';
-  String _agencyDescription =
-      'Creator-focused talent collective supporting live streaming hosts and community showcases.';
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  Map<String, dynamic>? _agency;
+  String _roleInAgency = 'none'; // 'admin', 'member', 'pending', 'none'
   String _selectedTab = 'dashboard';
   String _statusFilter = 'All';
   String _searchQuery = '';
-  bool _isEditing = false;
 
-  final List<Map<String, String>> _hosts = const [
-    {'id': 'PL-88401', 'name': 'Ayesha Khan', 'handle': '@ayesha.live', 'status': 'Active'},
-    {'id': 'PL-88402', 'name': 'Hamza Ali', 'handle': '@hamza.stage', 'status': 'Active'},
-    {'id': 'PL-88403', 'name': 'Mina Noor', 'handle': '@mina.noor', 'status': 'Active'},
-    {'id': 'PL-88411', 'name': 'Nadia Shah', 'handle': '@nadia.stage', 'status': 'Pending'},
-    {'id': 'PL-88415', 'name': 'Zainab Tariq', 'handle': '@zainab.art', 'status': 'Inactive'},
-    {'id': 'PL-88417', 'name': 'Ali Raza', 'handle': '@ali.demo', 'status': 'Suspended'},
-  ];
+  List<dynamic> _hosts = [];
+  bool _isLoadingHosts = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchAgencyInfo();
+  }
+
+  Future<void> _fetchAgencyInfo() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final res = await AgencyService.instance.getAgencyInfo();
+      if (!mounted) return;
+
+      if (res.isSuccess && res.data != null) {
+        final data = res.data as Map<String, dynamic>;
+        final agencyMap = data['agency'] as Map<String, dynamic>?;
+        final role = data['roleInAgency']?.toString() ?? 'none';
+
+        setState(() {
+          _agency = agencyMap;
+          _roleInAgency = role;
+          _isLoading = false;
+        });
+
+        if (agencyMap != null && (role == 'admin' || role == 'member')) {
+          _fetchHosts(agencyMap['id']);
+        }
+      } else {
+        setState(() {
+          _errorMessage = res.error ?? 'Failed to load agency.';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchHosts(String agencyId) async {
+    setState(() => _isLoadingHosts = true);
+    try {
+      final res = await AgencyService.instance.getAgencyMembers(
+        agencyId: agencyId,
+        statusFilter: _statusFilter,
+        search: _searchQuery,
+      );
+      if (!mounted) return;
+
+      if (res.isSuccess && res.data != null) {
+        final data = res.data as Map<String, dynamic>;
+        setState(() {
+          _hosts = (data['members'] as List<dynamic>?) ?? [];
+          _isLoadingHosts = false;
+        });
+      } else {
+        setState(() => _isLoadingHosts = false);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingHosts = false);
+    }
+  }
+
+  Future<void> _handleApproveHost(String memberId) async {
+    if (_agency == null) return;
+    try {
+      final res = await AgencyService.instance.approveMember(
+        agencyId: _agency!['id'],
+        memberId: memberId,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(res.data?['message']?.toString() ?? 'Host approved successfully!'),
+          backgroundColor: const Color(0xFF34D399),
+        ),
+      );
+      _fetchAgencyInfo();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: const Color(0xFFFF1A6C),
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleRejectHost(String memberId) async {
+    if (_agency == null) return;
+    try {
+      final res = await AgencyService.instance.rejectMember(
+        agencyId: _agency!['id'],
+        memberId: memberId,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(res.data?['message']?.toString() ?? 'Host request rejected.'),
+          backgroundColor: const Color(0xFFFFD166),
+        ),
+      );
+      _fetchAgencyInfo();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: const Color(0xFFFF1A6C),
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleRemoveHost(String memberId) async {
+    if (_agency == null) return;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1B0C35),
+        title: const Text('Remove Host', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: const Text(
+          'Are you sure you want to remove this host from the agency?',
+          style: TextStyle(color: Color(0xFFBBA9D6)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF1A6C)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Remove', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      final res = await AgencyService.instance.removeMember(
+        agencyId: _agency!['id'],
+        memberId: memberId,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(res.data?['message']?.toString() ?? 'Host removed.'),
+          backgroundColor: const Color(0xFFFF1A6C),
+        ),
+      );
+      _fetchAgencyInfo();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: const Color(0xFFFF1A6C),
+        ),
+      );
+    }
+  }
+
+  Future<void> _showRegisterAgencyDialog() async {
+    final nameCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+
+    final registered = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1B0C35),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Register New Agency',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Agency Name *',
+                  labelStyle: TextStyle(color: Color(0xFFBBA9D6)),
+                  hintText: 'e.g. Apex Talent Collective',
+                  hintStyle: TextStyle(color: Colors.white24),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: descCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Agency Description',
+                  labelStyle: TextStyle(color: Color(0xFFBBA9D6)),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: emailCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Business Email',
+                  labelStyle: TextStyle(color: Color(0xFFBBA9D6)),
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: phoneCtrl,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: 'Contact Phone',
+                  labelStyle: TextStyle(color: Color(0xFFBBA9D6)),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Note: New agency registrations are reviewed and approved by platform administrators.',
+                style: TextStyle(color: Color(0xFFFFD166), fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF1A6C)),
+            onPressed: () {
+              if (nameCtrl.text.trim().length < 3) return;
+              Navigator.pop(ctx, true);
+            },
+            child: const Text('Submit Application', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (registered == true) {
+      try {
+        final res = await AgencyService.instance.registerAgency(
+          name: nameCtrl.text.trim(),
+          description: descCtrl.text.trim(),
+          contactEmail: emailCtrl.text.trim(),
+          contactPhone: phoneCtrl.text.trim(),
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(res.data?['message']?.toString() ?? 'Agency registered! Status is pending approval.'),
+            backgroundColor: const Color(0xFF34D399),
+          ),
+        );
+        _fetchAgencyInfo();
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: const Color(0xFFFF1A6C),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _showJoinAgencyDialog() async {
+    final codeCtrl = TextEditingController();
+
+    final joined = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1B0C35),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Join an Agency', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: codeCtrl,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: 'Agency Code or ID',
+                labelStyle: TextStyle(color: Color(0xFFBBA9D6)),
+                hintText: 'e.g. AG-2048',
+                hintStyle: TextStyle(color: Colors.white24),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF1A6C)),
+            onPressed: () {
+              if (codeCtrl.text.trim().isEmpty) return;
+              Navigator.pop(ctx, true);
+            },
+            child: const Text('Send Join Request', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (joined == true) {
+      try {
+        final res = await AgencyService.instance.requestJoinAgency(codeCtrl.text.trim());
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(res.data?['message']?.toString() ?? 'Join request submitted!'),
+            backgroundColor: const Color(0xFF34D399),
+          ),
+        );
+        _fetchAgencyInfo();
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: const Color(0xFFFF1A6C),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final activeCount = _hosts.where((h) => h['status'] == 'Active').length;
-    final pendingCount = _hosts.where((h) => h['status'] == 'Pending').length;
-    final filteredHosts = _hosts.where((h) {
-      final matchesStatus = _statusFilter == 'All' || h['status'] == _statusFilter;
-      final q = _searchQuery.trim().toLowerCase();
-      final matchesQuery = q.isEmpty ||
-          h['name']!.toLowerCase().contains(q) ||
-          h['id']!.toLowerCase().contains(q);
-      return matchesStatus && matchesQuery;
-    }).toList();
-
     return Scaffold(
-      backgroundColor: const Color(0xFF130822),
+      backgroundColor: const Color(0xFF0D031B),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF130822),
+        backgroundColor: const Color(0xFF120624),
+        foregroundColor: Colors.white,
         elevation: 0,
         title: const Text(
-          'Agency',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+          'Agency Management',
+          style: TextStyle(fontWeight: FontWeight.w800),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: RefreshIndicator(
+        onRefresh: _fetchAgencyInfo,
+        color: const Color(0xFFFF1A6C),
+        backgroundColor: const Color(0xFF160830),
+        child: _buildBody(),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFFFF1A6C)),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline_rounded, color: Color(0xFFFF1A6C), size: 48),
+              const SizedBox(height: 12),
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFFCBB9E6), fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF1A6C),
+                  foregroundColor: Colors.white,
+                  shape: const StadiumBorder(),
+                ),
+                onPressed: _fetchAgencyInfo,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // If user does not belong to any agency
+    if (_agency == null) {
+      return ListView(
+        padding: const EdgeInsets.all(20),
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF1D0D34),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.purpleAccent.withValues(alpha: 0.2)),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF260D4A), Color(0xFF140728)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.purpleAccent.withOpacity(0.3)),
             ),
-            child: Row(
+            child: Column(
               children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFFFBBF24), width: 4),
-                    color: const Color(0xFF2A124C),
-                  ),
-                  child: const Center(
-                    child: CircleAvatar(radius: 6, backgroundColor: Colors.white),
+                const Icon(Icons.shield_outlined, color: Color(0xFF00E5FF), size: 54),
+                const SizedBox(height: 14),
+                const Text(
+                  'Join or Register an Agency',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Agencies support creators with professional growth, streaming advice, and exclusive event invitations.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Color(0xFFBBA9D6), fontSize: 13),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF1A6C),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: const StadiumBorder(),
+                    ),
+                    onPressed: _showJoinAgencyDialog,
+                    icon: const Icon(Icons.group_add_rounded),
+                    label: const Text('Join an Agency', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _agencyName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      const Text(
-                        'Agency ID: AG-2048',
-                        style: TextStyle(color: Colors.white70, fontSize: 12),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Active agency',
-                        style: TextStyle(
-                          color: Color(0xFF34D399),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF00E5FF),
+                      side: const BorderSide(color: Color(0xFF00E5FF)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: const StadiumBorder(),
+                    ),
+                    onPressed: _showRegisterAgencyDialog,
+                    icon: const Icon(Icons.add_business_rounded),
+                    label: const Text('Apply to Register Agency', style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
+        ],
+      );
+    }
+
+    final agency = _agency!;
+    final name = agency['name'] ?? 'Agency';
+    final code = agency['agencyCode'] ?? 'AG-0000';
+    final status = agency['status']?.toString().toUpperCase() ?? 'PENDING';
+    final adminName = agency['adminNickname'] ?? 'Administrator';
+    final totalHosts = agency['totalHosts'] ?? 0;
+    final activeHosts = agency['activeHosts'] ?? 0;
+    final pendingHosts = agency['pendingHosts'] ?? 0;
+    final announcement = agency['announcement'] ?? 'No platform announcements yet.';
+    final isAdmin = _roleInAgency == 'admin';
+
+    Color statusColor = const Color(0xFF34D399);
+    if (status == 'PENDING') statusColor = const Color(0xFFFFD166);
+    if (status == 'SUSPENDED' || status == 'REJECTED') statusColor = const Color(0xFFFF1A6C);
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Agency Hero Card
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF260D4A), Color(0xFF140728)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.purpleAccent.withOpacity(0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _statCard('${_hosts.length}', 'Hosts'),
-              const SizedBox(width: 8),
-              _statCard('$activeCount', 'Active'),
-              const SizedBox(width: 8),
-              _statCard('$pendingCount', 'Pending'),
+              Row(
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFFFC107), width: 3),
+                      color: const Color(0xFF2A124C),
+                    ),
+                    child: const Icon(Icons.business_rounded, color: Colors.white, size: 28),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Agency ID: $code · Admin: $adminName',
+                          style: const TextStyle(color: Color(0xFFBBA9D6), fontSize: 11),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.18),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: statusColor.withOpacity(0.5)),
+                          ),
+                          child: Text(
+                            status,
+                            style: TextStyle(
+                              color: statusColor,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            children: ['dashboard', 'hosts', 'profile', 'performance', 'support']
-                .map(
-                  (tab) => ChoiceChip(
-                    label: Text(tab),
-                    selected: _selectedTab == tab,
-                    onSelected: (_) => setState(() => _selectedTab = tab),
-                    selectedColor: const Color(0xFFFF2E93),
-                    backgroundColor: const Color(0xFF1A0B2E),
-                    labelStyle: const TextStyle(color: Colors.white, fontSize: 12),
-                  ),
-                )
-                .toList(),
-          ),
-          const SizedBox(height: 16),
-          if (_selectedTab == 'dashboard') ...[
-            _navTile('Host Management', 'View and manage agency hosts', () {
-              setState(() => _selectedTab = 'hosts');
-            }),
-            _navTile('Agency Details', 'Profile and agency information', () {
-              setState(() => _selectedTab = 'profile');
-            }),
-            _navTile('Performance', 'Review agency activity', () {
-              setState(() => _selectedTab = 'performance');
-            }),
-            _navTile('Support', 'Agency help and information', () {
-              setState(() => _selectedTab = 'support');
-            }),
-          ] else if (_selectedTab == 'hosts') ...[
-            TextField(
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                hintText: 'Search hosts by name or ID...',
-                hintStyle: TextStyle(color: Colors.white54),
-              ),
-              onChanged: (v) => setState(() => _searchQuery = v),
+        ),
+
+        const SizedBox(height: 14),
+
+        // Metrics Row
+        Row(
+          children: [
+            _statCard('$totalHosts', 'Total Hosts', const Color(0xFF00E5FF)),
+            const SizedBox(width: 8),
+            _statCard('$activeHosts', 'Active', const Color(0xFF34D399)),
+            const SizedBox(width: 8),
+            _statCard('$pendingHosts', 'Pending', const Color(0xFFFFD166)),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // Navigation Tabs
+        Wrap(
+          spacing: 8,
+          children: ['dashboard', 'hosts', 'profile', 'support'].map((tab) {
+            final active = _selectedTab == tab;
+            return ChoiceChip(
+              label: Text(tab.toUpperCase()),
+              selected: active,
+              selectedColor: const Color(0xFFFF1A6C),
+              backgroundColor: const Color(0xFF180A31),
+              labelStyle: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+              onSelected: (_) => setState(() => _selectedTab = tab),
+            );
+          }).toList(),
+        ),
+
+        const SizedBox(height: 16),
+
+        if (_selectedTab == 'dashboard') ...[
+          // Announcement Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF16082E),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.purpleAccent.withOpacity(0.2)),
             ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              children: ['All', 'Active', 'Pending', 'Inactive', 'Suspended']
-                  .map(
-                    (status) => ChoiceChip(
-                      label: Text(status),
-                      selected: _statusFilter == status,
-                      onSelected: (_) => setState(() => _statusFilter = status),
-                    ),
-                  )
-                  .toList(),
-            ),
-            const SizedBox(height: 10),
-            ...filteredHosts.map(
-              (h) => Card(
-                color: const Color(0xFF1A0B2E),
-                child: ListTile(
-                  title: Text(
-                    h['name']!,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-                  ),
-                  subtitle: Text(
-                    '${h['handle']} · ${h['id']}',
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                  trailing: Text(
-                    h['status']!,
-                    style: const TextStyle(color: Color(0xFFFF6BA3), fontSize: 12),
-                  ),
-                ),
-              ),
-            ),
-          ] else if (_selectedTab == 'profile') ...[
-            Card(
-              color: const Color(0xFF1A0B2E),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: const [
+                    Icon(Icons.campaign_rounded, color: Color(0xFFFFC107), size: 18),
+                    SizedBox(width: 8),
                     Text(
-                      _agencyName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(_agencyDescription, style: const TextStyle(color: Colors.white70)),
-                    const SizedBox(height: 12),
-                    ElevatedButton(
-                      onPressed: () => setState(() => _isEditing = !_isEditing),
-                      child: Text(_isEditing ? 'Cancel' : 'Edit Profile'),
+                      'Agency Bulletin',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 8),
+                Text(
+                  announcement,
+                  style: const TextStyle(color: Color(0xFFCBB9E6), fontSize: 12),
+                ),
+              ],
             ),
-          ] else if (_selectedTab == 'performance') ...[
-            const Card(
-              color: Color(0xFF1A0B2E),
-              child: ListTile(
-                title: Text(
-                  'Weekly Sample Activity: 42 Sessions · 93.0 hrs',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-                ),
-                subtitle: Text(
-                  'Sample host participation metrics only (non-financial).',
-                  style: TextStyle(color: Colors.white70),
-                ),
-              ),
+          ),
+          const SizedBox(height: 14),
+          _navTile('Host Management', 'View and manage registered hosts', () {
+            setState(() => _selectedTab = 'hosts');
+          }),
+          _navTile('Agency Profile', 'View contract details and contact info', () {
+            setState(() => _selectedTab = 'profile');
+          }),
+        ] else if (_selectedTab == 'hosts') ...[
+          // Search & Filter
+          TextField(
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Search hosts by nickname or ID...',
+              hintStyle: const TextStyle(color: Colors.white38),
+              prefixIcon: const Icon(Icons.search, color: Colors.white38),
+              filled: true,
+              fillColor: const Color(0xFF16082E),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
             ),
-          ] else ...[
-            const Card(
-              color: Color(0xFF1A0B2E),
-              child: ListTile(
-                title: Text(
-                  'Agency Support & Guidance',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-                ),
-                subtitle: Text(
-                  'Demo FAQs, onboarding tips, and sample support preview.',
-                  style: TextStyle(color: Colors.white70),
-                ),
+            onChanged: (v) {
+              _searchQuery = v;
+              _fetchHosts(agency['id']);
+            },
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            children: ['All', 'Active', 'Pending'].map((st) {
+              final active = _statusFilter == st;
+              return ChoiceChip(
+                label: Text(st),
+                selected: active,
+                selectedColor: const Color(0xFFFF1A6C),
+                backgroundColor: const Color(0xFF16082E),
+                labelStyle: const TextStyle(color: Colors.white, fontSize: 11),
+                onSelected: (_) {
+                  setState(() => _statusFilter = st);
+                  _fetchHosts(agency['id']);
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 14),
+
+          if (_isLoadingHosts)
+            const Center(child: CircularProgressIndicator(color: Color(0xFFFF1A6C)))
+          else if (_hosts.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF130728),
+                borderRadius: BorderRadius.circular(16),
               ),
+              child: const Center(
+                child: Text('No hosts found in this filter.', style: TextStyle(color: Color(0xFFBBA9D6))),
+              ),
+            )
+          else
+            ..._hosts.map((h) {
+              final String memberId = h['id'] ?? '';
+              final String name = h['nickname'] ?? 'Host';
+              final String poppoId = h['poppoId'] ?? '';
+              final String memberStatus = h['status']?.toString().toUpperCase() ?? 'ACTIVE';
+              final bool isPending = memberStatus == 'PENDING';
+              final String avatar = h['avatarUrl'] ?? '';
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF16082E),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.purpleAccent.withOpacity(0.18)),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: const Color(0xFF281347),
+                      backgroundImage: avatar.startsWith('http') ? NetworkImage(avatar) : null,
+                      child: !avatar.startsWith('http') ? const Icon(Icons.person, color: Colors.white) : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          Text('ID: $poppoId', style: const TextStyle(color: Color(0xFFBBA9D6), fontSize: 11)),
+                        ],
+                      ),
+                    ),
+                    if (isAdmin && isPending) ...[
+                      IconButton(
+                        icon: const Icon(Icons.check_circle_rounded, color: Color(0xFF34D399)),
+                        onPressed: () => _handleApproveHost(memberId),
+                        tooltip: 'Approve',
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.cancel_rounded, color: Color(0xFFFF1A6C)),
+                        onPressed: () => _handleRejectHost(memberId),
+                        tooltip: 'Reject',
+                      ),
+                    ] else if (isAdmin) ...[
+                      IconButton(
+                        icon: const Icon(Icons.remove_circle_outline, color: Colors.white38),
+                        onPressed: () => _handleRemoveHost(memberId),
+                        tooltip: 'Remove',
+                      ),
+                    ] else ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white12,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          memberStatus,
+                          style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }),
+        ] else if (_selectedTab == 'profile') ...[
+          _profileRow('Agency Code', code),
+          _profileRow('Administrator', adminName),
+          _profileRow('Contact Email', agency['contactEmail'] ?? 'management@starcreators.agency'),
+          _profileRow('Contact Phone', agency['contactPhone'] ?? '+92 300 1234567'),
+          _profileRow('Revenue Commission', '${agency['commissionRate'] ?? 10}%'),
+        ] else if (_selectedTab == 'support') ...[
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF16082E),
+              borderRadius: BorderRadius.circular(16),
             ),
-          ],
+            child: const Text(
+              'For agency inquiries, dispute resolutions, and partner certifications, please contact Popo Live Creator Support.',
+              style: TextStyle(color: Color(0xFFCBB9E6), fontSize: 13),
+            ),
+          ),
         ],
-      ),
+      ],
     );
   }
 
-  Widget _statCard(String count, String label) {
+  Widget _statCard(String value, String label, Color color) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFF1A0B2E),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Colors.purpleAccent.withValues(alpha: 0.2)),
+          color: const Color(0xFF16082E),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.3)),
         ),
         child: Column(
           children: [
-            Text(
-              count,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+            Text(value, style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 2),
+            Text(label, style: const TextStyle(color: Color(0xFFBBA9D6), fontSize: 11)),
           ],
         ),
       ),
@@ -276,17 +818,36 @@ class _AgencyManagementScreenState extends State<AgencyManagementScreen> {
   }
 
   Widget _navTile(String title, String subtitle, VoidCallback onTap) {
-    return Card(
-      color: const Color(0xFF1D0D34),
+    return Container(
       margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF16082E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.purpleAccent.withOpacity(0.18)),
+      ),
       child: ListTile(
+        title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+        subtitle: Text(subtitle, style: const TextStyle(color: Color(0xFFBBA9D6), fontSize: 11)),
+        trailing: const Icon(Icons.chevron_right, color: Colors.white54),
         onTap: onTap,
-        title: Text(
-          title,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
-        ),
-        subtitle: Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-        trailing: const Icon(Icons.chevron_right, color: Colors.white70),
+      ),
+    );
+  }
+
+  Widget _profileRow(String label, String value) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF16082E),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Color(0xFFBBA9D6), fontSize: 12)),
+          Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+        ],
       ),
     );
   }

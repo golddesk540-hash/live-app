@@ -13,6 +13,9 @@ import '../daily_tasks/daily_host_tasks_screen.dart';
 import '../task_level/task_level_screen.dart';
 import '../new_host_pack/new_host_pack_screen.dart';
 import '../earning_identity/earning_identity_screen.dart';
+import '../host_rankings/host_rankings_screen.dart';
+import '../event_leaderboard/event_leaderboard_screen.dart';
+import '../agency_management/agency_management_screen.dart';
 import 'edit_profile_screen.dart';
 import 'public_profile_screen.dart';
 import 'settings_screen.dart';
@@ -432,6 +435,55 @@ class _MeScreenState extends State<MeScreen> {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildHostToolButton(
+                              icon: Icons.leaderboard_rounded,
+                              label: 'Rankings',
+                              color: const Color(0xFFFFD166),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const HostRankingsScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildHostToolButton(
+                              icon: Icons.emoji_events_rounded,
+                              label: 'Leaderboard',
+                              color: const Color(0xFFF97316),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const EventLeaderboardScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildHostToolButton(
+                              icon: Icons.business_rounded,
+                              label: 'Agency',
+                              color: const Color(0xFF00E5FF),
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const AgencyManagementScreen(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -443,6 +495,83 @@ class _MeScreenState extends State<MeScreen> {
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
+                    ListTile(
+                      leading: const Icon(
+                        Icons.leaderboard_outlined,
+                        color: Color(0xFFFFD166),
+                      ),
+                      title: const Text(
+                        'Host Rankings',
+                        style: TextStyle(
+                          color: PopoTheme.textPrimary,
+                          fontSize: 14,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right_rounded,
+                        color: PopoTheme.textSecondary,
+                      ),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const HostRankingsScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(color: PopoTheme.borderSubtle, height: 1),
+                    ListTile(
+                      leading: const Icon(
+                        Icons.emoji_events_outlined,
+                        color: Color(0xFFF97316),
+                      ),
+                      title: const Text(
+                        'Event Leaderboard',
+                        style: TextStyle(
+                          color: PopoTheme.textPrimary,
+                          fontSize: 14,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.chevron_right_rounded,
+                        color: PopoTheme.textSecondary,
+                      ),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const EventLeaderboardScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    if (_isHostEligible || user['role'] == 'agency_admin') ...[
+                      const Divider(color: PopoTheme.borderSubtle, height: 1),
+                      ListTile(
+                        leading: const Icon(
+                          Icons.business_center_outlined,
+                          color: Color(0xFF00E5FF),
+                        ),
+                        title: const Text(
+                          'Agency Management',
+                          style: TextStyle(
+                            color: PopoTheme.textPrimary,
+                            fontSize: 14,
+                          ),
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: PopoTheme.textSecondary,
+                        ),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const AgencyManagementScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                    const Divider(color: PopoTheme.borderSubtle, height: 1),
                     ListTile(
                       leading: const Icon(
                         Icons.badge_outlined,
