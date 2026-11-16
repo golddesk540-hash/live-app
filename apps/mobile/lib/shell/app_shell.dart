@@ -11,6 +11,7 @@ import '../widgets/popo_secondary_button.dart';
 import '../screens/profile/me_screen.dart';
 import '../screens/discovery/explore_home_screen.dart';
 import '../screens/live/go_live_gate_screen.dart';
+import '../screens/party/party_discovery_screen.dart';
 
 /// Master 5-Tab Application Shell for Popo Live
 /// Tabs: [0: Home] [1: Party] [2: Go Live] [3: Inbox] [4: Me]
@@ -52,12 +53,7 @@ class _AppShellState extends State<AppShell> {
             index: _currentIndex,
             children: [
               const ExploreHomeScreen(),
-              _buildLockedTab(
-                title: PopoStrings.tabParty,
-                subtitle: PopoStrings.partyOpensSprint2,
-                icon: Icons.celebration_rounded,
-                accentColor: PopoTheme.cyan,
-              ),
+              const PartyDiscoveryScreen(),
               const GoLiveGateScreen(),
               _buildLockedTab(
                 title: PopoStrings.tabInbox,
@@ -78,8 +74,11 @@ class _AppShellState extends State<AppShell> {
   }
 
   PreferredSizeWidget? _buildAppBarForCurrentTab() {
-    // Tab 0 (Home/Explore), Tab 2 (Go Live Gate), and Tab 4 (Me) have their own custom AppBars
-    if (_currentIndex == 0 || _currentIndex == 2 || _currentIndex == 4) {
+    // Tab 0 (Home/Explore), Tab 1 (Party Discovery), Tab 2 (Go Live Gate), and Tab 4 (Me) have their own custom AppBars
+    if (_currentIndex == 0 ||
+        _currentIndex == 1 ||
+        _currentIndex == 2 ||
+        _currentIndex == 4) {
       return null;
     }
 

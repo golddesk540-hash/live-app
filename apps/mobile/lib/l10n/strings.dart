@@ -238,6 +238,22 @@ class PopoStrings {
       'history_filter_month': 'Past Month',
       'total_sessions': 'Total Sessions',
 
+      // 9-Seat Party Rooms
+      'party_discovery_title': 'Party Rooms',
+      'create_party_room': 'Create Room',
+      'create_party_title': 'Create Party Room',
+      'party_title_hint': 'Enter party room title (max 50 chars)',
+      'party_title_label': 'Room Title',
+      'select_category': 'Select Category',
+      'room_type_public': 'Public Room',
+      'room_type_private': 'Private Room',
+      'party_seats_count': '9 Seats',
+      'host_seat_label': 'Host',
+      'available_seat_label': 'Empty',
+      'leave_party_confirm': 'Leave this party room?',
+      'no_party_rooms': 'No party rooms active in this category.',
+      'party_closed': 'This party room is closed or unavailable.',
+
       // Errors
       'error_network':
           'Unable to connect to server. Please check your internet connection.',
@@ -435,6 +451,22 @@ class PopoStrings {
       'history_filter_week': 'پچھلا ہفتہ',
       'history_filter_month': 'پچھلا مہینہ',
       'total_sessions': 'کل نشریات',
+
+      // 9-Seat Party Rooms
+      'party_discovery_title': 'پارٹی رومز',
+      'create_party_room': 'روم بنائیں',
+      'create_party_title': 'نیا پارٹی روم بنائیں',
+      'party_title_hint': 'روم کا عنوان درج کریں (زیادہ سے زیادہ 50 حروف)',
+      'party_title_label': 'روم کا عنوان',
+      'select_category': 'کیٹیگری منتخب کریں',
+      'room_type_public': 'پبلک روم',
+      'room_type_private': 'پرائیویٹ روم',
+      'party_seats_count': '9 سیٹیں',
+      'host_seat_label': 'ہوسٹ',
+      'available_seat_label': 'خالی',
+      'leave_party_confirm': 'کیا آپ اس پارٹی روم سے نکلنا چاہتے ہیں؟',
+      'no_party_rooms': 'اس کیٹیگری میں کوئی پارٹی روم فعال نہیں ہے۔',
+      'party_closed': 'یہ پارٹی روم بند ہو چکا ہے یا دستیاب نہیں ہے۔',
 
       // Errors
       'error_network':
