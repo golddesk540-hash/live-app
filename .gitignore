@@ -55,5 +55,8 @@ Popo_Live_Phase_*/
 apps/web/storage/finance_exports/*
 !apps/web/storage/finance_exports/.gitkeep
 
+# Uploads
+apps/web/public/uploads/
+
 # Mobile Screen Safety Backups
 apps/mobile/lib/screens_backup_*/

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../models/gifts/gift_models.dart';
 import '../../../services/gifts/gift_session_manager.dart';
+import '../../wallet/coin_packages_screen.dart';
 
 /// Universal Gift Sending Bottom Sheet Panel
 /// Integrates with Solo Live, Party Rooms, and PK Battles
@@ -202,14 +203,19 @@ class _UniversalGiftPanelState extends State<UniversalGiftPanel> {
               foregroundColor: Colors.black,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Opening Popo Live Coin Wallet Top-Up...'),
-                  backgroundColor: Color(0xFF161622),
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const CoinPackagesScreen(
+                    userId: 'user_wallet_demo_701',
+                    isSandbox: true,
+                  ),
                 ),
               );
+              // Revalidate balance after returning from Top-Up
+              await _manager.loadCatalog(previewDemo: true);
             },
             child: Text(
               _isUrdu ? 'ابھی ریچارج کریں' : 'Top Up Now',
@@ -312,26 +318,42 @@ class _UniversalGiftPanelState extends State<UniversalGiftPanel> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF251F38),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFFFB800).withOpacity(0.4)),
-                          ),
-                          child: Row(
-                            children: [
-                              const Text('🪙', style: TextStyle(fontSize: 13)),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${_manager.availableCoins}',
-                                style: const TextStyle(
-                                  color: Color(0xFFFFB800),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
+                        GestureDetector(
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CoinPackagesScreen(
+                                  userId: 'user_wallet_demo_701',
+                                  isSandbox: true,
                                 ),
                               ),
-                            ],
+                            );
+                            await _manager.loadCatalog(previewDemo: true);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF251F38),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: const Color(0xFFFFB800).withOpacity(0.4)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Text('🪙', style: TextStyle(fontSize: 13)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${_manager.availableCoins}',
+                                  style: const TextStyle(
+                                    color: Color(0xFFFFB800),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.add_circle_rounded, color: Color(0xFFFFB800), size: 14),
+                              ],
+                            ),
                           ),
                         ),
                       ],

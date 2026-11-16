@@ -6,6 +6,9 @@ import 'coin_history_screen.dart';
 import 'points_history_screen.dart';
 import 'host_earnings_screen.dart';
 import 'topup_screen.dart';
+import 'coin_packages_screen.dart';
+import 'purchase_history_screen.dart';
+import 'transaction_history_screen.dart';
 import '../vip/vip_screen.dart';
 import '../recognition/recognition_screen.dart';
 import '../store/store_screen.dart';
@@ -29,7 +32,7 @@ class WalletScreen extends StatefulWidget {
   const WalletScreen({
     Key? key,
     this.userId = 'user_wallet_demo_701',
-    this.apiBaseUrl = 'https://kigolive.com',
+    this.apiBaseUrl = 'http://localhost:3000',
     this.authToken,
     this.previewDemo = true,
     this.onTopupPressed,
@@ -520,13 +523,11 @@ class _WalletScreenState extends State<WalletScreen> {
                         } else {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (_) => TopupScreen(
-                                apiBaseUrl: widget.apiBaseUrl,
+                              builder: (_) => CoinPackagesScreen(
                                 userId: widget.userId,
-                                headers: widget.authToken != null
-                                    ? {'Authorization': 'Bearer ${widget.authToken}'}
-                                    : null,
-                                previewDemo: widget.previewDemo,
+                                authToken: widget.authToken,
+                                isSandbox: widget.previewDemo,
+                                onTopupSuccess: () => _fetchWalletState(forceFresh: true),
                               ),
                             ),
                           );
@@ -621,7 +622,46 @@ class _WalletScreenState extends State<WalletScreen> {
       child: Column(
         children: [
           ListTile(
-            onTap: _openCoinHistory,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => PurchaseHistoryScreen(
+                    userId: widget.userId,
+                    authToken: widget.authToken,
+                    isSandbox: widget.previewDemo,
+                  ),
+                ),
+              );
+            },
+            leading: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(color: _neonPink.withOpacity(0.14), shape: BoxShape.circle),
+              child: const Icon(Icons.receipt_long_rounded, color: _neonPink, size: 19),
+            ),
+            title: Text(
+              _isUrdu ? 'خریداری کے آرڈرز' : 'Purchase Orders',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+            ),
+            subtitle: Text(
+              _isUrdu ? 'گوگل پلے اور ایپل پیکیج آرڈرز' : 'In-App Purchase & Top-up Orders',
+              style: const TextStyle(color: Colors.white54, fontSize: 11),
+            ),
+            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+          ),
+          Divider(color: Colors.white.withOpacity(0.08), height: 1, indent: 16, endIndent: 16),
+          ListTile(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => TransactionHistoryScreen(
+                    userId: widget.userId,
+                    authToken: widget.authToken,
+                    isSandbox: widget.previewDemo,
+                  ),
+                ),
+              );
+            },
             leading: Container(
               width: 34,
               height: 34,
@@ -629,7 +669,7 @@ class _WalletScreenState extends State<WalletScreen> {
               child: const Icon(Icons.monetization_on_rounded, color: _goldAccent, size: 19),
             ),
             title: Text(
-              _isUrdu ? 'کوائنز کی تاریخ' : 'Coin History',
+              _isUrdu ? 'کوائنز کی تفصیلی تاریخ' : 'Coin Transactions',
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
             ),
             subtitle: Text(
