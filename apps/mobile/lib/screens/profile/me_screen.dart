@@ -16,6 +16,9 @@ import '../earning_identity/earning_identity_screen.dart';
 import '../host_rankings/host_rankings_screen.dart';
 import '../event_leaderboard/event_leaderboard_screen.dart';
 import '../agency_management/agency_management_screen.dart';
+import '../agency_management/agent_earnings_screen.dart';
+import '../agency_management/coin_seller_screen.dart';
+import '../agency_management/withdrawal_screen.dart';
 import 'edit_profile_screen.dart';
 import 'public_profile_screen.dart';
 import 'settings_screen.dart';
@@ -544,7 +547,7 @@ class _MeScreenState extends State<MeScreen> {
                         );
                       },
                     ),
-                    if (_isHostEligible || user['role'] == 'agency_admin') ...[
+                    if (_isHostEligible || user['role'] == 'agency_admin' || user['role'] == 'agent') ...[
                       const Divider(color: PopoTheme.borderSubtle, height: 1),
                       ListTile(
                         leading: const Icon(
@@ -566,6 +569,81 @@ class _MeScreenState extends State<MeScreen> {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => const AgencyManagementScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(color: PopoTheme.borderSubtle, height: 1),
+                      ListTile(
+                        leading: const Icon(
+                          Icons.monetization_on_outlined,
+                          color: PopoTheme.gold,
+                        ),
+                        title: const Text(
+                          'Agent Earnings & Commission',
+                          style: TextStyle(
+                            color: PopoTheme.textPrimary,
+                            fontSize: 14,
+                          ),
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: PopoTheme.textSecondary,
+                        ),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const AgentEarningsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(color: PopoTheme.borderSubtle, height: 1),
+                      ListTile(
+                        leading: const Icon(
+                          Icons.storefront_outlined,
+                          color: PopoTheme.gold,
+                        ),
+                        title: const Text(
+                          'Coin Seller Portal',
+                          style: TextStyle(
+                            color: PopoTheme.textPrimary,
+                            fontSize: 14,
+                          ),
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: PopoTheme.textSecondary,
+                        ),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const CoinSellerScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const Divider(color: PopoTheme.borderSubtle, height: 1),
+                      ListTile(
+                        leading: const Icon(
+                          Icons.account_balance_wallet_outlined,
+                          color: Color(0xFF00E5FF),
+                        ),
+                        title: const Text(
+                          'Withdraw Earnings',
+                          style: TextStyle(
+                            color: PopoTheme.textPrimary,
+                            fontSize: 14,
+                          ),
+                        ),
+                        trailing: const Icon(
+                          Icons.chevron_right_rounded,
+                          color: PopoTheme.textSecondary,
+                        ),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const WithdrawalScreen(),
                             ),
                           );
                         },

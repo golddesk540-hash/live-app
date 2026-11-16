@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../api/api.dart';
 import '../profile/public_profile_screen.dart';
+import 'agent_earnings_screen.dart';
+import 'coin_seller_screen.dart';
+import 'withdrawal_screen.dart';
 
 /// Popo Live — Phase 4 Module 8: Agency Management Screen
 /// Guild & Agency Administration, Member Host Management, Approval Workflow, and Agency Registration.
@@ -651,6 +654,21 @@ class _AgencyManagementScreenState extends State<AgencyManagementScreen> {
           const SizedBox(height: 14),
           _navTile('Host Management', 'View and manage registered hosts', () {
             setState(() => _selectedTab = 'hosts');
+          }),
+          _navTile('Agent Earnings & Commission', 'View earnings, balance, and commission breakdown', () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AgentEarningsScreen()),
+            );
+          }),
+          _navTile('Coin Seller Portal', 'Manage coin inventory and transfer coins to users', () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const CoinSellerScreen()),
+            );
+          }),
+          _navTile('Earnings Withdrawal', 'Manage payout methods and submit withdrawal requests', () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const WithdrawalScreen()),
+            );
           }),
           _navTile('Agency Profile', 'View contract details and contact info', () {
             setState(() => _selectedTab = 'profile');
