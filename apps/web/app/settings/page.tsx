@@ -497,25 +497,38 @@ function SettingsContent() {
             <ChevronRight className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
           </button>
 
-          {/* ITEM 5: Blacklist (with count badge matching 02_07 reference) */}
+          {/* ITEM 5: Edit Profile */}
           <Link
-            href="/settings/blacklist"
+            href="/profile/edit"
+            data-testid="settings-edit-profile-link"
             className="w-full p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 flex items-center justify-between text-left transition-all group"
           >
             <div className="flex items-center gap-3.5">
-              <div className="w-9 h-9 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-400 group-hover:scale-105 transition-transform">
-                <Slash className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-xl bg-pink-500/10 flex items-center justify-center text-[#FF2E74] group-hover:scale-105 transition-transform">
+                <Edit3 className="w-5 h-5" />
               </div>
               <span className="text-xs font-bold text-white">
-                {isUr ? 'بلیک لسٹ' : 'Blacklist'}
+                {isUr ? 'پروفائل میں ترمیم کریں' : 'Edit Profile'}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded-full bg-white/10 text-[11px] font-bold text-white/70">
-                {data.blacklist.count}
+            <ChevronRight className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
+          </Link>
+
+          {/* ITEM 6: Active Sessions */}
+          <Link
+            href="/user-id"
+            data-testid="settings-active-sessions-link"
+            className="w-full p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 flex items-center justify-between text-left transition-all group"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:scale-105 transition-transform">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-bold text-white">
+                {isUr ? 'فعال سیشنز اور لاگ ان' : 'Active Sessions & Devices'}
               </span>
-              <ChevronRight className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
             </div>
+            <ChevronRight className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
           </Link>
 
           {/* ITEM 6: Notifications (with pink toggle switch in reference) */}

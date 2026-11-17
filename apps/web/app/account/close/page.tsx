@@ -220,11 +220,11 @@ function AccountClosureContent() {
         {/* Top Navigation Bar */}
         <div className="flex items-center justify-between pb-2 border-b border-white/10">
           <Link
-            href="/account"
+            href="/profile"
             className="flex items-center gap-2 text-white/70 hover:text-white transition-colors text-sm font-medium"
           >
             <ArrowLeft className={`w-4 h-4 ${isUr ? 'rotate-180' : ''}`} />
-            <span>{isUr ? 'اکاؤنٹ پر واپس' : 'Back to Account'}</span>
+            <span>{isUr ? 'پروفائل پر واپس' : 'Back to Profile'}</span>
           </Link>
 
           <button
