@@ -209,48 +209,6 @@ export const PoppoFooter: React.FC = () => {
                 <div className="text-[11px] font-bold text-gray-800">Google Play</div>
                 <div className="text-[9px] text-gray-400">Android 6.0+</div>
               </div>
-
-              {/* Huawei */}
-              <div className="p-2.5 rounded-xl border border-gray-100 bg-gray-50/70 hover:border-[#5653FE]/30 hover:bg-purple-50/30 transition-all text-center">
-                <div className="w-16 h-16 mx-auto mb-1.5 bg-white p-1 rounded-lg border border-gray-200 flex items-center justify-center">
-                  <div className="w-full h-full bg-gradient-to-br from-rose-900 to-red-800 rounded p-1 flex flex-col justify-between">
-                    <div className="flex justify-between">
-                      <div className="w-3 h-3 bg-white rounded-xs"></div>
-                      <div className="w-3 h-3 bg-white rounded-xs"></div>
-                    </div>
-                    <div className="flex justify-center items-center">
-                      <div className="w-2 h-2 bg-rose-400 rounded-full"></div>
-                    </div>
-                    <div className="flex justify-between">
-                      <div className="w-3 h-3 bg-white rounded-xs"></div>
-                      <div className="w-1.5 h-1.5 bg-white"></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-[11px] font-bold text-gray-800">AppGallery</div>
-                <div className="text-[9px] text-gray-400">Huawei Store</div>
-              </div>
-
-              {/* Android Direct */}
-              <div className="p-2.5 rounded-xl border border-gray-100 bg-gray-50/70 hover:border-[#5653FE]/30 hover:bg-purple-50/30 transition-all text-center">
-                <div className="w-16 h-16 mx-auto mb-1.5 bg-white p-1 rounded-lg border border-gray-200 flex items-center justify-center">
-                  <div className="w-full h-full bg-gradient-to-br from-[#5653FE] to-indigo-900 rounded p-1 flex flex-col justify-between">
-                    <div className="flex justify-between">
-                      <div className="w-3 h-3 bg-white rounded-xs"></div>
-                      <div className="w-3 h-3 bg-white rounded-xs"></div>
-                    </div>
-                    <div className="flex justify-center items-center">
-                      <div className="w-2 h-2 bg-yellow-400 rounded-full"></div>
-                    </div>
-                    <div className="flex justify-between">
-                      <div className="w-3 h-3 bg-white rounded-xs"></div>
-                      <div className="w-1.5 h-1.5 bg-white"></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="text-[11px] font-bold text-gray-800">Android APK</div>
-                <div className="text-[9px] text-gray-400">Direct v4.2.1</div>
-              </div>
             </div>
           </div>
         </div>

@@ -46,7 +46,6 @@ import {
   Globe,
   Filter,
   RefreshCw,
-  MapPin,
   Bell,
   Building2,
   Crown,
@@ -60,7 +59,6 @@ import FollowingUserCard, { FollowedUserItem } from './FollowingUserCard';
 import DiscoveryBannerCarousel from './DiscoveryBannerCarousel';
 import RankDoorSection from './RankDoorSection';
 import RankingPreviewSection from './RankingPreviewSection';
-import { NEAR_FEATURE_ENABLED } from '@/lib/featureFlags';
 
 export type DiscoveryTab = 'explore' | 'following' | 'new';
 
