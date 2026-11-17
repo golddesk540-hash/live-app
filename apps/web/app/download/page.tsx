@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { PoppoHeader } from '@/components/poppo/PoppoHeader';
 import { PoppoFooter } from '@/components/poppo/PoppoFooter';
 import { AuthModal } from '@/components/homepage/AuthModal';
@@ -33,7 +34,9 @@ import {
   Zap,
 } from 'lucide-react';
 
-export default function DownloadAppPage() {
+function DownloadContent() {
+  const searchParams = useSearchParams();
+  const fromApp = searchParams.get('from') === 'app';
   const { lang, toggleLang, isUr } = useLanguage();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [selectedPreviewScreen, setSelectedPreviewScreen] = useState<number>(0);
@@ -485,6 +488,17 @@ export default function DownloadAppPage() {
                   </>
                 )}
               </h1>
+
+              {/* Mobile-Only Route Redirect Banner (?from=app) */}
+              {fromApp && (
+                <div
+                  data-testid="from-app-notice"
+                  className="p-4 rounded-2xl bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-indigo-500/20 border border-pink-500/40 text-white text-base sm:text-lg font-bold shadow-lg shadow-pink-500/10 flex items-center gap-3 animate-in fade-in"
+                >
+                  <Smartphone className="w-6 h-6 text-pink-400 shrink-0" />
+                  <span>This part of Popo Live is in the Android and iOS app.</span>
+                </div>
+              )}
 
               <div className="flex flex-col gap-2">
                 <h2 className="text-lg sm:text-2xl font-bold text-gray-200">
@@ -980,5 +994,13 @@ export default function DownloadAppPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DownloadAppPage() {
+  return (
+    <React.Suspense fallback={<div className="min-h-screen bg-[#0B0E17]" />}>
+      <DownloadContent />
+    </React.Suspense>
   );
 }
