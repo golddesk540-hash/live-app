@@ -117,7 +117,7 @@ export default function MarketingHomePage() {
                     : 'Go live, meet interesting people worldwide, join lively audio & video party rooms, send stunning 3D virtual gifts, and celebrate friendship every single day.'}
                 </p>
 
-                {/* 4 App Store Download Buttons: 2x2 grid on mobile, inline on desktop */}
+                {/* 2 Official Store Download Buttons: Apple App Store & Google Play */}
                 <div className="pt-2 space-y-2">
                   <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-gray-400 text-center lg:text-left">
                     {isUr ? 'مفت ایپ ڈاؤن لوڈ کریں:' : 'Get Started On Mobile:'}
@@ -144,32 +144,6 @@ export default function MarketingHomePage() {
                       <div className="text-left">
                         <div className="text-[8px] text-gray-300 leading-none">GET IT ON</div>
                         <div className="text-[11px] sm:text-xs font-bold leading-tight">Google Play</div>
-                      </div>
-                    </Link>
-
-                    {/* Huawei AppGallery */}
-                    <Link
-                      href="/download"
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-950 hover:bg-gray-800 text-white shadow-sm transition-all hover:-translate-y-0.5 active:scale-95 justify-center sm:justify-start"
-                    >
-                      <div className="w-3.5 h-3.5 rounded-full bg-rose-600 flex items-center justify-center text-white text-[8px] font-black shrink-0">
-                        H
-                      </div>
-                      <div className="text-left">
-                        <div className="text-[8px] text-gray-300 leading-none">Explore on</div>
-                        <div className="text-[11px] sm:text-xs font-bold leading-tight">AppGallery</div>
-                      </div>
-                    </Link>
-
-                    {/* Direct Android APK */}
-                    <Link
-                      href="/download"
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#5653FE] hover:bg-[#433ffd] text-white shadow-sm shadow-purple-500/20 transition-all hover:-translate-y-0.5 active:scale-95 justify-center sm:justify-start"
-                    >
-                      <Download className="w-4 h-4 shrink-0" />
-                      <div className="text-left">
-                        <div className="text-[8px] text-purple-200 leading-none">Android Direct</div>
-                        <div className="text-[11px] sm:text-xs font-bold leading-tight">Download APK</div>
                       </div>
                     </Link>
                   </div>
