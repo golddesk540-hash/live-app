@@ -72,10 +72,9 @@ export default function FollowingUserCard({
   };
 
   const handleCardClick = () => {
-    if (user.isLive && (user.roomNumber || user.roomId)) {
-      router.push(`/live/room/${user.roomNumber || user.roomId}`);
-    } else {
-      router.push(`/user/${user.poppoId || user.userId || user.id}`);
+    const targetRoom = user.roomNumber || user.roomId;
+    if (targetRoom) {
+      router.push(`/live/room/${targetRoom}`);
     }
   };
 
@@ -129,9 +128,9 @@ export default function FollowingUserCard({
       {/* RIGHT: Pink LIVE Badge + Notification Bell Icon (1:1 with 03_08_following.png) */}
       <div className="flex items-center gap-3 sm:gap-4 shrink-0 pl-3">
         {/* Pink LIVE status badge */}
-        {user.isLive && (
+        {user.isLive && (user.roomNumber || user.roomId) && (
           <Link
-            href={`/live/room/${user.roomNumber || user.roomId || '100220'}`}
+            href={`/live/room/${user.roomNumber || user.roomId}`}
             className="px-3.5 sm:px-4 py-1 sm:py-1.5 rounded-full bg-[#FF2E74] hover:bg-[#ff1a66] active:scale-95 text-white text-xs sm:text-sm font-extrabold tracking-wider uppercase shadow-md shadow-pink-500/30 transition-all flex items-center justify-center cursor-pointer"
           >
             LIVE

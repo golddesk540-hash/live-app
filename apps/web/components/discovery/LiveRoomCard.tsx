@@ -9,7 +9,6 @@ import {
   Share2,
   Copy,
   Check,
-  User,
   Radio,
   ExternalLink,
   ShieldCheck,
@@ -91,7 +90,6 @@ export default function LiveRoomCard({ room, className = '', onShare }: LiveRoom
     : [room.isPk ? 'PK' : 'Live', room.category || 'Fun', 'Chat'];
 
   const roomLink = `/live/room/${room.roomId || room.roomNumber}`;
-  const hostProfileLink = `/user/${room.host?.id || room.host?.poppoId}`;
 
   const handleCardClick = (e: React.MouseEvent) => {
     // If clicking action menu, do nothing
@@ -154,7 +152,7 @@ export default function LiveRoomCard({ room, className = '', onShare }: LiveRoom
 
   const handleOpenHostProfile = (e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(hostProfileLink);
+    router.push(roomLink);
   };
 
   return (
@@ -269,18 +267,6 @@ export default function LiveRoomCard({ room, className = '', onShare }: LiveRoom
                 >
                   <Radio className="w-3.5 h-3.5 text-pink-400" />
                   <span>Open Room</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    setMenuOpen(false);
-                    handleOpenHostProfile(e);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-white hover:bg-white/10 rounded-xl transition-colors text-left"
-                >
-                  <User className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Host Profile</span>
                 </button>
 
                 <button
