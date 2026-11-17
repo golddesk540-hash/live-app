@@ -12,8 +12,8 @@ export default function LivePage({
 }: {
   searchParams?: { tab?: string };
 }) {
-  const tab = (searchParams?.tab === 'following' || searchParams?.tab === 'new' || searchParams?.tab === 'pk')
-    ? searchParams.tab
+  const tab = (searchParams?.tab === 'following' || searchParams?.tab === 'new')
+    ? (searchParams.tab as any)
     : 'explore';
 
   return (

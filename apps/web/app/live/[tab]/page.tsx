@@ -11,9 +11,6 @@ export function generateStaticParams() {
     { tab: 'explore' },
     { tab: 'following' },
     { tab: 'new' },
-    { tab: 'pk' },
-    { tab: 'party' },
-    { tab: 'near' },
   ];
 }
 
@@ -22,9 +19,6 @@ export function generateMetadata({ params }: { params: { tab: string } }) {
     explore: 'Explore Live Streams | Popo Live',
     following: 'Followed Streamers | Popo Live',
     new: 'New Broadcasters | Popo Live',
-    pk: 'Live PK Battles | Popo Live',
-    party: 'Party Rooms & Voice Chat | Popo Live',
-    near: 'Near (Location) | Popo Live',
   };
   return {
     title: titles[params.tab] || 'Popo Live Discovery',
@@ -32,7 +26,7 @@ export function generateMetadata({ params }: { params: { tab: string } }) {
 }
 
 export default function LiveTabRoute({ params }: { params: { tab: string } }) {
-  const validTabs: DiscoveryTab[] = ['explore', 'following', 'new', 'pk', 'party', 'near'];
+  const validTabs: DiscoveryTab[] = ['explore', 'following', 'new'];
   if (!validTabs.includes(params.tab as DiscoveryTab)) {
     notFound();
   }

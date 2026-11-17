@@ -56,15 +56,13 @@ import {
   Wallet,
 } from 'lucide-react';
 import LiveRoomCard from './LiveRoomCard';
-import PartyRoomCard, { PartyRoomItem } from './PartyRoomCard';
 import FollowingUserCard, { FollowedUserItem } from './FollowingUserCard';
-import NearScreen from './NearScreen';
 import DiscoveryBannerCarousel from './DiscoveryBannerCarousel';
 import RankDoorSection from './RankDoorSection';
 import RankingPreviewSection from './RankingPreviewSection';
 import { NEAR_FEATURE_ENABLED } from '@/lib/featureFlags';
 
-export type DiscoveryTab = 'explore' | 'following' | 'new' | 'pk' | 'party' | 'near';
+export type DiscoveryTab = 'explore' | 'following' | 'new';
 
 interface RoomItem {
   roomId: string;
@@ -208,7 +206,7 @@ interface FollowingFeedData {
 }
 
 interface DiscoveryShellProps {
-  initialTab?: DiscoveryTab;
+  initialTab?: DiscoveryTab | string;
 }
 
 export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) {
@@ -219,7 +217,9 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
   const unreadNotifications = useUnreadNotificationsCount();
   const [isPending, startTransition] = useTransition();
 
-  const [activeTab, setActiveTab] = useState<DiscoveryTab>(initialTab);
+  const validatedInitialTab: DiscoveryTab =
+    initialTab === 'following' || initialTab === 'new' ? initialTab : 'explore';
+  const [activeTab, setActiveTab] = useState<DiscoveryTab>(validatedInitialTab);
   const [selectedCountry, setSelectedCountry] = useState<string>(
     searchParams.get('country')?.toUpperCase() || 'ALL'
   );
@@ -234,18 +234,9 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
   const [exploreRooms, setExploreRooms] = useState<RoomItem[]>([]);
   const [followingData, setFollowingData] = useState<FollowingFeedData | null>(null);
   const [newCreators, setNewCreators] = useState<NewCreatorItem[]>([]);
-  const [pkBattles, setPkBattles] = useState<PkBattleItem[]>([]);
-  const [partyRooms, setPartyRooms] = useState<PartyRoomItem[]>([]);
-  const [pkCounts, setPkCounts] = useState<{ active: number; upcoming: number; completed: number; total: number }>({
-    active: 0,
-    upcoming: 0,
-    completed: 0,
-    total: 0,
-  });
 
   // Filter chips
   const [newFilter, setNewFilter] = useState<'all' | 'live' | 'verified'>('all');
-  const [pkStatusFilter, setPkStatusFilter] = useState<'all' | 'active' | 'upcoming' | 'completed'>('all');
 
   // User auth state
   const [user, setUser] = useState<any | null>(null);
@@ -256,9 +247,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
   useEffect(() => {
     if (pathname.includes('/live/following')) setActiveTab('following');
     else if (pathname.includes('/live/new')) setActiveTab('new');
-    else if (pathname.includes('/live/pk')) setActiveTab('pk');
-    else if (pathname.includes('/live/party') || pathname === '/party') setActiveTab('party');
-    else if (pathname.includes('/live/near') || pathname === '/near') setActiveTab('near');
     else if (pathname.includes('/live/explore') || pathname === '/live') setActiveTab('explore');
   }, [pathname]);
 
@@ -323,23 +311,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
             const data = await res.json();
             if (isMounted) setNewCreators(data.creators || []);
           }
-        } else if (activeTab === 'pk') {
-          const url = `/api/discovery/pk?status=${pkStatusFilter}${countryParam}`;
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            if (isMounted) {
-              setPkBattles(data.battles || []);
-              if (data.counts) setPkCounts(data.counts);
-            }
-          }
-        } else if (activeTab === 'party') {
-          const url = `/api/discovery/party?q=${encodeURIComponent(searchQuery)}${countryParam}`;
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            if (isMounted) setPartyRooms(data.rooms || []);
-          }
         }
       } catch (err) {
         console.error('Error fetching discovery tab data:', err);
@@ -350,7 +321,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
 
     loadTabData();
     return () => { isMounted = false; };
-  }, [activeTab, searchQuery, selectedCountry, newFilter, pkStatusFilter]);
+  }, [activeTab, searchQuery, selectedCountry, newFilter]);
 
   const handleTabChange = (tab: DiscoveryTab) => {
     if (tab === activeTab) return;
@@ -388,7 +359,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
     { id: 'explore', label_en: 'Explore', label_ur: 'دریافت' },
     { id: 'following', label_en: 'Following', label_ur: 'فالوئنگ' },
     { id: 'new', label_en: 'New', label_ur: 'نئے' },
-    { id: 'pk', label_en: 'PK', label_ur: 'پی کے' },
   ];
 
   // Filtered country list for modal
@@ -477,40 +447,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
             <span>{isUr ? 'کوائنز لیں' : 'Get Coins'}</span>
           </Link>
 
-          <Link
-            href="/inbox"
-            data-testid="discovery-header-inbox-link"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-semibold transition-colors"
-          >
-            <MessageSquare className="w-3.5 h-3.5 text-[#FF2E74]" />
-            <span>{isUr ? 'ان باکس' : 'Inbox'}</span>
-          </Link>
 
-          <Link
-            href="/square"
-            data-testid="discovery-header-square-link"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-semibold transition-colors"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-pink-400" />
-            <span>{isUr ? 'اسکوائر' : 'Square'}</span>
-          </Link>
-
-          <Link
-            href="/notifications"
-            data-testid="discovery-header-notifications-link"
-            aria-label="Notifications"
-            className="relative flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/85 hover:text-white transition-colors"
-          >
-            <Bell className="w-4 h-4 text-[#FF6BA3]" />
-            {unreadNotifications > 0 && (
-              <span
-                data-testid="discovery-notifications-badge"
-                className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#FF1A6C] text-white text-[9px] font-black flex items-center justify-center border border-[#120B24]"
-              >
-                {unreadNotifications}
-              </span>
-            )}
-          </Link>
 
           <Link
             href="/download"
@@ -561,243 +498,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                     <span>{isUr ? 'میری پروفائل' : 'My Profile'}</span>
                   </Link>
 
-                  <Link
-                    href="/account"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <Shield className="w-3.5 h-3.5 text-blue-400" />
-                    <span>{isUr ? 'ویب اکاؤنٹ' : 'Web Account'}</span>
-                  </Link>
 
-                  {(user.is_staff || user.role === 'staff' || user.role === 'admin') && (
-                    <Link
-                      href="/staff"
-                      onClick={() => setShowUserMenu(false)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-fuchsia-400 hover:bg-fuchsia-500/10 transition-colors font-bold"
-                    >
-                      <Shield className="w-3.5 h-3.5 text-fuchsia-400" />
-                      <span>{isUr ? 'اسٹاف پریویو' : 'Staff Preview'}</span>
-                    </Link>
-                  )}
-
-                  <Link
-                    href="/inbox"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5 text-[#FF2E74]" />
-                    <span>{isUr ? 'ان باکس اور پیغامات' : 'Inbox & Chats'}</span>
-                  </Link>
-
-                  <Link
-                    href="/system-notices"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <Bell className="w-3.5 h-3.5 text-amber-400" />
-                    <span>{isUr ? 'سسٹم نوٹس' : 'System Notices'}</span>
-                  </Link>
-
-                  <Link
-                    href="/notifications"
-                    data-testid="discovery-menu-notifications"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Heart className="w-3.5 h-3.5 text-[#FF2E74]" />
-                      <span>{isUr ? 'سرگرمیاں اور اطلاعات' : 'Notifications'}</span>
-                    </span>
-                    {unreadNotifications > 0 && (
-                      <span className="px-1.5 py-0.5 rounded-full bg-[#FF1A6C] text-white text-[10px] font-black">
-                        {unreadNotifications}
-                      </span>
-                    )}
-                  </Link>
-
-                  <Link
-                    href="/square"
-                    data-testid="discovery-menu-square"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-pink-400" />
-                    <span>{isUr ? 'اسکوائر پوسٹس' : 'Square Posts'}</span>
-                  </Link>
-
-                  <Link
-                    href="/square/discovery"
-                    data-testid="discovery-menu-square-discovery"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <Compass className="w-3.5 h-3.5 text-[#FF4D8D]" />
-                    <span>{isUr ? 'اسکوائر ڈسکوری' : 'Square Discovery'}</span>
-                  </Link>
-
-                  <Link
-                    href="/square/create"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <Camera className="w-3.5 h-3.5 text-[#FF2E74]" />
-                    <span>{isUr ? 'پوسٹ بنائیں' : 'Create Post'}</span>
-                  </Link>
-
-                  <Link
-                    href="/fan-club"
-                    data-testid="discovery-menu-fan-club"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <Crown className="w-3.5 h-3.5 text-amber-400" />
-                    <span>{isUr ? 'فین کلب' : 'Fan Club'}</span>
-                  </Link>
-
-                  <Link
-                    href="/invites"
-                    data-testid="discovery-menu-invites"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <UserPlus className="w-3.5 h-3.5 text-[#FF4D8D]" />
-                    <span>{isUr ? 'دوستوں کو مدعو کریں' : 'Invite Friends'}</span>
-                  </Link>
-
-                  <Link
-                    href="/admin"
-                    data-testid="discovery-menu-admin-operations"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <Shield className="w-3.5 h-3.5 text-pink-400" />
-                    <span>{isUr ? 'ایڈمن آپریشنز' : 'Admin Operations'}</span>
-                  </Link>
-
-                  <Link
-                    href="/withdrawals"
-                    data-testid="discovery-menu-withdrawals"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <Wallet className="w-3.5 h-3.5 text-pink-400" />
-                    <span>{isUr ? 'نکاسی' : 'Withdrawals'}</span>
-                  </Link>
-
-                  <Link
-                    href="/coin-seller"
-                    data-testid="discovery-menu-coin-seller"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <Coins className="w-3.5 h-3.5 text-amber-300" />
-                    <span>{isUr ? 'کوائن سیلر' : 'Coin Seller'}</span>
-                  </Link>
-
-                  <Link
-                    href="/agent-earnings"
-                    data-testid="discovery-menu-agent-earnings"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <Coins className="w-3.5 h-3.5 text-amber-300" />
-                    <span>{isUr ? 'ایجنٹ کمائی' : 'Agent Earnings'}</span>
-                  </Link>
-
-                  <Link
-                    href="/agency-management"
-                    data-testid="discovery-menu-agency-management"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <Building2 className="w-3.5 h-3.5 text-[#FF4D8D]" />
-                    <span>{isUr ? 'ایجنسی مینجمنٹ' : 'Agency Management'}</span>
-                  </Link>
-
-                  <Link
-                    href="/event-leaderboard"
-                    data-testid="discovery-menu-event-leaderboard"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <Calendar className="w-3.5 h-3.5 text-[#FF4D8D]" />
-                    <span>{isUr ? 'ایونٹ لیڈر بورڈ' : 'Event Leaderboard'}</span>
-                  </Link>
-
-                  <Link
-                    href="/host-rankings"
-                    data-testid="discovery-menu-host-rankings"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <Trophy className="w-3.5 h-3.5 text-amber-300" />
-                    <span>{isUr ? 'ہوسٹ رینکنگ' : 'Host Rankings'}</span>
-                  </Link>
-
-                  <Link
-                    href="/new-host-pack"
-                    data-testid="discovery-menu-new-host-pack"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                    <span>{isUr ? 'نیو ہوسٹ پیک' : 'New-Host Pack'}</span>
-                  </Link>
-
-                  <Link
-                    href="/task-level"
-                    data-testid="discovery-menu-task-level"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <Trophy className="w-3.5 h-3.5 text-amber-300" />
-                    <span>{isUr ? 'ٹاسک لیول' : 'Task Level'}</span>
-                  </Link>
-
-                  <Link
-                    href="/daily-tasks"
-                    data-testid="discovery-menu-daily-tasks"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <ListTodo className="w-3.5 h-3.5 text-[#FF4D8D]" />
-                    <span>{isUr ? 'روزانہ کے ٹاسک' : 'Daily Host Tasks'}</span>
-                  </Link>
-
-                  <Link
-                    href="/earning-identity"
-                    data-testid="discovery-menu-earning-identity"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5 text-amber-300" />
-                    <span>{isUr ? 'کمائی کی شناخت' : 'Earning Identity'}</span>
-                  </Link>
-
-                  <Link
-                    href="/video-call"
-                    data-testid="discovery-menu-video-call-off"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-white/70 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <span className="flex items-center gap-2">
-                      <VideoOff className="w-3.5 h-3.5 text-purple-300/75" />
-                      <span>{isUr ? '1-to-1 ویڈیو کال' : '1-to-1 Video Call'}</span>
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded-full bg-[#FF1A6C]/20 border border-[#FF1A6C]/45 text-[9px] font-black text-[#FF6BA3]">
-                      OFF
-                    </span>
-                  </Link>
-
-                  <Link
-                    href="/settings"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <Settings className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{isUr ? 'سیٹنگز' : 'Settings'}</span>
-                  </Link>
 
                   <Link
                     href="/help"
@@ -861,11 +562,8 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
 
               {[
                 { id: 'explore', label_en: 'Explore', label_ur: 'دریافت', icon: Compass, count: 'HOT' },
-                { id: 'party', label_en: 'Party Rooms', label_ur: 'پارٹی رومز', icon: Users, count: '9 SEATS' },
                 { id: 'following', label_en: 'Following', label_ur: 'فالوئنگ', icon: Heart, count: null },
                 { id: 'new', label_en: 'New Streamers', label_ur: 'نئے براڈکاسٹرز', icon: Sparkles, count: 'NEW' },
-                { id: 'pk', label_en: 'PK Battles', label_ur: 'پی کے مقابلے', icon: Swords, count: 'LIVE' },
-                { id: 'near', label_en: 'Near (Location)', label_ur: 'قریبی براڈکاسٹرز', icon: MapPin, count: 'OFF' },
               ].map((item) => {
                 const isSelected = activeTab === item.id;
                 const IconComponent = item.icon;
@@ -888,8 +586,6 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                       <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
                         item.count === 'HOT'
                           ? 'bg-[#FF2E74] text-white'
-                          : item.count === 'OFF'
-                          ? 'bg-zinc-800 text-zinc-400 border border-zinc-700/60'
                           : 'bg-purple-500/20 text-purple-300'
                       }`}>
                         {item.count}
@@ -902,26 +598,13 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
 
             <div className="space-y-1 pt-2 border-t border-white/5">
               <span className="text-[11px] font-bold text-white/40 uppercase tracking-wider px-3 block mb-2">
-                {isUr ? 'پلیٹ فارم' : 'Platform'}
+                {isUr ? 'خدمات' : 'Services'}
               </span>
 
               {[
-                { label_en: 'Admin Operations', label_ur: 'ایڈمن آپریشنز', icon: Shield, href: '/admin' },
-                { label_en: 'Withdrawals', label_ur: 'نکاسی', icon: Wallet, href: '/withdrawals' },
-                { label_en: 'Coin Seller', label_ur: 'کوائن سیلر', icon: Coins, href: '/coin-seller' },
-                { label_en: 'Agent Earnings', label_ur: 'ایجنٹ کمائی', icon: Coins, href: '/agent-earnings' },
-                { label_en: 'Agency Management', label_ur: 'ایجنسی مینجمنٹ', icon: Building2, href: '/agency-management' },
-                { label_en: 'Event Leaderboard', label_ur: 'ایونٹ لیڈر بورڈ', icon: Calendar, href: '/event-leaderboard' },
-                { label_en: 'Host Rankings', label_ur: 'ہوسٹ رینکنگ', icon: Trophy, href: '/host-rankings' },
-                { label_en: 'New-Host Pack', label_ur: 'نیو ہوسٹ پیک', icon: Sparkles, href: '/new-host-pack' },
-                { label_en: 'Task Level', label_ur: 'ٹاسک لیول', icon: Trophy, href: '/task-level' },
-                { label_en: 'Daily Host Tasks', label_ur: 'روزانہ کے ٹاسک', icon: ListTodo, href: '/daily-tasks' },
-                { label_en: 'Earning Identity', label_ur: 'کمائی کی شناخت', icon: ShieldCheck, href: '/earning-identity' },
-                { label_en: 'Square Discovery', label_ur: 'اسکوائر ڈسکوری', icon: Compass, href: '/square/discovery' },
                 { label_en: 'Agency Portal', label_ur: 'ایجنسی پورٹل', icon: Trophy, href: '/agency' },
                 { label_en: 'Recharge Coins', label_ur: 'کوائنز ریچارج', icon: Coins, href: '/recharge' },
                 { label_en: 'Help & Support', label_ur: 'مدد اور سوالات', icon: HelpCircle, href: '/help' },
-                { label_en: 'Staff Preview', label_ur: 'اسٹاف پریویو', icon: Shield, href: '/staff' },
               ].map((item) => (
                 <Link
                   key={item.href}
@@ -935,87 +618,45 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
             </div>
 
           </div>
-
-          <div className="p-4 rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-950/40 to-pink-900/20 border border-white/10 text-center space-y-2">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#FF2E74] to-[#A855F7] flex items-center justify-center mx-auto text-white shadow-lg shadow-pink-500/30">
-              <Radio className="w-5 h-5 animate-pulse" />
-            </div>
-            <h4 className="text-xs font-extrabold text-white">Start Broadcasting</h4>
-            <p className="text-[10px] text-white/60 leading-relaxed">
-              Go live with one click. Gain fans and monetize your talent.
-            </p>
-            <Link
-              href="/live/setup"
-              className="inline-block px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#e91e63] to-[#ff2d55] text-white text-[11px] font-bold shadow-md shadow-pink-500/30 hover:brightness-110 transition-all"
-            >
-              Go Live Setup
-            </Link>
-          </div>
         </aside>
 
         {/* MAIN CONTENT AREA */}
         <main className="flex-1 flex flex-col min-w-0 px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5">
           
-          {/* 3. TABS ROW (Matching 03_06 3-tab bar on Party, hidden on Near to match 03_09, or standard row) */}
-          {activeTab === 'party' ? (
-            <div className="flex items-center justify-center gap-8 sm:gap-14 py-2 sm:py-3 border-b border-white/5">
-              <button
-                type="button"
-                onClick={() => handleTabChange('explore')}
-                className="text-sm sm:text-base font-semibold text-zinc-400 hover:text-white transition-colors px-3 py-1 cursor-pointer"
-              >
-                Live
-              </button>
-              <button
-                type="button"
-                onClick={() => handleTabChange('party')}
-                className="px-6 sm:px-8 py-1.5 sm:py-2 rounded-full bg-gradient-to-r from-fuchsia-700 via-fuchsia-600 to-pink-600 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-fuchsia-900/50 ring-1 ring-fuchsia-400/30 transition-transform active:scale-95 cursor-pointer"
-              >
-                Party
-              </button>
-              <button
-                type="button"
-                onClick={() => handleTabChange('pk')}
-                className="text-sm sm:text-base font-semibold text-zinc-400 hover:text-white transition-colors px-3 py-1 cursor-pointer"
-              >
-                PK
-              </button>
+          {/* 3. TABS ROW */}
+          <div className="flex items-center justify-between pb-1">
+            <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar py-1">
+              {tabs.map((tab) => {
+                const isSelected = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => handleTabChange(tab.id)}
+                    className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 flex-shrink-0 ${
+                      isSelected
+                        ? 'bg-gradient-to-r from-[#C2185B] via-[#D81B60] to-[#9C27B0] text-white shadow-lg shadow-pink-500/30 ring-1 ring-pink-400/30'
+                        : 'text-white/60 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <span>{isUr ? tab.label_ur : tab.label_en}</span>
+                  </button>
+                );
+              })}
             </div>
-          ) : activeTab === 'near' ? null : (
-            <div className="flex items-center justify-between pb-1">
-              <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar py-1">
-                {tabs.map((tab) => {
-                  const isSelected = activeTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => handleTabChange(tab.id)}
-                      className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 flex-shrink-0 ${
-                        isSelected
-                          ? 'bg-gradient-to-r from-[#C2185B] via-[#D81B60] to-[#9C27B0] text-white shadow-lg shadow-pink-500/30 ring-1 ring-pink-400/30'
-                          : 'text-white/60 hover:text-white hover:bg-white/5'
-                      }`}
-                    >
-                      <span>{isUr ? tab.label_ur : tab.label_en}</span>
-                    </button>
-                  );
-                })}
+
+            {loading && (
+              <div className="flex items-center gap-1.5 text-xs text-pink-400">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span className="hidden sm:inline">{isUr ? 'لوڈ ہو رہا ہے...' : 'Updating...'}</span>
               </div>
-
-              {loading && (
-                <div className="flex items-center gap-1.5 text-xs text-pink-400">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span className="hidden sm:inline">{isUr ? 'لوڈ ہو رہا ہے...' : 'Updating...'}</span>
-                </div>
-              )}
-            </div>
-          )}
+            )}
+          </div>
 
           {/* ========================================================================= */}
-          {/* 4. COUNTRY FILTERS BAR (Only on Explore/New/PK tabs, hidden on Party, Following and Near to match 03_06, 03_08 & 03_09 1:1) */}
+          {/* 4. COUNTRY FILTERS BAR (Explore & New tabs, hidden on Following) */}
           {/* ========================================================================= */}
-          {activeTab !== 'party' && activeTab !== 'following' && activeTab !== 'near' && (
+          {activeTab !== 'following' && (
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs">
               {POPULAR_COUNTRY_SHORTCUTS.map((c) => {
                 const isSelected = selectedCountry === c.code;
@@ -1350,236 +991,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
             </div>
           )}
 
-          {/* ========================================================================= */}
-          {/* TAB 4: PK BATTLES DISCOVERY TAB */}
-          {/* ========================================================================= */}
-          {activeTab === 'pk' && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-                {[
-                  { id: 'all', label: `All PK (${pkCounts.total})` },
-                  { id: 'active', label: `⚔️ Live PK (${pkCounts.active})` },
-                  { id: 'upcoming', label: `⏳ Upcoming (${pkCounts.upcoming})` },
-                  { id: 'completed', label: `🏁 Completed (${pkCounts.completed})` },
-                ].map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => setPkStatusFilter(s.id as any)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex-shrink-0 ${
-                      pkStatusFilter === s.id
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
-                        : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
 
-              {loading && pkBattles.length === 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="h-48 rounded-3xl bg-white/5 animate-pulse border border-white/5" />
-                  ))}
-                </div>
-              ) : pkBattles.length === 0 ? (
-                <div className="p-12 text-center rounded-3xl bg-white/[0.02] border border-white/5 space-y-2">
-                  <Swords className="w-8 h-8 text-white/30 mx-auto" />
-                  <p className="text-xs text-white/50">
-                    {selectedCountry !== 'ALL'
-                      ? `No PK battles found for ${getCountryName(selectedCountry)}.`
-                      : `No PK battles found under "${pkStatusFilter}".`}
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {pkBattles.map((b) => (
-                    <div
-                      key={b.id}
-                      className="relative p-4 rounded-3xl bg-gradient-to-br from-[#121324] via-[#170e2b] to-[#121324] border border-purple-500/20 hover:border-pink-500/40 shadow-xl transition-all space-y-4"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white truncate max-w-[200px]">
-                          {b.title}
-                        </span>
-
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${
-                            b.status === 'active'
-                              ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white animate-pulse'
-                              : b.status === 'upcoming'
-                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                              : 'bg-zinc-800 text-zinc-400'
-                          }`}
-                        >
-                          <Swords className="w-3 h-3" />
-                          {b.status === 'active' ? 'Live PK' : b.status}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-3">
-                        {/* Host A */}
-                        <div className="flex-1 flex flex-col items-center text-center space-y-1">
-                          <div className="relative">
-                            <img
-                              src={b.hostA.avatarUrl}
-                              alt={b.hostA.nickname}
-                              className="w-14 h-14 rounded-full object-cover ring-2 ring-pink-500"
-                            />
-                            <span className="absolute -bottom-1 -right-1 text-xs">{b.hostA.flagEmoji}</span>
-                          </div>
-                          <p className="text-xs font-bold text-white truncate max-w-[100px]">{b.hostA.nickname}</p>
-                          <span className="text-[10px] font-extrabold text-pink-400">
-                            {b.hostA.pointsFormatted} pts
-                          </span>
-                        </div>
-
-                        {/* Middle VS Graphic */}
-                        <div className="shrink-0 flex flex-col items-center justify-center space-y-1">
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center font-black text-xs text-white shadow-lg shadow-pink-500/30">
-                            VS
-                          </div>
-                          <span className="text-[10px] text-zinc-400 font-bold">{b.viewersFormatted}</span>
-                        </div>
-
-                        {/* Host B */}
-                        <div className="flex-1 flex flex-col items-center text-center space-y-1">
-                          <div className="relative">
-                            <img
-                              src={b.hostB.avatarUrl}
-                              alt={b.hostB.nickname}
-                              className="w-14 h-14 rounded-full object-cover ring-2 ring-cyan-400"
-                            />
-                            <span className="absolute -bottom-1 -right-1 text-xs">{b.hostB.flagEmoji}</span>
-                          </div>
-                          <p className="text-xs font-bold text-white truncate max-w-[100px]">{b.hostB.nickname}</p>
-                          <span className="text-[10px] font-extrabold text-cyan-400">
-                            {b.hostB.pointsFormatted} pts
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden flex">
-                        <div
-                          className="bg-gradient-to-r from-pink-500 to-rose-500 h-full"
-                          style={{
-                            width: `${Math.max(15, Math.min(85, ((b.hostA.points || 1) / ((b.hostA.points || 1) + (b.hostB.points || 1))) * 100))}%`,
-                          }}
-                        />
-                        <div className="bg-gradient-to-r from-blue-500 to-cyan-400 flex-1 h-full" />
-                      </div>
-
-                      {b.status === 'active' && b.roomId ? (
-                        <Link
-                          href={`/live/room/${b.roomId}`}
-                          className="w-full py-2 rounded-2xl bg-gradient-to-r from-[#FF2E74] to-[#9C27B0] hover:brightness-110 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-pink-500/25 transition-all"
-                        >
-                          <Radio className="w-3.5 h-3.5 animate-pulse" />
-                          <span>Watch Live PK Battle</span>
-                        </Link>
-                      ) : (
-                        <div className="w-full py-2 text-center text-zinc-500 text-[11px] font-semibold bg-white/5 rounded-2xl">
-                          {b.status === 'upcoming' ? 'Scheduled Broadcast • Starting Soon' : 'Battle Completed'}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ========================================================================= */}
-          {/* TAB 5: PARTY DISCOVERY LIST (1:1 PIXEL MATCH TO 03_06_party_discovery_list.png) */}
-          {/* ========================================================================= */}
-          {activeTab === 'party' && (
-            <div className="w-full max-w-md mx-auto sm:max-w-xl md:max-w-2xl space-y-4 pb-8">
-              {/* Header Status & Quick Refresh */}
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-white/80">Voice Party Rooms</span>
-                  <span className="px-2 py-0.5 rounded-full bg-fuchsia-600/30 text-fuchsia-300 text-[10px] font-black border border-fuchsia-500/30">
-                    9 SEATS
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLoading(true);
-                    fetch(`/api/discovery/party?q=${encodeURIComponent(searchQuery)}`)
-                      .then((r) => r.json())
-                      .then((d) => setPartyRooms(d.rooms || []))
-                      .catch((err) => console.error('Party refresh error:', err))
-                      .finally(() => setLoading(false));
-                  }}
-                  className="flex items-center gap-1.5 text-xs text-fuchsia-400 hover:text-fuchsia-300 transition-colors font-semibold cursor-pointer"
-                >
-                  <Sparkles className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                  <span>Refresh</span>
-                </button>
-              </div>
-
-              {/* Loading Skeleton */}
-              {loading && partyRooms.length === 0 ? (
-                <div className="space-y-3">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between w-full px-3.5 py-3 sm:px-4 sm:py-3.5 rounded-2xl bg-[#14172f]/60 border border-white/5 animate-pulse"
-                    >
-                      <div className="flex items-center gap-3.5 sm:gap-4">
-                        <div className="w-[78px] h-[54px] sm:w-[84px] sm:h-[58px] rounded-xl bg-white/10 shrink-0" />
-                        <div className="space-y-2">
-                          <div className="w-36 h-4 bg-white/10 rounded" />
-                          <div className="w-20 h-3 bg-white/10 rounded" />
-                        </div>
-                      </div>
-                      <div className="w-5 h-5 rounded bg-white/10 shrink-0" />
-                    </div>
-                  ))}
-                </div>
-              ) : partyRooms.length === 0 ? (
-                /* Empty State */
-                <div className="p-10 text-center rounded-3xl bg-white/[0.02] border border-white/5 space-y-3">
-                  <Users className="w-10 h-10 text-white/30 mx-auto" />
-                  <h3 className="text-sm font-bold text-white">No active party rooms found</h3>
-                  <p className="text-xs text-white/50 max-w-sm mx-auto">
-                    Party rooms allow up to 9 participants to chat, play music, and hang out together.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLoading(true);
-                      fetch('/api/discovery/party')
-                        .then((r) => r.json())
-                        .then((d) => setPartyRooms(d.rooms || []))
-                        .finally(() => setLoading(false));
-                    }}
-                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-fuchsia-600 to-pink-500 text-white text-xs font-bold shadow-md hover:brightness-110 cursor-pointer"
-                  >
-                    Reload Party Rooms
-                  </button>
-                </div>
-              ) : (
-                /* Vertical Party Rooms Stack (1:1 with 03_06 reference) */
-                <div className="space-y-3 sm:space-y-3.5">
-                  {partyRooms.map((room) => (
-                    <PartyRoomCard key={room.id} room={room} />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* ========================================================================= */}
-          {/* TAB 6: NEAR (DEFAULT OFF) — STRICT MATCH TO 03_09_near_default_off.png */}
-          {/* ========================================================================= */}
-          {activeTab === 'near' && (
-            <div className="w-full flex justify-center py-2">
-              <NearScreen onBack={() => handleTabChange('explore')} />
-            </div>
-          )}
 
         </main>
       </div>
@@ -1721,69 +1133,7 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
         </div>
       )}
 
-      {/* 6. MOBILE BOTTOM NAVIGATION */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0c0e1e]/95 backdrop-blur-xl border-t border-white/10 h-16 px-4 flex items-center justify-around">
-        <button
-          onClick={() => handleTabChange('explore')}
-          className={`flex flex-col items-center gap-1 transition-colors ${
-            activeTab === 'explore' ? 'text-[#FF2E74]' : 'text-white/40 hover:text-white'
-          }`}
-        >
-          <div className={`p-1 rounded-full ${activeTab === 'explore' ? 'bg-pink-500/10' : ''}`}>
-            <Compass className="w-5 h-5" />
-          </div>
-          <span className="text-[10px] font-bold">{isUr ? 'دریافت' : 'Explore'}</span>
-        </button>
 
-        <button
-          onClick={() => handleTabChange('following')}
-          className={`flex flex-col items-center gap-1 transition-colors ${
-            activeTab === 'following' ? 'text-[#FF2E74]' : 'text-white/40 hover:text-white'
-          }`}
-        >
-          <div className={`p-1 rounded-full ${activeTab === 'following' ? 'bg-pink-500/10' : ''}`}>
-            <Heart className="w-5 h-5" />
-          </div>
-          <span className="text-[10px] font-bold">{isUr ? 'فالو' : 'Follow'}</span>
-        </button>
-
-        <Link
-          href="/live/setup"
-          aria-label="Go Live"
-          className="relative -top-4 w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#FF2E74] to-[#A855F7] flex items-center justify-center text-white shadow-xl shadow-pink-500/40 active:scale-95 transition-transform"
-        >
-          <Camera className="w-6 h-6" />
-        </Link>
-
-        <Link
-          href="/inbox"
-          data-testid="discovery-mobile-inbox-link"
-          className="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-colors"
-        >
-          <div className="p-1">
-            <MessageSquare className="w-5 h-5" />
-          </div>
-          <span className="text-[10px] font-semibold">{isUr ? 'پیغامات' : 'Inbox'}</span>
-        </Link>
-
-        <Link
-          href={user ? '/profile' : '/login'}
-          className="flex flex-col items-center gap-1 text-white/40 hover:text-white transition-colors"
-        >
-          {user?.avatarUrl || user?.avatar_url ? (
-            <img
-              src={user.avatarUrl || user.avatar_url}
-              alt="Me"
-              className="w-5 h-5 rounded-full object-cover ring-1 ring-white/30"
-            />
-          ) : (
-            <div className="p-1">
-              <User className="w-5 h-5" />
-            </div>
-          )}
-          <span className="text-[10px] font-semibold">{isUr ? 'میری پروفائل' : 'Me'}</span>
-        </Link>
-      </nav>
 
       {/* SEARCH MODAL (Mobile) */}
       {showSearchModal && (
