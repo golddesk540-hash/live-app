@@ -150,7 +150,7 @@ class _SquareDiscoveryScreenState extends State<SquareDiscoveryScreen> {
                 decoration: BoxDecoration(
                   color: const Color(0xFF170931),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5)),
+                  border: Border.all(color: Colors.redAccent.withOpacity(0.5)),
                 ),
                 child: Column(
                   children: [
@@ -203,7 +203,7 @@ class _SquareDiscoveryScreenState extends State<SquareDiscoveryScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF170931),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.purpleAccent.withValues(alpha: 0.2)),
+        border: Border.all(color: Colors.purpleAccent.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,7 +280,7 @@ class _SquareDiscoveryScreenState extends State<SquareDiscoveryScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFF211042),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.purpleAccent.withValues(alpha: 0.15)),
+                border: Border.all(color: Colors.purpleAccent.withOpacity(0.15)),
               ),
               child: Center(
                 child: Row(

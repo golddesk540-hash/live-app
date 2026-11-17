@@ -18,6 +18,9 @@ class ApiResponse<T> {
     this.exception,
   });
 
+  /// Compatibility getter for error message
+  String? get error => message ?? errorCode;
+
   /// Successful response with parsed payload
   factory ApiResponse.success(T data, {int statusCode = 200, String? message}) {
     return ApiResponse._(

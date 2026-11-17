@@ -8,6 +8,7 @@ class PopoEmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
   final String message;
+  final String? subtitle;
   final String? actionText;
   final VoidCallback? onActionTap;
   final Color? iconColor;
@@ -17,12 +18,15 @@ class PopoEmptyState extends StatelessWidget {
     Key? key,
     required this.icon,
     required this.title,
-    required this.message,
+    String? message,
+    String? subtitle,
     this.actionText,
     this.onActionTap,
     this.iconColor,
     this.padding = const EdgeInsets.all(28.0),
-  }) : super(key: key);
+  }) : message = message ?? subtitle ?? '',
+       subtitle = subtitle ?? message,
+       super(key: key);
 
   @override
   Widget build(BuildContext context) {

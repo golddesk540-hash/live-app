@@ -20,6 +20,9 @@ class ApiClient {
   /// Default singleton instance
   static final ApiClient instance = ApiClient();
 
+  /// Effective base URL from ApiConfig
+  String get baseUrl => ApiConfig.baseUrl;
+
   /// Resolves full target URI
   Uri buildUri(String path, [Map<String, dynamic>? queryParameters]) {
     final baseUrl = ApiConfig.baseUrl;

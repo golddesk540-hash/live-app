@@ -292,7 +292,7 @@ class _CoinSellerScreenState extends State<CoinSellerScreen> with SingleTickerPr
                   colors: [Color(0xFF2E1C0C), Color(0xFF1A1108)],
                 ),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: PopoTheme.gold.withValues(alpha: 0.4)),
+                border: Border.all(color: PopoTheme.gold.withOpacity(0.4)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -304,7 +304,7 @@ class _CoinSellerScreenState extends State<CoinSellerScreen> with SingleTickerPr
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: PopoTheme.gold.withValues(alpha: 0.15),
+                          color: PopoTheme.gold.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -387,7 +387,7 @@ class _CoinSellerScreenState extends State<CoinSellerScreen> with SingleTickerPr
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isSelected ? PopoTheme.gold.withValues(alpha: 0.1) : PopoTheme.surface,
+                      color: isSelected ? PopoTheme.gold.withOpacity(0.1) : PopoTheme.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected ? PopoTheme.gold : PopoTheme.borderSubtle,
@@ -418,7 +418,7 @@ class _CoinSellerScreenState extends State<CoinSellerScreen> with SingleTickerPr
                                     const SizedBox(width: 6),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(color: PopoTheme.success.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(4)),
+                                      decoration: BoxDecoration(color: PopoTheme.success.withOpacity(0.15), borderRadius: BorderRadius.circular(4)),
                                       child: Text('+$bonusCoins BONUS', style: const TextStyle(color: PopoTheme.success, fontSize: 9, fontWeight: FontWeight.bold)),
                                     ),
                                   ],
@@ -426,7 +426,7 @@ class _CoinSellerScreenState extends State<CoinSellerScreen> with SingleTickerPr
                                     const SizedBox(width: 6),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(color: PopoTheme.primary.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(4)),
+                                      decoration: BoxDecoration(color: PopoTheme.primary.withOpacity(0.15), borderRadius: BorderRadius.circular(4)),
                                       child: const Text('HOT', style: TextStyle(color: PopoTheme.primary, fontSize: 9, fontWeight: FontWeight.bold)),
                                     ),
                                   ],
@@ -532,7 +532,7 @@ class _CoinSellerScreenState extends State<CoinSellerScreen> with SingleTickerPr
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: PopoTheme.success.withValues(alpha: 0.15),
+                              color: PopoTheme.success.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: const Text('DELIVERED', style: TextStyle(color: PopoTheme.success, fontSize: 10, fontWeight: FontWeight.bold)),

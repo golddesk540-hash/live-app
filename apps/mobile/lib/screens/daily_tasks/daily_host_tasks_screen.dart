@@ -186,7 +186,7 @@ class _DailyHostTasksScreenState extends State<DailyHostTasksScreen> {
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E0E35),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
+                  border: Border.all(color: Colors.amber.withOpacity(0.5)),
                 ),
                 child: const Row(
                   children: [
@@ -212,7 +212,7 @@ class _DailyHostTasksScreenState extends State<DailyHostTasksScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFF160830),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.purple.withValues(alpha: 0.28)),
+                border: Border.all(color: Colors.purple.withOpacity(0.28)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,8 +269,8 @@ class _DailyHostTasksScreenState extends State<DailyHostTasksScreen> {
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isDone
-                          ? const Color(0xFFFFB800).withValues(alpha: 0.45)
-                          : Colors.purple.withValues(alpha: 0.24),
+                          ? const Color(0xFFFFB800).withOpacity(0.45)
+                          : Colors.purple.withOpacity(0.24),
                     ),
                   ),
                   child: Row(
@@ -334,7 +334,7 @@ class _DailyHostTasksScreenState extends State<DailyHostTasksScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.2),
+                            color: Colors.green.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Text('Claimed', style: TextStyle(color: Colors.greenAccent, fontSize: 11, fontWeight: FontWeight.bold)),

@@ -178,7 +178,7 @@ class _CommentsReportsScreenState extends State<CommentsReportsScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFF16092D),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.purpleAccent.withValues(alpha: 0.25)),
+                    border: Border.all(color: Colors.purpleAccent.withOpacity(0.25)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

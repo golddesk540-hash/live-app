@@ -11,7 +11,7 @@ import '../profile/public_profile_screen.dart';
 import '../host_rankings/host_rankings_screen.dart';
 import '../event_leaderboard/event_leaderboard_screen.dart';
 import '../agency_management/agency_management_screen.dart';
-import '../system_notices/system_notices_screen.dart';
+import '../notices/system_notices_screen.dart';
 
 /// Modal Bottom Sheet displaying Leaderboards and Ranking Doors
 class RankingsBottomSheet extends StatefulWidget {

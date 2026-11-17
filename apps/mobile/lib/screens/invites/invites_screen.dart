@@ -149,7 +149,7 @@ class _InvitesScreenState extends State<InvitesScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF180A33),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.purpleAccent.withValues(alpha: 0.2)),
+        border: Border.all(color: Colors.purpleAccent.withOpacity(0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -257,7 +257,7 @@ class _InvitesScreenState extends State<InvitesScreen> {
           decoration: BoxDecoration(
             color: const Color(0xFF180A33),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.purpleAccent.withValues(alpha: 0.2)),
+            border: Border.all(color: Colors.purpleAccent.withOpacity(0.2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,7 +288,7 @@ class _InvitesScreenState extends State<InvitesScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: isPending ? const Color(0xFF28124D) : Colors.green.withValues(alpha: 0.2),
+                      color: isPending ? const Color(0xFF28124D) : Colors.green.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(

@@ -49,6 +49,9 @@ class PartyRoom {
     this.createdAt,
   });
 
+  /// Host user identifier (maps to party room host or creator)
+  String get hostUserId => id;
+
   factory PartyRoom.fromJson(Map<String, dynamic> json) {
     final rawTags = json['tags'] as List<dynamic>? ?? [];
     final tagsList = rawTags.map((e) => e.toString()).toList();

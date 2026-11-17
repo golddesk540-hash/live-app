@@ -195,7 +195,7 @@ class PushNotificationService {
       if (roomId != null && roomId.isNotEmpty) {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => ViewerRoomScreen(roomNumber: roomId),
+            builder: (_) => ViewerRoomScreen(roomId: roomId),
           ),
         );
       }
@@ -204,7 +204,7 @@ class PushNotificationService {
       if (roomId != null && roomId.isNotEmpty) {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => ViewerRoomScreen(roomNumber: roomId),
+            builder: (_) => ViewerRoomScreen(roomId: roomId),
           ),
         );
       } else {

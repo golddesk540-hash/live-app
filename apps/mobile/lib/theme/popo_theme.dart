@@ -90,7 +90,7 @@ class PopoTheme {
           fontWeight: FontWeight.normal,
         ),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: surface,
         elevation: 4,
         shape: RoundedRectangleBorder(
@@ -98,7 +98,7 @@ class PopoTheme {
           side: const BorderSide(color: borderSubtle, width: 1),
         ),
       ),
-      dialogTheme: DialogThemeData(
+      dialogTheme: DialogTheme(
         backgroundColor: surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),

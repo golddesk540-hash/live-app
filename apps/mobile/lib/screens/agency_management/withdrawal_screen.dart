@@ -377,7 +377,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> with SingleTickerPr
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? PopoTheme.primary.withValues(alpha: 0.15) : PopoTheme.background,
+            color: isSelected ? PopoTheme.primary.withOpacity(0.15) : PopoTheme.background,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: isSelected ? PopoTheme.primary : PopoTheme.borderSubtle),
           ),
@@ -448,7 +448,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> with SingleTickerPr
                 gradient: PopoTheme.goldGradient,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
-                  BoxShadow(color: PopoTheme.gold.withValues(alpha: 0.3), blurRadius: 16, offset: const Offset(0, 4)),
+                  BoxShadow(color: PopoTheme.gold.withOpacity(0.3), blurRadius: 16, offset: const Offset(0, 4)),
                 ],
               ),
               child: Column(
@@ -462,20 +462,20 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> with SingleTickerPr
                     children: [
                       Text('\$${_availableUsd.toStringAsFixed(2)}', style: const TextStyle(color: Colors.black, fontSize: 32, fontWeight: FontWeight.bold)),
                       const SizedBox(width: 8),
-                      Text('USD', style: TextStyle(color: Colors.black.withValues(alpha: 0.7), fontSize: 14, fontWeight: FontWeight.w600)),
+                      Text('USD', style: TextStyle(color: Colors.black.withOpacity(0.7), fontSize: 14, fontWeight: FontWeight.w600)),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '${_availablePoints.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} Points (1,000 pts = \$1 USD)',
-                    style: TextStyle(color: Colors.black.withValues(alpha: 0.8), fontSize: 12),
+                    style: TextStyle(color: Colors.black.withOpacity(0.8), fontSize: 12),
                   ),
                   if (_pendingPoints > 0) ...[
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.15),
+                        color: Colors.black.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -536,7 +536,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> with SingleTickerPr
                     margin: const EdgeInsets.only(bottom: 10),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isSelected ? PopoTheme.primary.withValues(alpha: 0.08) : PopoTheme.surface,
+                      color: isSelected ? PopoTheme.primary.withOpacity(0.08) : PopoTheme.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: isSelected ? PopoTheme.primary : PopoTheme.borderSubtle, width: isSelected ? 1.5 : 1),
                     ),
@@ -572,7 +572,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> with SingleTickerPr
                                     const SizedBox(width: 6),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(color: PopoTheme.cyan.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(4)),
+                                      decoration: BoxDecoration(color: PopoTheme.cyan.withOpacity(0.15), borderRadius: BorderRadius.circular(4)),
                                       child: const Text('DEFAULT', style: TextStyle(color: PopoTheme.cyan, fontSize: 9, fontWeight: FontWeight.bold)),
                                     ),
                                   ],
@@ -717,7 +717,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> with SingleTickerPr
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? PopoTheme.primary.withValues(alpha: 0.15) : PopoTheme.surface,
+          color: isSelected ? PopoTheme.primary.withOpacity(0.15) : PopoTheme.surface,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: isSelected ? PopoTheme.primary : PopoTheme.borderSubtle),
         ),
@@ -803,7 +803,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> with SingleTickerPr
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: statusColor.withValues(alpha: 0.15),
+                              color: statusColor.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(

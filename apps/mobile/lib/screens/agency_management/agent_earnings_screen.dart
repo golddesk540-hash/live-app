@@ -136,7 +136,7 @@ class _AgentEarningsScreenState extends State<AgentEarningsScreen> {
                               Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: PopoTheme.gold.withValues(alpha: 0.15),
+                                  color: PopoTheme.gold.withOpacity(0.15),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(Icons.shield, color: PopoTheme.gold, size: 24),
@@ -157,7 +157,7 @@ class _AgentEarningsScreenState extends State<AgentEarningsScreen> {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                             decoration: BoxDecoration(
-                                              color: PopoTheme.cyan.withValues(alpha: 0.15),
+                                              color: PopoTheme.cyan.withOpacity(0.15),
                                               borderRadius: BorderRadius.circular(4),
                                             ),
                                             child: const Text('COIN SELLER', style: TextStyle(color: PopoTheme.cyan, fontSize: 9, fontWeight: FontWeight.bold)),
@@ -168,7 +168,7 @@ class _AgentEarningsScreenState extends State<AgentEarningsScreen> {
                                     const SizedBox(height: 2),
                                     Text(
                                       'Exchange Rate: 1,000 Points = \$1.00 USD',
-                                      style: TextStyle(color: PopoTheme.textSecondary.withValues(alpha: 0.8), fontSize: 11),
+                                      style: TextStyle(color: PopoTheme.textSecondary.withOpacity(0.8), fontSize: 11),
                                     ),
                                   ],
                                 ),
@@ -186,7 +186,7 @@ class _AgentEarningsScreenState extends State<AgentEarningsScreen> {
                             gradient: PopoTheme.goldGradient,
                             borderRadius: BorderRadius.circular(16),
                             boxShadow: [
-                              BoxShadow(color: PopoTheme.gold.withValues(alpha: 0.25), blurRadius: 16, offset: const Offset(0, 4)),
+                              BoxShadow(color: PopoTheme.gold.withOpacity(0.25), blurRadius: 16, offset: const Offset(0, 4)),
                             ],
                           ),
                           child: Column(
@@ -200,13 +200,13 @@ class _AgentEarningsScreenState extends State<AgentEarningsScreen> {
                                 children: [
                                   Text('\$${availableUsd.toStringAsFixed(2)}', style: const TextStyle(color: Colors.black, fontSize: 34, fontWeight: FontWeight.bold)),
                                   const SizedBox(width: 8),
-                                  Text('USD', style: TextStyle(color: Colors.black.withValues(alpha: 0.7), fontSize: 15, fontWeight: FontWeight.w600)),
+                                  Text('USD', style: TextStyle(color: Colors.black.withOpacity(0.7), fontSize: 15, fontWeight: FontWeight.w600)),
                                 ],
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 '${availablePts.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} Points',
-                                style: TextStyle(color: Colors.black.withValues(alpha: 0.85), fontSize: 13, fontWeight: FontWeight.w500),
+                                style: TextStyle(color: Colors.black.withOpacity(0.85), fontSize: 13, fontWeight: FontWeight.w500),
                               ),
                               const SizedBox(height: 16),
                               Row(
@@ -257,9 +257,9 @@ class _AgentEarningsScreenState extends State<AgentEarningsScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
-                            color: isEligible ? PopoTheme.success.withValues(alpha: 0.1) : PopoTheme.warning.withValues(alpha: 0.1),
+                            color: isEligible ? PopoTheme.success.withOpacity(0.1) : PopoTheme.warning.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: isEligible ? PopoTheme.success.withValues(alpha: 0.3) : PopoTheme.warning.withValues(alpha: 0.3)),
+                            border: Border.all(color: isEligible ? PopoTheme.success.withOpacity(0.3) : PopoTheme.warning.withOpacity(0.3)),
                           ),
                           child: Row(
                             children: [

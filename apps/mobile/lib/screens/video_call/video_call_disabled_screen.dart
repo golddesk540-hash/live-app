@@ -25,7 +25,7 @@ class VideoCallDisabledScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFF180A33),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFFFF1A6C).withValues(alpha: 0.35)),
+              border: Border.all(color: const Color(0xFFFF1A6C).withOpacity(0.35)),
             ),
             child: Column(
               children: const [
@@ -88,7 +88,7 @@ class VideoCallDisabledScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFF16092D),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+              border: Border.all(color: Colors.amber.withOpacity(0.4)),
             ),
             child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
