@@ -23,12 +23,14 @@ export interface HostDailyTaskItem {
 export interface HostTaskLevelData {
   currentLevel: number;
   currentLevelName: string;
+  levelName?: string;
   taskPoints: number;
   minPoints: number;
   targetPoints: number;
   progressRatio: number;
   nextLevel: number | null;
   nextLevelName: string | null;
+  pointsToNext?: number;
   benefits: string[];
   allTiers: Array<{
     levelNumber: number;
@@ -38,15 +40,18 @@ export interface HostTaskLevelData {
     description: string;
     benefits: string[];
   }>;
+  allLevels?: any[];
 }
 
 export interface NewHostPackData {
   id: string;
+  packId?: string;
   title: string;
   description: string;
   rewardPoints: number;
   rewardCoins: number;
   welcomeBadge: string;
+  badgeName?: string;
   guides: Array<{
     id: string;
     title: string;

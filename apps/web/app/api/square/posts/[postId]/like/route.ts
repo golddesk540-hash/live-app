@@ -14,11 +14,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pos
     const body = await req.json().catch(() => ({}));
     if (body.unlike === true) {
       const result = await unlikeSquarePost(postId, user.id);
-      return NextResponse.json({ success: true, ...result });
+      return NextResponse.json({ ...result });
     }
 
     const result = await likeSquarePost(postId, user.id);
-    return NextResponse.json({ success: true, ...result });
+    return NextResponse.json({ ...result });
   } catch (error: any) {
     console.error('Error liking post:', error);
     const status = error.message === 'POST_NOT_FOUND' ? 404 : 500;
@@ -35,7 +35,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ p
     }
 
     const result = await unlikeSquarePost(postId, user.id);
-    return NextResponse.json({ success: true, ...result });
+    return NextResponse.json({ ...result });
   } catch (error: any) {
     console.error('Error unliking post:', error);
     return NextResponse.json({ success: false, error: error.message || 'FAILED_TO_UNLIKE_POST' }, { status: 500 });

@@ -230,7 +230,7 @@ export async function GET(req: NextRequest) {
         walletId: wallet.walletId,
         coins: wallet.coins,
         points: wallet.points,
-        diamonds: wallet.diamondPoints,
+        diamonds: (wallet as any).diamondPoints || 0,
         totalSpentCoins: wallet.totalSpentCoins,
         totalReceivedPoints: wallet.totalReceivedPoints,
       },

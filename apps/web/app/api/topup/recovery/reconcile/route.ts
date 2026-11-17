@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { resolveWalletActor } from '@/lib/walletAuth';
 import { DEFAULT_DEMO_WALLET_USER_ID, getWalletSummary } from '@/lib/wallet';
-import { handleTopupWebhook, mapTopupOrderRow } from '@/lib/topup';
+import { handleTopupWebhook, mapTopupOrderRow, computeWebhookSignatureDigest } from '@/lib/topup';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,14 +84,25 @@ export async function POST(req: NextRequest) {
 
       // If simulateRecovery flag is provided in sandbox/preview
       if (body.simulateRecovery === true && order.providerKey === 'sandbox_verified') {
-        const webhookRes = await handleTopupWebhook({
+        const eventId = `RECOV_EVT_${Date.now()}_${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+        const signature = computeWebhookSignatureDigest({
           providerKey: 'sandbox_verified',
-          eventId: `RECOV_EVT_${Date.now()}_${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+          eventId,
           orderId: order.orderId,
           eventType: 'payment.succeeded',
           amount: order.amount,
           currency: order.currency,
+        });
+
+        const webhookRes = await handleTopupWebhook({
+          providerKey: 'sandbox_verified',
+          eventId,
+          orderId: order.orderId,
+          eventType: 'payment.succeeded' as const,
+          amount: order.amount,
+          currency: order.currency,
           providerPaymentRef: `RECOV_PAY_${Date.now()}`,
+          signature,
           rawPayload: { recovered: true, source: 'purchase_recovery_api' },
         });
 
@@ -136,7 +147,7 @@ export async function POST(req: NextRequest) {
       wallet: {
         coins: freshWallet.coins,
         points: freshWallet.points,
-        diamonds: freshWallet.diamondPoints,
+        diamonds: (freshWallet as any).diamondPoints || 0,
       },
       reconciledAt: new Date().toISOString(),
     });

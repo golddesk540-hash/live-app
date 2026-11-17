@@ -20,7 +20,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ inv
       action,
     });
 
-    return NextResponse.json({ success: true, ...result });
+    return NextResponse.json({ ...result });
   } catch (error: any) {
     console.error('Error responding to fan club invite:', error);
     const status = error.message === 'FORBIDDEN_NOT_INVITEE' ? 403 : error.message === 'INVITE_NOT_FOUND' ? 404 : 500;

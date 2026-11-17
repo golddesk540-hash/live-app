@@ -61,8 +61,8 @@ export async function POST(req: NextRequest) {
       [transactionId]
     );
 
-    if (existingReceipts.rows && existingReceipts.rows.length > 0) {
-      const existing = existingReceipts.rows[0];
+    if (existingReceipts && existingReceipts.length > 0) {
+      const existing = existingReceipts[0];
       const wallet = await getWalletSummary(existing.user_id, true);
       return NextResponse.json({
         success: true,
@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
       [productId]
     );
 
-    if (!pkgRows.rows || pkgRows.rows.length === 0) {
+    if (!pkgRows || pkgRows.length === 0) {
       return NextResponse.json(
         {
           success: false,
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const pkg = mapCoinPackageRow(pkgRows.rows[0]);
+    const pkg = mapCoinPackageRow(pkgRows[0]);
 
     // 4. Resolve or create order
     if (!orderId) {
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
           {
             success: false,
             errorCode: 'ORDER_CREATION_FAILED',
-            error: orderResult.error || 'Failed to create topup order.',
+            error: (orderResult as any).error || 'Failed to create topup order.',
           },
           { status: 500 }
         );
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
       providerKey: 'apple_iap',
       eventId,
       orderId,
-      eventType: 'payment.succeeded',
+      eventType: 'payment.succeeded' as const,
       amount: pkg.priceAmount,
       currency: pkg.currency,
     };

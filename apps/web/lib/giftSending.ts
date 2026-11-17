@@ -1364,7 +1364,7 @@ export async function sendRealTimeGift(params: {
       senderUserId: params.senderUserId,
       giftName: gift.name,
       coinPrice: totalCoins,
-      roomId: stage.roomId || undefined,
+      roomId: stage.liveRoomId || undefined,
     });
   } catch (_) {}
 

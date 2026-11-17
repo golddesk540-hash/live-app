@@ -12,7 +12,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ clu
     }
 
     const result = await leaveFanClub(clubId, user.id);
-    return NextResponse.json({ success: true, ...result });
+    return NextResponse.json({ ...result });
   } catch (error: any) {
     console.error('Error leaving fan club:', error);
     return NextResponse.json({ success: false, error: error.message || 'FAILED_TO_LEAVE_CLUB' }, { status: 500 });

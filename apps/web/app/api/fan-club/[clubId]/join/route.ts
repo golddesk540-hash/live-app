@@ -12,7 +12,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ clu
     }
 
     const result = await joinFanClub(clubId, user.id);
-    return NextResponse.json({ success: true, ...result });
+    return NextResponse.json({ ...result });
   } catch (error: any) {
     console.error('Error joining fan club:', error);
     const status = error.message === 'FAN_CLUB_NOT_FOUND' ? 404 : 500;

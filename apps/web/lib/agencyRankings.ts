@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { query, pool, withTransaction } from '@/lib/db';
+import { query, withTransaction } from '@/lib/db';
 import { getCountryFlag } from '@/lib/countries';
 import { dispatchPushNotification } from '@/lib/pushNotifications';
 

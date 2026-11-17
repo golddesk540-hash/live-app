@@ -124,9 +124,15 @@ export async function getUserActiveDeviceTokens(userId: string): Promise<DeviceT
  * Checks notification settings, block lists, fetches tokens, dispatches, and logs
  */
 export async function dispatchPushNotification(
-  recipientUserId: string,
-  payload: PushNotificationPayload
+  recipientUserIdOrParams: string | { userId: string; payload: PushNotificationPayload },
+  maybePayload?: PushNotificationPayload
 ): Promise<PushDispatchResult> {
+  const recipientUserId = typeof recipientUserIdOrParams === 'string'
+    ? recipientUserIdOrParams
+    : recipientUserIdOrParams.userId;
+  const payload: PushNotificationPayload = (typeof recipientUserIdOrParams === 'string'
+    ? maybePayload!
+    : recipientUserIdOrParams.payload) || { type: 'system_notice', title: '', body: '', data: {}, senderId: undefined };
   const { type, title, body, data, senderId } = payload;
 
   // 1. Check user notification settings
