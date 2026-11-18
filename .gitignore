@@ -64,6 +64,7 @@ apps/mobile/lib/screens_backup_*/
 # Android Keystore & Release Signing Secrets
 *.keystore
 *.jks
+*.apk
 **/android/key.properties
 **/android/app/key.properties
 

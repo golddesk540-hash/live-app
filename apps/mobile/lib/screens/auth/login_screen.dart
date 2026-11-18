@@ -74,8 +74,9 @@ class _LoginScreenState extends State<LoginScreen> {
           AuthState.instance.currentUser?['isProfileCompleted'] == true;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (_) =>
-              isCompleted ? const AppShell() : const CompleteProfileScreen(),
+          builder: (_) => isCompleted
+              ? const AppShell(initialIndex: 1)
+              : const CompleteProfileScreen(),
         ),
         (route) => false,
       );
@@ -94,6 +95,30 @@ class _LoginScreenState extends State<LoginScreen> {
           MaterialPageRoute(builder: (_) => const AgeGateScreen()),
         );
       }
+    }
+  }
+
+  Future<void> _handleFixtureLogin() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final success = await AuthState.instance.loginWithFixtureUser();
+
+    if (!mounted) return;
+
+    if (success) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const AppShell(initialIndex: 1)),
+        (route) => false,
+      );
+    } else {
+      setState(() {
+        _isLoading = false;
+        _errorMessage =
+            AuthState.instance.errorMessage ?? 'Fixture login failed.';
+      });
     }
   }
 
@@ -410,6 +435,38 @@ class _LoginScreenState extends State<LoginScreen> {
                         text: PopoStrings.get('login_btn'),
                         isLoading: _isLoading,
                         onPressed: _isLoading ? null : _handleLogin,
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Quick Fixture Login Button
+                      OutlinedButton.icon(
+                        icon: const Icon(
+                          Icons.stars_rounded,
+                          color: PopoTheme.primary,
+                          size: 20,
+                        ),
+                        label: Text(
+                          PopoStrings.get('login_fixture_user'),
+                          style: const TextStyle(
+                            color: PopoTheme.textPrimary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 16,
+                          ),
+                          side: BorderSide(
+                            color: PopoTheme.primary.withOpacity(0.55),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          backgroundColor: PopoTheme.primary.withOpacity(0.08),
+                        ),
+                        onPressed: _isLoading ? null : _handleFixtureLogin,
                       ),
                       const SizedBox(height: 12),
 

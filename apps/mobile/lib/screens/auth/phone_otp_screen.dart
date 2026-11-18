@@ -72,7 +72,14 @@ const List<CountryDialCode> _kPopularDialCodes = [
 
 /// Premium Phone Number & OTP Verification Screen
 class PhoneOtpScreen extends StatefulWidget {
-  const PhoneOtpScreen({Key? key}) : super(key: key);
+  final String? initialPhone;
+  final String? nickname;
+
+  const PhoneOtpScreen({
+    Key? key,
+    this.initialPhone,
+    this.nickname,
+  }) : super(key: key);
 
   @override
   State<PhoneOtpScreen> createState() => _PhoneOtpScreenState();
@@ -90,6 +97,14 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
   // Countdown timer state
   Timer? _countdownTimer;
   int _secondsRemaining = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialPhone != null && widget.initialPhone!.isNotEmpty) {
+      _phoneController.text = widget.initialPhone!;
+    }
+  }
 
   @override
   void dispose() {
@@ -198,8 +213,12 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
           AuthState.instance.currentUser?['isProfileCompleted'] == true;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (_) =>
-              isCompleted ? const AppShell() : const CompleteProfileScreen(),
+          builder: (_) => isCompleted
+              ? const AppShell(initialIndex: 1)
+              : CompleteProfileScreen(
+                  initialNickname: widget.nickname,
+                  initialPhone: _formattedFullPhone,
+                ),
         ),
         (route) => false,
       );
@@ -467,6 +486,42 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
                           icon: Icons.send_rounded,
                         ),
                       ] else ...[
+                        // Fixture OTP Hint Banner
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: PopoTheme.primary.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: PopoTheme.primary.withOpacity(0.35),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.key_rounded,
+                                color: PopoTheme.primary,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  PopoStrings.get('fixture_otp_hint'),
+                                  style: const TextStyle(
+                                    color: PopoTheme.primary,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
                         // 6-Digit OTP Field
                         TextField(
                           controller: _otpController,

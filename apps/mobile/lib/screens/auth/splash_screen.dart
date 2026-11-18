@@ -72,8 +72,9 @@ class _SplashScreenState extends State<SplashScreen>
           AuthState.instance.currentUser?['isProfileCompleted'] == true;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) =>
-              isCompleted ? const AppShell() : const CompleteProfileScreen(),
+          builder: (_) => isCompleted
+              ? const AppShell(initialIndex: 1)
+              : const CompleteProfileScreen(),
         ),
       );
     } else {

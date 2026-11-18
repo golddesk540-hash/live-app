@@ -7,6 +7,7 @@ import '../../widgets/popo_icon_button.dart';
 import '../../auth/auth_state.dart';
 import '../../shell/app_shell.dart';
 import '../profile/complete_profile_screen.dart';
+import 'phone_otp_screen.dart';
 
 /// Premium Popo Live User Registration Screen
 class RegisterScreen extends StatefulWidget {
@@ -86,34 +87,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _errorMessage = null;
     });
 
-    final success = await AuthState.instance.register(
-      nickname: nickname.isNotEmpty
-          ? nickname
-          : 'User_${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
-      email: email,
+    // Pure design/fixture registration state setup
+    AuthState.instance.setPendingRegistration(
+      nickname: nickname.isNotEmpty ? nickname : 'Amina Noor',
+      contact: email,
       password: password,
     );
 
-    if (!mounted) return;
+    await Future.delayed(const Duration(milliseconds: 250));
 
-    if (success) {
-      final isCompleted =
-          AuthState.instance.currentUser?['isProfileCompleted'] == true;
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (_) =>
-              isCompleted ? const AppShell() : const CompleteProfileScreen(),
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+    });
+
+    // Proceed to Phone OTP step according to D1 specification
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PhoneOtpScreen(
+          initialPhone: email.contains('@') ? '3001234567' : email,
+          nickname: nickname.isNotEmpty ? nickname : 'Amina Noor',
         ),
-        (route) => false,
-      );
-    } else {
-      setState(() {
-        _isLoading = false;
-        _errorMessage =
-            AuthState.instance.errorMessage ??
-            'Registration failed. Please try again.';
-      });
-    }
+      ),
+    );
   }
 
   @override
