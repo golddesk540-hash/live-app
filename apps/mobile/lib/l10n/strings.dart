@@ -26,6 +26,10 @@ class PopoStrings {
 
   // Common UI getters
   static String get appName => get('app_name');
+  static String get tabLive => get('tab_live');
+  static String get tabExplore => get('tab_explore');
+  static String get tabSquare => get('tab_square');
+  static String get tabMessage => get('tab_message');
   static String get tabHome => get('tab_home');
   static String get tabParty => get('tab_party');
   static String get tabGoLive => get('tab_go_live');
@@ -47,6 +51,10 @@ class PopoStrings {
   static const Map<String, Map<String, String>> _strings = {
     'en': {
       'app_name': 'Popo Live',
+      'tab_live': 'Live',
+      'tab_explore': 'Explore',
+      'tab_square': 'Square',
+      'tab_message': 'Message',
       'tab_home': 'Home',
       'tab_party': 'Party',
       'tab_go_live': 'Go Live',
@@ -263,6 +271,10 @@ class PopoStrings {
     },
     'ur': {
       'app_name': 'پوپو لائیو',
+      'tab_live': 'لائیو',
+      'tab_explore': 'دریافت',
+      'tab_square': 'اسکوائر',
+      'tab_message': 'پیغامات',
       'tab_home': 'ہوم',
       'tab_party': 'پارٹی',
       'tab_go_live': 'لائیو جائیں',

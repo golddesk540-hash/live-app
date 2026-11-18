@@ -4,19 +4,27 @@ import 'package:flutter/services.dart';
 import '../theme/popo_theme.dart';
 import '../l10n/strings.dart';
 
-/// Premium 5-Tab Bottom Navigation Bar for Popo Live
-/// Tabs: [Home] [Party] [Go Live (Center CTA)] [Inbox] [Me]
+/// Premium 5-Destination Bottom Navigation Bar for Popo Live (Phase 2 - D1)
+/// Destinations in exact order:
+/// [0: Live] → [1: Explore] → [2: Square] → [3: Message] → [4: Me]
+///
+/// Clean, uniform bottom navigation without a raised or floating Go Live button.
 class PopoBottomNavigation extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTabSelected;
+  final int messageBadgeCount;
   final int inboxBadgeCount;
 
   const PopoBottomNavigation({
     Key? key,
     required this.currentIndex,
     required this.onTabSelected,
+    this.messageBadgeCount = 0,
     this.inboxBadgeCount = 0,
   }) : super(key: key);
+
+  int get _effectiveMessageBadge =>
+      messageBadgeCount > 0 ? messageBadgeCount : inboxBadgeCount;
 
   void _handleTap(int index) {
     if (currentIndex != index) {
@@ -46,32 +54,42 @@ class PopoBottomNavigation extends StatelessWidget {
       padding: EdgeInsets.only(
         top: 8,
         bottom: bottomPadding > 0 ? bottomPadding : 10,
-        left: 12,
-        right: 12,
+        left: 8,
+        right: 8,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
+          // 0: Live
           _buildNavItem(
             index: 0,
-            icon: Icons.explore_outlined,
-            activeIcon: Icons.explore_rounded,
-            label: PopoStrings.tabHome,
+            icon: Icons.live_tv_outlined,
+            activeIcon: Icons.live_tv_rounded,
+            label: PopoStrings.tabLive,
           ),
+          // 1: Explore / Sparkle
           _buildNavItem(
             index: 1,
-            icon: Icons.celebration_outlined,
-            activeIcon: Icons.celebration_rounded,
-            label: PopoStrings.tabParty,
+            icon: Icons.auto_awesome_outlined,
+            activeIcon: Icons.auto_awesome_rounded,
+            label: PopoStrings.tabExplore,
           ),
-          _buildCenterGoLiveButton(),
+          // 2: Square
+          _buildNavItem(
+            index: 2,
+            icon: Icons.grid_view_outlined,
+            activeIcon: Icons.grid_view_rounded,
+            label: PopoStrings.tabSquare,
+          ),
+          // 3: Message / Chat
           _buildNavItem(
             index: 3,
-            icon: Icons.mail_outline_rounded,
-            activeIcon: Icons.mail_rounded,
-            label: PopoStrings.tabInbox,
-            badgeCount: inboxBadgeCount,
+            icon: Icons.chat_bubble_outline_rounded,
+            activeIcon: Icons.chat_bubble_rounded,
+            label: PopoStrings.tabMessage,
+            badgeCount: _effectiveMessageBadge,
           ),
+          // 4: Me / Bag
           _buildNavItem(
             index: 4,
             icon: Icons.person_outline_rounded,
@@ -99,7 +117,7 @@ class PopoBottomNavigation extends StatelessWidget {
       highlightColor: Colors.transparent,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        constraints: const BoxConstraints(minWidth: 54, minHeight: 46),
+        constraints: const BoxConstraints(minWidth: 56, minHeight: 48),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -113,7 +131,9 @@ class PopoBottomNavigation extends StatelessWidget {
                   curve: Curves.easeOutCubic,
                   child: Icon(
                     isSelected ? activeIcon : icon,
-                    color: isSelected ? PopoTheme.primary : PopoTheme.textSecondary,
+                    color: isSelected
+                        ? PopoTheme.primary
+                        : PopoTheme.textSecondary,
                     size: 22,
                   ),
                 ),
@@ -122,11 +142,30 @@ class PopoBottomNavigation extends StatelessWidget {
                     top: -2,
                     right: -6,
                     child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 14,
+                        minHeight: 14,
+                      ),
+                      decoration: BoxDecoration(
                         color: PopoTheme.primary,
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(7),
+                        border: Border.all(
+                          color: PopoTheme.surface,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Text(
+                        badgeCount > 99 ? '99+' : '$badgeCount',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ),
@@ -138,68 +177,20 @@ class PopoBottomNavigation extends StatelessWidget {
               style: TextStyle(
                 color: isSelected ? PopoTheme.primary : PopoTheme.textSecondary,
                 fontSize: 10,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 letterSpacing: 0.2,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCenterGoLiveButton() {
-    final isSelected = currentIndex == 2;
-
-    return InkWell(
-      onTap: () => _handleTap(2),
-      borderRadius: BorderRadius.circular(30),
-      splashColor: PopoTheme.primaryDark.withOpacity(0.3),
-      highlightColor: Colors.transparent,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        constraints: const BoxConstraints(minWidth: 54),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
+            const SizedBox(height: 2),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: isSelected ? 4 : 0,
+              height: isSelected ? 4 : 0,
               decoration: BoxDecoration(
-                gradient: PopoTheme.primaryGradient,
+                color: isSelected ? PopoTheme.primary : Colors.transparent,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected
-                      ? Colors.white
-                      : Colors.white.withOpacity(0.2),
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: PopoTheme.primary.withOpacity(0.45),
-                    blurRadius: 10,
-                    spreadRadius: 1,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.videocam_rounded,
-                color: Colors.white,
-                size: 24,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              PopoStrings.tabGoLive,
-              style: TextStyle(
-                color: isSelected ? PopoTheme.primary : PopoTheme.textSecondary,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.2,
               ),
             ),
           ],
