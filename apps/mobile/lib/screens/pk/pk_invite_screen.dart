@@ -41,7 +41,7 @@ class _PkInviteScreenState extends State<PkInviteScreen> {
     final eligible = _getEligibleOpponents();
     if (eligible.isNotEmpty) {
       _selectedOpponent = eligible.first;
-      _invitationStatus = 'Opponent Ready (${eligible.first.hostName})';
+      _invitationStatus = 'Opponent Ready (${eligible.first.hostNickname})';
     }
   }
 
@@ -61,7 +61,7 @@ class _PkInviteScreenState extends State<PkInviteScreen> {
     setState(() {
       _selectedOpponent = opponent;
       _isInviting = true;
-      _invitationStatus = 'Sending PK challenge to ${opponent.hostName}...';
+      _invitationStatus = 'Sending PK challenge to ${opponent.hostNickname}...';
     });
 
     if (!Platform.environment.containsKey('FLUTTER_TEST')) {
@@ -71,13 +71,13 @@ class _PkInviteScreenState extends State<PkInviteScreen> {
         setState(() {
           _isInviting = false;
           _invitationStatus =
-              'Challenge accepted by ${opponent.hostName}! Arena ready.';
+              'Challenge accepted by ${opponent.hostNickname}! Arena ready.';
         });
       });
     } else {
       _isInviting = false;
       _invitationStatus =
-          'Challenge accepted by ${opponent.hostName}! Arena ready.';
+          'Challenge accepted by ${opponent.hostNickname}! Arena ready.';
     }
   }
 
@@ -106,7 +106,7 @@ class _PkInviteScreenState extends State<PkInviteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentHost = widget.currentRoom?.hostName ?? 'Amina Noor';
+    final currentHost = widget.currentRoom?.hostNickname ?? 'Amina Noor';
     final currentFlag = widget.currentRoom?.flagEmoji ?? '🇵🇰';
     final opponents = _getEligibleOpponents();
 
@@ -301,7 +301,7 @@ class _PkInviteScreenState extends State<PkInviteScreen> {
                                 Row(
                                   children: [
                                     Text(
-                                      host.hostName,
+                                      host.hostNickname,
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 14,
@@ -395,7 +395,7 @@ class _PkInviteScreenState extends State<PkInviteScreen> {
                           const SizedBox(width: 8),
                           Text(
                             _selectedOpponent != null
-                                ? 'Start 1v1 Battle vs ${_selectedOpponent!.hostName}'
+                                ? 'Start 1v1 Battle vs ${_selectedOpponent!.hostNickname}'
                                 : 'Select Opponent to Start',
                             style: const TextStyle(
                               color: Colors.white,

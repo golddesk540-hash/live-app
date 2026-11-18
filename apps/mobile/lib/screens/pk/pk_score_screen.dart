@@ -416,7 +416,7 @@ class _PkScoreScreenState extends State<PkScoreScreen> {
                         children: [
                           Flexible(
                             child: Text(
-                              room.hostName,
+                              room.hostNickname,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 13,

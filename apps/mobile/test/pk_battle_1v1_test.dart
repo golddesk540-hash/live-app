@@ -307,7 +307,7 @@ void main() {
 
       // 1. Open Live Viewer Screen
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: ViewerRoomScreen(
             roomId: 'room_001',
           ),
@@ -374,7 +374,7 @@ void main() {
       });
 
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: ViewerRoomScreen(
             roomId: 'room_001',
           ),

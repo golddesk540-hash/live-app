@@ -130,7 +130,7 @@ class PkResultScreen extends StatelessWidget {
               Text(
                 isTie
                     ? 'Both Broadcasters Finished Equal!'
-                    : '${winnerRoom.hostName} Won the PK Faceoff!',
+                    : '${winnerRoom.hostNickname} Won the PK Faceoff!',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -219,7 +219,7 @@ class PkResultScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        winnerRoom.hostName,
+                        winnerRoom.hostNickname,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -275,7 +275,7 @@ class PkResultScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                hostARoom.hostName,
+                                hostARoom.hostNickname,
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 13,
@@ -322,7 +322,7 @@ class PkResultScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                hostBRoom.hostName,
+                                hostBRoom.hostNickname,
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 13,

@@ -40,7 +40,7 @@ class _PkBattleTypeScreenState extends State<PkBattleTypeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final hostName = widget.room?.hostName ?? 'Amina Noor';
+    final hostName = widget.room?.hostNickname ?? 'Amina Noor';
     final roomTitle = widget.room?.title ?? 'Karachi Nights 🎶 Acoustic Live Session';
 
     return Scaffold(
