@@ -39,11 +39,30 @@ class _MockHttpClient extends Fake implements HttpClient {
 
   @override
   Future<HttpClientRequest> getUrl(Uri url) async => _MockHttpClientRequest();
+
+  @override
+  Future<HttpClientRequest> postUrl(Uri url) async => _MockHttpClientRequest();
+
+  @override
+  Future<HttpClientRequest> openUrl(String method, Uri url) async =>
+      _MockHttpClientRequest();
+
+  @override
+  void close({bool force = false}) {}
 }
 
 class _MockHttpClientRequest extends Fake implements HttpClientRequest {
   @override
   final HttpHeaders headers = _MockHttpHeaders();
+
+  @override
+  void add(List<int> data) {}
+
+  @override
+  void write(Object? obj) {}
+
+  @override
+  void writeln([Object? obj = ""]) {}
 
   @override
   Future<HttpClientResponse> close() async => _MockHttpClientResponse();
@@ -233,7 +252,8 @@ void main() {
       );
 
       // Verify Register screen elements
-      expect(find.text(PopoStrings.get('register_title')), findsOneWidget);
+      expect(find.byType(RegisterScreen), findsOneWidget);
+      expect(find.text(PopoStrings.get('register_title')), findsWidgets);
 
       // Validation test: Empty email/phone submission
       final registerButtonFinder =
