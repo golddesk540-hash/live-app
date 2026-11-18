@@ -239,7 +239,9 @@ class _GoLiveGateScreenState extends State<GoLiveGateScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
                         children: [
                           const Text(
                             'Wealth Level Requirement: ',

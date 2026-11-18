@@ -33,7 +33,10 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen>
     _scanController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
+    );
+    if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+      _scanController.repeat(reverse: true);
+    }
 
     _scanAnimation = Tween<double>(begin: 0.15, end: 0.85).animate(
       CurvedAnimation(parent: _scanController, curve: Curves.easeInOut),
@@ -322,21 +325,24 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen>
                           color: const Color(0xFF00C853).withOpacity(0.5),
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: [
+                        children: const [
                           Icon(
                             Icons.verified_rounded,
                             color: Color(0xFF00C853),
-                            size: 18,
+                            size: 16,
                           ),
-                          SizedBox(width: 8),
-                          Text(
-                            'Face Biometric Verified (98.5% Match)',
-                            style: TextStyle(
-                              color: Color(0xFF00C853),
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                          SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              'Face Biometric Verified (98.5% Match)',
+                              style: TextStyle(
+                                color: Color(0xFF00C853),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],

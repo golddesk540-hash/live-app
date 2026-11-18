@@ -84,7 +84,10 @@ class _HostStudioScreenState extends State<HostStudioScreen>
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
+    );
+    if (!Platform.environment.containsKey('FLUTTER_TEST')) {
+      _pulseController.repeat(reverse: true);
+    }
 
     _pulseAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
@@ -462,7 +465,7 @@ class _HostStudioScreenState extends State<HostStudioScreen>
       children: [
         // Host avatar and name pill
         Container(
-          padding: const EdgeInsets.only(left: 4, top: 4, bottom: 4, right: 10),
+          padding: const EdgeInsets.only(left: 4, top: 4, bottom: 4, right: 8),
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.55),
             borderRadius: BorderRadius.circular(24),
@@ -476,7 +479,7 @@ class _HostStudioScreenState extends State<HostStudioScreen>
                 backgroundImage: NetworkImage(user.avatarUrl),
                 onBackgroundImageError: (_, __) {},
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -520,60 +523,66 @@ class _HostStudioScreenState extends State<HostStudioScreen>
           ),
         ),
 
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
 
         // LIVE badge & Viewers & Timer
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.55),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white12),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                decoration: BoxDecoration(
-                  color: PopoTheme.primary,
-                  borderRadius: BorderRadius.circular(10),
+        Flexible(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.55),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: PopoTheme.primary,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Text(
+                    '● LIVE',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                child: const Text(
-                  '● LIVE',
+                const SizedBox(width: 5),
+                const Icon(Icons.visibility_rounded,
+                    color: Colors.white70, size: 12),
+                const SizedBox(width: 3),
+                const Text(
+                  '1,420',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 9,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-              const SizedBox(width: 6),
-              const Icon(Icons.visibility_rounded,
-                  color: Colors.white70, size: 12),
-              const SizedBox(width: 3),
-              const Text(
-                '1,420',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(width: 5),
+                Flexible(
+                  child: Text(
+                    _formatDuration(_elapsedSeconds),
+                    style: const TextStyle(
+                      color: PopoTheme.cyan,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                _formatDuration(_elapsedSeconds),
-                style: const TextStyle(
-                  color: PopoTheme.cyan,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
 
-        const Spacer(),
+        const SizedBox(width: 6),
 
         // End Live Button
         GestureDetector(
@@ -581,7 +590,7 @@ class _HostStudioScreenState extends State<HostStudioScreen>
           onTap: _showEndLiveConfirmation,
           behavior: HitTestBehavior.opaque,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [Color(0xFFFF2B78), Color(0xFFD60B4C)],
