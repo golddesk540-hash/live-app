@@ -13,6 +13,10 @@ class TokenStorage {
   static const String _keyUserId = 'poppo_user_id';
   static const String _keyUserNickname = 'poppo_user_nickname';
 
+  /// In-memory testing mode for widget tests and headless environments
+  static bool useInMemoryOnly = false;
+  static final Map<String, String> _inMemoryMap = {};
+
   /// In-memory cache for fast synchronous header construction
   static String? _cachedSessionToken;
   static String? _cachedTermsToken;
@@ -20,6 +24,7 @@ class TokenStorage {
   /// Retrieves the active session token
   static Future<String?> getSessionToken() async {
     if (_cachedSessionToken != null) return _cachedSessionToken;
+    if (useInMemoryOnly) return _inMemoryMap[_keySessionToken];
     try {
       _cachedSessionToken = await _storage.read(key: _keySessionToken);
       return _cachedSessionToken;
@@ -32,6 +37,10 @@ class TokenStorage {
   /// Stores session token securely
   static Future<void> saveSessionToken(String token) async {
     _cachedSessionToken = token;
+    if (useInMemoryOnly) {
+      _inMemoryMap[_keySessionToken] = token;
+      return;
+    }
     try {
       await _storage.write(key: _keySessionToken, value: token);
     } catch (e) {
@@ -42,6 +51,7 @@ class TokenStorage {
   /// Retrieves 18+ terms consent verification token
   static Future<String?> getTermsConsentToken() async {
     if (_cachedTermsToken != null) return _cachedTermsToken;
+    if (useInMemoryOnly) return _inMemoryMap[_keyTermsConsent];
     try {
       _cachedTermsToken = await _storage.read(key: _keyTermsConsent);
       return _cachedTermsToken;
@@ -54,6 +64,10 @@ class TokenStorage {
   /// Stores 18+ terms consent verification token
   static Future<void> saveTermsConsentToken(String token) async {
     _cachedTermsToken = token;
+    if (useInMemoryOnly) {
+      _inMemoryMap[_keyTermsConsent] = token;
+      return;
+    }
     try {
       await _storage.write(key: _keyTermsConsent, value: token);
     } catch (e) {
@@ -63,6 +77,10 @@ class TokenStorage {
 
   /// Saves current user id
   static Future<void> saveUserId(String userId) async {
+    if (useInMemoryOnly) {
+      _inMemoryMap[_keyUserId] = userId;
+      return;
+    }
     try {
       await _storage.write(key: _keyUserId, value: userId);
     } catch (e) {
@@ -72,6 +90,7 @@ class TokenStorage {
 
   /// Retrieves current user id
   static Future<String?> getUserId() async {
+    if (useInMemoryOnly) return _inMemoryMap[_keyUserId];
     try {
       return await _storage.read(key: _keyUserId);
     } catch (e) {
@@ -89,6 +108,8 @@ class TokenStorage {
   static Future<void> clearAll() async {
     _cachedSessionToken = null;
     _cachedTermsToken = null;
+    _inMemoryMap.clear();
+    if (useInMemoryOnly) return;
     try {
       await _storage.delete(key: _keySessionToken);
       await _storage.delete(key: _keyTermsConsent);
