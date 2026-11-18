@@ -954,6 +954,7 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
   // ==========================================
   Widget _buildPinkLiveButton() {
     return Container(
+      key: const Key('pink_live_button'),
       margin: const EdgeInsets.only(bottom: 8, right: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),

@@ -108,7 +108,7 @@ void main() {
   });
 
   void setMobileScreenSize(WidgetTester tester) {
-    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.physicalSize = const Size(1080, 4200);
     tester.view.devicePixelRatio = 2.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -136,17 +136,17 @@ void main() {
 
       // Switch to Following tab (index 0)
       await tester.tap(find.text(PopoStrings.get('tab_follow')));
-      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
       expect(find.textContaining('Followed Creators'), findsOneWidget);
 
       // Switch to For You tab (index 2)
       await tester.tap(find.text(PopoStrings.get('tab_for_you')));
-      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
       expect(find.text('Recommended For You'), findsOneWidget);
 
       // Switch back to Explore tab (index 1)
       await tester.tap(find.text(PopoStrings.get('tab_explore')));
-      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
       expect(find.text('Karachi Nights 🎶 Acoustic Live Session'), findsOneWidget);
     });
 
@@ -303,8 +303,8 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Find the pink LIVE button
-      final liveBtn = find.text(PopoStrings.get('go_live_btn'));
+      // Find the pink LIVE button via unique Key
+      final liveBtn = find.byKey(const Key('pink_live_button'));
       expect(liveBtn, findsOneWidget);
 
       // Tap pink LIVE button
