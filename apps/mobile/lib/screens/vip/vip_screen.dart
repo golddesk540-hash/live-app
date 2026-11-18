@@ -133,7 +133,8 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
           'planId': plan['planId'],
           'providerKey': _selectedProviderKey,
           'platform': _platformName,
-          'membershipId': orderType == 'renewal' ? _vipProfile?['membershipId'] : null,
+          'membershipId':
+              (orderType == 'renewal') ? (_vipProfile != null ? _vipProfile!['membershipId'] : null) : null,
           'autoRenewConsent': _autoRenewConsent,
           'idempotencyKey': 'mob_vip_${DateTime.now().millisecondsSinceEpoch}',
         }),
