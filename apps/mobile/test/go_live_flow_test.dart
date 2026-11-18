@@ -126,7 +126,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Header and title
-      expect(find.text('Broadcaster Eligibility & Setup'), findsOneWidget);
+      expect(find.text('Go Live Gate'), findsOneWidget);
       expect(find.text('Amina Noor'), findsOneWidget);
 
       // Permission tiles
@@ -338,7 +338,7 @@ void main() {
       // Tap Pink LIVE Button -> Opens Gate Screen
       await tester.tap(pinkLiveBtn);
       await tester.pumpAndSettle();
-      expect(find.text('Broadcaster Eligibility & Setup'), findsOneWidget);
+      expect(find.text('Go Live Gate'), findsOneWidget);
 
       // 2. Gate Screen -> Tap Continue -> Opens Face Screen
       final gateContinue = find.byKey(const Key('gate_continue_button'));
@@ -413,7 +413,7 @@ void main() {
       // Open Gate
       await tester.tap(find.byKey(const Key('pink_live_button')));
       await tester.pumpAndSettle();
-      expect(find.text('Broadcaster Eligibility & Setup'), findsOneWidget);
+      expect(find.text('Go Live Gate'), findsOneWidget);
 
       // Open Face
       await tester.tap(find.byKey(const Key('gate_continue_button')));
@@ -433,7 +433,7 @@ void main() {
       // Back to Gate
       await tester.tap(find.byKey(const Key('face_back_button')));
       await tester.pumpAndSettle();
-      expect(find.text('Broadcaster Eligibility & Setup'), findsOneWidget);
+      expect(find.text('Go Live Gate'), findsOneWidget);
 
       // Back to Explore
       await tester.tap(find.byKey(const Key('gate_back_button')));

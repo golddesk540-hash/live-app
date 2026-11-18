@@ -6,6 +6,7 @@ import '../../theme/popo_theme.dart';
 import '../../design/design_fixtures.dart';
 import '../../widgets/popo_error_state.dart';
 import '../../widgets/popo_empty_state.dart';
+import '../pk/pk_battle_type_screen.dart';
 
 /// Professional Live Room Viewer Screen for Audience Experience
 /// Built for Phase 3 (D2) Prompt 2 according to Popo Live Product Design v1.1.
@@ -212,6 +213,14 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) => _buildViewersSheet(ctx),
+    );
+  }
+
+  void _openPkFlow() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PkBattleTypeScreen(room: _room),
+      ),
     );
   }
 
@@ -993,6 +1002,41 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
                     Icons.card_giftcard_rounded,
                     color: Color(0xFFFFB800),
                     size: 20,
+                  ),
+                ),
+              ),
+
+              // PK Battle Entry Point Trigger
+              const SizedBox(width: 8),
+              GestureDetector(
+                key: const Key('pk_entry_button'),
+                onTap: _openPkFlow,
+                child: Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF1768), Color(0xFF00E5FF)],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: PopoTheme.primary.withOpacity(0.35),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'PK',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
                   ),
                 ),
               ),

@@ -56,6 +56,7 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
   void _openLiveViewer(FixtureLiveRoom room) {
     Navigator.of(context).push(
       MaterialPageRoute(
+        settings: const RouteSettings(name: 'ViewerRoom'),
         builder: (_) => ViewerRoomScreen(
           roomId: room.id,
           initialTitle: room.title,

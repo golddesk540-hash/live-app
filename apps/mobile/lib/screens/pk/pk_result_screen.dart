@@ -1,152 +1,384 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import '../../api/api_client.dart';
-import '../../models/pk/pk_models.dart';
 
-/// ============================================================================
-/// Popo Live — Phase 6 Module 6.4: PK Battle Result and Winner Declaration
-/// Exact 1:1 Design Reference: 06_04_result.png
-/// Flutter implementation for Android & iOS
-/// ============================================================================
+import '../../design/design_fixtures.dart';
+import '../../theme/popo_theme.dart';
 
-class PKResultScreen extends StatefulWidget {
-  final String battleId;
-  final String apiBaseUrl;
-  final PkBattleResult? initialResult;
-  final VoidCallback? onClose;
+/// Screen 4/4 of PK Battle Flow: PK Result & Winner Declaration
+/// Implemented for Phase 3 (D2) Prompt 4 according to Popo Live Complete Product Design v1.1.
+/// Features:
+/// - Winner and loser cards with fixture avatars and nicknames
+/// - Winner indicator with golden celebration trophy and laurels
+/// - Final scores comparison for both broadcaster sides
+/// - Tie / Draw handling when scores are equal
+/// - Battle duration presentation
+/// - Return to Live Viewer button preserving original live room context
+class PkResultScreen extends StatelessWidget {
+  final FixtureLiveRoom hostARoom;
+  final FixtureLiveRoom hostBRoom;
+  final FixtureLiveRoom winnerRoom;
+  final FixtureLiveRoom loserRoom;
+  final int winnerScore;
+  final int loserScore;
+  final int scoreA;
+  final int scoreB;
+  final bool isTie;
+  final String duration;
 
-  const PKResultScreen({
-    Key? key,
-    this.battleId = '00000000-0000-0000-0000-000000000604',
-    this.apiBaseUrl = 'https://kigolive.com',
-    this.initialResult,
-    this.onClose,
-  }) : super(key: key);
+  const PkResultScreen({
+    super.key,
+    required this.hostARoom,
+    required this.hostBRoom,
+    required this.winnerRoom,
+    required this.loserRoom,
+    required this.winnerScore,
+    required this.loserScore,
+    required this.scoreA,
+    required this.scoreB,
+    this.isTie = false,
+    this.duration = '03:00',
+  });
 
-  @override
-  State<PKResultScreen> createState() => _PKResultScreenState();
-}
-
-class _PKResultScreenState extends State<PKResultScreen> {
-  bool _isUrdu = false;
-  bool _isLoading = true;
-
-  // Canonical values matching 06_04_result.png
-  String _winnerNickname = 'Sara Live';
-  String _winnerAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500';
-  int _winnerScore = 24860;
-  int _loserScore = 18320;
-  String _resultType = 'winner_declared'; // 'winner_declared' or 'draw'
-  String _hostAName = 'Sara Live';
-  String _hostBName = 'Ayesha';
-  String _hostAAvatar = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500';
-  String _hostBAvatar = 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500';
-
-  // Theme colors
-  static const Color _bgDark = Color(0xFF0D081E);
-  static const Color _neonPink = Color(0xFFFF2D78);
-  static const Color _goldYellow = Color(0xFFF59E0B);
-  static const Color _watermarkPill = Color(0xFF8C1B64);
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.initialResult != null) {
-      final r = widget.initialResult!;
-      _winnerNickname = r.winnerNickname ?? _winnerNickname;
-      _winnerAvatar = r.winnerAvatar ?? _winnerAvatar;
-      _winnerScore = r.winnerScore ?? r.hostAScore;
-      _loserScore = r.loserScore ?? r.hostBScore;
-      _resultType = r.resultType;
-      _hostAName = r.hostANickname;
-      _hostBName = r.hostBNickname;
-      _hostAAvatar = r.hostAAvatar;
-      _hostBAvatar = r.hostBAvatar;
-      _isLoading = false;
-    } else {
-      _fetchResult();
-    }
+  String _formatScore(int score) {
+    return score.toString().replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (Match m) => '${m[1]},',
+        );
   }
 
-  Future<void> _fetchResult() async {
-    try {
-      final base = widget.apiBaseUrl == 'https://kigolive.com'
-          ? ApiClient.instance.baseUrl
-          : widget.apiBaseUrl;
-      final url = Uri.parse('$base/api/pk/battle/${widget.battleId}/result');
-      final res = await http.get(url).timeout(const Duration(seconds: 4));
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        if (data['success'] == true && data['result'] != null && mounted) {
-          final r = data['result'];
-          setState(() {
-            _winnerNickname = r['winnerNickname'] ?? _winnerNickname;
-            _winnerAvatar = r['winnerAvatar'] ?? _winnerAvatar;
-            _winnerScore = r['winnerScore'] ?? r['hostAScore'] ?? _winnerScore;
-            _loserScore = r['loserScore'] ?? r['hostBScore'] ?? _loserScore;
-            _resultType = r['resultType'] ?? 'winner_declared';
-            _hostAName = r['hostANickname'] ?? _hostAName;
-            _hostBName = r['hostBNickname'] ?? _hostBName;
-            _hostAAvatar = r['hostAAvatar'] ?? _hostAAvatar;
-            _hostBAvatar = r['hostBAvatar'] ?? _hostBAvatar;
-          });
-        }
-      }
-    } catch (_) {
-      // canonical values will remain as robust fallback
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+  void _returnToLiveViewer(BuildContext context) {
+    // Pop back to the Live Room Viewer, preserving current room context
+    Navigator.of(context).popUntil((route) {
+      return route.settings.name == 'ViewerRoom' || route.isFirst;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDraw = _resultType == 'draw';
+    final winnerIsHostA = winnerRoom.id == hostARoom.id;
 
-    return Directionality(
-      textDirection: _isUrdu ? TextDirection.rtl : TextDirection.ltr,
-      child: Scaffold(
-        backgroundColor: _bgDark,
-        body: SafeArea(
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // 1. TOP HEADER (PK Result + Lang toggle)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (widget.onClose != null)
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
-                        onPressed: widget.onClose,
-                      )
-                    else
-                      const SizedBox(width: 40),
+              const SizedBox(height: 10),
 
-                    Text(
-                      _isUrdu ? 'پی کے نتیجہ' : 'PK Result',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 22,
-                        letterSpacing: 0.5,
+              // Result Banner (VICTORY or DRAW)
+              if (isTie) ...[
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: PopoTheme.cyan.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border:
+                        Border.all(color: PopoTheme.cyan.withOpacity(0.6)),
+                  ),
+                  child: const Text(
+                    '🤝 DRAW / TIED BATTLE',
+                    key: Key('pk_result_badge'),
+                    style: TextStyle(
+                      color: PopoTheme.cyan,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ),
+              ] else ...[
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFFB800), Color(0xFFFF8A00)],
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: PopoTheme.gold.withOpacity(0.4),
+                        blurRadius: 16,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.emoji_events_rounded,
+                          color: Colors.black, size: 22),
+                      SizedBox(width: 8),
+                      Text(
+                        'VICTORY',
+                        key: Key('pk_result_badge'),
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+
+              Text(
+                isTie
+                    ? 'Both Broadcasters Finished Equal!'
+                    : '${winnerRoom.hostName} Won the PK Faceoff!',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Battle Duration: $duration · Standard 1v1 Arena',
+                style: const TextStyle(
+                  color: PopoTheme.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Winner Showcase Card
+              if (!isTie)
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1F1528),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: PopoTheme.gold,
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: PopoTheme.gold.withOpacity(0.2),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.star_rounded,
+                              color: PopoTheme.gold, size: 20),
+                          SizedBox(width: 6),
+                          Text(
+                            'PK CHAMPION',
+                            style: TextStyle(
+                              color: PopoTheme.gold,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          SizedBox(width: 6),
+                          Icon(Icons.star_rounded,
+                              color: PopoTheme.gold, size: 20),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Stack(
+                        alignment: Alignment.topRight,
+                        children: [
+                          CircleAvatar(
+                            radius: 40,
+                            backgroundColor: PopoTheme.gold,
+                            child: CircleAvatar(
+                              radius: 37,
+                              backgroundImage:
+                                  NetworkImage(winnerRoom.hostAvatar),
+                              onBackgroundImageError: (_, __) {},
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: PopoTheme.gold,
+                            ),
+                            child: const Icon(
+                              Icons.emoji_events_rounded,
+                              color: Colors.black,
+                              size: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        winnerRoom.hostName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Winning Score: ${_formatScore(winnerScore)} pts',
+                        style: const TextStyle(
+                          color: PopoTheme.gold,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              const SizedBox(height: 20),
+
+              // Final Score Comparison Grid
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: PopoTheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: PopoTheme.borderSubtle),
+                ),
+                child: Column(
+                  children: [
+                    const Text(
+                      'SCORE BREAKDOWN',
+                      style: TextStyle(
+                        color: PopoTheme.textSecondary,
+                        fontSize: 11,
+                        letterSpacing: 0.8,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-
-                    GestureDetector(
-                      onTap: () => setState(() => _isUrdu = !_isUrdu),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white12,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.white24),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        // Host A
+                        Expanded(
+                          child: Column(
+                            children: [
+                              CircleAvatar(
+                                radius: 24,
+                                backgroundImage:
+                                    NetworkImage(hostARoom.hostAvatar),
+                                onBackgroundImageError: (_, __) {},
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                hostARoom.hostName,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _formatScore(scoreA),
+                                style: const TextStyle(
+                                  color: PopoTheme.primary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              if (!isTie && winnerIsHostA)
+                                const Text(
+                                  'WINNER',
+                                  style: TextStyle(
+                                    color: PopoTheme.gold,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
-                        child: Text(
-                          _isUrdu ? 'EN' : 'اردو',
-                          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                        Container(
+                          height: 60,
+                          width: 1,
+                          color: Colors.white12,
+                        ),
+                        // Host B
+                        Expanded(
+                          child: Column(
+                            children: [
+                              CircleAvatar(
+                                radius: 24,
+                                backgroundImage:
+                                    NetworkImage(hostBRoom.hostAvatar),
+                                onBackgroundImageError: (_, __) {},
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                hostBRoom.hostName,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _formatScore(scoreB),
+                                style: const TextStyle(
+                                  color: PopoTheme.cyan,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              if (!isTie && !winnerIsHostA)
+                                const Text(
+                                  'WINNER',
+                                  style: TextStyle(
+                                    color: PopoTheme.gold,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Safe Demonstration Disclaimer
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.04),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: const [
+                    Icon(Icons.verified_user_outlined,
+                        color: PopoTheme.cyan, size: 16),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Fixture PK Battle Result: All battle points and results are simulated locally using Popo Live fixture engine. No real monetary transactions occurred.',
+                        style: TextStyle(
+                          color: PopoTheme.textSecondary,
+                          fontSize: 11,
+                          height: 1.3,
                         ),
                       ),
                     ),
@@ -154,238 +386,53 @@ class _PKResultScreenState extends State<PKResultScreen> {
                 ),
               ),
 
-              // 2. MAIN CENTER BODY
-              Expanded(
-                child: Center(
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: !isDraw
-                          ? _buildWinnerLayout()
-                          : _buildDrawLayout(),
+              const SizedBox(height: 28),
+
+              // Return to Live Viewer Button
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  key: const Key('return_to_live_viewer_button'),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  onPressed: () => _returnToLiveViewer(context),
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      gradient: PopoTheme.primaryGradient,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Container(
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.live_tv_rounded,
+                              color: Colors.white, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Return to Live Viewer',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-
-              // 3. BOTTOM OK BUTTON & 6.4 RESULT WATERMARK
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                child: Column(
-                  children: [
-                    // Neon Pink OK Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _neonPink,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                          elevation: 6,
-                          shadowColor: _neonPink.withOpacity(0.6),
-                        ),
-                        onPressed: widget.onClose ?? () => Navigator.pop(context),
-                        child: Text(
-                          _isUrdu ? 'ٹھیک ہے' : 'OK',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // 6.4 Result Watermark Pill
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: _watermarkPill,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        _isUrdu ? '6.4 نتیجہ' : '6.4 Result',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  // Exact 1:1 Winner Layout from 06_04_result.png
-  Widget _buildWinnerLayout() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Crown + Laurel Wreath + Avatar Stack
-        Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
-          children: [
-            // Ambient Radial Glow
-            Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    _goldYellow.withOpacity(0.25),
-                    Colors.purple.withOpacity(0.15),
-                    Colors.transparent,
-                  ],
-                ),
-              ),
-            ),
-
-            // Crown on Top
-            Positioned(
-              top: -24,
-              child: Stack(
-                alignment: Alignment.topCenter,
-                children: const [
-                  Icon(Icons.workspace_premium, color: Color(0xFFFBBF24), size: 48),
-                ],
-              ),
-            ),
-
-            // Winner Avatar with Rich Golden Ring
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFDE68A), Color(0xFFF59E0B), Color(0xFFB45309)],
-                ),
-                boxShadow: [
-                  BoxShadow(color: _goldYellow.withOpacity(0.4), blurRadius: 25, spreadRadius: 3),
-                ],
-              ),
-              child: CircleAvatar(
-                radius: 64,
-                backgroundImage: NetworkImage(_winnerAvatar),
-              ),
-            ),
-
-            // Golden WINNER Ribbon (Overlapping Avatar Bottom)
-            Positioned(
-              bottom: -14,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 6),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFD97706), Color(0xFFFCD34D), Color(0xFFD97706)],
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 6)],
-                ),
-                child: Text(
-                  _isUrdu ? 'فاتح' : 'WINNER',
-                  style: const TextStyle(
-                    color: Color(0xFF1E1728),
-                    fontWeight: FontWeight.w900,
-                    fontSize: 15,
-                    letterSpacing: 2,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 28),
-
-        // Winner Nickname
-        Text(
-          _isUrdu && _winnerNickname == 'Sara Live' ? 'سارہ لائیو' : _winnerNickname,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
-            fontSize: 22,
-          ),
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'ID: 88201',
-          style: TextStyle(color: Colors.white60, fontSize: 12),
-        ),
-
-        const SizedBox(height: 24),
-
-        // Final Scores: 24,860 Vs 18,320
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              '$_winnerScore',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 24),
-            ),
-            const SizedBox(width: 14),
-            const Text(
-              'Vs',
-              style: TextStyle(
-                color: _neonPink,
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.w900,
-                fontSize: 20,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Text(
-              '$_loserScore',
-              style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w900, fontSize: 24),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // Draw Layout (Equal scores)
-  Widget _buildDrawLayout() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircleAvatar(radius: 40, backgroundImage: NetworkImage(_hostAAvatar)),
-            const SizedBox(width: 16),
-            const Text('VS', style: TextStyle(color: _neonPink, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, fontSize: 18)),
-            const SizedBox(width: 16),
-            CircleAvatar(radius: 40, backgroundImage: NetworkImage(_hostBAvatar)),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.purple.shade700,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            _isUrdu ? 'برابری' : 'DRAW',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15, letterSpacing: 2),
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('$_winnerScore', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22)),
-            const SizedBox(width: 12),
-            const Text('Vs', style: TextStyle(color: _neonPink, fontStyle: FontStyle.italic, fontSize: 18)),
-            const SizedBox(width: 12),
-            Text('$_loserScore', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22)),
-          ],
-        ),
-      ],
     );
   }
 }
