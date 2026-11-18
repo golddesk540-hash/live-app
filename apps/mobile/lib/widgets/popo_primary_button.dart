@@ -73,15 +73,19 @@ class PopoPrimaryButton extends StatelessWidget {
                         Icon(icon, color: Colors.white, size: 18),
                         const SizedBox(width: 8),
                       ],
-                      Text(
-                        text,
-                        style: TextStyle(
-                          color: canPress
-                              ? Colors.white
-                              : PopoTheme.textSecondary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.3,
+                      Flexible(
+                        child: Text(
+                          text,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: canPress
+                                ? Colors.white
+                                : PopoTheme.textSecondary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.3,
+                          ),
                         ),
                       ),
                     ],

@@ -760,44 +760,48 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.flash_on_rounded,
-                      color: PopoTheme.gold,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      PopoStrings.get('pk_ranking_title'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.5,
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.flash_on_rounded,
+                        color: PopoTheme.gold,
+                        size: 16,
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.black38,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        r1.eventName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      const SizedBox(width: 4),
+                      Text(
+                        PopoStrings.get('pk_ranking_title'),
                         style: const TextStyle(
-                          color: PopoTheme.cyan,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.black38,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            r1.eventName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: PopoTheme.cyan,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
