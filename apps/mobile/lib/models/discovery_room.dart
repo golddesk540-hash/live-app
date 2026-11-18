@@ -1,3 +1,5 @@
+import '../design/design_fixtures.dart';
+
 /// Strongly typed models for Discovery Live Rooms and Broadcasters
 class DiscoveryHost {
   final String id;
@@ -248,6 +250,40 @@ class DiscoveryRoom {
       host: hostObj,
       pkBattle: pkObj,
       isFollowing: json['isFollowing'] == true,
+    );
+  }
+
+  factory DiscoveryRoom.fromFixture(FixtureLiveRoom f) {
+    return DiscoveryRoom(
+      id: f.id,
+      roomId: f.id,
+      roomNumber: f.roomNumber,
+      title: f.title,
+      coverUrl: f.coverUrl,
+      category: f.category,
+      status: f.isLive ? 'live' : 'ended',
+      isLive: f.isLive,
+      isPk: f.isPkActive,
+      viewerCount: f.viewerCount,
+      viewersFormatted: f.viewerCount >= 1000
+          ? '${(f.viewerCount / 1000).toStringAsFixed(1)}k'
+          : f.viewerCount.toString(),
+      coinsEarned: f.heatScore,
+      coinsFormatted: '${f.heatScore}',
+      country: f.country,
+      countryCode: f.countryCode,
+      flagEmoji: f.flagEmoji,
+      tags: f.tags,
+      host: DiscoveryHost(
+        id: 'host_${f.id}',
+        poppoId: f.roomNumber,
+        nickname: f.hostNickname,
+        avatarUrl: f.hostAvatar,
+        hostLevel: 10,
+        wealthLevel: 5,
+        isVerified: true,
+      ),
+      isFollowing: false,
     );
   }
 

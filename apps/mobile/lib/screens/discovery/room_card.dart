@@ -2,13 +2,26 @@ import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
 import '../../models/models.dart';
+import '../../design/design_fixtures.dart';
 
 /// Reusable 3:4 aspect-ratio Live Stream Room Card for Discovery feeds
 class RoomCard extends StatelessWidget {
   final DiscoveryRoom room;
   final VoidCallback? onTap;
 
-  const RoomCard({Key? key, required this.room, this.onTap}) : super(key: key);
+  const RoomCard({super.key, required this.room, this.onTap});
+
+  factory RoomCard.fromFixture({
+    Key? key,
+    required FixtureLiveRoom fixture,
+    VoidCallback? onTap,
+  }) {
+    return RoomCard(
+      key: key,
+      room: DiscoveryRoom.fromFixture(fixture),
+      onTap: onTap,
+    );
+  }
 
   factory RoomCard.fromMap({
     Key? key,
@@ -182,6 +195,33 @@ class RoomCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Category pill
+                    if (room.category.isNotEmpty) ...[
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: PopoTheme.cyan.withOpacity(0.4),
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Text(
+                          room.category.toUpperCase(),
+                          style: const TextStyle(
+                            color: PopoTheme.cyan,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
                     // Title
                     Text(
                       room.title,

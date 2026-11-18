@@ -9,12 +9,14 @@ import '../../widgets/popo_loading_indicator.dart';
 class CountryChips extends StatefulWidget {
   final String selectedCountryCode;
   final ValueChanged<String> onCountrySelected;
+  final List<DiscoveryCountry>? countries;
 
   const CountryChips({
-    Key? key,
+    super.key,
     required this.selectedCountryCode,
     required this.onCountrySelected,
-  }) : super(key: key);
+    this.countries,
+  });
 
   @override
   State<CountryChips> createState() => _CountryChipsState();
@@ -23,22 +25,40 @@ class CountryChips extends StatefulWidget {
 class _CountryChipsState extends State<CountryChips> {
   final DiscoveryRepository _repository = DiscoveryRepository.instance;
   List<DiscoveryCountry> _countries = [];
-  bool _isLoading = true;
+  bool _isLoading = false;
+
+  static const List<DiscoveryCountry> _defaultFixtureCountries = [
+    DiscoveryCountry(code: 'ALL', name: 'All', flag: '🌐', activeRooms: 8),
+    DiscoveryCountry(code: 'PK', name: 'Pakistan', flag: '🇵🇰', activeRooms: 8),
+    DiscoveryCountry(code: 'SA', name: 'Saudi Arabia', flag: '🇸🇦', activeRooms: 0),
+    DiscoveryCountry(code: 'AE', name: 'UAE', flag: '🇦🇪', activeRooms: 0),
+    DiscoveryCountry(code: 'TR', name: 'Turkey', flag: '🇹🇷', activeRooms: 0),
+    DiscoveryCountry(code: 'US', name: 'USA', flag: '🇺🇸', activeRooms: 0),
+  ];
 
   @override
   void initState() {
     super.initState();
-    _fetchCountries();
+    if (widget.countries != null && widget.countries!.isNotEmpty) {
+      _countries = widget.countries!;
+    } else {
+      _countries = _defaultFixtureCountries;
+      _tryFetchDynamicCountries();
+    }
   }
 
-  Future<void> _fetchCountries() async {
-    final list = await _repository.fetchPopularCountries();
-    if (!mounted) return;
-
-    setState(() {
-      _countries = list;
-      _isLoading = false;
-    });
+  Future<void> _tryFetchDynamicCountries() async {
+    try {
+      final list = await _repository.fetchPopularCountries();
+      if (!mounted) return;
+      if (list.isNotEmpty) {
+        setState(() {
+          _countries = list;
+        });
+      }
+    } catch (_) {
+      // Retain fixture countries
+    }
   }
 
   @override
