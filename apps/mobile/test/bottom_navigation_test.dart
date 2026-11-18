@@ -17,13 +17,19 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            bottomNavigationBar: PopoBottomNavigation(
-              currentIndex: selectedTab,
-              onTabSelected: (index) {
-                selectedTab = index;
-              },
-            ),
+          home: StatefulBuilder(
+            builder: (context, setState) {
+              return Scaffold(
+                bottomNavigationBar: PopoBottomNavigation(
+                  currentIndex: selectedTab,
+                  onTabSelected: (index) {
+                    setState(() {
+                      selectedTab = index;
+                    });
+                  },
+                ),
+              );
+            },
           ),
         ),
       );
