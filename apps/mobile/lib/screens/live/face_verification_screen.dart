@@ -23,9 +23,9 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen>
   late Animation<double> _scanAnimation;
 
   bool _isFrontCamera = true;
-  bool _isCameraActive = true;
-  bool _isMicActive = true;
-  bool _isFaceVerified = true;
+  final bool _isCameraActive = true;
+  final bool _isMicActive = true;
+  final bool _isFaceVerified = true;
 
   @override
   void initState() {

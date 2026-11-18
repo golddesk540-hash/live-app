@@ -52,11 +52,12 @@ class _LiveEndScreenState extends State<LiveEndScreen> {
           totalGifts: 12,
           totalLikes: 8500,
           host: LiveHostInfo(
+            id: user.userId,
             poppoId: user.poppoId,
             nickname: user.nickname,
-            avatar: user.avatarUrl,
+            avatarUrl: user.avatarUrl,
+            hostLevel: user.hostLevel,
             wealthLevel: user.wealthLevel,
-            country: 'PK',
           ),
         );
   }
@@ -79,10 +80,10 @@ class _LiveEndScreenState extends State<LiveEndScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        _returnToExplore();
-        return false;
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) {
+        if (!didPop) _returnToExplore();
       },
       child: Scaffold(
         backgroundColor: PopoTheme.background,
@@ -188,7 +189,7 @@ class _LiveEndScreenState extends State<LiveEndScreen> {
     final nickname = host?.nickname ?? user.nickname;
     final poppoId = host?.poppoId ?? user.poppoId;
     final wealthLevel = host?.wealthLevel ?? user.wealthLevel;
-    final avatar = host?.avatar ?? user.avatarUrl;
+    final avatar = host?.avatarUrl ?? user.avatarUrl;
 
     return Container(
       padding: const EdgeInsets.all(14),

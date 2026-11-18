@@ -188,7 +188,7 @@ class _HostStudioScreenState extends State<HostStudioScreen>
           ),
           ElevatedButton(
             key: const Key('confirm_end_live_button'),
-            style: ElevatedButton.styleToFill(
+            style: ElevatedButton.styleFrom(
               backgroundColor: PopoTheme.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
@@ -236,12 +236,13 @@ class _HostStudioScreenState extends State<HostStudioScreen>
       totalGifts: 12,
       totalLikes: 8500,
       host: const LiveHostInfo(
+        id: 'amina_host_01',
         poppoId: 'amina_host_01',
         nickname: 'Amina Noor',
-        avatar:
+        avatarUrl:
             'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+        hostLevel: 10,
         wealthLevel: 10,
-        country: 'PK',
       ),
     );
 

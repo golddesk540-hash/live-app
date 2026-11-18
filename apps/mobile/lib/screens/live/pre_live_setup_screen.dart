@@ -70,7 +70,7 @@ class _PreLiveSetupScreenState extends State<PreLiveSetupScreen> {
       tags: _tags,
       hostNickname: user.nickname,
       hostPoppoId: user.poppoId,
-      hostId: user.id,
+      hostId: user.userId,
       status: 'live',
       nextStep: '/live/studio',
     );
@@ -400,7 +400,7 @@ class _PreLiveSetupScreenState extends State<PreLiveSetupScreen> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        '${user.coinsFormatted} Coins',
+                        '${user.coinBalance} Coins',
                         style: const TextStyle(
                           color: PopoTheme.primary,
                           fontSize: 11,
@@ -417,7 +417,7 @@ class _PreLiveSetupScreenState extends State<PreLiveSetupScreen> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        '${user.pointsFormatted} Points',
+                        '${user.pointsBalance} Points',
                         style: const TextStyle(
                           color: PopoTheme.gold,
                           fontSize: 11,
@@ -539,7 +539,7 @@ class _PreLiveSetupScreenState extends State<PreLiveSetupScreen> {
                   _isCameraOn
                       ? Icons.videocam_rounded
                       : Icons.videocam_off_rounded,
-                  color: _isCameraOn ? PopoTheme.green : Colors.redAccent,
+                  color: _isCameraOn ? PopoTheme.success : Colors.redAccent,
                   size: 22,
                 ),
                 const SizedBox(width: 12),
@@ -563,7 +563,7 @@ class _PreLiveSetupScreenState extends State<PreLiveSetupScreen> {
                             : 'Disabled / Muted',
                         style: TextStyle(
                           color: _isCameraOn
-                              ? PopoTheme.green
+                              ? PopoTheme.success
                               : PopoTheme.textSecondary,
                           fontSize: 12,
                         ),
@@ -594,7 +594,7 @@ class _PreLiveSetupScreenState extends State<PreLiveSetupScreen> {
               children: [
                 Icon(
                   _isMicOn ? Icons.mic_rounded : Icons.mic_off_rounded,
-                  color: _isMicOn ? PopoTheme.green : Colors.redAccent,
+                  color: _isMicOn ? PopoTheme.success : Colors.redAccent,
                   size: 22,
                 ),
                 const SizedBox(width: 12),
@@ -614,7 +614,7 @@ class _PreLiveSetupScreenState extends State<PreLiveSetupScreen> {
                         _isMicOn ? 'Active · Input Ready' : 'Muted',
                         style: TextStyle(
                           color: _isMicOn
-                              ? PopoTheme.green
+                              ? PopoTheme.success
                               : PopoTheme.textSecondary,
                           fontSize: 12,
                         ),

@@ -106,7 +106,7 @@ void main() {
   });
 
   setUp(() {
-    DesignFixtures.setDesignState(DesignState.filled);
+    DesignFixtures.setState(DesignFixtureState.filled);
   });
 
   group('Go Live System — Phase 3 (D2) Prompt 3 Individual Screens', () {
