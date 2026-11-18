@@ -83,6 +83,23 @@ class DesignFixtures {
   static int _mutableCoinBalance = 154200;
   static int _mutablePointsBalance = 420500;
 
+  /// Current coin balance for live gift transactions
+  static int get currentCoinBalance => _mutableCoinBalance;
+
+  /// Deducts coins from fixture balance if sufficient funds exist
+  static bool deductCoins(int amount) {
+    if (_mutableCoinBalance >= amount) {
+      _mutableCoinBalance -= amount;
+      return true;
+    }
+    return false;
+  }
+
+  /// Adds coins to fixture balance
+  static void addCoins(int amount) {
+    _mutableCoinBalance += amount;
+  }
+
   // --------------------------------------------------------------------------
   // REALISTIC ERROR-STATE FIXTURES (PROMPT 4)
   // --------------------------------------------------------------------------

@@ -506,6 +506,22 @@ export class DesignFixtures {
   private static mutableCoinBalance = 154200;
   private static mutablePointsBalance = 420500;
 
+  public static get currentCoinBalance(): number {
+    return this.mutableCoinBalance;
+  }
+
+  public static deductCoins(amount: number): boolean {
+    if (this.mutableCoinBalance >= amount) {
+      this.mutableCoinBalance -= amount;
+      return true;
+    }
+    return false;
+  }
+
+  public static addCoins(amount: number): void {
+    this.mutableCoinBalance += amount;
+  }
+
   // --------------------------------------------------------------------------
   // REALISTIC ERROR-STATE FIXTURES (PROMPT 4)
   // --------------------------------------------------------------------------
