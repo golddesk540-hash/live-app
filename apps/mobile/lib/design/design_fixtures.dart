@@ -99,7 +99,8 @@ class DesignFixtures {
     module: 'liveRooms',
     code: 'ERR_LIVE_ROOMS_503',
     title: 'Live Streams Unavailable',
-    message: 'Failed to load live broadcast rooms. Please check your network connection and tap to retry.',
+    message:
+        'Failed to load live broadcast rooms. Please check your network connection and tap to retry.',
     actionLabel: 'Tap to retry',
     isRetryable: true,
   );
@@ -108,7 +109,8 @@ class DesignFixtures {
     module: 'partyRooms',
     code: 'ERR_PARTY_ROOMS_503',
     title: 'Party Audio Cluster Offline',
-    message: 'Failed to connect to party room audio cluster. 9-seat rooms cannot be displayed right now.',
+    message:
+        'Failed to connect to party room audio cluster. 9-seat rooms cannot be displayed right now.',
     actionLabel: 'Tap to reconnect',
     isRetryable: true,
   );
@@ -117,7 +119,8 @@ class DesignFixtures {
     module: 'messages',
     code: 'ERR_MESSAGES_TIMEOUT',
     title: 'Inbox Sync Failed',
-    message: 'Failed to synchronize direct messages and official notices. Pull down to refresh.',
+    message:
+        'Failed to synchronize direct messages and official notices. Pull down to refresh.',
     actionLabel: 'Pull down to refresh',
     isRetryable: true,
   );
@@ -126,7 +129,8 @@ class DesignFixtures {
     module: 'wallet',
     code: 'ERR_WALLET_SYNC_500',
     title: 'Wallet Ledger Unavailable',
-    message: 'Failed to synchronize coin and point balances. Your transaction records are safely stored on the ledger.',
+    message:
+        'Failed to synchronize coin and point balances. Your transaction records are safely stored on the ledger.',
     actionLabel: 'Tap to retry',
     isRetryable: true,
   );
@@ -135,7 +139,8 @@ class DesignFixtures {
     module: 'vip',
     code: 'ERR_VIP_LOAD_FAILED',
     title: 'VIP Membership Check Failed',
-    message: 'VIP membership status and exclusive privileges could not be loaded. Please try again.',
+    message:
+        'VIP membership status and exclusive privileges could not be loaded. Please try again.',
     actionLabel: 'Tap to reload',
     isRetryable: true,
   );
@@ -144,7 +149,8 @@ class DesignFixtures {
     module: 'store',
     code: 'ERR_STORE_INVENTORY_503',
     title: 'Store Catalog Unavailable',
-    message: 'Failed to load virtual store items and owned bag items. Please check your internet connection.',
+    message:
+        'Failed to load virtual store items and owned bag items. Please check your internet connection.',
     actionLabel: 'Retry store query',
     isRetryable: true,
   );
@@ -153,7 +159,8 @@ class DesignFixtures {
     module: 'helpTickets',
     code: 'ERR_SUPPORT_TICKETS_500',
     title: 'Support Center Unreachable',
-    message: 'Customer support ticketing system is temporarily unreachable. Help topics and tickets are offline.',
+    message:
+        'Customer support ticketing system is temporarily unreachable. Help topics and tickets are offline.',
     actionLabel: 'Check network status',
     isRetryable: true,
   );
@@ -162,7 +169,8 @@ class DesignFixtures {
     module: 'redeemCode',
     code: 'ERR_REDEEM_SYSTEM_BUSY',
     title: 'Voucher Service Error',
-    message: 'Promotional code validation server is currently busy. Your code was not redeemed. Please retry in a few moments.',
+    message:
+        'Promotional code validation server is currently busy. Your code was not redeemed. Please retry in a few moments.',
     actionLabel: 'Try again',
     isRetryable: true,
   );
@@ -179,7 +187,8 @@ class DesignFixtures {
     'redeemCode': redeemCodeError,
   };
 
-  static FixtureModuleError? errorForModule(String module) => allModuleErrors[module];
+  static FixtureModuleError? errorForModule(String module) =>
+      allModuleErrors[module];
 
   // --------------------------------------------------------------------------
   // REALISTIC EMPTY-STATE FIXTURES (PROMPT 4)
@@ -195,7 +204,8 @@ class DesignFixtures {
   static const partyRoomsEmpty = FixtureEmptyStateInfo(
     module: 'partyRooms',
     title: 'No Party Rooms Available',
-    message: 'All party lounges are currently quiet. Open a 9-seat room to invite your friends!',
+    message:
+        'All party lounges are currently quiet. Open a 9-seat room to invite your friends!',
     actionLabel: 'Create Party Room',
     iconEmoji: '🎉',
   );
@@ -203,7 +213,8 @@ class DesignFixtures {
   static const messagesEmpty = FixtureEmptyStateInfo(
     module: 'messages',
     title: 'No Messages Yet',
-    message: 'Your inbox is empty. Say hello to creator hosts or join a party room to connect!',
+    message:
+        'Your inbox is empty. Say hello to creator hosts or join a party room to connect!',
     actionLabel: 'Discover Creators',
     iconEmoji: '💬',
   );
@@ -211,7 +222,8 @@ class DesignFixtures {
   static const walletEmpty = FixtureEmptyStateInfo(
     module: 'wallet',
     title: 'No Transactions',
-    message: 'You have no recent coin or point transaction records in your wallet history.',
+    message:
+        'You have no recent coin or point transaction records in your wallet history.',
     actionLabel: 'Top Up Coins',
     iconEmoji: '🪙',
   );
@@ -227,7 +239,8 @@ class DesignFixtures {
   static const bagEmpty = FixtureEmptyStateInfo(
     module: 'bag',
     title: 'Backpack is Empty',
-    message: 'You have not acquired any avatar frames, entrance effects, or battle cards yet.',
+    message:
+        'You have not acquired any avatar frames, entrance effects, or battle cards yet.',
     actionLabel: 'Browse Store',
     iconEmoji: '🎒',
   );
@@ -235,7 +248,8 @@ class DesignFixtures {
   static const supportTicketsEmpty = FixtureEmptyStateInfo(
     module: 'supportTickets',
     title: 'No Support Tickets',
-    message: 'You have no pending or past support requests. We are here if you need assistance!',
+    message:
+        'You have no pending or past support requests. We are here if you need assistance!',
     actionLabel: 'Submit Ticket',
     iconEmoji: '🎫',
   );
@@ -250,7 +264,8 @@ class DesignFixtures {
     'supportTickets': supportTicketsEmpty,
   };
 
-  static FixtureEmptyStateInfo? emptyInfoForModule(String module) => allEmptyStates[module];
+  static FixtureEmptyStateInfo? emptyInfoForModule(String module) =>
+      allEmptyStates[module];
 
   // --------------------------------------------------------------------------
   // 1. USER PROFILES
@@ -258,7 +273,8 @@ class DesignFixtures {
   static FixtureUserProfile get currentUserProfile {
     if (isError) {
       throw const DesignFixtureException(
-        message: 'Failed to load user profile: Service temporarily unavailable.',
+        message:
+            'Failed to load user profile: Service temporarily unavailable.',
         code: 'ERR_USER_PROFILE_503',
         module: 'userProfile',
       );
@@ -270,7 +286,8 @@ class DesignFixtures {
   static List<FixtureUserProfile> get userProfiles {
     if (isError) {
       throw const DesignFixtureException(
-        message: 'Failed to load user profile: Service temporarily unavailable.',
+        message:
+            'Failed to load user profile: Service temporarily unavailable.',
         code: 'ERR_USER_PROFILE_503',
         module: 'userProfile',
       );
@@ -294,7 +311,8 @@ class DesignFixtures {
   static FixtureLiveViewer get liveViewer {
     if (isError) {
       throw const DesignFixtureException(
-        message: 'Failed to load live broadcast rooms. Please check your network connection and tap to retry.',
+        message:
+            'Failed to load live broadcast rooms. Please check your network connection and tap to retry.',
         code: 'ERR_LIVE_ROOMS_503',
         module: 'liveRooms',
       );
@@ -365,7 +383,8 @@ class DesignFixtures {
   static List<FixtureLiveRoom> get liveRooms {
     if (isError) {
       throw const DesignFixtureException(
-        message: 'Failed to load live broadcast rooms. Please check your network connection and tap to retry.',
+        message:
+            'Failed to load live broadcast rooms. Please check your network connection and tap to retry.',
         code: 'ERR_LIVE_ROOMS_503',
         module: 'liveRooms',
       );
@@ -533,7 +552,8 @@ class DesignFixtures {
   static List<FixturePartyRoom> get partyRooms {
     if (isError) {
       throw const DesignFixtureException(
-        message: 'Failed to connect to party room audio cluster. 9-seat rooms cannot be displayed right now.',
+        message:
+            'Failed to connect to party room audio cluster. 9-seat rooms cannot be displayed right now.',
         code: 'ERR_PARTY_ROOMS_503',
         module: 'partyRooms',
       );
@@ -1079,7 +1099,8 @@ class DesignFixtures {
   static List<FixtureChatThread> get inboxChats {
     if (isError) {
       throw const DesignFixtureException(
-        message: 'Failed to synchronize direct messages and official notices. Pull down to refresh.',
+        message:
+            'Failed to synchronize direct messages and official notices. Pull down to refresh.',
         code: 'ERR_MESSAGES_TIMEOUT',
         module: 'messages',
       );
@@ -1257,7 +1278,8 @@ class DesignFixtures {
   static List<FixtureOfficialNotice> get officialNotices {
     if (isError) {
       throw const DesignFixtureException(
-        message: 'Failed to synchronize direct messages and official notices. Pull down to refresh.',
+        message:
+            'Failed to synchronize direct messages and official notices. Pull down to refresh.',
         code: 'ERR_MESSAGES_TIMEOUT',
         module: 'messages',
       );
@@ -1345,7 +1367,8 @@ class DesignFixtures {
   static FixtureWallet get wallet {
     if (isError) {
       throw const DesignFixtureException(
-        message: 'Failed to synchronize coin and point balances. Your transaction records are safely stored on the ledger.',
+        message:
+            'Failed to synchronize coin and point balances. Your transaction records are safely stored on the ledger.',
         code: 'ERR_WALLET_SYNC_500',
         module: 'wallet',
       );
@@ -2076,7 +2099,8 @@ class DesignFixtures {
   static FixtureRedeemCode redeemCode(String code) {
     if (isError) {
       throw const DesignFixtureException(
-        message: 'Promotional code validation server is currently busy. Your code was not redeemed. Please retry in a few moments.',
+        message:
+            'Promotional code validation server is currently busy. Your code was not redeemed. Please retry in a few moments.',
         code: 'ERR_REDEEM_SYSTEM_BUSY',
         module: 'redeemCode',
       );
@@ -2341,7 +2365,8 @@ class DesignFixtures {
   static List<FixtureStoreItem> get storeItems {
     if (isError) {
       throw const DesignFixtureException(
-        message: 'Failed to load virtual store items and owned bag items. Please check your internet connection.',
+        message:
+            'Failed to load virtual store items and owned bag items. Please check your internet connection.',
         code: 'ERR_STORE_INVENTORY_503',
         module: 'store',
       );
@@ -2656,7 +2681,8 @@ class DesignFixtures {
   static List<FixtureSupportTicket> get supportTickets {
     if (isError) {
       throw const DesignFixtureException(
-        message: 'Customer support ticketing system is temporarily unreachable. Help topics and tickets are offline.',
+        message:
+            'Customer support ticketing system is temporarily unreachable. Help topics and tickets are offline.',
         code: 'ERR_SUPPORT_TICKETS_500',
         module: 'helpTickets',
       );
@@ -3932,4 +3958,3 @@ class FixtureEmptyStateInfo {
     required this.iconEmoji,
   });
 }
-
