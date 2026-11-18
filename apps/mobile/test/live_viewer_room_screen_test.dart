@@ -234,7 +234,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // New message appears in list
-      expect(find.text('Awesome performance live! 🎉'), findsOneWidget);
+      expect(
+          find.textContaining('Awesome performance live! 🎉'), findsOneWidget);
     });
 
     // ------------------------------------------------------------------------

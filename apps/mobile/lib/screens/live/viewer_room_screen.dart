@@ -1064,8 +1064,8 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
 
           // Nickname & Content
           Flexible(
-            child: RichText(
-              text: TextSpan(
+            child: Text.rich(
+              TextSpan(
                 children: [
                   TextSpan(
                     text: '${msg.senderNickname}: ',
