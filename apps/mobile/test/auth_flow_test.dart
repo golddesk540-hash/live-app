@@ -19,9 +19,18 @@ void main() {
     DesignFixtures.reset();
   });
 
+  void setMobileScreenSize(WidgetTester tester) {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+  }
+
   group('Phase 2 (D1) Prompt 2 - Mobile Authentication Flow Tests', () {
     testWidgets('1. Splash screen displays branding and routes to 18+ Age Gate',
         (WidgetTester tester) async {
+      setMobileScreenSize(tester);
+
       await tester.pumpWidget(
         MaterialApp(
           theme: PopoTheme.darkTheme,
@@ -33,9 +42,9 @@ void main() {
       expect(find.text('PL'), findsOneWidget);
       expect(find.text(PopoStrings.appName), findsOneWidget);
 
-      // Advance through splash delay and animation
+      // Advance through splash delay and animation (fixed pumps avoid infinite spinner timeout)
       await tester.pump(const Duration(milliseconds: 900));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 600));
 
       // Should transition to AgeGateScreen when unauthenticated and terms unaccepted
       expect(find.byType(AgeGateScreen), findsOneWidget);
@@ -44,6 +53,8 @@ void main() {
 
     testWidgets('2. 18+ Age Gate enforces age confirmation before continuing',
         (WidgetTester tester) async {
+      setMobileScreenSize(tester);
+
       await tester.pumpWidget(
         MaterialApp(
           theme: PopoTheme.darkTheme,
@@ -58,7 +69,7 @@ void main() {
 
       // Attempt to continue WITHOUT checking the 18+ confirmation checkbox
       await tester.tap(find.text(PopoStrings.get('accept_and_continue')));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       // Error message must be visible (Validation State)
       expect(find.text(PopoStrings.get('err_terms_required')), findsOneWidget);
@@ -68,11 +79,12 @@ void main() {
       final checkboxFinder = find.byType(Checkbox);
       expect(checkboxFinder, findsOneWidget);
       await tester.tap(checkboxFinder);
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       // Tap Accept & Continue again
       await tester.tap(find.text(PopoStrings.get('accept_and_continue')));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       // Must navigate to LoginScreen
       expect(find.byType(LoginScreen), findsOneWidget);
@@ -81,6 +93,8 @@ void main() {
 
     testWidgets('3. Login screen supports validation, fixture login, and landing on Explore',
         (WidgetTester tester) async {
+      setMobileScreenSize(tester);
+
       await tester.pumpWidget(
         MaterialApp(
           theme: PopoTheme.darkTheme,
@@ -96,12 +110,13 @@ void main() {
 
       // Validation test: Empty inputs
       await tester.tap(find.text(PopoStrings.get('login_btn')));
-      await tester.pumpAndSettle();
+      await tester.pump();
       expect(find.text(PopoStrings.get('err_empty_identifier')), findsOneWidget);
 
       // Tap Quick Login with Fixture User (Amina Noor)
       await tester.tap(find.text(PopoStrings.get('login_fixture_user')));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       // Verify session authenticated with Amina Noor fixture profile
       expect(AuthState.instance.isAuthenticated, true);
@@ -123,13 +138,15 @@ void main() {
 
       // Switch to Me tab (index 4)
       await tester.tap(find.text(PopoStrings.tabMe));
-      await tester.pumpAndSettle();
+      await tester.pump();
       final updatedStack = tester.widget<IndexedStack>(find.byType(IndexedStack));
       expect(updatedStack.index, 4);
     });
 
     testWidgets('4. Registration flow validates fields and navigates to Phone OTP',
         (WidgetTester tester) async {
+      setMobileScreenSize(tester);
+
       await tester.pumpWidget(
         MaterialApp(
           theme: PopoTheme.darkTheme,
@@ -143,7 +160,7 @@ void main() {
 
       // Validation test: Empty email/phone submission
       await tester.tap(find.text(PopoStrings.get('register_btn')));
-      await tester.pumpAndSettle();
+      await tester.pump();
       expect(find.text(PopoStrings.get('err_invalid_email')), findsOneWidget);
 
       // Fill valid registration fields
@@ -154,12 +171,12 @@ void main() {
       await tester.enterText(textFields.at(1), 'amina.noor@popolive.com');
       await tester.enterText(textFields.at(2), 'PopoLive123!');
       await tester.enterText(textFields.at(3), 'PopoLive123!');
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       // Submit Registration
       await tester.tap(find.text(PopoStrings.get('register_btn')));
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pump(const Duration(milliseconds: 100));
 
       // Should transition to PhoneOtpScreen
       expect(find.byType(PhoneOtpScreen), findsOneWidget);
@@ -168,6 +185,8 @@ void main() {
 
     testWidgets('5. Phone OTP sends fixture code, validates wrong code, and accepts 123456',
         (WidgetTester tester) async {
+      setMobileScreenSize(tester);
+
       await tester.pumpWidget(
         MaterialApp(
           theme: PopoTheme.darkTheme,
@@ -181,7 +200,7 @@ void main() {
       // Tap Send Code
       expect(find.text(PopoStrings.get('send_code')), findsOneWidget);
       await tester.tap(find.text(PopoStrings.get('send_code')));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       // Code sent: Verify OTP input and fixture hint are shown
       expect(find.text(PopoStrings.get('fixture_otp_hint')), findsOneWidget);
@@ -191,7 +210,7 @@ void main() {
       final otpField = find.byType(TextField);
       await tester.enterText(otpField, '999999');
       await tester.tap(find.text(PopoStrings.get('verify_and_continue')));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       // Error banner must be shown
       expect(find.text(PopoStrings.get('err_invalid_otp')), findsOneWidget);
@@ -200,8 +219,7 @@ void main() {
       // Now enter valid fixture OTP: 123456
       await tester.enterText(otpField, '123456');
       await tester.tap(find.text(PopoStrings.get('verify_and_continue')));
-      await tester.pump(const Duration(milliseconds: 200));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 300));
 
       // Should transition to CompleteProfileScreen
       expect(find.byType(CompleteProfileScreen), findsOneWidget);
@@ -210,6 +228,8 @@ void main() {
 
     testWidgets('6. Complete Profile validates data, completes profile, and lands on Explore',
         (WidgetTester tester) async {
+      setMobileScreenSize(tester);
+
       await tester.pumpWidget(
         MaterialApp(
           theme: PopoTheme.darkTheme,
@@ -228,19 +248,18 @@ void main() {
       final nicknameField = find.widgetWithText(TextField, 'Amina Noor');
       await tester.enterText(nicknameField, 'A'); // Short nickname (< 3 chars)
       await tester.tap(find.text(PopoStrings.get('save_and_continue')));
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       expect(find.text(PopoStrings.get('err_nickname_short')), findsOneWidget);
       expect(find.byType(AppShell), findsNothing);
 
       // Re-enter valid fixture nickname
       await tester.enterText(nicknameField, 'Amina Noor');
-      await tester.pumpAndSettle();
+      await tester.pump();
 
       // Tap Save and Continue
       await tester.tap(find.text(PopoStrings.get('save_and_continue')));
-      await tester.pump(const Duration(milliseconds: 200));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 300));
 
       // Verified: lands on AppShell with Explore active
       expect(find.byType(AppShell), findsOneWidget);
