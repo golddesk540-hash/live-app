@@ -52,7 +52,6 @@ class PopoStrings {
     'en': {
       'app_name': 'Popo Live',
       'tab_live': 'Live',
-      'tab_explore': 'Explore',
       'tab_square': 'Square',
       'tab_message': 'Message',
       'tab_home': 'Home',
@@ -272,7 +271,6 @@ class PopoStrings {
     'ur': {
       'app_name': 'پوپو لائیو',
       'tab_live': 'لائیو',
-      'tab_explore': 'دریافت',
       'tab_square': 'اسکوائر',
       'tab_message': 'پیغامات',
       'tab_home': 'ہوم',

@@ -14,7 +14,7 @@ import '../screens/profile/me_screen.dart';
 class AppShell extends StatefulWidget {
   final int initialIndex;
 
-  const AppShell({Key? key, this.initialIndex = 0}) : super(key: key);
+  const AppShell({super.key, this.initialIndex = 0});
 
   @override
   State<AppShell> createState() => _AppShellState();

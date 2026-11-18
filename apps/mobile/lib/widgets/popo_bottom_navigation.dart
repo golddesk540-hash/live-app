@@ -16,12 +16,12 @@ class PopoBottomNavigation extends StatelessWidget {
   final int inboxBadgeCount;
 
   const PopoBottomNavigation({
-    Key? key,
+    super.key,
     required this.currentIndex,
     required this.onTabSelected,
     this.messageBadgeCount = 0,
     this.inboxBadgeCount = 0,
-  }) : super(key: key);
+  });
 
   int get _effectiveMessageBadge =>
       messageBadgeCount > 0 ? messageBadgeCount : inboxBadgeCount;
