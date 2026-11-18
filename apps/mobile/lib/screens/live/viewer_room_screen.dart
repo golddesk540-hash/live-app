@@ -334,22 +334,14 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
               ),
             ),
 
-            // 4. Live Viewer Header
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: _buildHeader(),
-              ),
-            ),
-
-            // 5. Room Title & Stream Status Pill (Positioned below header)
+            // 4. Room Title & Stream Status Pill (Positioned below header)
             Positioned(
               left: 14,
               top: 104,
               child: _buildRoomDetailsPill(),
             ),
 
-            // 6. Floating Gift Animation Banner Overlay
+            // 5. Floating Gift Animation Banner Overlay
             if (_activeFloatingGift != null)
               Positioned(
                 top: 160,
@@ -358,7 +350,7 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
                 child: _buildFloatingGiftBanner(),
               ),
 
-            // 7. Live Chat Stream & Action Overlay
+            // 6. Live Chat Stream & Action Overlay
             Positioned(
               left: 0,
               right: 0,
@@ -366,6 +358,21 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
               child: SafeArea(
                 top: false,
                 child: _buildLiveChatOverlay(),
+              ),
+            ),
+
+            // 7. Live Viewer Header (Placed on top of all stack layers)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: _buildHeader(),
+                ),
               ),
             ),
           ],

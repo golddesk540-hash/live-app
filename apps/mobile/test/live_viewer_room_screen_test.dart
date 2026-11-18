@@ -89,6 +89,11 @@ class _MockHttpClientResponse extends Fake implements HttpClientResponse {
   }
 }
 
+void _setPhoneViewport(WidgetTester tester) {
+  tester.view.physicalSize = const Size(1080, 2400);
+  tester.view.devicePixelRatio = 2.0;
+}
+
 Widget _buildViewerScreen({required String roomId}) {
   return MaterialApp(
     home: ViewerRoomScreen(roomId: roomId),
@@ -108,11 +113,14 @@ void main() {
     // ------------------------------------------------------------------------
     // Test 1: Dynamic Room Loading (room_001)
     // ------------------------------------------------------------------------
-    testWidgets('1. Dynamic Room Loading: opens room_001 with Amina Noor & Karachi Nights',
+    testWidgets(
+        '1. Dynamic Room Loading: opens room_001 with Amina Noor & Karachi Nights',
         (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(1080, 2400);
-      tester.view.devicePixelRatio = 2.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
 
       await tester.pumpWidget(_buildViewerScreen(roomId: 'room_001'));
       await tester.pumpAndSettle();
@@ -129,11 +137,14 @@ void main() {
     // ------------------------------------------------------------------------
     // Test 2: Dynamic Room Loading (room_002) - Different Room Verification
     // ------------------------------------------------------------------------
-    testWidgets('2. Dynamic Room Loading: opens room_002 with Sana Ali (not hardcoded)',
+    testWidgets(
+        '2. Dynamic Room Loading: opens room_002 with Sana Ali (not hardcoded)',
         (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(1080, 2400);
-      tester.view.devicePixelRatio = 2.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
 
       await tester.pumpWidget(_buildViewerScreen(roomId: 'room_002'));
       await tester.pumpAndSettle();
@@ -148,9 +159,11 @@ void main() {
     // ------------------------------------------------------------------------
     testWidgets('3. Follow Button: toggles state between + Follow and Following',
         (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(1080, 2400);
-      tester.view.devicePixelRatio = 2.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
 
       await tester.pumpWidget(_buildViewerScreen(roomId: 'room_001'));
       await tester.pumpAndSettle();
@@ -179,9 +192,11 @@ void main() {
     // ------------------------------------------------------------------------
     testWidgets('4. Live Chat: renders initial messages from fixture',
         (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(1080, 2400);
-      tester.view.devicePixelRatio = 2.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
 
       await tester.pumpWidget(_buildViewerScreen(roomId: 'room_001'));
       await tester.pumpAndSettle();
@@ -197,9 +212,11 @@ void main() {
     // ------------------------------------------------------------------------
     testWidgets('5. Chat Composer: sending chat message appends to chat list',
         (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(1080, 2400);
-      tester.view.devicePixelRatio = 2.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
 
       await tester.pumpWidget(_buildViewerScreen(roomId: 'room_001'));
       await tester.pumpAndSettle();
@@ -223,11 +240,14 @@ void main() {
     // ------------------------------------------------------------------------
     // Test 6: Gift Sheet Opens & Displays Fixture Gifts
     // ------------------------------------------------------------------------
-    testWidgets('6. Gift Sheet: opens modal and renders fixture gifts with coin balance',
+    testWidgets(
+        '6. Gift Sheet: opens modal and renders fixture gifts with coin balance',
         (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(1080, 2400);
-      tester.view.devicePixelRatio = 2.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
 
       await tester.pumpWidget(_buildViewerScreen(roomId: 'room_001'));
       await tester.pumpAndSettle();
@@ -251,9 +271,11 @@ void main() {
     // ------------------------------------------------------------------------
     testWidgets('7. Gift Sending: deducts coins, posts announcement in chat',
         (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(1080, 2400);
-      tester.view.devicePixelRatio = 2.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
 
       await tester.pumpWidget(_buildViewerScreen(roomId: 'room_001'));
       await tester.pumpAndSettle();
@@ -282,11 +304,14 @@ void main() {
     // ------------------------------------------------------------------------
     // Test 8: Insufficient Balance Guard
     // ------------------------------------------------------------------------
-    testWidgets('8. Insufficient Balance Guard: blocks sending when coins are insufficient',
+    testWidgets(
+        '8. Insufficient Balance Guard: blocks sending when coins are insufficient',
         (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(1080, 2400);
-      tester.view.devicePixelRatio = 2.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
 
       await tester.pumpWidget(_buildViewerScreen(roomId: 'room_001'));
       await tester.pumpAndSettle();
@@ -320,11 +345,14 @@ void main() {
     // ------------------------------------------------------------------------
     // Test 9: Viewers / Top Contributors Sheet
     // ------------------------------------------------------------------------
-    testWidgets('9. Viewers Sheet: opens top contributors list on viewer pill tap',
+    testWidgets(
+        '9. Viewers Sheet: opens top contributors list on viewer pill tap',
         (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(1080, 2400);
-      tester.view.devicePixelRatio = 2.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
 
       await tester.pumpWidget(_buildViewerScreen(roomId: 'room_001'));
       await tester.pumpAndSettle();
@@ -351,9 +379,11 @@ void main() {
     // ------------------------------------------------------------------------
     testWidgets('10. Close Button: pops the screen cleanly',
         (WidgetTester tester) async {
-      tester.view.physicalSize = const Size(1080, 2400);
-      tester.view.devicePixelRatio = 2.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
 
       bool didPop = false;
       await tester.pumpWidget(
