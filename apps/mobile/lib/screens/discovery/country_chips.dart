@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../theme/popo_theme.dart';
 import '../../models/models.dart';
 import '../../repositories/discovery_repository.dart';
-import '../../widgets/popo_loading_indicator.dart';
 
 /// Reusable horizontally scrollable country filter chips component
 class CountryChips extends StatefulWidget {
@@ -25,7 +24,6 @@ class CountryChips extends StatefulWidget {
 class _CountryChipsState extends State<CountryChips> {
   final DiscoveryRepository _repository = DiscoveryRepository.instance;
   List<DiscoveryCountry> _countries = [];
-  bool _isLoading = false;
 
   static const List<DiscoveryCountry> _defaultFixtureCountries = [
     DiscoveryCountry(code: 'ALL', name: 'All', flag: '🌐', activeRooms: 8),
@@ -63,15 +61,6 @@ class _CountryChipsState extends State<CountryChips> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const SizedBox(
-        height: 40,
-        child: Center(
-          child: PopoLoadingIndicator(size: 20, color: PopoTheme.cyan),
-        ),
-      );
-    }
-
     return SizedBox(
       height: 38,
       child: ListView.separated(

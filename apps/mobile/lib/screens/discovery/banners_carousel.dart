@@ -9,7 +9,7 @@ import '../../api/api.dart';
 
 /// Reusable promotional Hero Banner Carousel for Explore Home
 class BannersCarousel extends StatefulWidget {
-  const BannersCarousel({Key? key}) : super(key: key);
+  const BannersCarousel({super.key});
 
   @override
   State<BannersCarousel> createState() => _BannersCarouselState();

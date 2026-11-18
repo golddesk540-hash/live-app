@@ -15,7 +15,7 @@ import '../notices/system_notices_screen.dart';
 
 /// Modal Bottom Sheet displaying Leaderboards and Ranking Doors
 class RankingsBottomSheet extends StatefulWidget {
-  const RankingsBottomSheet({Key? key}) : super(key: key);
+  const RankingsBottomSheet({super.key});
 
   static void show(BuildContext context) {
     showModalBottomSheet(

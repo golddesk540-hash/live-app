@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../theme/popo_theme.dart';
 import '../../l10n/strings.dart';
 import '../../design/design_fixtures.dart';
-import '../../models/models.dart';
 import '../../widgets/popo_empty_state.dart';
 import '../../widgets/popo_error_state.dart';
 import '../../widgets/popo_icon_button.dart';
@@ -171,7 +170,7 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
               ),
               actions: [
                 // Language Switcher
-                PopoIconButton(
+                const PopoIconButton(
                   icon: Icons.translate_rounded,
                   color: PopoTheme.cyan,
                   tooltip: 'Switch Language (English / اردو)',
@@ -447,8 +446,8 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-              child: Row(
-                children: const [
+              child: const Row(
+                children: [
                   Icon(Icons.auto_awesome_rounded, color: PopoTheme.gold, size: 16),
                   SizedBox(width: 6),
                   Text(
@@ -1004,7 +1003,7 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
   // EMPTY & ERROR STATES
   // ==========================================
   Widget _buildEmptyState() {
-    final emptyInfo = DesignFixtures.liveRoomsEmpty;
+    const emptyInfo = DesignFixtures.liveRoomsEmpty;
     return PopoEmptyState(
       title: emptyInfo.title,
       subtitle: emptyInfo.message,
@@ -1015,7 +1014,7 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
   }
 
   Widget _buildErrorState() {
-    final errorInfo = DesignFixtures.liveRoomsError;
+    const errorInfo = DesignFixtures.liveRoomsError;
     return PopoErrorState(
       title: errorInfo.title,
       message: errorInfo.message,

@@ -12,8 +12,6 @@ import 'package:popo_live/screens/discovery/country_chips.dart';
 import 'package:popo_live/screens/recognition/recognition_screen.dart';
 import 'package:popo_live/screens/live/go_live_gate_screen.dart';
 import 'package:popo_live/screens/live/viewer_room_screen.dart';
-import 'package:popo_live/screens/discovery/rankings_bottom_sheet.dart';
-import 'package:popo_live/shell/app_shell.dart';
 import 'package:popo_live/widgets/popo_empty_state.dart';
 import 'package:popo_live/widgets/popo_error_state.dart';
 

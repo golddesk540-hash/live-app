@@ -17,8 +17,7 @@ class RoomPreviewScreen extends StatefulWidget {
   final String roomId;
   final DiscoveryRoom? initialRoom;
 
-  const RoomPreviewScreen({Key? key, required this.roomId, this.initialRoom})
-    : super(key: key);
+  const RoomPreviewScreen({super.key, required this.roomId, this.initialRoom});
 
   factory RoomPreviewScreen.fromMap({
     Key? key,
