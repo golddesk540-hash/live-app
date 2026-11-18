@@ -3,12 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
 import '../../design/design_fixtures.dart';
-import '../../widgets/popo_loading_indicator.dart';
 import '../../widgets/popo_error_state.dart';
 import '../../widgets/popo_empty_state.dart';
-import '../../widgets/popo_primary_button.dart';
-import 'live_rules_screen.dart';
-import 'widgets/live_safety_modal.dart';
 
 /// Professional Live Room Viewer Screen for Audience Experience
 /// Built for Phase 3 (D2) Prompt 2 according to Popo Live Product Design v1.1.
@@ -27,12 +23,12 @@ class ViewerRoomScreen extends StatefulWidget {
   final String? initialCoverUrl;
 
   const ViewerRoomScreen({
-    Key? key,
+    super.key,
     required this.roomId,
     this.initialTitle,
     this.initialHostNickname,
     this.initialCoverUrl,
-  }) : super(key: key);
+  });
 
   @override
   State<ViewerRoomScreen> createState() => _ViewerRoomScreenState();
@@ -182,7 +178,7 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
     final text = _chatController.text.trim();
     if (text.isEmpty) return;
 
-    final user = DesignFixtures.mainUserProfile;
+    final user = DesignFixtures.currentUserProfile;
     final newMsg = FixtureLiveChatMessage(
       id: 'lmsg_${DateTime.now().millisecondsSinceEpoch}',
       senderNickname: user.nickname,
@@ -285,11 +281,8 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
       );
     }
 
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.pop(context);
-        return false;
-      },
+    return PopScope(
+      canPop: true,
       child: Scaffold(
         backgroundColor: PopoTheme.background,
         resizeToAvoidBottomInset: true,
@@ -777,7 +770,7 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '${DesignFixtures.mainUserProfile.nickname} sent',
+                  '${DesignFixtures.currentUserProfile.nickname} sent',
                   style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 10,
@@ -1448,11 +1441,11 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
                                   FixtureLiveChatMessage(
                                     id: 'lmsg_gift_${DateTime.now().millisecondsSinceEpoch}',
                                     senderNickname:
-                                        DesignFixtures.mainUserProfile.nickname,
+                                        DesignFixtures.currentUserProfile.nickname,
                                     senderAvatar:
-                                        DesignFixtures.mainUserProfile.avatarUrl,
+                                        DesignFixtures.currentUserProfile.avatarUrl,
                                     senderLevel:
-                                        DesignFixtures.mainUserProfile.wealthLevel,
+                                        DesignFixtures.currentUserProfile.wealthLevel,
                                     isVip: true,
                                     content:
                                         'Sent ${selectedGift.name} x$selectedQuantity 🎁✨',

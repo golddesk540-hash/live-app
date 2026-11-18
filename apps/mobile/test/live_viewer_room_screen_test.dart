@@ -101,7 +101,7 @@ void main() {
   });
 
   setUp(() {
-    DesignFixtures.setDesignState(DesignState.filled);
+    DesignFixtures.currentState = DesignFixtureState.filled;
   });
 
   group('Phase 3 (D2) Prompt 2: Live Room Viewer Screen Tests', () {
