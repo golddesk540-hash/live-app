@@ -8,8 +8,6 @@
 // Fictional test data: Amina Noor, Sana Ali, Karachi Nights, and peers.
 // ==============================================================================
 
-import 'package:flutter/foundation.dart';
-
 /// Selectable design states for UI prototyping and acceptance testing.
 enum DesignFixtureState {
   /// Full realistic UI fixtures populated with rich content.
@@ -68,7 +66,8 @@ class DesignFixtures {
   static FixtureUserProfile get currentUserProfile {
     if (isError) {
       throw const DesignFixtureException(
-        message: 'Failed to load user profile: Service temporarily unavailable [ERR_503]',
+        message:
+            'Failed to load user profile: Service temporarily unavailable [ERR_503]',
       );
     }
     if (isEmpty) {
@@ -100,13 +99,14 @@ class DesignFixtures {
   static FixtureLiveViewer get liveViewer {
     if (isError) {
       throw const DesignFixtureException(
-        message: 'Live stream connection refused: Agora channel timeout [ERR_RTC_408]',
+        message:
+            'Live stream connection refused: Agora channel timeout [ERR_RTC_408]',
       );
     }
     if (isEmpty) {
       return FixtureLiveViewer.empty();
     }
-    return FixtureLiveViewer(
+    return const FixtureLiveViewer(
       roomId: 'live_room_001',
       roomNumber: '883901',
       title: 'Karachi Nights 🎶 Acoustic Live Session',
@@ -122,7 +122,8 @@ class DesignFixtures {
       country: 'Pakistan',
       countryCode: 'PK',
       activeSeatCount: 1,
-      pinnedAnnouncement: 'Welcome to Karachi Nights! Request songs in the live chat 🎸✨',
+      pinnedAnnouncement:
+          'Welcome to Karachi Nights! Request songs in the live chat 🎸✨',
       topContributors: [
         _profileBilalAhmed,
         _profileFaizanSheikh,
@@ -132,16 +133,19 @@ class DesignFixtures {
         FixtureLiveChatMessage(
           id: 'lmsg_01',
           senderNickname: 'Sana Ali',
-          senderAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+          senderAvatar:
+              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
           senderLevel: 14,
           isVip: true,
-          content: 'Sing the acoustic version of Karachi Nights again please! ❤️',
+          content:
+              'Sing the acoustic version of Karachi Nights again please! ❤️',
           timestamp: 'Just now',
         ),
         FixtureLiveChatMessage(
           id: 'lmsg_02',
           senderNickname: 'Bilal Ahmed',
-          senderAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+          senderAvatar:
+              'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
           senderLevel: 22,
           isVip: true,
           content: 'Sent a Luxury Sports Car 🏎️💨 keep rocking!',
@@ -150,7 +154,8 @@ class DesignFixtures {
         FixtureLiveChatMessage(
           id: 'lmsg_03',
           senderNickname: 'Hamza Tariq',
-          senderAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+          senderAvatar:
+              'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
           senderLevel: 9,
           isVip: false,
           content: 'Greetings from Lahore! Brilliant voice Amina.',
@@ -176,8 +181,10 @@ class DesignFixtures {
         roomNumber: '883901',
         title: 'Karachi Nights 🎶 Acoustic Live Session',
         hostNickname: 'Amina Noor',
-        hostAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
-        coverUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600',
+        hostAvatar:
+            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200',
+        coverUrl:
+            'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600',
         category: 'Singing',
         country: 'Pakistan',
         countryCode: 'PK',
@@ -193,8 +200,10 @@ class DesignFixtures {
         roomNumber: '883902',
         title: 'Chai & Midnight Chill Talk ☕🌙',
         hostNickname: 'Sana Ali',
-        hostAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
-        coverUrl: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=600',
+        hostAvatar:
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200',
+        coverUrl:
+            'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=600',
         category: 'ChitChat',
         country: 'Pakistan',
         countryCode: 'PK',
@@ -210,8 +219,10 @@ class DesignFixtures {
         roomNumber: '883903',
         title: 'Gaming Marathon & Battle Arena 🎮🔥',
         hostNickname: 'Bilal Ahmed',
-        hostAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
-        coverUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600',
+        hostAvatar:
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
+        coverUrl:
+            'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600',
         category: 'Gaming',
         country: 'Pakistan',
         countryCode: 'PK',
@@ -227,8 +238,10 @@ class DesignFixtures {
         roomNumber: '883904',
         title: 'Lahore Beats & Eastern Classical 🪕✨',
         hostNickname: 'Zainab Khan',
-        hostAvatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200',
-        coverUrl: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=600',
+        hostAvatar:
+            'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=200',
+        coverUrl:
+            'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?w=600',
         category: 'Music',
         country: 'Pakistan',
         countryCode: 'PK',
@@ -244,8 +257,10 @@ class DesignFixtures {
         roomNumber: '883905',
         title: 'Standup Comedy & Talent Hunt 😂🎭',
         hostNickname: 'Hamza Tariq',
-        hostAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200',
-        coverUrl: 'https://images.unsplash.com/photo-1514306191717-452ec28c7814?w=600',
+        hostAvatar:
+            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200',
+        coverUrl:
+            'https://images.unsplash.com/photo-1514306191717-452ec28c7814?w=600',
         category: 'Talent',
         country: 'Pakistan',
         countryCode: 'PK',
@@ -261,8 +276,10 @@ class DesignFixtures {
         roomNumber: '883906',
         title: 'Fashion, Style & Glow Up Diary 💄👗',
         hostNickname: 'Hira Malik',
-        hostAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200',
-        coverUrl: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600',
+        hostAvatar:
+            'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=200',
+        coverUrl:
+            'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=600',
         category: 'Fashion',
         country: 'Pakistan',
         countryCode: 'PK',
@@ -278,8 +295,10 @@ class DesignFixtures {
         roomNumber: '883907',
         title: 'Indus Waves: Live Q&A & Poetry 🌊📖',
         hostNickname: 'Faizan Sheikh',
-        hostAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200',
-        coverUrl: 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=600',
+        hostAvatar:
+            'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200',
+        coverUrl:
+            'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=600',
         category: 'Literature',
         country: 'Pakistan',
         countryCode: 'PK',
@@ -295,8 +314,10 @@ class DesignFixtures {
         roomNumber: '883908',
         title: 'Late Night Sing-Along & Requests 🎤🌙',
         hostNickname: 'Ayesha Siddiqui',
-        hostAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200',
-        coverUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600',
+        hostAvatar:
+            'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200',
+        coverUrl:
+            'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600',
         category: 'Singing',
         country: 'Pakistan',
         countryCode: 'PK',
@@ -316,7 +337,8 @@ class DesignFixtures {
   static List<FixturePartyRoom> get partyRooms {
     if (isError) {
       throw const DesignFixtureException(
-        message: 'Party rooms discovery failed: WebSocket connection lost [ERR_WS_DISCONNECTED]',
+        message:
+            'Party rooms discovery failed: WebSocket connection lost [ERR_WS_DISCONNECTED]',
       );
     }
     if (isEmpty) return const [];
@@ -328,15 +350,60 @@ class DesignFixtures {
         hostNickname: 'Amina Noor',
         category: 'ChitChat',
         seats: [
-          FixturePartySeat(index: 1, userId: 'u_amina', nickname: 'Amina Noor', avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', isHost: true, isMuted: false, isSpeaking: true, giftPoints: 12500),
-          FixturePartySeat(index: 2, userId: 'u_sana', nickname: 'Sana Ali', avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', isHost: false, isMuted: false, isSpeaking: false, giftPoints: 8900),
-          FixturePartySeat(index: 3, userId: 'u_bilal', nickname: 'Bilal Ahmed', avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', isHost: false, isMuted: false, isSpeaking: true, giftPoints: 6400),
-          FixturePartySeat(index: 4, userId: 'u_hamza', nickname: 'Hamza Tariq', avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', isHost: false, isMuted: true, isSpeaking: false, giftPoints: 4300),
-          FixturePartySeat(index: 5, userId: 'u_zainab', nickname: 'Zainab Khan', avatarUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150', isHost: false, isMuted: false, isSpeaking: false, giftPoints: 3100),
-          FixturePartySeat.empty(6),
-          FixturePartySeat.empty(7),
-          FixturePartySeat.empty(8),
-          FixturePartySeat.empty(9),
+          const FixturePartySeat(
+              index: 1,
+              userId: 'u_amina',
+              nickname: 'Amina Noor',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+              isHost: true,
+              isMuted: false,
+              isSpeaking: true,
+              giftPoints: 12500),
+          const FixturePartySeat(
+              index: 2,
+              userId: 'u_sana',
+              nickname: 'Sana Ali',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+              isHost: false,
+              isMuted: false,
+              isSpeaking: false,
+              giftPoints: 8900),
+          const FixturePartySeat(
+              index: 3,
+              userId: 'u_bilal',
+              nickname: 'Bilal Ahmed',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+              isHost: false,
+              isMuted: false,
+              isSpeaking: true,
+              giftPoints: 6400),
+          const FixturePartySeat(
+              index: 4,
+              userId: 'u_hamza',
+              nickname: 'Hamza Tariq',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+              isHost: false,
+              isMuted: true,
+              isSpeaking: false,
+              giftPoints: 4300),
+          const FixturePartySeat(
+              index: 5,
+              userId: 'u_zainab',
+              nickname: 'Zainab Khan',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
+              isHost: false,
+              isMuted: false,
+              isSpeaking: false,
+              giftPoints: 3100),
+          const FixturePartySeat.empty(6),
+          const FixturePartySeat.empty(7),
+          const FixturePartySeat.empty(8),
+          const FixturePartySeat.empty(9),
         ],
       ),
       _createPartyRoom(
@@ -346,15 +413,42 @@ class DesignFixtures {
         hostNickname: 'Zainab Khan',
         category: 'Music',
         seats: [
-          FixturePartySeat(index: 1, userId: 'u_zainab', nickname: 'Zainab Khan', avatarUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150', isHost: true, isMuted: false, isSpeaking: true, giftPoints: 9200),
-          FixturePartySeat(index: 2, userId: 'u_faizan', nickname: 'Faizan Sheikh', avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', isHost: false, isMuted: false, isSpeaking: false, giftPoints: 5400),
-          FixturePartySeat(index: 3, userId: 'u_ayesha', nickname: 'Ayesha Siddiqui', avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150', isHost: false, isMuted: false, isSpeaking: true, giftPoints: 7800),
-          FixturePartySeat.empty(4),
-          FixturePartySeat.empty(5),
-          FixturePartySeat.empty(6),
-          FixturePartySeat.empty(7),
-          FixturePartySeat.empty(8),
-          FixturePartySeat.empty(9),
+          const FixturePartySeat(
+              index: 1,
+              userId: 'u_zainab',
+              nickname: 'Zainab Khan',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
+              isHost: true,
+              isMuted: false,
+              isSpeaking: true,
+              giftPoints: 9200),
+          const FixturePartySeat(
+              index: 2,
+              userId: 'u_faizan',
+              nickname: 'Faizan Sheikh',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+              isHost: false,
+              isMuted: false,
+              isSpeaking: false,
+              giftPoints: 5400),
+          const FixturePartySeat(
+              index: 3,
+              userId: 'u_ayesha',
+              nickname: 'Ayesha Siddiqui',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+              isHost: false,
+              isMuted: false,
+              isSpeaking: true,
+              giftPoints: 7800),
+          const FixturePartySeat.empty(4),
+          const FixturePartySeat.empty(5),
+          const FixturePartySeat.empty(6),
+          const FixturePartySeat.empty(7),
+          const FixturePartySeat.empty(8),
+          const FixturePartySeat.empty(9),
         ],
       ),
       _createPartyRoom(
@@ -364,15 +458,51 @@ class DesignFixtures {
         hostNickname: 'Faizan Sheikh',
         category: 'ChitChat',
         seats: [
-          FixturePartySeat(index: 1, userId: 'u_faizan', nickname: 'Faizan Sheikh', avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', isHost: true, isMuted: false, isSpeaking: false, giftPoints: 4100),
-          FixturePartySeat(index: 2, userId: 'u_sana', nickname: 'Sana Ali', avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', isHost: false, isMuted: false, isSpeaking: true, giftPoints: 6700),
-          FixturePartySeat(index: 3, userId: 'u_tariq', nickname: 'Tariq Jamil', avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150', isHost: false, isMuted: false, isSpeaking: false, giftPoints: 3400),
-          FixturePartySeat(index: 4, userId: 'u_usman', nickname: 'Usman Raza', avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150', isHost: false, isMuted: true, isSpeaking: false, giftPoints: 2100),
-          FixturePartySeat.empty(5),
-          FixturePartySeat.empty(6),
-          FixturePartySeat.empty(7),
-          FixturePartySeat.empty(8),
-          FixturePartySeat.empty(9),
+          const FixturePartySeat(
+              index: 1,
+              userId: 'u_faizan',
+              nickname: 'Faizan Sheikh',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+              isHost: true,
+              isMuted: false,
+              isSpeaking: false,
+              giftPoints: 4100),
+          const FixturePartySeat(
+              index: 2,
+              userId: 'u_sana',
+              nickname: 'Sana Ali',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+              isHost: false,
+              isMuted: false,
+              isSpeaking: true,
+              giftPoints: 6700),
+          const FixturePartySeat(
+              index: 3,
+              userId: 'u_tariq',
+              nickname: 'Tariq Jamil',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+              isHost: false,
+              isMuted: false,
+              isSpeaking: false,
+              giftPoints: 3400),
+          const FixturePartySeat(
+              index: 4,
+              userId: 'u_usman',
+              nickname: 'Usman Raza',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150',
+              isHost: false,
+              isMuted: true,
+              isSpeaking: false,
+              giftPoints: 2100),
+          const FixturePartySeat.empty(5),
+          const FixturePartySeat.empty(6),
+          const FixturePartySeat.empty(7),
+          const FixturePartySeat.empty(8),
+          const FixturePartySeat.empty(9),
         ],
       ),
       _createPartyRoom(
@@ -382,15 +512,33 @@ class DesignFixtures {
         hostNickname: 'Hira Malik',
         category: 'Talent',
         seats: [
-          FixturePartySeat(index: 1, userId: 'u_hira', nickname: 'Hira Malik', avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150', isHost: true, isMuted: false, isSpeaking: true, giftPoints: 8300),
-          FixturePartySeat(index: 2, userId: 'u_amina', nickname: 'Amina Noor', avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', isHost: false, isMuted: false, isSpeaking: false, giftPoints: 11400),
-          FixturePartySeat.empty(3),
-          FixturePartySeat.empty(4),
-          FixturePartySeat.empty(5),
-          FixturePartySeat.empty(6),
-          FixturePartySeat.empty(7),
-          FixturePartySeat.empty(8),
-          FixturePartySeat.empty(9),
+          const FixturePartySeat(
+              index: 1,
+              userId: 'u_hira',
+              nickname: 'Hira Malik',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+              isHost: true,
+              isMuted: false,
+              isSpeaking: true,
+              giftPoints: 8300),
+          const FixturePartySeat(
+              index: 2,
+              userId: 'u_amina',
+              nickname: 'Amina Noor',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+              isHost: false,
+              isMuted: false,
+              isSpeaking: false,
+              giftPoints: 11400),
+          const FixturePartySeat.empty(3),
+          const FixturePartySeat.empty(4),
+          const FixturePartySeat.empty(5),
+          const FixturePartySeat.empty(6),
+          const FixturePartySeat.empty(7),
+          const FixturePartySeat.empty(8),
+          const FixturePartySeat.empty(9),
         ],
       ),
       _createPartyRoom(
@@ -400,15 +548,42 @@ class DesignFixtures {
         hostNickname: 'Usman Raza',
         category: 'Gaming',
         seats: [
-          FixturePartySeat(index: 1, userId: 'u_usman', nickname: 'Usman Raza', avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150', isHost: true, isMuted: false, isSpeaking: true, giftPoints: 7200),
-          FixturePartySeat(index: 2, userId: 'u_bilal', nickname: 'Bilal Ahmed', avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', isHost: false, isMuted: false, isSpeaking: false, giftPoints: 6100),
-          FixturePartySeat(index: 3, userId: 'u_hamza', nickname: 'Hamza Tariq', avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', isHost: false, isMuted: false, isSpeaking: true, giftPoints: 5900),
-          FixturePartySeat.empty(4),
-          FixturePartySeat.empty(5),
-          FixturePartySeat.empty(6),
-          FixturePartySeat.empty(7),
-          FixturePartySeat.empty(8),
-          FixturePartySeat.empty(9),
+          const FixturePartySeat(
+              index: 1,
+              userId: 'u_usman',
+              nickname: 'Usman Raza',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150',
+              isHost: true,
+              isMuted: false,
+              isSpeaking: true,
+              giftPoints: 7200),
+          const FixturePartySeat(
+              index: 2,
+              userId: 'u_bilal',
+              nickname: 'Bilal Ahmed',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+              isHost: false,
+              isMuted: false,
+              isSpeaking: false,
+              giftPoints: 6100),
+          const FixturePartySeat(
+              index: 3,
+              userId: 'u_hamza',
+              nickname: 'Hamza Tariq',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+              isHost: false,
+              isMuted: false,
+              isSpeaking: true,
+              giftPoints: 5900),
+          const FixturePartySeat.empty(4),
+          const FixturePartySeat.empty(5),
+          const FixturePartySeat.empty(6),
+          const FixturePartySeat.empty(7),
+          const FixturePartySeat.empty(8),
+          const FixturePartySeat.empty(9),
         ],
       ),
       _createPartyRoom(
@@ -418,15 +593,42 @@ class DesignFixtures {
         hostNickname: 'Sana Ali',
         category: 'Music',
         seats: [
-          FixturePartySeat(index: 1, userId: 'u_sana', nickname: 'Sana Ali', avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', isHost: true, isMuted: false, isSpeaking: true, giftPoints: 14500),
-          FixturePartySeat(index: 2, userId: 'u_amina', nickname: 'Amina Noor', avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', isHost: false, isMuted: false, isSpeaking: false, giftPoints: 12300),
-          FixturePartySeat(index: 3, userId: 'u_zainab', nickname: 'Zainab Khan', avatarUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150', isHost: false, isMuted: false, isSpeaking: false, giftPoints: 8900),
-          FixturePartySeat.empty(4),
-          FixturePartySeat.empty(5),
-          FixturePartySeat.empty(6),
-          FixturePartySeat.empty(7),
-          FixturePartySeat.empty(8),
-          FixturePartySeat.empty(9),
+          const FixturePartySeat(
+              index: 1,
+              userId: 'u_sana',
+              nickname: 'Sana Ali',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+              isHost: true,
+              isMuted: false,
+              isSpeaking: true,
+              giftPoints: 14500),
+          const FixturePartySeat(
+              index: 2,
+              userId: 'u_amina',
+              nickname: 'Amina Noor',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+              isHost: false,
+              isMuted: false,
+              isSpeaking: false,
+              giftPoints: 12300),
+          const FixturePartySeat(
+              index: 3,
+              userId: 'u_zainab',
+              nickname: 'Zainab Khan',
+              avatarUrl:
+                  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
+              isHost: false,
+              isMuted: false,
+              isSpeaking: false,
+              giftPoints: 8900),
+          const FixturePartySeat.empty(4),
+          const FixturePartySeat.empty(5),
+          const FixturePartySeat.empty(6),
+          const FixturePartySeat.empty(7),
+          const FixturePartySeat.empty(8),
+          const FixturePartySeat.empty(9),
         ],
       ),
     ];
@@ -438,7 +640,8 @@ class DesignFixtures {
   static List<FixtureChatThread> get chats {
     if (isError) {
       throw const DesignFixtureException(
-        message: 'Failed to retrieve inbox threads: Chat database locked [ERR_DB_LOCKED]',
+        message:
+            'Failed to retrieve inbox threads: Chat database locked [ERR_DB_LOCKED]',
       );
     }
     if (isEmpty) return const [];
@@ -447,8 +650,10 @@ class DesignFixtures {
         threadId: 'th_01',
         peerUserId: 'u_sana',
         peerNickname: 'Sana Ali',
-        peerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-        lastMessage: 'Hey Amina! Are we doing the PK battle tonight on Karachi Nights?',
+        peerAvatar:
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        lastMessage:
+            'Hey Amina! Are we doing the PK battle tonight on Karachi Nights?',
         lastMessageTime: '10:42 AM',
         unreadCount: 2,
         isOnline: true,
@@ -457,8 +662,10 @@ class DesignFixtures {
         threadId: 'th_02',
         peerUserId: 'u_bilal',
         peerNickname: 'Bilal Ahmed',
-        peerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-        lastMessage: 'Thanks for sending the lion gift on my gaming stream! 🦁🔥',
+        peerAvatar:
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+        lastMessage:
+            'Thanks for sending the lion gift on my gaming stream! 🦁🔥',
         lastMessageTime: '09:15 AM',
         unreadCount: 0,
         isOnline: true,
@@ -467,8 +674,10 @@ class DesignFixtures {
         threadId: 'th_03',
         peerUserId: 'u_zainab',
         peerNickname: 'Zainab Khan',
-        peerAvatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
-        lastMessage: 'Loved your acoustic cover yesterday! The guitar tone was perfect.',
+        peerAvatar:
+            'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
+        lastMessage:
+            'Loved your acoustic cover yesterday! The guitar tone was perfect.',
         lastMessageTime: 'Yesterday',
         unreadCount: 1,
         isOnline: false,
@@ -477,7 +686,8 @@ class DesignFixtures {
         threadId: 'th_04',
         peerUserId: 'u_hamza',
         peerNickname: 'Hamza Tariq',
-        peerAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+        peerAvatar:
+            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
         lastMessage: 'Party room slot booked for 10 PM PKT. See you there!',
         lastMessageTime: 'Yesterday',
         unreadCount: 0,
@@ -487,7 +697,8 @@ class DesignFixtures {
         threadId: 'th_05',
         peerUserId: 'u_hira',
         peerNickname: 'Hira Malik',
-        peerAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+        peerAvatar:
+            'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
         lastMessage: 'Let us collaborate on the weekend live stream event.',
         lastMessageTime: 'Nov 16',
         unreadCount: 0,
@@ -497,7 +708,8 @@ class DesignFixtures {
         threadId: 'th_06',
         peerUserId: 'u_faizan',
         peerNickname: 'Faizan Sheikh',
-        peerAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+        peerAvatar:
+            'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
         lastMessage: 'Best of luck with the weekly agency rankings table!',
         lastMessageTime: 'Nov 15',
         unreadCount: 0,
@@ -507,7 +719,8 @@ class DesignFixtures {
         threadId: 'th_07',
         peerUserId: 'u_ayesha',
         peerNickname: 'Ayesha Siddiqui',
-        peerAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+        peerAvatar:
+            'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
         lastMessage: 'Sent you the new song chords on WhatsApp too.',
         lastMessageTime: 'Nov 14',
         unreadCount: 0,
@@ -517,7 +730,8 @@ class DesignFixtures {
         threadId: 'th_08',
         peerUserId: 'u_usman',
         peerNickname: 'Usman Raza',
-        peerAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150',
+        peerAvatar:
+            'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150',
         lastMessage: 'Are you joining the 9-seat party tonight with the team?',
         lastMessageTime: 'Nov 13',
         unreadCount: 0,
@@ -527,7 +741,8 @@ class DesignFixtures {
         threadId: 'th_09',
         peerUserId: 'u_danish',
         peerNickname: 'Danish Qureshi',
-        peerAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150',
+        peerAvatar:
+            'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150',
         lastMessage: 'Welcome to the Popo Live creator community!',
         lastMessageTime: 'Nov 12',
         unreadCount: 0,
@@ -537,8 +752,10 @@ class DesignFixtures {
         threadId: 'th_10',
         peerUserId: 'u_maryam',
         peerNickname: 'Maryam Noor',
-        peerAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
-        lastMessage: 'Can you share your microphone settings for acoustic singing?',
+        peerAvatar:
+            'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+        lastMessage:
+            'Can you share your microphone settings for acoustic singing?',
         lastMessageTime: 'Nov 11',
         unreadCount: 0,
         isOnline: false,
@@ -547,7 +764,8 @@ class DesignFixtures {
         threadId: 'th_11',
         peerUserId: 'u_tariq',
         peerNickname: 'Tariq Jamil',
-        peerAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+        peerAvatar:
+            'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
         lastMessage: 'Congratulations on reaching Level 12 host status!',
         lastMessageTime: 'Nov 10',
         unreadCount: 0,
@@ -557,7 +775,8 @@ class DesignFixtures {
         threadId: 'th_12',
         peerUserId: 'u_sara',
         peerNickname: 'Sara Khan',
-        peerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        peerAvatar:
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
         lastMessage: 'See you in the upcoming talent hunt event on Saturday!',
         lastMessageTime: 'Nov 09',
         unreadCount: 0,
@@ -582,7 +801,8 @@ class DesignFixtures {
         category: 'Security',
         badgeLabel: 'Important',
         title: 'New Sign-in Detected',
-        preview: 'A new sign-in was detected on your account from Android Pixel device (Karachi, PK).',
+        preview:
+            'A new sign-in was detected on your account from Android Pixel device (Karachi, PK).',
         timestamp: '10 mins ago',
         isRead: false,
         isUrgent: true,
@@ -592,7 +812,8 @@ class DesignFixtures {
         category: 'Wallet',
         badgeLabel: 'Finance',
         title: 'Weekly Settlement Credited',
-        preview: 'Your host earnings of 420,000 points have been converted and credited to your wallet balance.',
+        preview:
+            'Your host earnings of 420,000 points have been converted and credited to your wallet balance.',
         timestamp: '2 hours ago',
         isRead: true,
         isUrgent: false,
@@ -602,7 +823,8 @@ class DesignFixtures {
         category: 'Activity',
         badgeLabel: 'Event',
         title: 'Grand Super PK Tournament Open',
-        preview: 'Registration for the regional Super PK Tournament is now live! Sign up before Friday.',
+        preview:
+            'Registration for the regional Super PK Tournament is now live! Sign up before Friday.',
         timestamp: '1 day ago',
         isRead: true,
         isUrgent: false,
@@ -612,7 +834,8 @@ class DesignFixtures {
         category: 'System',
         badgeLabel: 'Policy',
         title: 'Streaming Guidelines & Safety Update',
-        preview: 'Please review our updated community guidelines regarding background music and fair play.',
+        preview:
+            'Please review our updated community guidelines regarding background music and fair play.',
         timestamp: '3 days ago',
         isRead: true,
         isUrgent: false,
@@ -701,25 +924,29 @@ class DesignFixtures {
         FixtureVipPrivilege(
           id: 'p_01',
           title: 'Custom Entrance Animation',
-          description: 'Golden carriage and celestial fanfare on entering any live room',
+          description:
+              'Golden carriage and celestial fanfare on entering any live room',
           iconName: 'car_crash_rounded',
         ),
         FixtureVipPrivilege(
           id: 'p_02',
           title: 'Exclusive Glowing Avatar Ring',
-          description: 'Prismatic animated border surrounding your profile picture',
+          description:
+              'Prismatic animated border surrounding your profile picture',
           iconName: 'blur_circular_rounded',
         ),
         FixtureVipPrivilege(
           id: 'p_03',
           title: 'Chat Message Highlight',
-          description: 'Golden bubble and bold typography in audience live chats',
+          description:
+              'Golden bubble and bold typography in audience live chats',
           iconName: 'mark_chat_read_rounded',
         ),
         FixtureVipPrivilege(
           id: 'p_04',
           title: 'Stealth Mode Visitor',
-          description: 'Browse rooms without appearing in public visitor counters',
+          description:
+              'Browse rooms without appearing in public visitor counters',
           iconName: 'visibility_off_rounded',
         ),
       ],
@@ -783,7 +1010,8 @@ class DesignFixtures {
         category: 'Battle',
         rarity: 'Epic',
         iconEmoji: '⚔️',
-        description: 'Achieved 50+ victories in official 1v1 PK battle competitions',
+        description:
+            'Achieved 50+ victories in official 1v1 PK battle competitions',
         isUnlocked: true,
         unlockedDate: '2026-11-10',
       ),
@@ -836,17 +1064,20 @@ class DesignFixtures {
       id: 'fc_amina_noor',
       clubName: 'Noor Fam',
       hostNickname: 'Amina Noor',
-      hostAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+      hostAvatar:
+          'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
       badgeTag: '🌟 NoorFam',
       clubLevel: 8,
       memberCount: 432,
       dailyIntimacyPoints: 18450,
-      description: 'The official family for Amina Noor acoustic sessions & Karachi Nights!',
+      description:
+          'The official family for Amina Noor acoustic sessions & Karachi Nights!',
       topMembers: [
         FixtureFanClubMember(
           userId: 'u_bilal',
           nickname: 'Bilal Ahmed',
-          avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+          avatarUrl:
+              'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
           intimacyLevel: 18,
           rank: 1,
           joinedDaysAgo: 120,
@@ -854,7 +1085,8 @@ class DesignFixtures {
         FixtureFanClubMember(
           userId: 'u_sana',
           nickname: 'Sana Ali',
-          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+          avatarUrl:
+              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
           intimacyLevel: 15,
           rank: 2,
           joinedDaysAgo: 95,
@@ -862,7 +1094,8 @@ class DesignFixtures {
         FixtureFanClubMember(
           userId: 'u_faizan',
           nickname: 'Faizan Sheikh',
-          avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+          avatarUrl:
+              'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
           intimacyLevel: 12,
           rank: 3,
           joinedDaysAgo: 60,
@@ -887,33 +1120,39 @@ class DesignFixtures {
         rank: 1,
         tierName: 'Gold Dragon Guardian',
         guardianNickname: 'Bilal Ahmed',
-        guardianAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+        guardianAvatar:
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
         shieldIconEmoji: '🐉',
         contributionPoints: 250000,
         daysRemaining: 28,
-        privilegeSummary: 'Custom dragon entrance banner, seat lock immunity, priority chat voice',
+        privilegeSummary:
+            'Custom dragon entrance banner, seat lock immunity, priority chat voice',
       ),
       FixtureGuardian(
         id: 'guard_02',
         rank: 2,
         tierName: 'Silver Phoenix Guardian',
         guardianNickname: 'Faizan Sheikh',
-        guardianAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+        guardianAvatar:
+            'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
         shieldIconEmoji: '🦅',
         contributionPoints: 120000,
         daysRemaining: 14,
-        privilegeSummary: 'Phoenix aura glow, silver seat shield, exclusive guardian badge',
+        privilegeSummary:
+            'Phoenix aura glow, silver seat shield, exclusive guardian badge',
       ),
       FixtureGuardian(
         id: 'guard_03',
         rank: 3,
         tierName: 'Bronze Lion Guardian',
         guardianNickname: 'Tariq Jamil',
-        guardianAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+        guardianAvatar:
+            'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
         shieldIconEmoji: '🦁',
         contributionPoints: 60000,
         daysRemaining: 7,
-        privilegeSummary: 'Bronze lion badge, special entrance notification, fan club multiplier',
+        privilegeSummary:
+            'Bronze lion badge, special entrance notification, fan club multiplier',
       ),
     ];
   }
@@ -926,7 +1165,8 @@ class DesignFixtures {
         isValid: true,
         coinReward: 5000,
         bonusItem: '1-Day VIP Trial Pass + Karachi Nights Avatar Frame',
-        message: 'Voucher successfully redeemed! 5,000 coins credited to your wallet.',
+        message:
+            'Voucher successfully redeemed! 5,000 coins credited to your wallet.',
       );
 
   static FixtureRedeemCode get expiredRedeemCode => const FixtureRedeemCode(
@@ -934,7 +1174,8 @@ class DesignFixtures {
         isValid: false,
         coinReward: 0,
         bonusItem: null,
-        message: 'This redemption code has expired or has already been claimed by another account.',
+        message:
+            'This redemption code has expired or has already been claimed by another account.',
       );
 
   static FixtureRedeemCode get invalidRedeemCode => const FixtureRedeemCode(
@@ -942,7 +1183,8 @@ class DesignFixtures {
         isValid: false,
         coinReward: 0,
         bonusItem: null,
-        message: 'Invalid voucher code. Please check your spelling and try again.',
+        message:
+            'Invalid voucher code. Please check your spelling and try again.',
       );
 
   // --------------------------------------------------------------------------
@@ -1013,7 +1255,8 @@ class DesignFixtures {
       FixtureHostRanking(
         rank: 1,
         hostNickname: 'Amina Noor',
-        avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
         diamondsEarned: 1850000,
         country: 'Pakistan',
         countryFlag: '🇵🇰',
@@ -1022,7 +1265,8 @@ class DesignFixtures {
       FixtureHostRanking(
         rank: 2,
         hostNickname: 'Sana Ali',
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
         diamondsEarned: 1420000,
         country: 'Pakistan',
         countryFlag: '🇵🇰',
@@ -1031,7 +1275,8 @@ class DesignFixtures {
       FixtureHostRanking(
         rank: 3,
         hostNickname: 'Zainab Khan',
-        avatarUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
         diamondsEarned: 980000,
         country: 'Pakistan',
         countryFlag: '🇵🇰',
@@ -1040,7 +1285,8 @@ class DesignFixtures {
       FixtureHostRanking(
         rank: 4,
         hostNickname: 'Hamza Tariq',
-        avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
         diamondsEarned: 760000,
         country: 'Pakistan',
         countryFlag: '🇵🇰',
@@ -1049,7 +1295,8 @@ class DesignFixtures {
       FixtureHostRanking(
         rank: 5,
         hostNickname: 'Hira Malik',
-        avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
         diamondsEarned: 620000,
         country: 'Pakistan',
         countryFlag: '🇵🇰',
@@ -1058,7 +1305,8 @@ class DesignFixtures {
       FixtureHostRanking(
         rank: 6,
         hostNickname: 'Faizan Sheikh',
-        avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
         diamondsEarned: 510000,
         country: 'Pakistan',
         countryFlag: '🇵🇰',
@@ -1067,7 +1315,8 @@ class DesignFixtures {
       FixtureHostRanking(
         rank: 7,
         hostNickname: 'Ayesha Siddiqui',
-        avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
         diamondsEarned: 430000,
         country: 'Pakistan',
         countryFlag: '🇵🇰',
@@ -1076,7 +1325,8 @@ class DesignFixtures {
       FixtureHostRanking(
         rank: 8,
         hostNickname: 'Bilal Ahmed',
-        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
         diamondsEarned: 380000,
         country: 'Pakistan',
         countryFlag: '🇵🇰',
@@ -1102,7 +1352,8 @@ class DesignFixtures {
         category: 'Avatar Frame',
         priceCoins: 30000,
         validityDays: 30,
-        previewImage: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=200',
+        previewImage:
+            'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=200',
         isHot: true,
       ),
       FixtureStoreItem(
@@ -1111,7 +1362,8 @@ class DesignFixtures {
         category: 'Entrance Effect',
         priceCoins: 85000,
         validityDays: 30,
-        previewImage: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=200',
+        previewImage:
+            'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=200',
         isHot: true,
       ),
       FixtureStoreItem(
@@ -1120,7 +1372,8 @@ class DesignFixtures {
         category: 'Chat Bubble',
         priceCoins: 12000,
         validityDays: 15,
-        previewImage: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200',
+        previewImage:
+            'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200',
         isHot: false,
       ),
       FixtureStoreItem(
@@ -1129,7 +1382,8 @@ class DesignFixtures {
         category: 'Avatar Frame',
         priceCoins: 25000,
         validityDays: 30,
-        previewImage: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200',
+        previewImage:
+            'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200',
         isHot: false,
       ),
     ];
@@ -1212,7 +1466,8 @@ class DesignFixtures {
       monthlyDiamondVolume: 14850000,
       commissionTierPercentage: 12.0,
       settlementStatus: 'Active & Verified',
-      announcement: 'Weekly settlement cycle runs every Monday at 12:00 UTC. Submit bank updates by Sunday midnight.',
+      announcement:
+          'Weekly settlement cycle runs every Monday at 12:00 UTC. Submit bank updates by Sunday midnight.',
     );
   }
 
@@ -1231,49 +1486,58 @@ class DesignFixtures {
         id: 'help_01',
         category: 'Recharge & Wallet',
         question: 'How do I top up coins with Google Play or Card?',
-        answer: 'Navigate to Wallet > Top Up. Choose your desired coin bundle and complete checkout via Google Play billing or authorized payment providers.',
+        answer:
+            'Navigate to Wallet > Top Up. Choose your desired coin bundle and complete checkout via Google Play billing or authorized payment providers.',
       ),
       FixtureHelpTopic(
         id: 'help_02',
         category: 'Broadcasting',
         question: 'How do I qualify to go live as a host?',
-        answer: 'You must reach Wealth Level 5, verify your profile face photo, and accept our broadcasting safety guidelines before opening the host studio.',
+        answer:
+            'You must reach Wealth Level 5, verify your profile face photo, and accept our broadcasting safety guidelines before opening the host studio.',
       ),
       FixtureHelpTopic(
         id: 'help_03',
         category: 'Withdrawals',
         question: 'How do I withdraw host points into my bank or e-wallet?',
-        answer: 'Go to Me > Wallet > Host Earnings > Withdraw. Complete identity KYC and select your local bank transfer or registered e-wallet account.',
+        answer:
+            'Go to Me > Wallet > Host Earnings > Withdraw. Complete identity KYC and select your local bank transfer or registered e-wallet account.',
       ),
       FixtureHelpTopic(
         id: 'help_04',
         category: 'Security',
-        question: 'How can I protect my Popo Live account from unauthorized access?',
-        answer: 'Bind your phone number and email in Settings > Account Security. Always enable two-factor OTP verification for new device logins.',
+        question:
+            'How can I protect my Popo Live account from unauthorized access?',
+        answer:
+            'Bind your phone number and email in Settings > Account Security. Always enable two-factor OTP verification for new device logins.',
       ),
       FixtureHelpTopic(
         id: 'help_05',
         category: 'PK Battles',
         question: 'How are PK battle scores and winners decided?',
-        answer: 'In 1v1 PK, audience gifts during the 5-minute timer determine each host score. The host with the highest gift point tally wins the battle.',
+        answer:
+            'In 1v1 PK, audience gifts during the 5-minute timer determine each host score. The host with the highest gift point tally wins the battle.',
       ),
       FixtureHelpTopic(
         id: 'help_06',
         category: 'Party Rooms',
         question: 'How do 9-seat party rooms work and how do I speak?',
-        answer: 'Tap any empty seat in a party room to send a mic request. Once approved by the room host, your microphone un-mutes and you join the live conversation.',
+        answer:
+            'Tap any empty seat in a party room to send a mic request. Once approved by the room host, your microphone un-mutes and you join the live conversation.',
       ),
       FixtureHelpTopic(
         id: 'help_07',
         category: 'VIP System',
         question: 'What are the privileges of subscribing to VIP tiers?',
-        answer: 'VIP members enjoy custom carriage entry animations, glowing avatar frames, chat badges, stealth visitor mode, and special gift discounts.',
+        answer:
+            'VIP members enjoy custom carriage entry animations, glowing avatar frames, chat badges, stealth visitor mode, and special gift discounts.',
       ),
       FixtureHelpTopic(
         id: 'help_08',
         category: 'Safety & Bans',
         question: 'What content is prohibited during live streams?',
-        answer: 'Harassment, hate speech, dangerous activities, copyright violations, and vulgarity are strictly forbidden and result in instant broadcast termination.',
+        answer:
+            'Harassment, hate speech, dangerous activities, copyright violations, and vulgarity are strictly forbidden and result in instant broadcast termination.',
       ),
     ];
   }
@@ -1285,8 +1549,10 @@ class DesignFixtures {
     userId: 'u_amina_noor',
     poppoId: '8839201',
     nickname: 'Amina Noor',
-    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300',
-    bio: 'Singer & acoustic guitarist from Karachi 🎸🎶 Welcome to Karachi Nights!',
+    avatarUrl:
+        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300',
+    bio:
+        'Singer & acoustic guitarist from Karachi 🎸🎶 Welcome to Karachi Nights!',
     gender: 'female',
     country: 'Pakistan',
     countryCode: 'PK',
@@ -1307,7 +1573,8 @@ class DesignFixtures {
     userId: 'u_sana_ali',
     poppoId: '8839202',
     nickname: 'Sana Ali',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300',
+    avatarUrl:
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300',
     bio: 'Chai enthusiast, storyteller & late-night podcaster ☕✨',
     gender: 'female',
     country: 'Pakistan',
@@ -1329,7 +1596,8 @@ class DesignFixtures {
     userId: 'u_bilal_ahmed',
     poppoId: '8839203',
     nickname: 'Bilal Ahmed',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300',
+    avatarUrl:
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300',
     bio: 'Esports streamer & community champion 🎮🔥 High tier gamer.',
     gender: 'male',
     country: 'Pakistan',
@@ -1350,7 +1618,8 @@ class DesignFixtures {
     userId: 'u_zainab_khan',
     poppoId: '8839204',
     nickname: 'Zainab Khan',
-    avatarUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300',
+    avatarUrl:
+        'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300',
     bio: 'Eastern classical vocalist & poetess from Lahore 🪕✨',
     gender: 'female',
     country: 'Pakistan',
@@ -1371,7 +1640,8 @@ class DesignFixtures {
     userId: 'u_hamza_tariq',
     poppoId: '8839205',
     nickname: 'Hamza Tariq',
-    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300',
+    avatarUrl:
+        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300',
     bio: 'Standup comedian, entertainer & improv host 😂🎭',
     gender: 'male',
     country: 'Pakistan',
@@ -1392,7 +1662,8 @@ class DesignFixtures {
     userId: 'u_hira_malik',
     poppoId: '8839206',
     nickname: 'Hira Malik',
-    avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300',
+    avatarUrl:
+        'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300',
     bio: 'Fashion curator, lifestyle vlogger & daily host 💄👗',
     gender: 'female',
     country: 'Pakistan',
@@ -1413,7 +1684,8 @@ class DesignFixtures {
     userId: 'u_faizan_sheikh',
     poppoId: '8839207',
     nickname: 'Faizan Sheikh',
-    avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300',
+    avatarUrl:
+        'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300',
     bio: 'Literature enthusiast & community speaker 📖',
     gender: 'male',
     country: 'Pakistan',
@@ -1434,7 +1706,8 @@ class DesignFixtures {
     userId: 'u_tariq_jamil',
     poppoId: '8839208',
     nickname: 'Tariq Jamil',
-    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300',
+    avatarUrl:
+        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300',
     bio: 'Music patron & supporter of acoustic talent 🎵',
     gender: 'male',
     country: 'Pakistan',
