@@ -11,7 +11,8 @@ import 'package:popo_live/screens/profile/me_screen.dart';
 
 void main() {
   group('Phase 2 (D1) Prompt 1 - Mobile Bottom Navigation Bar Tests', () {
-    testWidgets('PopoBottomNavigation renders exactly 5 uniform tabs in correct order',
+    testWidgets(
+        'PopoBottomNavigation renders exactly 5 uniform tabs in correct order',
         (WidgetTester tester) async {
       int selectedTab = 0;
 
@@ -46,11 +47,16 @@ void main() {
       expect(find.byIcon(Icons.videocam_rounded), findsNothing);
 
       // Verify the 5 tab icons exist
-      expect(find.byIcon(Icons.live_tv_rounded), findsOneWidget); // Active Tab 0
-      expect(find.byIcon(Icons.auto_awesome_outlined), findsOneWidget); // Inactive Tab 1
-      expect(find.byIcon(Icons.grid_view_outlined), findsOneWidget); // Inactive Tab 2
-      expect(find.byIcon(Icons.chat_bubble_outline_rounded), findsOneWidget); // Inactive Tab 3
-      expect(find.byIcon(Icons.person_outline_rounded), findsOneWidget); // Inactive Tab 4
+      expect(
+          find.byIcon(Icons.live_tv_rounded), findsOneWidget); // Active Tab 0
+      expect(find.byIcon(Icons.auto_awesome_outlined),
+          findsOneWidget); // Inactive Tab 1
+      expect(find.byIcon(Icons.grid_view_outlined),
+          findsOneWidget); // Inactive Tab 2
+      expect(find.byIcon(Icons.chat_bubble_outline_rounded),
+          findsOneWidget); // Inactive Tab 3
+      expect(find.byIcon(Icons.person_outline_rounded),
+          findsOneWidget); // Inactive Tab 4
 
       // Test tapping each tab triggers onTabSelected with correct index
       // Tap Explore (index 1)
@@ -79,7 +85,8 @@ void main() {
       expect(selectedTab, 0);
     });
 
-    testWidgets('PopoBottomNavigation displays badge on Message tab when messageBadgeCount > 0',
+    testWidgets(
+        'PopoBottomNavigation displays badge on Message tab when messageBadgeCount > 0',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
@@ -96,7 +103,8 @@ void main() {
       expect(find.text('5'), findsOneWidget);
     });
 
-    testWidgets('AppShell houses all 5 destination widgets in IndexedStack in exact order',
+    testWidgets(
+        'AppShell houses all 5 destination widgets in IndexedStack in exact order',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
