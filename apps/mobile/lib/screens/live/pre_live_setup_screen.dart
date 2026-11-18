@@ -35,7 +35,7 @@ class _PreLiveSetupScreenState extends State<PreLiveSetupScreen> {
 
   bool _isCameraOn = true;
   bool _isMicOn = true;
-  bool _isFrontCamera = true;
+  final bool _isFrontCamera = true;
   String? _validationError;
 
   @override

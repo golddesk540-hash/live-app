@@ -82,7 +82,7 @@ class _LiveEndScreenState extends State<LiveEndScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (!didPop) _returnToExplore();
       },
       child: Scaffold(
