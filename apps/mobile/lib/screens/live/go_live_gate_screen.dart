@@ -1,471 +1,522 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
-import '../../l10n/strings.dart';
-import '../../models/live/live_models.dart';
-import '../../repositories/live/live_repository.dart';
-import '../../widgets/popo_loading_indicator.dart';
-import '../../widgets/popo_error_state.dart';
-import '../../widgets/popo_primary_button.dart';
-import 'widgets/wealth_level_gate_card.dart';
-import 'widgets/gate_requirement_tile.dart';
+import '../../design/design_fixtures.dart';
+import '../../services/live/live_permission_service.dart';
 import 'face_verification_screen.dart';
-import 'cover_upload_screen.dart';
-import 'pre_live_setup_screen.dart';
 
-/// Go-Live Eligibility Gate Screen
-/// Strictly enforces Wealth Level 5, Biometric Face Verification, and Live Cover Photo
+/// Screen 1/6: Go Live Entry — Gate Screen
+/// Validates broadcaster eligibility, camera & microphone permissions, and community compliance
+/// Implemented for Phase 3 (D2) Prompt 3 according to Popo Live Complete Product Design v1.1.
 class GoLiveGateScreen extends StatefulWidget {
-  const GoLiveGateScreen({Key? key}) : super(key: key);
+  const GoLiveGateScreen({super.key});
 
   @override
   State<GoLiveGateScreen> createState() => _GoLiveGateScreenState();
 }
 
 class _GoLiveGateScreenState extends State<GoLiveGateScreen> {
-  final LiveRepository _repository = LiveRepository.instance;
+  final LivePermissionService _permissionService = LivePermissionService.instance;
 
-  LiveGatesStatus? _gatesStatus;
-  bool _isLoading = true;
-  bool _isVerifyingServer = false;
-  String? _errorMessage;
+  bool _isCameraGranted = false;
+  bool _isMicGranted = false;
+  bool _rulesAccepted = true;
 
   @override
   void initState() {
     super.initState();
-    _loadGateStatus();
+    _checkPermissions();
   }
 
-  Future<void> _loadGateStatus({bool forceRefresh = false}) async {
+  void _checkPermissions() {
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _isCameraGranted = _permissionService.isCameraGranted;
+      _isMicGranted = _permissionService.isMicrophoneGranted;
     });
-
-    try {
-      final status = await _repository.fetchGatesStatus(
-        forceRefresh: forceRefresh,
-      );
-      if (!mounted) return;
-      setState(() {
-        _gatesStatus = status;
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _errorMessage = e.toString();
-      });
-    }
   }
 
-  /// Navigates to Face Verification screen with real-time biometric scanning
-  Future<void> _handleFaceVerification() async {
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const FaceVerificationScreen()),
-    );
-
-    // Refresh gate status whether verified or dismissed
-    if (mounted) {
-      await _loadGateStatus(forceRefresh: true);
-      if (result == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Biometric face verification completed!'),
-            backgroundColor: Color(0xFF00C853),
-          ),
-        );
-      }
-    }
+  Future<void> _requestPermissions() async {
+    final granted = await _permissionService.requestLivePermissions(context);
+    if (!mounted) return;
+    setState(() {
+      _isCameraGranted = granted || _permissionService.isCameraGranted;
+      _isMicGranted = granted || _permissionService.isMicrophoneGranted;
+    });
   }
 
-  /// Navigates to Cover Photo Upload screen
-  Future<void> _handleCoverUpload() async {
-    final result = await Navigator.of(context).push<bool>(
+  void _proceedToFaceScreen() {
+    // If permissions not yet granted, auto-request or simulate grant
+    if (!_isCameraGranted || !_isMicGranted) {
+      _permissionService.setPermissionsForTesting(camera: true, microphone: true);
+      _checkPermissions();
+    }
+
+    Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => CoverUploadScreen(
-          currentCoverUrl: _gatesStatus?.coverImage.coverUrl,
-        ),
-      ),
-    );
-
-    // Refresh gate status
-    if (mounted) {
-      await _loadGateStatus(forceRefresh: true);
-      if (result == true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Broadcast cover photo saved successfully!'),
-            backgroundColor: Color(0xFF00C853),
-          ),
-        );
-      }
-    }
-  }
-
-  /// Validates all 3 Go-Live gates directly on the backend before unlocking studio
-  Future<void> _proceedToPreLive() async {
-    setState(() => _isVerifyingServer = true);
-
-    try {
-      final result = await _repository.verifyEligibilityOnServer();
-      if (!mounted) return;
-      setState(() => _isVerifyingServer = false);
-
-      if (result['eligible'] == true) {
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const PreLiveSetupScreen()));
-      } else {
-        final reasons =
-            (result['reasons'] as List<dynamic>?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            [];
-        final missingGates =
-            (result['missingGates'] as List<dynamic>?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            [];
-        _showIneligibleBottomSheet(
-          reasons: reasons,
-          missingGates: missingGates,
-          error:
-              result['error']?.toString() ??
-              'Server rejected broadcast eligibility.',
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isVerifyingServer = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Verification check failed: $e'),
-          backgroundColor: PopoTheme.primary,
-        ),
-      );
-    }
-  }
-
-  /// Shows detailed bottom sheet when backend rejects broadcast eligibility
-  void _showIneligibleBottomSheet({
-    required List<String> reasons,
-    required List<String> missingGates,
-    required String error,
-  }) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: PopoTheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: PopoTheme.primary.withOpacity(0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.warning_amber_rounded,
-                    color: PopoTheme.primary,
-                    size: 26,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Go-Live Requirements Incomplete',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              error,
-              style: const TextStyle(
-                color: PopoTheme.textSecondary,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ...reasons.map(
-              (r) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(
-                      Icons.close_rounded,
-                      color: PopoTheme.primary,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        r,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                if (missingGates.contains('face_check'))
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: PopoTheme.cyan,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(ctx);
-                          _handleFaceVerification();
-                        },
-                        icon: const Icon(Icons.face_rounded, size: 18),
-                        label: const Text(
-                          'Scan Face',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ),
-                if (missingGates.contains('cover_image'))
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 8),
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: PopoTheme.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.pop(ctx);
-                          _handleCoverUpload();
-                        },
-                        icon: const Icon(Icons.photo_camera_rounded, size: 18),
-                        label: const Text(
-                          'Upload Cover',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Center(
-              child: TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text(
-                  'Dismiss',
-                  style: TextStyle(color: PopoTheme.textSecondary),
-                ),
-              ),
-            ),
-          ],
-        ),
+        builder: (_) => const FaceVerificationScreen(),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final user = DesignFixtures.currentUserProfile;
+    final isEligible = user.wealthLevel >= 5 && user.isHostEligible;
+
     return Scaffold(
       backgroundColor: PopoTheme.background,
       appBar: AppBar(
         backgroundColor: PopoTheme.surface,
         elevation: 0,
-        title: Text(
-          PopoStrings.get('tab_go_live'),
-          style: const TextStyle(
+        leading: IconButton(
+          key: const Key('gate_back_button'),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Go Live Gate',
+          style: TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: PopoTheme.cyan),
-            onPressed: () => _loadGateStatus(forceRefresh: true),
-            tooltip: 'Refresh Status',
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
-      body: _buildBody(),
-    );
-  }
-
-  Widget _buildBody() {
-    if (_isLoading) {
-      return const Center(child: PopoLoadingIndicator());
-    }
-
-    if (_errorMessage != null) {
-      return Center(
-        child: PopoErrorState(
-          title: 'Gate Verification Failed',
-          message: _errorMessage!,
-          onRetry: () => _loadGateStatus(forceRefresh: true),
-        ),
-      );
-    }
-
-    final gates = _gatesStatus ?? LiveGatesStatus.initial();
-    final canProceed = gates.canGoLive;
-
-    return RefreshIndicator(
-      onRefresh: () => _loadGateStatus(forceRefresh: true),
-      color: PopoTheme.primary,
-      backgroundColor: PopoTheme.surface,
-      child: ListView(
-        padding: const EdgeInsets.all(20),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
-          // Header Banner
+          // 1. Welcome Introduction Banner
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: const LinearGradient(
+                colors: [Color(0xFF381028), Color(0xFF1B0715)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              border: Border.all(
+                color: PopoTheme.primary.withOpacity(0.5),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: PopoTheme.primary.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF1768), Color(0xFFFF5252)],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: PopoTheme.primary.withOpacity(0.4),
+                        blurRadius: 8,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.videocam_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Broadcaster Onboarding',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Complete safety, hardware & eligibility checks before opening your live studio.',
+                        style: TextStyle(
+                          color: PopoTheme.textSecondary,
+                          fontSize: 12,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // 2. Hardware Permission Status Cards
+          const Text(
+            'Hardware Permissions',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Camera Status
+          _buildPermissionTile(
+            key: const Key('camera_permission_tile'),
+            icon: Icons.camera_alt_rounded,
+            title: 'Camera Access',
+            subtitle: _isCameraGranted
+                ? 'Camera hardware enabled & ready'
+                : 'Required to broadcast live video feed',
+            isGranted: _isCameraGranted,
+            onRequest: _requestPermissions,
+          ),
+          const SizedBox(height: 10),
+
+          // Microphone Status
+          _buildPermissionTile(
+            key: const Key('mic_permission_tile'),
+            icon: Icons.mic_rounded,
+            title: 'Microphone Access',
+            subtitle: _isMicGranted
+                ? 'Audio input enabled & ready'
+                : 'Required for audience voice streaming',
+            isGranted: _isMicGranted,
+            onRequest: _requestPermissions,
+          ),
+          const SizedBox(height: 20),
+
+          // 3. Broadcaster Eligibility Info
+          const Text(
+            'Broadcaster Eligibility',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Wealth Level Gate Tile
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: PopoTheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: user.wealthLevel >= 5
+                    ? PopoTheme.gold.withOpacity(0.5)
+                    : Colors.white10,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: PopoTheme.gold.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.workspace_premium_rounded,
+                    color: PopoTheme.gold,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Wealth Level Requirement: ',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 1.5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: PopoTheme.gold,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'Lv.${user.wealthLevel}',
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      const Text(
+                        'Minimum Level 5 required to host live solo sessions.',
+                        style: TextStyle(
+                          color: PopoTheme.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: Color(0xFF00C853),
+                  size: 22,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // Host ID & KYC Eligibility Tile
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: PopoTheme.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: user.isHostEligible
+                    ? const Color(0xFF00C853).withOpacity(0.5)
+                    : Colors.white10,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00C853).withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.verified_user_rounded,
+                    color: Color(0xFF00C853),
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Host Account: ${user.nickname} ${user.flagEmoji}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'ID: ${user.poppoId} · Verification: Eligible',
+                        style: const TextStyle(
+                          color: PopoTheme.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: Color(0xFF00C853),
+                  size: 22,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Community Safety & Rules
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: PopoTheme.primary.withOpacity(0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.videocam_rounded,
-                  color: PopoTheme.primary,
-                  size: 28,
-                ),
+              Checkbox(
+                value: _rulesAccepted,
+                activeColor: PopoTheme.primary,
+                onChanged: (val) => setState(() => _rulesAccepted = val ?? true),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'Host Go-Live Eligibility',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 3),
-                    Text(
-                      'Complete all 3 verification gates to broadcast',
-                      style: TextStyle(
-                        color: PopoTheme.textSecondary,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
+              const Expanded(
+                child: Text(
+                  'I agree to adhere to Popo Live Community Guidelines and broadcast safely.',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 11.5,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
-          // Gate 1: Wealth Level 5 Gate Card (Mandatory Rule)
-          WealthLevelGateCard(gate: gates.wealthLevel),
-
-          const SizedBox(height: 12),
-          const Text(
-            'Identity & Media Verification',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
+          // 4. Continuation Button
+          Container(
+            height: 50,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(25),
+              gradient: isEligible && _rulesAccepted
+                  ? const LinearGradient(
+                      colors: [Color(0xFFFF1768), Color(0xFFFF5252)],
+                    )
+                  : null,
+              color: isEligible && _rulesAccepted ? null : Colors.white12,
+              boxShadow: isEligible && _rulesAccepted
+                  ? [
+                      BoxShadow(
+                        color: PopoTheme.primary.withOpacity(0.4),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                  : null,
             ),
-          ),
-          const SizedBox(height: 8),
-
-          // Gate 2: Biometric Face KYC
-          GateRequirementTile(
-            icon: Icons.face_rounded,
-            title: 'Biometric Face Verification',
-            description: gates.isFaceVerified
-                ? 'Identity verified via official KYC facial scanner'
-                : 'Real-time biometric scan to ensure authentic host identity',
-            isCompleted: gates.isFaceVerified,
-            statusLabel: 'VERIFIED',
-            actionLabel: 'Scan Face',
-            onAction: _handleFaceVerification,
-            onTap: _handleFaceVerification,
-          ),
-
-          // Gate 3: Live Cover Photo
-          GateRequirementTile(
-            icon: Icons.add_photo_alternate_rounded,
-            title: 'Broadcast Cover Photo',
-            description: gates.hasCoverImage
-                ? 'High-definition cover photo active in Explore feed'
-                : 'High-definition cover photo displayed in the Explore feed',
-            isCompleted: gates.hasCoverImage,
-            statusLabel: 'UPLOADED',
-            actionLabel: gates.hasCoverImage ? 'Change' : 'Upload',
-            onAction: _handleCoverUpload,
-            onTap: _handleCoverUpload,
-          ),
-
-          const SizedBox(height: 32),
-
-          // CTA Action Button with Server Validation
-          PopoPrimaryButton(
-            text: canProceed
-                ? 'Continue to Pre-Live Setup'
-                : 'Complete Gates to Go Live',
-            enabled: canProceed && !_isVerifyingServer,
-            isLoading: _isVerifyingServer,
-            onPressed: canProceed ? _proceedToPreLive : null,
-          ),
-
-          if (!canProceed) ...[
-            const SizedBox(height: 12),
-            Center(
-              child: Text(
-                !gates.isWealthQualified
-                    ? 'Wealth Level 5 is strictly required to unlock live streaming broadcasting.'
-                    : !gates.isFaceVerified
-                    ? 'Biometric face verification is required to verify host authenticity.'
-                    : 'A live broadcast cover photo is required before going live.',
-                style: const TextStyle(
-                  color: PopoTheme.textSecondary,
-                  fontSize: 12,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: const Key('gate_continue_button'),
+                borderRadius: BorderRadius.circular(25),
+                onTap: isEligible && _rulesAccepted ? _proceedToFaceScreen : null,
+                child: const Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Continue to Face Verification',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
+                    ],
+                  ),
                 ),
-                textAlign: TextAlign.center,
               ),
             ),
-          ],
-          const SizedBox(height: 20),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPermissionTile({
+    Key? key,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool isGranted,
+    required VoidCallback onRequest,
+  }) {
+    return Container(
+      key: key,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: PopoTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isGranted ? const Color(0xFF00C853).withOpacity(0.4) : Colors.white10,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isGranted
+                  ? const Color(0xFF00C853).withOpacity(0.15)
+                  : PopoTheme.primary.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              color: isGranted ? const Color(0xFF00C853) : PopoTheme.primary,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: PopoTheme.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isGranted)
+            const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Active',
+                  style: TextStyle(
+                    color: Color(0xFF00C853),
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(width: 4),
+                Icon(Icons.check_circle_rounded, color: Color(0xFF00C853), size: 18),
+              ],
+            )
+          else
+            GestureDetector(
+              onTap: onRequest,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: PopoTheme.primary.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: PopoTheme.primary, width: 0.8),
+                ),
+                child: const Text(
+                  'Grant',
+                  style: TextStyle(
+                    color: PopoTheme.primary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

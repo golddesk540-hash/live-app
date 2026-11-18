@@ -1,225 +1,122 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
-import '../../api/api.dart';
-import '../../models/live/live_models.dart';
-import '../../repositories/live/live_repository.dart';
-import '../../widgets/popo_loading_indicator.dart';
-import '../../widgets/popo_primary_button.dart';
-import '../../widgets/popo_secondary_button.dart';
+import '../../design/design_fixtures.dart';
+import 'pre_live_setup_screen.dart';
 
-/// Professional Live Broadcast Cover Photo Upload Screen
-/// Interacts with POST & DELETE /api/live/gates/cover-upload
+/// Screen 3/6: Cover Screen — Room Cover & Broadcast Meta Setup
+/// Configures room cover photo, title, category, and host details
+/// Implemented for Phase 3 (D2) Prompt 3 according to Popo Live Complete Product Design v1.1.
 class CoverUploadScreen extends StatefulWidget {
   final String? currentCoverUrl;
+  final String? initialTitle;
+  final String? initialCategory;
 
-  const CoverUploadScreen({Key? key, this.currentCoverUrl}) : super(key: key);
+  const CoverUploadScreen({
+    super.key,
+    this.currentCoverUrl,
+    this.initialTitle,
+    this.initialCategory,
+  });
 
   @override
   State<CoverUploadScreen> createState() => _CoverUploadScreenState();
 }
 
 class _CoverUploadScreenState extends State<CoverUploadScreen> {
-  final LiveRepository _repository = LiveRepository.instance;
-  final LiveApiService _apiService = LiveApiService();
+  late final TextEditingController _titleController;
 
-  String? _selectedCoverBase64;
-  String? _activeCoverUrl;
-  bool _isUploading = false;
-  bool _isDeleting = false;
+  late String _selectedCoverUrl;
+  late String _selectedCategory;
   String? _errorMessage;
-  String? _successMessage;
 
-  // Curated high-definition broadcast cover presets for fast creator selection
-  static const List<Map<String, String>> _presetCovers = [
+  // Curated high-definition broadcast covers from original project fixtures
+  static const List<Map<String, String>> _coverPresets = [
     {
-      'id': 'glamour',
+      'id': 'cover_01',
+      'label': 'Acoustic Night',
+      'category': 'Singing',
+      'url': 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600',
+    },
+    {
+      'id': 'cover_02',
       'label': 'Glamour Live',
-      'accent': '#FF1768',
-      'url': '/assets/pre-live/sample_cover_model.png',
-      // High-quality base64 sample
-      'data': 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=',
+      'category': 'Live Chat',
+      'url': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600',
     },
     {
-      'id': 'party',
+      'id': 'cover_03',
       'label': 'Party & Chat',
-      'accent': '#00E5FF',
-      'url': '/assets/viewer/sample_viewer_broadcast.png',
-      'data': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+      'category': 'Entertainment',
+      'url': 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600',
     },
     {
-      'id': 'vip',
-      'label': 'VIP Streamer',
-      'accent': '#FFB800',
-      'url': '/assets/studio/sample_host_preview.png',
-      'data': 'data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==',
+      'id': 'cover_04',
+      'label': 'VIP Gala',
+      'category': 'Music',
+      'url': 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=600',
     },
+  ];
+
+  static const List<String> _categories = [
+    'Singing',
+    'Live Chat',
+    'Entertainment',
+    'Music',
+    'Gaming',
   ];
 
   @override
   void initState() {
     super.initState();
-    _activeCoverUrl = widget.currentCoverUrl;
+    _selectedCoverUrl = widget.currentCoverUrl ??
+        _coverPresets.first['url']!;
+    _selectedCategory = widget.initialCategory ?? 'Singing';
+    _titleController = TextEditingController(
+      text: widget.initialTitle ?? 'Karachi Nights 🎶 Acoustic Live Session',
+    );
   }
 
-  void _selectPreset(Map<String, String> preset) {
-    setState(() {
-      _selectedCoverBase64 = preset['data'];
-      _errorMessage = null;
-      _successMessage = null;
-    });
+  @override
+  void dispose() {
+    _titleController.dispose();
+    super.dispose();
   }
 
-  Future<void> _uploadCover() async {
-    if (_selectedCoverBase64 == null) {
-      setState(() => _errorMessage = 'Please select a cover photo to upload.');
+  void _proceedToPreLive() {
+    final title = _titleController.text.trim();
+    if (title.isEmpty) {
+      setState(() => _errorMessage = 'Please enter a broadcast room title.');
       return;
     }
 
-    // Client-side format & size validation
-    final prefix = _selectedCoverBase64!.split(';')[0];
-    final allowedPrefixes = [
-      'data:image/jpeg',
-      'data:image/jpg',
-      'data:image/png',
-      'data:image/webp',
-    ];
-    if (!allowedPrefixes.any((p) => prefix.startsWith(p))) {
-      setState(() {
-        _errorMessage =
-            'Invalid file format. Only JPG, PNG, and WebP images are allowed.';
-      });
-      return;
-    }
-
-    // Size check (< 5MB)
-    final byteCount = (_selectedCoverBase64!.length * 3) / 4;
-    if (byteCount > 5 * 1024 * 1024) {
-      setState(() {
-        _errorMessage = 'Cover photo exceeds the maximum 5MB size limit.';
-      });
-      return;
-    }
-
-    setState(() {
-      _isUploading = true;
-      _errorMessage = null;
-      _successMessage = null;
-    });
-
-    try {
-      final res = await _apiService.uploadCover(
-        base64Image: _selectedCoverBase64!,
-        fileName: 'live_cover_${DateTime.now().millisecondsSinceEpoch}.jpg',
-      );
-
-      if (!mounted) return;
-      setState(() => _isUploading = false);
-
-      if (res.isSuccess && res.data != null) {
-        final data = res.data as Map<String, dynamic>;
-        setState(() {
-          _activeCoverUrl = data['coverUrl']?.toString();
-          _successMessage = 'Cover photo uploaded and verified successfully!';
-        });
-
-        await _repository.fetchGatesStatus(forceRefresh: true);
-
-        // Auto return after success
-        Future.delayed(const Duration(milliseconds: 1400), () {
-          if (mounted) Navigator.of(context).pop(true);
-        });
-      } else {
-        setState(() {
-          _errorMessage =
-              res.errorMessage ??
-              'Failed to upload cover photo. Please try again.';
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isUploading = false;
-        _errorMessage = 'Network connection failed: $e';
-      });
-    }
-  }
-
-  Future<void> _deleteCover() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: PopoTheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Remove Cover Photo',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PreLiveSetupScreen(
+          coverUrl: _selectedCoverUrl,
+          title: title,
+          category: _selectedCategory,
         ),
-        content: const Text(
-          'Are you sure you want to remove your broadcast cover? You will need to upload a new cover before broadcasting.',
-          style: TextStyle(color: PopoTheme.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: PopoTheme.textSecondary),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: PopoTheme.primary),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Remove', style: TextStyle(color: Colors.white)),
-          ),
-        ],
       ),
     );
-
-    if (confirm != true) return;
-
-    setState(() {
-      _isDeleting = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final res = await _apiService.deleteCover();
-      if (!mounted) return;
-      setState(() => _isDeleting = false);
-
-      if (res.isSuccess) {
-        setState(() {
-          _activeCoverUrl = null;
-          _selectedCoverBase64 = null;
-          _successMessage = 'Cover photo removed successfully.';
-        });
-        await _repository.fetchGatesStatus(forceRefresh: true);
-      } else {
-        setState(() {
-          _errorMessage = res.errorMessage ?? 'Failed to delete cover photo.';
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isDeleting = false;
-        _errorMessage = 'Error removing cover: $e';
-      });
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final user = DesignFixtures.currentUserProfile;
+
     return Scaffold(
       backgroundColor: PopoTheme.background,
       appBar: AppBar(
         backgroundColor: PopoTheme.surface,
         elevation: 0,
+        leading: IconButton(
+          key: const Key('cover_back_button'),
+          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text(
-          'Broadcast Cover Photo',
+          'Room Cover & Title',
           style: TextStyle(
             color: Colors.white,
             fontSize: 18,
@@ -228,364 +125,301 @@ class _CoverUploadScreenState extends State<CoverUploadScreen> {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         children: [
-          // Informative Banner
+          // 1. Selected Cover Preview Card
           Container(
-            padding: const EdgeInsets.all(16),
+            height: 200,
             decoration: BoxDecoration(
-              color: PopoTheme.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: PopoTheme.borderSubtle, width: 1),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: PopoTheme.gold.withOpacity(0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.photo_camera_back_rounded,
-                    color: PopoTheme.gold,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'Your broadcast cover is the primary preview card shown to millions of viewers on the Explore feed. High-definition portrait photos attract up to 3x more viewers.',
-                    style: TextStyle(
-                      color: PopoTheme.textSecondary,
-                      fontSize: 13,
-                      height: 1.35,
-                    ),
-                  ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: PopoTheme.primary.withOpacity(0.5),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 24),
-
-          // Cover Image Preview Stage (Aspect Ratio 3:4)
-          Center(
-            child: Container(
-              width: 220,
-              height: 293, // 3:4 aspect ratio
-              decoration: BoxDecoration(
-                color: PopoTheme.surface,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: _activeCoverUrl != null
-                      ? PopoTheme.cyan
-                      : (_selectedCoverBase64 != null
-                            ? PopoTheme.primary
-                            : PopoTheme.borderSubtle),
-                  width: 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color:
-                        (_activeCoverUrl != null
-                                ? PopoTheme.cyan
-                                : PopoTheme.primary)
-                            .withOpacity(0.15),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    _selectedCoverUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: PopoTheme.surface,
+                      child: const Center(
+                        child: Icon(Icons.image, color: Colors.white30, size: 48),
+                      ),
+                    ),
                   ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    if (_selectedCoverBase64 != null) ...[
-                      // Memory image from base64
-                      Container(
-                        color: const Color(0xFF1F1F2E),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(
-                                Icons.image_rounded,
-                                color: PopoTheme.cyan,
-                                size: 56,
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'Cover Selected',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Ready to Upload',
-                                style: TextStyle(
-                                  color: PopoTheme.textSecondary,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+
+                  // Gradient overlay
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.75),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                       ),
-                    ] else if (_activeCoverUrl != null) ...[
-                      // Existing verified cover placeholder
-                      Container(
-                        color: const Color(0xFF1E1E2D),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.verified_rounded,
-                                color: PopoTheme.cyan,
-                                size: 56,
-                              ),
-                              const SizedBox(height: 10),
-                              const Text(
-                                'Verified Cover',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _activeCoverUrl!,
-                                style: const TextStyle(
-                                  color: PopoTheme.textSecondary,
-                                  fontSize: 10,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
+                    ),
+                  ),
+
+                  // Host Info Overlay
+                  Positioned(
+                    top: 12,
+                    left: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                    ] else ...[
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(
-                            Icons.add_photo_alternate_rounded,
-                            color: PopoTheme.textSecondary,
-                            size: 48,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircleAvatar(
+                            radius: 10,
+                            backgroundImage: NetworkImage(user.avatarUrl),
                           ),
-                          SizedBox(height: 10),
+                          const SizedBox(width: 6),
                           Text(
-                            'No Cover Uploaded',
-                            style: TextStyle(
+                            user.nickname,
+                            style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 14,
+                              fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Select from presets below',
-                            style: TextStyle(
-                              color: PopoTheme.textSecondary,
-                              fontSize: 12,
-                            ),
-                          ),
+                          const SizedBox(width: 4),
+                          Text(user.flagEmoji, style: const TextStyle(fontSize: 10)),
                         ],
                       ),
-                    ],
+                    ),
+                  ),
 
-                    // Badge
-                    Positioned(
-                      top: 10,
-                      left: 10,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _activeCoverUrl != null
-                              ? PopoTheme.cyan
-                              : PopoTheme.primary,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          _activeCoverUrl != null ? 'VERIFIED' : '3:4 RATIO',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
+                  // Selected Category Badge
+                  Positioned(
+                    bottom: 12,
+                    left: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: PopoTheme.primary,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _selectedCategory,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
 
-          // Presets title
+          // 2. Cover Selection Preset Thumbnails
           const Text(
-            'Select Broadcast Cover',
+            'Select Cover Preset',
             style: TextStyle(
               color: Colors.white,
-              fontSize: 15,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 10),
+          SizedBox(
+            height: 80,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _coverPresets.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, idx) {
+                final preset = _coverPresets[idx];
+                final isSelected = _selectedCoverUrl == preset['url'];
 
-          // Preset options
-          Row(
-            children: _presetCovers.map((preset) {
-              final isSelected = _selectedCoverBase64 == preset['data'];
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => _selectPreset(preset),
+                return GestureDetector(
+                  key: Key('cover_preset_${preset['id']}'),
+                  onTap: () {
+                    setState(() {
+                      _selectedCoverUrl = preset['url']!;
+                      _selectedCategory = preset['category']!;
+                    });
+                  },
                   child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    width: 76,
                     decoration: BoxDecoration(
-                      color: PopoTheme.surface,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isSelected
-                            ? PopoTheme.primary
-                            : PopoTheme.borderSubtle,
+                        color: isSelected ? PopoTheme.primary : Colors.white12,
                         width: isSelected ? 2 : 1,
                       ),
                     ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.portrait_rounded,
-                          color: isSelected
-                              ? PopoTheme.primary
-                              : PopoTheme.textSecondary,
-                          size: 28,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          preset['label']!,
-                          style: TextStyle(
-                            color: isSelected
-                                ? Colors.white
-                                : PopoTheme.textSecondary,
-                            fontSize: 11,
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                        ),
-                      ],
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        preset['url']!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(color: Colors.white10),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // 3. Room Title Input
+          const Text(
+            'Broadcast Title',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            decoration: BoxDecoration(
+              color: PopoTheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: _errorMessage != null ? Colors.red : Colors.white12,
+              ),
+            ),
+            child: TextField(
+              key: const Key('room_title_input'),
+              controller: _titleController,
+              maxLength: 60,
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+              decoration: const InputDecoration(
+                hintText: 'Enter attractive broadcast title...',
+                hintStyle: TextStyle(color: Colors.white38, fontSize: 13),
+                border: InputBorder.none,
+                counterStyle: TextStyle(color: Colors.white38, fontSize: 10),
+              ),
+              onChanged: (_) {
+                if (_errorMessage != null) {
+                  setState(() => _errorMessage = null);
+                }
+              },
+            ),
+          ),
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              _errorMessage!,
+              style: const TextStyle(color: Colors.red, fontSize: 11),
+            ),
+          ],
+          const SizedBox(height: 18),
+
+          // 4. Category Selector Chips
+          const Text(
+            'Select Category',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _categories.map((cat) {
+              final isCatSelected = _selectedCategory == cat;
+              return GestureDetector(
+                key: Key('category_chip_$cat'),
+                onTap: () => setState(() => _selectedCategory = cat),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isCatSelected
+                        ? PopoTheme.primary
+                        : PopoTheme.surface,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: isCatSelected
+                          ? PopoTheme.primary
+                          : Colors.white10,
+                    ),
+                  ),
+                  child: Text(
+                    cat,
+                    style: TextStyle(
+                      color: isCatSelected ? Colors.white : Colors.white70,
+                      fontSize: 12,
+                      fontWeight: isCatSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
                     ),
                   ),
                 ),
               );
             }).toList(),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 32),
 
-          // Specifications
+          // 5. Continuation Button
           Container(
-            padding: const EdgeInsets.all(12),
+            height: 50,
             decoration: BoxDecoration(
-              color: const Color(0xFF1E1E2D),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Upload Requirements:',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  '• Supported formats: JPG, PNG, WebP\n• Maximum file size: 5 MB\n• Recommended resolution: 720 x 960 (3:4 ratio)',
-                  style: TextStyle(
-                    color: PopoTheme.textSecondary,
-                    fontSize: 11,
-                    height: 1.35,
-                  ),
+              borderRadius: BorderRadius.circular(25),
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFF1768), Color(0xFFFF5252)],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: PopoTheme.primary.withOpacity(0.4),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 20),
-
-          // Error / Success Feedback
-          if (_errorMessage != null) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: PopoTheme.primary.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: PopoTheme.primary.withOpacity(0.4)),
-              ),
-              child: Text(
-                _errorMessage!,
-                style: const TextStyle(color: PopoTheme.primary, fontSize: 13),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
-
-          if (_successMessage != null) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFF00C853).withOpacity(0.12),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: const Color(0xFF00C853).withOpacity(0.4),
-                ),
-              ),
-              child: Text(
-                _successMessage!,
-                style: const TextStyle(
-                  color: Color(0xFF00C853),
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                key: const Key('cover_continue_button'),
+                borderRadius: BorderRadius.circular(25),
+                onTap: _proceedToPreLive,
+                child: const Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Continue to Pre-Live Review',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
+                    ],
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-          ],
-
-          // Upload CTA Button
-          PopoPrimaryButton(
-            text: _isUploading ? 'Uploading & Verifying...' : 'Upload Cover',
-            isLoading: _isUploading,
-            onPressed: _isUploading || _selectedCoverBase64 == null
-                ? null
-                : _uploadCover,
           ),
-
-          if (_activeCoverUrl != null) ...[
-            const SizedBox(height: 12),
-            PopoSecondaryButton(
-              text: _isDeleting ? 'Removing...' : 'Remove Current Cover',
-              isLoading: _isDeleting,
-              borderColor: PopoTheme.primary.withOpacity(0.5),
-              textColor: PopoTheme.primary,
-              onPressed: _isDeleting ? null : _deleteCover,
-            ),
-          ],
-          const SizedBox(height: 20),
         ],
       ),
     );

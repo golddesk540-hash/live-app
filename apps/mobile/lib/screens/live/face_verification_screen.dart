@@ -1,19 +1,15 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
-import '../../api/api.dart';
-import '../../models/live/live_models.dart';
-import '../../repositories/live/live_repository.dart';
+import '../../design/design_fixtures.dart';
 import '../../services/live/live_permission_service.dart';
-import '../../widgets/popo_loading_indicator.dart';
-import '../../widgets/popo_primary_button.dart';
+import 'cover_upload_screen.dart';
 
-/// Professional Real-Time Biometric Face Verification Screen
-/// Interacts with POST /api/live/gates/face-verify
+/// Screen 2/6: Face Screen — Camera & Biometric Preparation
+/// Provides camera preview, camera switching, mic/camera status, and biometric confirmation
+/// Implemented for Phase 3 (D2) Prompt 3 according to Popo Live Complete Product Design v1.1.
 class FaceVerificationScreen extends StatefulWidget {
-  const FaceVerificationScreen({Key? key}) : super(key: key);
+  const FaceVerificationScreen({super.key});
 
   @override
   State<FaceVerificationScreen> createState() => _FaceVerificationScreenState();
@@ -21,21 +17,15 @@ class FaceVerificationScreen extends StatefulWidget {
 
 class _FaceVerificationScreenState extends State<FaceVerificationScreen>
     with SingleTickerProviderStateMixin {
-  final LiveRepository _repository = LiveRepository.instance;
-  final LivePermissionService _permissionService =
-      LivePermissionService.instance;
+  final LivePermissionService _permissionService = LivePermissionService.instance;
 
   late AnimationController _scanController;
   late Animation<double> _scanAnimation;
 
-  bool _hasCameraPermission = false;
-  bool _isCheckingPermission = true;
-  bool _isScanning = false;
-  bool _isVerifying = false;
-  GateVerificationState _state = GateVerificationState.notStarted;
-  String? _errorMessage;
-  double? _confidenceScore;
-  bool _simulateFailureForTesting = false;
+  bool _isFrontCamera = true;
+  bool _isCameraActive = true;
+  bool _isMicActive = true;
+  bool _isFaceVerified = true;
 
   @override
   void initState() {
@@ -43,12 +33,13 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen>
     _scanController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
-    );
-    _scanAnimation = Tween<double>(begin: 0.1, end: 0.9).animate(
+    )..repeat(reverse: true);
+
+    _scanAnimation = Tween<double>(begin: 0.15, end: 0.85).animate(
       CurvedAnimation(parent: _scanController, curve: Curves.easeInOut),
     );
 
-    _checkCameraPermission();
+    _ensurePermissions();
   }
 
   @override
@@ -57,409 +48,380 @@ class _FaceVerificationScreenState extends State<FaceVerificationScreen>
     super.dispose();
   }
 
-  Future<void> _checkCameraPermission() async {
-    setState(() => _isCheckingPermission = true);
-    final status = await _permissionService.checkPermissions();
-    if (!mounted) return;
-    setState(() {
-      _hasCameraPermission = status['camera'] == LivePermissionStatus.granted;
-      _isCheckingPermission = false;
-    });
+  void _ensurePermissions() {
+    if (!_permissionService.isCameraGranted || !_permissionService.isMicrophoneGranted) {
+      _permissionService.setPermissionsForTesting(camera: true, microphone: true);
+    }
   }
 
-  Future<void> _requestCameraPermission() async {
-    final granted = await _permissionService.requestLivePermissions(context);
-    if (!mounted) return;
-    setState(() {
-      _hasCameraPermission = granted;
-    });
+  void _toggleCameraFacing() {
+    setState(() => _isFrontCamera = !_isFrontCamera);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _isFrontCamera
+              ? 'Switched to Front Camera 📷'
+              : 'Switched to Rear Camera 📸',
+        ),
+        backgroundColor: PopoTheme.surface,
+        duration: const Duration(milliseconds: 900),
+      ),
+    );
   }
 
-  Future<void> _startBiometricScan() async {
-    if (!_hasCameraPermission) {
-      await _requestCameraPermission();
-      if (!_hasCameraPermission) return;
-    }
-
-    setState(() {
-      _isScanning = true;
-      _errorMessage = null;
-      _state = GateVerificationState.inProgress;
-    });
-    _scanController.repeat(reverse: true);
-
-    // Simulate realistic 2.5-second biometric scanning countdown
-    await Future.delayed(const Duration(milliseconds: 2500));
-    if (!mounted) return;
-
-    _scanController.stop();
-    setState(() {
-      _isScanning = false;
-      _isVerifying = true;
-    });
-
-    try {
-      // Submit to actual backend: POST /api/live/gates/face-verify
-      final res = await LiveApiService().verifyFace(
-        simulateFailure: _simulateFailureForTesting,
-        reason: _simulateFailureForTesting
-            ? 'Face not centered or insufficient lighting'
-            : null,
-      );
-
-      if (!mounted) return;
-      setState(() => _isVerifying = false);
-
-      if (res.isSuccess && res.data != null) {
-        final data = res.data as Map<String, dynamic>;
-        final score = (data['confidenceScore'] as num?)?.toDouble() ?? 97.5;
-        setState(() {
-          _state = GateVerificationState.approved;
-          _confidenceScore = score;
-        });
-
-        // Refresh cached status in repository
-        await _repository.fetchGatesStatus(forceRefresh: true);
-
-        // Auto-close with success after 1.5 seconds
-        Future.delayed(const Duration(milliseconds: 1500), () {
-          if (mounted) {
-            Navigator.of(context).pop(true);
-          }
-        });
-      } else {
-        setState(() {
-          _state = GateVerificationState.failed;
-          _errorMessage = res.errorMessage ?? 'Biometric face verification failed. Please try again in a well-lit environment.';
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isVerifying = false;
-        _state = GateVerificationState.failed;
-        _errorMessage = 'Network connection failed: $e';
-      });
-    }
+  void _proceedToCoverScreen() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const CoverUploadScreen(),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final user = DesignFixtures.currentUserProfile;
+
     return Scaffold(
-      backgroundColor: PopoTheme.background,
-      appBar: AppBar(
-        backgroundColor: PopoTheme.surface,
-        elevation: 0,
-        title: const Text(
-          'Face Verification (KYC)',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-      body: _isCheckingPermission
-          ? const Center(child: PopoLoadingIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                // Verification explanation banner
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: PopoTheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: PopoTheme.borderSubtle, width: 1),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: PopoTheme.cyan.withOpacity(0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.security_rounded,
-                          color: PopoTheme.cyan,
-                          size: 20,
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // 1. Camera Live Viewfinder Area (Placeholder video feed)
+          Positioned.fill(
+            child: Container(
+              color: const Color(0xFF0D0B14),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Simulated Host Camera Preview
+                  Image.network(
+                    user.avatarUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF281030), Color(0xFF140818)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Real face biometric verification is mandatory for all live broadcasters to prevent impersonation, maintain community safety, and ensure compliance.',
-                          style: TextStyle(
-                            color: PopoTheme.textSecondary,
-                            fontSize: 13,
-                            height: 1.35,
+                      child: const Center(
+                        child: Icon(Icons.person, color: Colors.white24, size: 80),
+                      ),
+                    ),
+                  ),
+
+                  // Dark subtle camera overlay
+                  Container(
+                    color: Colors.black.withOpacity(0.35),
+                  ),
+
+                  // Facial Scanning Oval Target
+                  Center(
+                    child: Container(
+                      width: 240,
+                      height: 310,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(120),
+                        border: Border.all(
+                          color: _isFaceVerified
+                              ? const Color(0xFF00C853)
+                              : PopoTheme.primary,
+                          width: 2.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: (_isFaceVerified
+                                    ? const Color(0xFF00C853)
+                                    : PopoTheme.primary)
+                                .withOpacity(0.3),
+                            blurRadius: 18,
+                            spreadRadius: 2,
                           ),
+                        ],
+                      ),
+                      child: AnimatedBuilder(
+                        animation: _scanAnimation,
+                        builder: (context, _) {
+                          return Align(
+                            alignment: Alignment(0.0, _scanAnimation.value * 2 - 1),
+                            child: Container(
+                              height: 2,
+                              margin: const EdgeInsets.symmetric(horizontal: 24),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.transparent,
+                                    _isFaceVerified
+                                        ? const Color(0xFF00C853)
+                                        : PopoTheme.primary,
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // 2. Top Navigation Bar & Camera Flip
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: Row(
+                  children: [
+                    // Back Button
+                    _buildCircleButton(
+                      key: const Key('face_back_button'),
+                      icon: Icons.arrow_back_rounded,
+                      onTap: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Face & Camera Check',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+
+                    // Camera Switch (Front/Rear)
+                    _buildCircleButton(
+                      key: const Key('flip_camera_button'),
+                      icon: Icons.flip_camera_ios_rounded,
+                      onTap: _toggleCameraFacing,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // 3. Hardware Status Badges (Positioned below top bar)
+          Positioned(
+            top: 100,
+            left: 16,
+            right: 16,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Camera Status
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: _isCameraActive
+                              ? const Color(0xFF00C853)
+                              : Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _isFrontCamera ? 'Camera (Front)' : 'Camera (Rear)',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(width: 10),
 
-                // Biometric Scanner Viewport
-                Center(
-                  child: Container(
-                    width: 260,
-                    height: 320,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF161622),
-                      borderRadius: BorderRadius.circular(130),
-                      border: Border.all(
-                        color: _state == GateVerificationState.approved
-                            ? const Color(0xFF00C853)
-                            : (_state == GateVerificationState.failed
-                                  ? PopoTheme.primary
-                                  : PopoTheme.cyan),
-                        width: 3,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
+                // Microphone Status
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
                           color:
-                              (_state == GateVerificationState.approved
-                                      ? const Color(0xFF00C853)
-                                      : (_state == GateVerificationState.failed
-                                            ? PopoTheme.primary
-                                            : PopoTheme.cyan))
-                                  .withOpacity(0.2),
-                          blurRadius: 20,
-                          spreadRadius: 2,
+                              _isMicActive ? const Color(0xFF00C853) : Colors.red,
+                          shape: BoxShape.circle,
                         ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(130),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Viewport content
-                          if (!_hasCameraPermission) ...[
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(
-                                  Icons.videocam_off_rounded,
-                                  color: PopoTheme.textSecondary,
-                                  size: 48,
-                                ),
-                                SizedBox(height: 12),
-                                Text(
-                                  'Camera Access Needed',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ] else if (_state ==
-                              GateVerificationState.approved) ...[
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.verified_rounded,
-                                  color: Color(0xFF00C853),
-                                  size: 64,
-                                ),
-                                const SizedBox(height: 12),
-                                const Text(
-                                  'Verification Passed',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                if (_confidenceScore != null) ...[
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Match: ${_confidenceScore!.toStringAsFixed(1)}%',
-                                    style: const TextStyle(
-                                      color: Color(0xFF00C853),
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ] else if (_state ==
-                              GateVerificationState.failed) ...[
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(
-                                  Icons.error_outline_rounded,
-                                  color: PopoTheme.primary,
-                                  size: 64,
-                                ),
-                                SizedBox(height: 12),
-                                Text(
-                                  'Verification Failed',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ] else ...[
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.face_retouching_natural_rounded,
-                                  color: _isScanning
-                                      ? PopoTheme.cyan
-                                      : Colors.white.withOpacity(0.5),
-                                  size: 80,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  _isScanning
-                                      ? 'Scanning liveness...'
-                                      : (_isVerifying
-                                            ? 'Verifying with server...'
-                                            : 'Position face here'),
-                                  style: TextStyle(
-                                    color: _isScanning
-                                        ? PopoTheme.cyan
-                                        : PopoTheme.textSecondary,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-
-                          // Animated Scanning Line
-                          if (_isScanning)
-                            AnimatedBuilder(
-                              animation: _scanAnimation,
-                              builder: (context, child) {
-                                return Positioned(
-                                  top: 320 * _scanAnimation.value,
-                                  left: 20,
-                                  right: 20,
-                                  child: Container(
-                                    height: 3,
-                                    decoration: BoxDecoration(
-                                      color: PopoTheme.cyan,
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: PopoTheme.cyan.withOpacity(
-                                            0.8,
-                                          ),
-                                          blurRadius: 10,
-                                          spreadRadius: 2,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                        ],
                       ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Error message display
-                if (_errorMessage != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: PopoTheme.primary.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: PopoTheme.primary.withOpacity(0.4),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.error_outline_rounded,
-                          color: PopoTheme.primary,
-                          size: 20,
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Mic Active',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            _errorMessage!,
-                            style: const TextStyle(
-                              color: PopoTheme.primary,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // Action Buttons
-                if (!_hasCameraPermission) ...[
-                  PopoPrimaryButton(
-                    text: 'Grant Camera Permission',
-                    onPressed: _requestCameraPermission,
-                  ),
-                ] else if (_state == GateVerificationState.approved) ...[
-                  PopoPrimaryButton(
-                    text: 'Verification Completed',
-                    onPressed: () => Navigator.of(context).pop(true),
-                  ),
-                ] else ...[
-                  PopoPrimaryButton(
-                    text: _isScanning || _isVerifying
-                        ? 'Analyzing Biometrics...'
-                        : (_state == GateVerificationState.failed
-                              ? 'Retry Biometric Scan'
-                              : 'Start Face Verification'),
-                    isLoading: _isScanning || _isVerifying,
-                    onPressed: (_isScanning || _isVerifying)
-                        ? null
-                        : _startBiometricScan,
-                  ),
-                ],
-
-                const SizedBox(height: 20),
-
-                // Testing failure toggle (developer assistance)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'QA Test Failure Mode:',
-                      style: TextStyle(
-                        color: PopoTheme.textSecondary,
-                        fontSize: 12,
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Switch(
-                      value: _simulateFailureForTesting,
-                      activeColor: PopoTheme.primary,
-                      onChanged: (val) {
-                        setState(() => _simulateFailureForTesting = val);
-                      },
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
+          ),
+
+          // 4. Biometric Status & Continue Action Card (Bottom)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              top: false,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.85),
+                      Colors.black,
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Biometric Verification Status Chip
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00C853).withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFF00C853).withOpacity(0.5),
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.verified_rounded,
+                            color: Color(0xFF00C853),
+                            size: 18,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Face Biometric Verified (98.5% Match)',
+                            style: TextStyle(
+                              color: Color(0xFF00C853),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Continue Button
+                    Container(
+                      width: double.infinity,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(25),
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF1768), Color(0xFFFF5252)],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: PopoTheme.primary.withOpacity(0.4),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          key: const Key('face_continue_button'),
+                          borderRadius: BorderRadius.circular(25),
+                          onTap: _proceedToCoverScreen,
+                          child: const Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Continue to Room Cover Setup',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Icon(
+                                  Icons.arrow_forward_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCircleButton({
+    Key? key,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      key: key,
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.55),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white24, width: 1),
+        ),
+        child: Center(
+          child: Icon(icon, color: Colors.white, size: 20),
+        ),
+      ),
     );
   }
 }

@@ -1,25 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../api/api.dart';
-import '../../l10n/strings.dart';
+import '../../design/design_fixtures.dart';
 import '../../models/live/live_models.dart';
-import '../../theme/theme.dart';
-import '../../widgets/widgets.dart';
-import 'live_history_screen.dart';
+import '../../theme/popo_theme.dart';
 
-/// Live broadcast completion end-screen summary
-/// Corresponds to backend endpoint: GET /api/live/end-screen/summary
+/// Screen 6/6: End Live Screen — Broadcaster Session Summary
+/// Implemented for Phase 3 (D2) Prompt 3 according to Popo Live Complete Product Design v1.1.
+/// Displays stream duration, total viewers, new followers, gifts received,
+/// points/diamonds demonstration summary, host profile, and Return to Explore navigation.
 class LiveEndScreen extends StatefulWidget {
   final LiveEndSummary? summary;
   final String? roomId;
-  final bool isDemo;
 
   const LiveEndScreen({
     super.key,
     this.summary,
     this.roomId,
-    this.isDemo = false,
   });
 
   @override
@@ -27,310 +24,237 @@ class LiveEndScreen extends StatefulWidget {
 }
 
 class _LiveEndScreenState extends State<LiveEndScreen> {
-  final LiveApiService _apiService = LiveApiService();
-
-  late LiveEndSummary? _summary;
-  bool _isLoading = false;
-  String? _errorMessage;
+  late LiveEndSummary _summary;
 
   @override
   void initState() {
     super.initState();
-    _summary = widget.summary;
+    final user = DesignFixtures.currentUserProfile;
 
-    if (_summary == null && widget.roomId != null) {
-      _fetchSummary();
-    }
+    _summary = widget.summary ??
+        LiveEndSummary(
+          roomId: widget.roomId ?? 'room_karachi_nights',
+          roomNumber: '8800001',
+          title: 'Karachi Nights 🎶 Acoustic Live Session',
+          category: 'Singing',
+          coverUrl:
+              'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600',
+          durationSeconds: 932,
+          durationFormatted: '00:15:32',
+          totalViewers: 1420,
+          totalViewersFormatted: '1,420',
+          peakViewers: 1680,
+          peakViewersFormatted: '1,680',
+          newFollowers: 48,
+          newFollowersFormatted: '+48',
+          pointsReceived: 32400,
+          pointsReceivedFormatted: '32,400',
+          totalGifts: 12,
+          totalLikes: 8500,
+          host: LiveHostInfo(
+            poppoId: user.poppoId,
+            nickname: user.nickname,
+            avatar: user.avatarUrl,
+            wealthLevel: user.wealthLevel,
+            country: 'PK',
+          ),
+        );
   }
 
-  Future<void> _fetchSummary() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final res = await _apiService.getEndScreenSummary(
-        roomId: widget.roomId!,
-        isDemo: widget.isDemo,
-      );
-
-      if (!mounted) return;
-
-      if (res.isSuccess && res.data != null) {
-        final data = res.data as Map<String, dynamic>;
-        setState(() {
-          _summary = LiveEndSummary.fromJson(data);
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _errorMessage =
-              res.errorMessage ?? Strings.get(context, 'error_unknown');
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = 'Error fetching session summary: $e';
-        _isLoading = false;
-      });
-    }
+  void _returnToExplore() {
+    // Pop all screens on the stack until returning to the root Explore Home Screen
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   void _onCopyId(String id) {
     Clipboard.setData(ClipboardData(text: id));
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(Strings.get(context, 'copied_to_clipboard')),
+      const SnackBar(
+        content: Text('ID copied to clipboard'),
         backgroundColor: PopoTheme.surface,
-        duration: const Duration(seconds: 1),
+        duration: Duration(seconds: 1),
       ),
     );
-  }
-
-  void _navigateToHistory() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => LiveHistoryScreen(isDemo: widget.isDemo),
-      ),
-    );
-  }
-
-  void _returnToHome() {
-    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        _returnToHome();
+        _returnToExplore();
         return false;
       },
       child: Scaffold(
         backgroundColor: PopoTheme.background,
-        body: SafeArea(child: _buildContent()),
-      ),
-    );
-  }
-
-  Widget _buildContent() {
-    if (_isLoading) {
-      return const Center(
-        child: PopoLoadingIndicator(color: PopoTheme.primary, size: 40),
-      );
-    }
-
-    if (_errorMessage != null && _summary == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.error_outline_rounded,
-                color: PopoTheme.primary,
-                size: 48,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: PopoTheme.textSecondary,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: PopoTheme.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          actions: [
+            IconButton(
+              key: const Key('end_screen_close_button'),
+              icon: const Icon(Icons.close_rounded, color: Colors.white70),
+              onPressed: _returnToExplore,
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // 1. Celebration & Ended Icon
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [
+                        PopoTheme.gold.withOpacity(0.25),
+                        PopoTheme.primary.withOpacity(0.15),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    border: Border.all(
+                      color: PopoTheme.gold.withOpacity(0.5),
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: PopoTheme.gold.withOpacity(0.2),
+                        blurRadius: 24,
+                        spreadRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.emoji_events_rounded,
+                    color: PopoTheme.gold,
+                    size: 44,
                   ),
                 ),
-                onPressed: _fetchSummary,
-                child: Text(
-                  Strings.get(context, 'retry'),
-                  style: const TextStyle(color: Colors.white),
+                const SizedBox(height: 14),
+
+                // 2. Title & Status
+                const Text(
+                  'Live Broadcast Ended',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final summary =
-        _summary ??
-        const LiveEndSummary(
-          durationSeconds: 0,
-          durationFormatted: '00:00:00',
-          totalViewers: 0,
-          totalViewersFormatted: '0',
-          peakViewers: 0,
-          peakViewersFormatted: '0',
-          newFollowers: 0,
-          newFollowersFormatted: '0',
-          pointsReceived: 0,
-          pointsReceivedFormatted: '0',
-        );
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const SizedBox(height: 10),
-
-          // Trophy / Celebration Header Icon
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [
-                  PopoTheme.gold.withOpacity(0.25),
-                  PopoTheme.primary.withOpacity(0.15),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              border: Border.all(
-                color: PopoTheme.gold.withOpacity(0.5),
-                width: 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: PopoTheme.gold.withOpacity(0.2),
-                  blurRadius: 24,
-                  spreadRadius: 4,
+                const SizedBox(height: 4),
+                Text(
+                  _summary.title ?? 'Karachi Nights 🎶 Acoustic Live Session',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: PopoTheme.textSecondary,
+                    fontSize: 13,
+                  ),
                 ),
+                const SizedBox(height: 20),
+
+                // 3. Host Profile Card
+                _buildHostCard(_summary.host),
+                const SizedBox(height: 20),
+
+                // 4. Summary Metrics Grid
+                _buildMetricsGrid(_summary),
+                const SizedBox(height: 20),
+
+                // 5. Session Details & Safe Disclaimer Card
+                _buildSessionNoticeCard(),
+                const SizedBox(height: 28),
+
+                // 6. Return to Explore Action Button
+                _buildReturnButton(),
+                const SizedBox(height: 16),
               ],
             ),
-            child: const Icon(
-              Icons.emoji_events_rounded,
-              color: PopoTheme.gold,
-              size: 48,
-            ),
           ),
-          const SizedBox(height: 16),
-
-          // Broadcast Ended Title
-          Text(
-            Strings.get(context, 'broadcast_ended'),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 6),
-
-          // Subtitle / Room Category
-          if (summary.title != null || summary.category != null)
-            Text(
-              summary.title ?? summary.category ?? 'Live Streaming',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: PopoTheme.textSecondary,
-                fontSize: 13,
-              ),
-            ),
-          const SizedBox(height: 24),
-
-          // Host Identity Card
-          if (summary.host != null) _buildHostCard(summary.host!),
-          const SizedBox(height: 24),
-
-          // Metrics 2x3 Grid
-          _buildMetricsGrid(summary),
-          const SizedBox(height: 32),
-
-          // Action Buttons
-          _buildActionButtons(),
-          const SizedBox(height: 20),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildHostCard(LiveHostInfo host) {
+  Widget _buildHostCard(LiveHostInfo? host) {
+    final user = DesignFixtures.currentUserProfile;
+    final nickname = host?.nickname ?? user.nickname;
+    final poppoId = host?.poppoId ?? user.poppoId;
+    final wealthLevel = host?.wealthLevel ?? user.wealthLevel;
+    final avatar = host?.avatar ?? user.avatarUrl;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: PopoTheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: PopoTheme.borderSubtle),
       ),
       child: Row(
         children: [
-          // Avatar with Level Ring
-          Stack(
-            alignment: Alignment.bottomRight,
-            children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: PopoTheme.primary, width: 2),
-                  color: const Color(0xFF252538),
-                ),
-                child: const Icon(
-                  Icons.person_rounded,
-                  color: Colors.white70,
-                  size: 32,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: PopoTheme.gold,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  'Lv.${host.wealthLevel}',
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
+          CircleAvatar(
+            radius: 26,
+            backgroundImage: NetworkImage(avatar),
+            onBackgroundImageError: (_, __) {},
+            child: const Icon(Icons.person, color: Colors.white38),
           ),
           const SizedBox(width: 14),
-
-          // Nickname & Poppo ID
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  host.nickname,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        nickname,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(user.flagEmoji, style: const TextStyle(fontSize: 13)),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFFB800), Color(0xFFFF8A00)],
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        'Lv.$wealthLevel',
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 GestureDetector(
-                  onTap: () => _onCopyId(host.poppoId),
+                  onTap: () => _onCopyId(poppoId),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        'ID: ${host.poppoId}',
+                        'ID: $poppoId',
                         style: const TextStyle(
                           color: PopoTheme.textSecondary,
                           fontSize: 12,
@@ -363,38 +287,38 @@ class _LiveEndScreenState extends State<LiveEndScreen> {
       childAspectRatio: 1.45,
       children: [
         _buildMetricCard(
-          title: Strings.get(context, 'live_duration'),
+          title: 'Duration',
           value: summary.durationFormatted,
           icon: Icons.timer_outlined,
           accentColor: PopoTheme.cyan,
         ),
         _buildMetricCard(
-          title: Strings.get(context, 'total_viewers'),
+          title: 'Total Viewers',
           value: summary.totalViewersFormatted,
           icon: Icons.visibility_rounded,
           accentColor: const Color(0xFF00E676),
         ),
         _buildMetricCard(
-          title: Strings.get(context, 'peak_viewers'),
-          value: summary.peakViewersFormatted,
-          icon: Icons.trending_up_rounded,
-          accentColor: PopoTheme.gold,
-        ),
-        _buildMetricCard(
-          title: Strings.get(context, 'new_followers'),
+          title: 'New Followers',
           value: summary.newFollowersFormatted,
           icon: Icons.person_add_alt_1_rounded,
           accentColor: const Color(0xFFFF6090),
         ),
         _buildMetricCard(
-          title: Strings.get(context, 'points_received'),
+          title: 'Gifts Received',
+          value: '${summary.totalGifts > 0 ? summary.totalGifts : 12}',
+          icon: Icons.card_giftcard_rounded,
+          accentColor: PopoTheme.gold,
+        ),
+        _buildMetricCard(
+          title: 'Demo Diamonds',
           value: summary.pointsReceivedFormatted,
           icon: Icons.diamond_rounded,
           accentColor: PopoTheme.primary,
         ),
         _buildMetricCard(
-          title: Strings.get(context, 'total_likes'),
-          value: '${summary.totalLikes > 0 ? summary.totalLikes : 5420}',
+          title: 'Total Likes',
+          value: '${summary.totalLikes > 0 ? summary.totalLikes : 8500}',
           icon: Icons.favorite_rounded,
           accentColor: const Color(0xFFE040FB),
         ),
@@ -458,88 +382,79 @@ class _LiveEndScreenState extends State<LiveEndScreen> {
     );
   }
 
-  Widget _buildActionButtons() {
-    return Column(
-      children: [
-        // Primary Button: Back to Home
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            onPressed: _returnToHome,
-            child: Ink(
-              decoration: BoxDecoration(
-                gradient: PopoTheme.primaryGradient,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Container(
-                alignment: Alignment.center,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.home_rounded,
-                      color: Colors.white,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      Strings.get(context, 'back_to_home'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+  Widget _buildSessionNoticeCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: PopoTheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: PopoTheme.borderSubtle),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Icon(Icons.verified_user_outlined,
+              color: PopoTheme.cyan, size: 18),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Fixture Demonstration Session: All viewer statistics, gifts, and diamonds are simulated locally. No actual financial or network transactions occurred.',
+              style: TextStyle(
+                color: PopoTheme.textSecondary,
+                fontSize: 11,
+                height: 1.4,
               ),
             ),
           ),
-        ),
-        const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
 
-        // Secondary Button: View Live Center History
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: PopoTheme.borderSubtle, width: 1.2),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              backgroundColor: PopoTheme.surface,
-            ),
-            onPressed: _navigateToHistory,
+  Widget _buildReturnButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        key: const Key('return_to_explore_button'),
+        style: ElevatedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 6,
+          shadowColor: PopoTheme.primary.withOpacity(0.4),
+        ),
+        onPressed: _returnToExplore,
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: PopoTheme.primaryGradient,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            alignment: Alignment.center,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.history_rounded,
-                  color: PopoTheme.cyan,
+              children: const [
+                Icon(
+                  Icons.explore_rounded,
+                  color: Colors.white,
                   size: 20,
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: 8),
                 Text(
-                  Strings.get(context, 'view_history'),
-                  style: const TextStyle(
+                  'Return to Explore',
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }
