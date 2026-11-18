@@ -443,10 +443,10 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
         slivers: [
-          SliverToBoxAdapter(
+          const SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-              child: const Row(
+              padding: EdgeInsets.fromLTRB(16, 14, 16, 8),
+              child: Row(
                 children: [
                   Icon(Icons.auto_awesome_rounded, color: PopoTheme.gold, size: 16),
                   SizedBox(width: 6),
