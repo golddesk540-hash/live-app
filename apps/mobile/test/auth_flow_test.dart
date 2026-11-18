@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:popo_live/l10n/strings.dart';
@@ -13,8 +16,76 @@ import 'package:popo_live/screens/auth/phone_otp_screen.dart';
 import 'package:popo_live/screens/profile/complete_profile_screen.dart';
 import 'package:popo_live/shell/app_shell.dart';
 import 'package:popo_live/widgets/popo_bottom_navigation.dart';
+import 'package:popo_live/widgets/popo_primary_button.dart';
+
+/// Transparent 1x1 PNG bytes for network image mock in tests
+final Uint8List _kTransparentImageBytes = Uint8List.fromList(<int>[
+  0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49,
+  0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06,
+  0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44,
+  0x41, 0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00, 0x05, 0x00, 0x01, 0x0D,
+  0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42,
+  0x60, 0x82
+]);
+
+class _TestHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) => _MockHttpClient();
+}
+
+class _MockHttpClient extends Fake implements HttpClient {
+  @override
+  bool autoUncompress = true;
+
+  @override
+  Future<HttpClientRequest> getUrl(Uri url) async => _MockHttpClientRequest();
+}
+
+class _MockHttpClientRequest extends Fake implements HttpClientRequest {
+  @override
+  final HttpHeaders headers = _MockHttpHeaders();
+
+  @override
+  Future<HttpClientResponse> close() async => _MockHttpClientResponse();
+}
+
+class _MockHttpHeaders extends Fake implements HttpHeaders {
+  @override
+  void set(String name, Object value) {}
+}
+
+class _MockHttpClientResponse extends Fake implements HttpClientResponse {
+  @override
+  int get statusCode => 200;
+
+  @override
+  int get contentLength => _kTransparentImageBytes.length;
+
+  @override
+  HttpClientResponseCompressionState get compressionState =>
+      HttpClientResponseCompressionState.notCompressed;
+
+  @override
+  StreamSubscription<List<int>> listen(
+    void Function(List<int> event)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    return Stream<List<int>>.value(_kTransparentImageBytes).listen(
+      onData,
+      onError: onError,
+      onDone: onDone,
+      cancelOnError: cancelOnError,
+    );
+  }
+}
 
 void main() {
+  setUpAll(() {
+    HttpOverrides.global = _TestHttpOverrides();
+  });
+
   setUp(() {
     TokenStorage.useInMemoryOnly = true;
     TokenStorage.clearAll();
@@ -163,10 +234,12 @@ void main() {
 
       // Verify Register screen elements
       expect(find.text(PopoStrings.get('register_title')), findsOneWidget);
-      expect(find.text(PopoStrings.get('register_btn')), findsOneWidget);
 
       // Validation test: Empty email/phone submission
-      await tester.tap(find.text(PopoStrings.get('register_btn')));
+      final registerButtonFinder =
+          find.widgetWithText(PopoPrimaryButton, PopoStrings.get('register_btn'));
+      expect(registerButtonFinder, findsOneWidget);
+      await tester.tap(registerButtonFinder);
       await tester.pump();
       expect(find.text(PopoStrings.get('err_invalid_email')), findsOneWidget);
 
@@ -181,7 +254,7 @@ void main() {
       await tester.pump();
 
       // Submit Registration
-      await tester.tap(find.text(PopoStrings.get('register_btn')));
+      await tester.tap(registerButtonFinder);
       await tester.pump(const Duration(milliseconds: 300));
       await tester.pump(const Duration(milliseconds: 350));
       await tester.pump(const Duration(milliseconds: 100));
@@ -213,12 +286,14 @@ void main() {
 
       // Code sent: Verify OTP input and fixture hint are shown
       expect(find.text(PopoStrings.get('fixture_otp_hint')), findsOneWidget);
-      expect(find.text(PopoStrings.get('verify_and_continue')), findsOneWidget);
+      final verifyButtonFinder =
+          find.widgetWithText(PopoPrimaryButton, PopoStrings.get('verify_and_login'));
+      expect(verifyButtonFinder, findsOneWidget);
 
       // Validation test: Enter wrong OTP
       final otpField = find.byType(TextField);
       await tester.enterText(otpField, '999999');
-      await tester.tap(find.text(PopoStrings.get('verify_and_continue')));
+      await tester.tap(verifyButtonFinder);
       await tester.pump();
 
       // Error banner must be shown
@@ -227,7 +302,7 @@ void main() {
 
       // Now enter valid fixture OTP: 123456
       await tester.enterText(otpField, '123456');
-      await tester.tap(find.text(PopoStrings.get('verify_and_continue')));
+      await tester.tap(verifyButtonFinder);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
       await tester.pump(const Duration(milliseconds: 350));
@@ -260,7 +335,10 @@ void main() {
       await tester.enterText(nicknameField, 'A'); // Short nickname (< 3 chars)
       await tester.pump();
 
-      await tester.tap(find.text(PopoStrings.get('save_and_continue')));
+      final saveButtonFinder =
+          find.widgetWithText(PopoPrimaryButton, PopoStrings.get('save_and_continue'));
+      expect(saveButtonFinder, findsOneWidget);
+      await tester.tap(saveButtonFinder);
       await tester.pump();
 
       expect(find.text(PopoStrings.get('err_nickname_short')), findsOneWidget);
@@ -271,7 +349,7 @@ void main() {
       await tester.pump();
 
       // Tap Save and Continue
-      await tester.tap(find.text(PopoStrings.get('save_and_continue')));
+      await tester.tap(saveButtonFinder);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
       await tester.pump(const Duration(milliseconds: 350));
