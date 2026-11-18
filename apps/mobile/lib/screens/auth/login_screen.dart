@@ -83,8 +83,7 @@ class _LoginScreenState extends State<LoginScreen> {
     } else {
       setState(() {
         _isLoading = false;
-        _errorMessage =
-            AuthState.instance.errorMessage ??
+        _errorMessage = AuthState.instance.errorMessage ??
             'Login failed. Please try again.';
       });
 

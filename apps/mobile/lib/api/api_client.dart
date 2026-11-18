@@ -93,8 +93,8 @@ class ApiClient {
     }
 
     // Match poppo_terms_consent
-    final termsMatch = RegExp(r'poppo_terms_consent=([^;]+)')
-        .firstMatch(rawCookie);
+    final termsMatch =
+        RegExp(r'poppo_terms_consent=([^;]+)').firstMatch(rawCookie);
     if (termsMatch != null && termsMatch.group(1) != null) {
       final token = termsMatch.group(1)!;
       if (token != 'deleted' && token.isNotEmpty) {
@@ -147,7 +147,8 @@ class ApiClient {
           'Backend service is temporarily unavailable (502 Bad Gateway).';
       errorCode = 'BAD_GATEWAY';
     } else if (statusCode == 503) {
-      errorMessage = 'Server is currently undergoing maintenance (503 Service Unavailable).';
+      errorMessage =
+          'Server is currently undergoing maintenance (503 Service Unavailable).';
       errorCode = 'SERVICE_UNAVAILABLE';
     } else if (statusCode == 504) {
       errorMessage = 'Gateway timeout connecting to backend upstream (504).';
@@ -202,13 +203,15 @@ class ApiClient {
     if (error is SocketException) {
       return ApiResponse.fromException(
         const NetworkException(
-          message: 'Unable to reach backend server. Please verify your internet connection.',
+          message:
+              'Unable to reach backend server. Please verify your internet connection.',
         ),
       );
     } else if (error is TimeoutException) {
       return ApiResponse.fromException(
         const ApiTimeoutException(
-          message: 'Network request timed out. Please check your connection and retry.',
+          message:
+              'Network request timed out. Please check your connection and retry.',
         ),
       );
     } else if (error is http.ClientException) {

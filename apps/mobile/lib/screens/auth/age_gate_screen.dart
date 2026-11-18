@@ -48,8 +48,7 @@ class _AgeGateScreenState extends State<AgeGateScreen> {
     } else {
       setState(() {
         _isSubmitting = false;
-        _errorMessage =
-            AuthState.instance.errorMessage ??
+        _errorMessage = AuthState.instance.errorMessage ??
             'Failed to record compliance. Please try again.';
       });
     }

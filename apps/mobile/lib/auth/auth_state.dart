@@ -23,7 +23,7 @@ class AuthState extends ChangeNotifier {
   final AuthService _authService;
 
   AuthState({AuthService? authService})
-    : _authService = authService ?? AuthService();
+      : _authService = authService ?? AuthService();
 
   AuthStatus _status = AuthStatus.uninitialized;
   Map<String, dynamic>? _currentUser;
@@ -146,7 +146,8 @@ class AuthState extends ChangeNotifier {
 
       final savedCookie = await TokenStorage.getTermsConsentToken();
       if (savedCookie == null || savedCookie.isEmpty) {
-        await TokenStorage.saveTermsConsentToken('fixture_terms_accepted_token');
+        await TokenStorage.saveTermsConsentToken(
+            'fixture_terms_accepted_token');
       }
 
       _isTermsAccepted = true;
@@ -448,8 +449,7 @@ class AuthState extends ChangeNotifier {
       final check = await ApiClient.instance.get('/api/auth/providers');
       if (check.isSuccess && check.data is Map) {
         final providers = check.data['providers'] as List?;
-        final isConfigured =
-            providers?.any(
+        final isConfigured = providers?.any(
               (p) => p['id'] == 'google' && p['enabled'] == true,
             ) ??
             false;
@@ -497,7 +497,7 @@ class AuthState extends ChangeNotifier {
         final providers = check.data['providers'] as List?;
         final isConfigured =
             providers?.any((p) => p['id'] == 'apple' && p['enabled'] == true) ??
-            false;
+                false;
         if (!isConfigured) {
           _status = AuthStatus.unauthenticated;
           _errorMessage = PopoStrings.get('provider_unconfigured');

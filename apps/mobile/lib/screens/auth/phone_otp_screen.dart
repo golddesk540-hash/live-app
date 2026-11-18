@@ -274,9 +274,8 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
                           color: isSelected
                               ? PopoTheme.primary
                               : PopoTheme.textPrimary,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.normal,
                           fontSize: 14,
                         ),
                       ),
