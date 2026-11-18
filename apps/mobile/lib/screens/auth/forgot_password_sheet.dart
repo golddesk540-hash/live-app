@@ -7,7 +7,7 @@ import '../../api/api.dart';
 
 /// Modal bottom sheet for requesting password reset instructions
 class ForgotPasswordSheet extends StatefulWidget {
-  const ForgotPasswordSheet({Key? key}) : super(key: key);
+  const ForgotPasswordSheet({super.key});
 
   static Future<void> show(BuildContext context) {
     return showModalBottomSheet(

@@ -11,7 +11,7 @@ import 'login_screen.dart';
 
 /// Premium Popo Live Splash Screen with authentic branding and session resolution
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();

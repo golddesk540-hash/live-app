@@ -5,13 +5,11 @@ import '../../l10n/strings.dart';
 import '../../widgets/popo_primary_button.dart';
 import '../../widgets/popo_icon_button.dart';
 import '../../auth/auth_state.dart';
-import '../../shell/app_shell.dart';
-import '../profile/complete_profile_screen.dart';
 import 'phone_otp_screen.dart';
 
 /// Premium Popo Live User Registration Screen
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({Key? key}) : super(key: key);
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -128,14 +126,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
               tooltip: 'Back',
               onPressed: () => Navigator.of(context).maybePop(),
             ),
-            actions: [
+            actions: const [
               PopoIconButton(
                 icon: Icons.translate_rounded,
                 color: PopoTheme.cyan,
                 tooltip: 'Switch Language (English / اردو)',
                 onPressed: PopoStrings.toggleLanguage,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
             ],
           ),
           body: SafeArea(

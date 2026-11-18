@@ -18,7 +18,7 @@ import 'phone_otp_screen.dart';
 
 /// Premium Popo Live Authentication / Login Screen
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -202,14 +202,14 @@ class _LoginScreenState extends State<LoginScreen> {
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            actions: [
+            actions: const [
               PopoIconButton(
                 icon: Icons.translate_rounded,
                 color: PopoTheme.cyan,
                 tooltip: 'Switch Language (English / اردو)',
                 onPressed: PopoStrings.toggleLanguage,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
             ],
           ),
           body: SafeArea(

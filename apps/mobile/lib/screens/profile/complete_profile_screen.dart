@@ -15,10 +15,10 @@ class CompleteProfileScreen extends StatefulWidget {
   final String? initialPhone;
 
   const CompleteProfileScreen({
-    Key? key,
+    super.key,
     this.initialNickname,
     this.initialPhone,
-  }) : super(key: key);
+  });
 
   @override
   State<CompleteProfileScreen> createState() => _CompleteProfileScreenState();
@@ -222,14 +222,14 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             automaticallyImplyLeading: false,
-            actions: [
+            actions: const [
               PopoIconButton(
                 icon: Icons.translate_rounded,
                 color: PopoTheme.cyan,
                 tooltip: 'Switch Language (English / اردو)',
                 onPressed: PopoStrings.toggleLanguage,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
             ],
           ),
           body: SafeArea(

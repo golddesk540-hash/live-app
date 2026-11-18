@@ -11,7 +11,7 @@ import 'login_screen.dart';
 
 /// Mandatory 18+ Age Verification & Terms Acceptance Gate Screen
 class AgeGateScreen extends StatefulWidget {
-  const AgeGateScreen({Key? key}) : super(key: key);
+  const AgeGateScreen({super.key});
 
   @override
   State<AgeGateScreen> createState() => _AgeGateScreenState();
@@ -113,14 +113,14 @@ class _AgeGateScreenState extends State<AgeGateScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             automaticallyImplyLeading: false,
-            actions: [
+            actions: const [
               PopoIconButton(
                 icon: Icons.translate_rounded,
                 color: PopoTheme.cyan,
                 tooltip: 'Switch Language (English / اردو)',
                 onPressed: PopoStrings.toggleLanguage,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
             ],
           ),
           body: SafeArea(

@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../theme/popo_theme.dart';
 import '../../l10n/strings.dart';
 import '../../widgets/popo_primary_button.dart';
-import '../../widgets/popo_secondary_button.dart';
 import '../../widgets/popo_icon_button.dart';
 import '../../widgets/popo_card.dart';
 import '../../auth/auth_state.dart';
@@ -76,10 +75,10 @@ class PhoneOtpScreen extends StatefulWidget {
   final String? nickname;
 
   const PhoneOtpScreen({
-    Key? key,
+    super.key,
     this.initialPhone,
     this.nickname,
-  }) : super(key: key);
+  });
 
   @override
   State<PhoneOtpScreen> createState() => _PhoneOtpScreenState();
@@ -331,14 +330,14 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
                 }
               },
             ),
-            actions: [
+            actions: const [
               PopoIconButton(
                 icon: Icons.translate_rounded,
                 color: PopoTheme.cyan,
                 tooltip: 'Switch Language (English / اردو)',
                 onPressed: PopoStrings.toggleLanguage,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
             ],
           ),
           body: SafeArea(
@@ -589,7 +588,7 @@ class _PhoneOtpScreenState extends State<PhoneOtpScreen> {
                             ),
                             if (_secondsRemaining > 0)
                               Text(
-                                '${PopoStrings.get('resend_in')} ${_secondsRemaining}${PopoStrings.get('seconds')}',
+                                '${PopoStrings.get('resend_in')} $_secondsRemaining${PopoStrings.get('seconds')}',
                                 style: const TextStyle(
                                   color: PopoTheme.textSecondary,
                                   fontSize: 12,
