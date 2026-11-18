@@ -1,5 +1,5 @@
 // ==============================================================================
-// POPO LIVE — WEB DESIGN FIXTURES (PHASE 1 - D0 - PROMPT 3)
+// POPO LIVE — WEB DESIGN FIXTURES (PHASE 1 - D0 - PROMPT 4)
 // Path: apps/web/lib/design/designFixtures.ts
 //
 // Complete parity with Mobile Design Fixtures (apps/mobile/lib/design/design_fixtures.dart)
@@ -27,12 +27,31 @@ export const activeDesignFixtureState: DesignFixtureState = 'filled';
  */
 export class DesignFixtureError extends Error {
   public readonly code: string;
+  public readonly module?: string;
 
-  constructor(message: string, code = 'FIXTURE_SIMULATED_ERROR') {
+  constructor(message: string, code = 'FIXTURE_SIMULATED_ERROR', module?: string) {
     super(`DesignFixtureError [${code}]: ${message}`);
     this.name = 'DesignFixtureError';
     this.code = code;
+    this.module = module;
   }
+}
+
+export interface FixtureModuleError {
+  module: string;
+  code: string;
+  title: string;
+  message: string;
+  actionLabel: string;
+  isRetryable: boolean;
+}
+
+export interface FixtureEmptyStateInfo {
+  module: string;
+  title: string;
+  message: string;
+  actionLabel: string;
+  iconEmoji: string;
 }
 
 // ----------------------------------------------------------------------------
@@ -466,6 +485,18 @@ export class DesignFixtures {
     this.currentState = state;
   }
 
+  public static setFilled(): void {
+    this.currentState = 'filled';
+  }
+
+  public static setEmpty(): void {
+    this.currentState = 'empty';
+  }
+
+  public static setError(): void {
+    this.currentState = 'error';
+  }
+
   public static reset(): void {
     this.currentState = 'filled';
     this.mutableCoinBalance = 154200;
@@ -476,11 +507,184 @@ export class DesignFixtures {
   private static mutablePointsBalance = 420500;
 
   // --------------------------------------------------------------------------
+  // REALISTIC ERROR-STATE FIXTURES (PROMPT 4)
+  // --------------------------------------------------------------------------
+  public static readonly userProfileError: FixtureModuleError = {
+    module: 'userProfile',
+    code: 'ERR_USER_PROFILE_503',
+    title: 'User Profile Unavailable',
+    message: 'Failed to load user profile: Service temporarily unavailable.',
+    actionLabel: 'Tap to retry',
+    isRetryable: true,
+  };
+
+  public static readonly liveRoomsError: FixtureModuleError = {
+    module: 'liveRooms',
+    code: 'ERR_LIVE_ROOMS_503',
+    title: 'Live Streams Unavailable',
+    message: 'Failed to load live broadcast rooms. Please check your network connection and tap to retry.',
+    actionLabel: 'Tap to retry',
+    isRetryable: true,
+  };
+
+  public static readonly partyRoomsError: FixtureModuleError = {
+    module: 'partyRooms',
+    code: 'ERR_PARTY_ROOMS_503',
+    title: 'Party Audio Cluster Offline',
+    message: 'Failed to connect to party room audio cluster. 9-seat rooms cannot be displayed right now.',
+    actionLabel: 'Tap to reconnect',
+    isRetryable: true,
+  };
+
+  public static readonly messagesError: FixtureModuleError = {
+    module: 'messages',
+    code: 'ERR_MESSAGES_TIMEOUT',
+    title: 'Inbox Sync Failed',
+    message: 'Failed to synchronize direct messages and official notices. Pull down to refresh.',
+    actionLabel: 'Pull down to refresh',
+    isRetryable: true,
+  };
+
+  public static readonly walletError: FixtureModuleError = {
+    module: 'wallet',
+    code: 'ERR_WALLET_SYNC_500',
+    title: 'Wallet Ledger Unavailable',
+    message: 'Failed to synchronize coin and point balances. Your transaction records are safely stored on the ledger.',
+    actionLabel: 'Tap to retry',
+    isRetryable: true,
+  };
+
+  public static readonly vipError: FixtureModuleError = {
+    module: 'vip',
+    code: 'ERR_VIP_LOAD_FAILED',
+    title: 'VIP Membership Check Failed',
+    message: 'VIP membership status and exclusive privileges could not be loaded. Please try again.',
+    actionLabel: 'Tap to reload',
+    isRetryable: true,
+  };
+
+  public static readonly storeError: FixtureModuleError = {
+    module: 'store',
+    code: 'ERR_STORE_INVENTORY_503',
+    title: 'Store Catalog Unavailable',
+    message: 'Failed to load virtual store items and owned bag items. Please check your internet connection.',
+    actionLabel: 'Retry store query',
+    isRetryable: true,
+  };
+
+  public static readonly supportTicketsError: FixtureModuleError = {
+    module: 'helpTickets',
+    code: 'ERR_SUPPORT_TICKETS_500',
+    title: 'Support Center Unreachable',
+    message: 'Customer support ticketing system is temporarily unreachable. Help topics and tickets are offline.',
+    actionLabel: 'Check network status',
+    isRetryable: true,
+  };
+
+  public static readonly redeemCodeError: FixtureModuleError = {
+    module: 'redeemCode',
+    code: 'ERR_REDEEM_SYSTEM_BUSY',
+    title: 'Voucher Service Error',
+    message: 'Promotional code validation server is currently busy. Your code was not redeemed. Please retry in a few moments.',
+    actionLabel: 'Try again',
+    isRetryable: true,
+  };
+
+  public static readonly allModuleErrors: Record<string, FixtureModuleError> = {
+    userProfile: DesignFixtures.userProfileError,
+    liveRooms: DesignFixtures.liveRoomsError,
+    partyRooms: DesignFixtures.partyRoomsError,
+    messages: DesignFixtures.messagesError,
+    wallet: DesignFixtures.walletError,
+    vip: DesignFixtures.vipError,
+    store: DesignFixtures.storeError,
+    helpTickets: DesignFixtures.supportTicketsError,
+    redeemCode: DesignFixtures.redeemCodeError,
+  };
+
+  public static errorForModule(module: string): FixtureModuleError | undefined {
+    return this.allModuleErrors[module];
+  }
+
+  // --------------------------------------------------------------------------
+  // REALISTIC EMPTY-STATE FIXTURES (PROMPT 4)
+  // --------------------------------------------------------------------------
+  public static readonly liveRoomsEmpty: FixtureEmptyStateInfo = {
+    module: 'liveRooms',
+    title: 'No Live Broadcasts',
+    message: 'No hosts are live right now. Be the first to start streaming!',
+    actionLabel: 'Go Live Now',
+    iconEmoji: '📡',
+  };
+
+  public static readonly partyRoomsEmpty: FixtureEmptyStateInfo = {
+    module: 'partyRooms',
+    title: 'No Party Rooms Available',
+    message: 'All party lounges are currently quiet. Open a 9-seat room to invite your friends!',
+    actionLabel: 'Create Party Room',
+    iconEmoji: '🎉',
+  };
+
+  public static readonly messagesEmpty: FixtureEmptyStateInfo = {
+    module: 'messages',
+    title: 'No Messages Yet',
+    message: 'Your inbox is empty. Say hello to creator hosts or join a party room to connect!',
+    actionLabel: 'Discover Creators',
+    iconEmoji: '💬',
+  };
+
+  public static readonly walletEmpty: FixtureEmptyStateInfo = {
+    module: 'wallet',
+    title: 'No Transactions',
+    message: 'You have no recent coin or point transaction records in your wallet history.',
+    actionLabel: 'Top Up Coins',
+    iconEmoji: '🪙',
+  };
+
+  public static readonly storeEmpty: FixtureEmptyStateInfo = {
+    module: 'store',
+    title: 'No Store Products',
+    message: 'There are currently no items in this store category.',
+    actionLabel: 'Refresh Store',
+    iconEmoji: '🛍️',
+  };
+
+  public static readonly bagEmpty: FixtureEmptyStateInfo = {
+    module: 'bag',
+    title: 'Backpack is Empty',
+    message: 'You have not acquired any avatar frames, entrance effects, or battle cards yet.',
+    actionLabel: 'Browse Store',
+    iconEmoji: '🎒',
+  };
+
+  public static readonly supportTicketsEmpty: FixtureEmptyStateInfo = {
+    module: 'supportTickets',
+    title: 'No Support Tickets',
+    message: 'You have no pending or past support requests. We are here if you need assistance!',
+    actionLabel: 'Submit Ticket',
+    iconEmoji: '🎫',
+  };
+
+  public static readonly allEmptyStates: Record<string, FixtureEmptyStateInfo> = {
+    liveRooms: DesignFixtures.liveRoomsEmpty,
+    partyRooms: DesignFixtures.partyRoomsEmpty,
+    messages: DesignFixtures.messagesEmpty,
+    wallet: DesignFixtures.walletEmpty,
+    store: DesignFixtures.storeEmpty,
+    bag: DesignFixtures.bagEmpty,
+    supportTickets: DesignFixtures.supportTicketsEmpty,
+  };
+
+  public static emptyInfoForModule(module: string): FixtureEmptyStateInfo | undefined {
+    return this.allEmptyStates[module];
+  }
+
+  // --------------------------------------------------------------------------
   // 1. USER PROFILES
   // --------------------------------------------------------------------------
   public static get currentUserProfile(): FixtureUserProfile {
     if (this.isError) {
-      throw new DesignFixtureError('Failed to load user profile: Service temporarily unavailable [ERR_503]', 'ERR_503');
+      throw new DesignFixtureError('Failed to load user profile: Service temporarily unavailable.', 'ERR_USER_PROFILE_503', 'userProfile');
     }
     if (this.isEmpty) return this.emptyUserProfile();
     return this.profileAminaNoor;
@@ -488,7 +692,7 @@ export class DesignFixtures {
 
   public static get userProfiles(): FixtureUserProfile[] {
     if (this.isError) {
-      throw new DesignFixtureError('Failed to query user profiles list [ERR_500]', 'ERR_500');
+      throw new DesignFixtureError('Failed to load user profile: Service temporarily unavailable.', 'ERR_USER_PROFILE_503', 'userProfile');
     }
     if (this.isEmpty) return [];
     return [
@@ -508,7 +712,7 @@ export class DesignFixtures {
   // --------------------------------------------------------------------------
   public static get liveViewer(): FixtureLiveViewer {
     if (this.isError) {
-      throw new DesignFixtureError('Live stream connection refused: Agora channel timeout [ERR_RTC_408]', 'ERR_RTC_408');
+      throw new DesignFixtureError('Failed to load live broadcast rooms. Please check your network connection and tap to retry.', 'ERR_LIVE_ROOMS_503', 'liveRooms');
     }
     if (this.isEmpty) return this.emptyLiveViewer();
     return {
@@ -570,7 +774,7 @@ export class DesignFixtures {
   // --------------------------------------------------------------------------
   public static get liveRooms(): FixtureLiveRoom[] {
     if (this.isError) {
-      throw new DesignFixtureError('Failed to fetch live broadcast feeds [ERR_GATEWAY_TIMEOUT]', 'ERR_GATEWAY_TIMEOUT');
+      throw new DesignFixtureError('Failed to load live broadcast rooms. Please check your network connection and tap to retry.', 'ERR_LIVE_ROOMS_503', 'liveRooms');
     }
     if (this.isEmpty) return [];
     return [
@@ -718,7 +922,7 @@ export class DesignFixtures {
   // --------------------------------------------------------------------------
   public static get partyRooms(): FixturePartyRoom[] {
     if (this.isError) {
-      throw new DesignFixtureError('Failed to join party room cluster [ERR_RTC_ROSTER_503]', 'ERR_RTC_ROSTER_503');
+      throw new DesignFixtureError('Failed to connect to party room audio cluster. 9-seat rooms cannot be displayed right now.', 'ERR_PARTY_ROOMS_503', 'partyRooms');
     }
     if (this.isEmpty) return [];
     return [
@@ -1223,7 +1427,7 @@ export class DesignFixtures {
   // --------------------------------------------------------------------------
   public static get inboxChats(): FixtureChatThread[] {
     if (this.isError) {
-      throw new DesignFixtureError('Inbox message store unreachable [ERR_IM_TIMEOUT]', 'ERR_IM_TIMEOUT');
+      throw new DesignFixtureError('Failed to synchronize direct messages and official notices. Pull down to refresh.', 'ERR_MESSAGES_TIMEOUT', 'messages');
     }
     if (this.isEmpty) return [];
     return [
@@ -1380,7 +1584,7 @@ export class DesignFixtures {
   // --------------------------------------------------------------------------
   public static get officialNotices(): FixtureOfficialNotice[] {
     if (this.isError) {
-      throw new DesignFixtureError('Official notices service unavailable [ERR_NOTICE_503]', 'ERR_NOTICE_503');
+      throw new DesignFixtureError('Failed to synchronize direct messages and official notices. Pull down to refresh.', 'ERR_MESSAGES_TIMEOUT', 'messages');
     }
     if (this.isEmpty) return [];
     return [
@@ -1456,7 +1660,7 @@ export class DesignFixtures {
   // --------------------------------------------------------------------------
   public static get wallet(): FixtureWallet {
     if (this.isError) {
-      throw new DesignFixtureError('Failed to synchronize wallet balance [ERR_LEDGER_TIMEOUT]', 'ERR_LEDGER_TIMEOUT');
+      throw new DesignFixtureError('Failed to synchronize coin and point balances. Your transaction records are safely stored on the ledger.', 'ERR_WALLET_SYNC_500', 'wallet');
     }
     if (this.isEmpty) return this.emptyWallet();
     return {
@@ -1700,7 +1904,7 @@ export class DesignFixtures {
   // --------------------------------------------------------------------------
   public static get vipPlan(): FixtureVipPlan {
     if (this.isError) {
-      throw new DesignFixtureError('VIP membership service unavailable [ERR_VIP_TIMEOUT]', 'ERR_VIP_TIMEOUT');
+      throw new DesignFixtureError('VIP membership status and exclusive privileges could not be loaded. Please try again.', 'ERR_VIP_LOAD_FAILED', 'vip');
     }
     if (this.isEmpty) return this.inactiveVipPlan();
     return {
@@ -2120,7 +2324,7 @@ export class DesignFixtures {
 
   public static redeemCode(code: string): FixtureRedeemCode {
     if (this.isError) {
-      throw new DesignFixtureError('Redemption service maintenance [ERR_REDEEM_503]', 'ERR_REDEEM_503');
+      throw new DesignFixtureError('Promotional code validation server is currently busy. Your code was not redeemed. Please retry in a few moments.', 'ERR_REDEEM_SYSTEM_BUSY', 'redeemCode');
     }
     const clean = code.trim().toUpperCase();
     if (clean === this.successfulRedeemCode.code) {
@@ -2358,7 +2562,7 @@ export class DesignFixtures {
 
   public static get storeItems(): FixtureStoreItem[] {
     if (this.isError) {
-      throw new DesignFixtureError('Store inventory query failed [ERR_STORE_503]', 'ERR_STORE_503');
+      throw new DesignFixtureError('Failed to load virtual store items and owned bag items. Please check your internet connection.', 'ERR_STORE_INVENTORY_503', 'store');
     }
     if (this.isEmpty) return [];
     return [
@@ -2629,7 +2833,7 @@ export class DesignFixtures {
 
   public static get supportTickets(): FixtureSupportTicket[] {
     if (this.isError) {
-      throw new DesignFixtureError('Customer support ticketing unavailable [ERR_TICKET_503]', 'ERR_TICKET_503');
+      throw new DesignFixtureError('Customer support ticketing system is temporarily unreachable. Help topics and tickets are offline.', 'ERR_SUPPORT_TICKETS_500', 'helpTickets');
     }
     if (this.isEmpty) return [];
     return [
