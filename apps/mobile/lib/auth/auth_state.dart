@@ -42,6 +42,7 @@ class AuthState extends ChangeNotifier {
   bool get isLoading => _status == AuthStatus.authenticating;
   String? get pendingNickname => _pendingNickname;
   String? get pendingContact => _pendingContact;
+  String? get pendingPassword => _pendingPassword;
 
   void setPendingRegistration({
     required String nickname,
@@ -309,7 +310,7 @@ class AuthState extends ChangeNotifier {
     // Offline / fixture flow: register succeeds and moves to OTP/Profile
     _currentUser = {
       'id': 'u_registered_${DateTime.now().millisecondsSinceEpoch}',
-      'poppoId': '8839' + (2000 + DateTime.now().millisecond).toString(),
+      'poppoId': '8839${2000 + DateTime.now().millisecond}',
       'nickname': nickname,
       'email': email,
       'phone': phone,
@@ -376,7 +377,7 @@ class AuthState extends ChangeNotifier {
 
     _currentUser = {
       'id': 'u_phone_user_${DateTime.now().millisecondsSinceEpoch}',
-      'poppoId': '8839' + (1000 + DateTime.now().millisecond).toString(),
+      'poppoId': '8839${1000 + DateTime.now().millisecond}',
       'phone': phone,
       'nickname': _pendingNickname ?? 'Amina Noor',
       'country': 'Pakistan',
