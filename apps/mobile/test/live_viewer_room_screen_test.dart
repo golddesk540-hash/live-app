@@ -127,7 +127,8 @@ void main() {
 
       // Host name and title for room_001
       expect(find.text('Amina Noor'), findsOneWidget);
-      expect(find.textContaining('Karachi Nights'), findsOneWidget);
+      expect(
+          find.text('Karachi Nights 🎶 Acoustic Live Session'), findsOneWidget);
       expect(find.text('🇵🇰'), findsOneWidget);
       expect(find.text('Lv.10'), findsOneWidget);
       expect(find.text('ID: 883901'), findsOneWidget);
@@ -299,7 +300,13 @@ void main() {
       expect(DesignFixtures.currentCoinBalance, initialBalance - 10);
 
       // Chat now has the gift message
-      expect(find.textContaining('Sent Rose Flower'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('live_chat_list')),
+          matching: find.textContaining('Sent Rose Flower'),
+        ),
+        findsOneWidget,
+      );
     });
 
     // ------------------------------------------------------------------------
