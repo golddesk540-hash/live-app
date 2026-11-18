@@ -69,18 +69,22 @@ class PopoStrings {
       'party_opens_sprint2': '9-Seat Party Rooms activate in Sprint 2 (M4).',
       'go_live_opens_sprint2':
           'Host Live Studio & Agora Video stream activates in Sprint 2 (M3).',
-      'inbox_opens_sprint4': 'Direct Messages and FCM Push notifications activate in Sprint 4 (M7).',
+      'inbox_opens_sprint4':
+          'Direct Messages and FCM Push notifications activate in Sprint 4 (M7).',
       'locked_placeholder': 'Upcoming Sprint Milestone',
       'back_to_explore': 'Back to Explore',
 
       // 18+ Age Verification Gate
       'age_gate_title': '18+ Age Verification Required',
       'age_gate_badge': 'MANDATORY COMPLIANCE',
-      'age_gate_desc': 'Popo Live is an adult live streaming & interactive entertainment community. By continuing, you verify that you are at least 18 years of age and agree to our Terms of Service and Privacy Policy.',
-      'age_gate_checkbox': 'I confirm that I am at least 18 years of age and agree to the Terms of Service & Privacy Policy.',
+      'age_gate_desc':
+          'Popo Live is an adult live streaming & interactive entertainment community. By continuing, you verify that you are at least 18 years of age and agree to our Terms of Service and Privacy Policy.',
+      'age_gate_checkbox':
+          'I confirm that I am at least 18 years of age and agree to the Terms of Service & Privacy Policy.',
       'accept_and_continue': 'Accept & Continue',
       'age_gate_decline': 'Decline & Exit',
-      'age_gate_declined_msg': 'Access to Popo Live is strictly restricted to adult users aged 18 and older. You cannot proceed without age confirmation.',
+      'age_gate_declined_msg':
+          'Access to Popo Live is strictly restricted to adult users aged 18 and older. You cannot proceed without age confirmation.',
 
       // Login
       'login_title': 'Welcome Back',
@@ -191,7 +195,8 @@ class PopoStrings {
       'forgot_password_desc':
           'Enter your registered email or phone to receive instructions.',
       'send_reset_link': 'Send Reset Instructions',
-      'reset_link_sent': 'If an account exists with this identifier, password reset instructions have been dispatched.',
+      'reset_link_sent':
+          'If an account exists with this identifier, password reset instructions have been dispatched.',
 
       // Profile & Settings
       'profile_title': 'Me Center',
@@ -296,11 +301,14 @@ class PopoStrings {
       // 18+ Age Verification Gate
       'age_gate_title': '18+ عمر کی توثیق لازمی ہے',
       'age_gate_badge': 'لازمی تعمیل',
-      'age_gate_desc': 'پوپو لائیو بالغان کے لیے ایک لائیو اسٹریمنگ پلیٹ فارم ہے۔ آگے بڑھنے کے لیے آپ کی عمر کم از کم 18 سال ہونی چاہیے اور سروس کی شرائط سے متفق ہونا ضروری ہے۔',
-      'age_gate_checkbox': 'میں تصدیق کرتا ہوں کہ میری عمر کم از کم 18 سال ہے اور میں سروس کی شرائط اور پرائیویسی پالیسی سے متفق ہوں۔',
+      'age_gate_desc':
+          'پوپو لائیو بالغان کے لیے ایک لائیو اسٹریمنگ پلیٹ فارم ہے۔ آگے بڑھنے کے لیے آپ کی عمر کم از کم 18 سال ہونی چاہیے اور سروس کی شرائط سے متفق ہونا ضروری ہے۔',
+      'age_gate_checkbox':
+          'میں تصدیق کرتا ہوں کہ میری عمر کم از کم 18 سال ہے اور میں سروس کی شرائط اور پرائیویسی پالیسی سے متفق ہوں۔',
       'accept_and_continue': 'قبول کریں اور آگے بڑھیں',
       'age_gate_decline': 'انکار اور خروج',
-      'age_gate_declined_msg': 'پوپو لائیو تک رسائی صرف 18 سال یا اس سے زیادہ عمر کے افراد کے لیے مخصوص ہے۔ آپ بغیر تصدیق کے داخل نہیں ہو سکتے۔',
+      'age_gate_declined_msg':
+          'پوپو لائیو تک رسائی صرف 18 سال یا اس سے زیادہ عمر کے افراد کے لیے مخصوص ہے۔ آپ بغیر تصدیق کے داخل نہیں ہو سکتے۔',
 
       // Login
       'login_title': 'خوش آمدید',
@@ -343,7 +351,8 @@ class PopoStrings {
 
       // Complete Profile
       'complete_profile_title': 'اپنی پروفائل مکمل کریں',
-      'complete_profile_subtitle': 'پوپو لائیو میں داخل ہونے کے لیے اپنا نام، تاریخ پیدائش اور ملک درج کریں',
+      'complete_profile_subtitle':
+          'پوپو لائیو میں داخل ہونے کے لیے اپنا نام، تاریخ پیدائش اور ملک درج کریں',
       'birthdate': 'تاریخ پیدائش',
       'birthdate_hint': 'تاریخ پیدائش منتخب کریں (صرف 18+ سال)',
       'gender': 'جنس',
@@ -400,7 +409,8 @@ class PopoStrings {
       'err_invalid_phone': 'براہ کرم ایک درست فون نمبر درج کریں۔',
       'err_invalid_otp': 'براہ کرم پورا 6 ہندسوں کا تصدیقی کوڈ درج کریں۔',
       'err_missing_birthdate': 'براہ کرم اپنی تاریخ پیدائش منتخب کریں۔',
-      'err_under_18': 'پوپو لائیو استعمال کرنے کے لیے آپ کی عمر کم از کم 18 سال ہونی چاہیے۔',
+      'err_under_18':
+          'پوپو لائیو استعمال کرنے کے لیے آپ کی عمر کم از کم 18 سال ہونی چاہیے۔',
       'err_future_birthday': 'تاریخ پیدائش مستقبل کی نہیں ہو سکتی۔',
 
       // Forgot Password
@@ -408,7 +418,8 @@ class PopoStrings {
       'forgot_password_desc':
           'ہدایات حاصل کرنے کے لیے اپنی رجسٹرڈ ای میل درج کریں۔',
       'send_reset_link': 'ہدایات بھیجیں',
-      'reset_link_sent': 'اگر اکاؤنٹ موجود ہے تو پاس ورڈ ری سیٹ کرنے کی ہدایات بھیج دی گئی ہیں۔',
+      'reset_link_sent':
+          'اگر اکاؤنٹ موجود ہے تو پاس ورڈ ری سیٹ کرنے کی ہدایات بھیج دی گئی ہیں۔',
 
       // Profile & Settings
       'profile_title': 'می سینٹر',
