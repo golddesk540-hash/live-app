@@ -323,7 +323,8 @@ class PopoStrings {
       'forgot_password': 'پاس ورڈ بھول گئے؟',
       'login_btn': 'لاگ ان کریں',
       'login_fixture_user': 'فکسچر صارف کے ساتھ فوری لاگ ان (امینہ نور)',
-      'login_fixture_sub': 'بغیر ڈیٹا بیس یا اے پی آئی کے فرضی پروفائل استعمال کریں',
+      'login_fixture_sub':
+          'بغیر ڈیٹا بیس یا اے پی آئی کے فرضی پروفائل استعمال کریں',
       'fixture_otp_hint': 'فکسچر او ٹی پی کوڈ: 123456',
       'complete_profile_btn': 'پوپو لائیو میں داخل ہوں',
       'dont_have_account': 'اکاؤنٹ نہیں ہے؟ نیا اکاؤنٹ بنائیں',
