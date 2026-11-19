@@ -34,8 +34,8 @@ export default function LiveTabRoute({ params }: { params: { tab: string } }) {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#080915] flex items-center justify-center text-white">
-          <Loader2 className="w-8 h-8 animate-spin text-[#FF2E74]" />
+        <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center text-gray-900">
+          <Loader2 className="w-8 h-8 animate-spin text-[#FF1A6C]" />
         </div>
       }
     >

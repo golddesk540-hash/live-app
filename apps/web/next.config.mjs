@@ -35,14 +35,11 @@ const nextConfig = {
       { source: '/live/cost-guard', destination: '/download?from=app', permanent: false },
 
       // -------------------------------------------------------------
-      // 2. PARTY, PK AND NEAR (Mobile-Only -> /download?from=app)
+      // 2. PK AND NEAR (Mobile-Only -> /download?from=app)
       // -------------------------------------------------------------
-      { source: '/live/party', destination: '/download?from=app', permanent: false },
       { source: '/live/pk', destination: '/download?from=app', permanent: false },
       { source: '/live/near', destination: '/download?from=app', permanent: false },
       { source: '/near', destination: '/download?from=app', permanent: false },
-      { source: '/party', destination: '/download?from=app', permanent: false },
-      { source: '/party/:path*', destination: '/download?from=app', permanent: false },
       { source: '/pk', destination: '/download?from=app', permanent: false },
       { source: '/pk/:path*', destination: '/download?from=app', permanent: false },
 

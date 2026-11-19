@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect, useTransition, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useLanguage } from '@/lib/languageContext';
-import { useUnreadNotificationsCount } from '@/components/notifications/useUnreadNotificationsCount';
 import {
   COUNTRIES_LIST,
   POPULAR_COUNTRY_SHORTCUTS,
@@ -12,243 +11,108 @@ import {
   getCountryName,
 } from '@/lib/countries';
 import {
-  Search,
-  Coins,
-  Download,
   Radio,
   Users,
   Heart,
   MessageSquare,
   User,
   Compass,
-  Swords,
   Trophy,
   Flame,
-  Camera,
-  ArrowLeft,
+  Search,
   Sparkles,
   ChevronRight,
   ChevronDown,
-  LogOut,
-  Settings,
-  Shield,
-  HelpCircle,
-  Eye,
   Loader2,
   X,
   ExternalLink,
   Check,
-  UserCheck,
-  Calendar,
-  Clock,
-  LogIn,
-  UserPlus,
   Globe,
   Filter,
   RefreshCw,
   Bell,
-  Building2,
-  Crown,
-  VideoOff,
+  Eye,
+  Swords,
+  Coins,
+  Download,
+  Smartphone,
   ShieldCheck,
-  ListTodo,
-  Wallet,
+  ArrowRight,
 } from 'lucide-react';
-import LiveRoomCard from './LiveRoomCard';
-import FollowingUserCard, { FollowedUserItem } from './FollowingUserCard';
+import { DesignFixtures, FixtureLiveRoom, FixturePartyRoom } from '@/lib/design/designFixtures';
+import WebTopNav from './WebTopNav';
+import WebLeftRail, { NavRailId } from './WebLeftRail';
+import WebMobileNav from './WebMobileNav';
+import AppDownloadModal from './AppDownloadModal';
 import DiscoveryBannerCarousel from './DiscoveryBannerCarousel';
 import RankDoorSection from './RankDoorSection';
 import RankingPreviewSection from './RankingPreviewSection';
 
-export type DiscoveryTab = 'explore' | 'following' | 'new';
+export type DiscoveryTab =
+  | 'explore'
+  | 'live'
+  | 'party'
+  | 'following'
+  | 'new'
+  | 'message'
+  | 'profile'
+  | 'near'
+  | string;
 
-interface RoomItem {
-  roomId: string;
-  roomNumber: string;
-  title: string;
-  coverUrl: string;
-  category: string;
-  status?: string;
-  isLive: boolean;
-  isPk: boolean;
-  viewerCount: number;
-  viewersFormatted: string;
-  coinsEarned: number;
-  coinsFormatted: string;
-  country: string;
-  countryCode: string;
-  flagEmoji: string;
-  tags?: string[];
-  host: {
-    id: string;
-    nickname: string;
-    poppoId: string;
-    avatarUrl: string;
-    hostLevel?: number;
-    wealthLevel?: number;
-    isVerified?: boolean;
-  };
-  pkDetails?: {
-    pkId: string;
-    title: string;
-    status: string;
-    votesHost?: number;
-    votesOpponent?: number;
-    pointsHost?: number;
-    pointsOpponent?: number;
-    opponent?: {
-      id: string;
-      nickname: string;
-      avatarUrl: string;
-      poppoId: string;
-    } | null;
-  } | null;
+export interface DiscoveryShellProps {
+  initialTab?: DiscoveryTab;
+  activeNav?: NavRailId | string;
+  children?: React.ReactNode;
 }
 
-interface NewCreatorItem {
-  id: string;
-  poppoId: string;
-  nickname: string;
-  avatarUrl: string;
-  country: string;
-  countryCode: string;
-  flagEmoji: string;
-  hostLevel: number;
-  wealthLevel: number;
-  isVerified: boolean;
-  createdAt: string;
-  joinedFormatted: string;
-  isLive: boolean;
-  liveRoom?: {
-    roomId: string;
-    roomNumber: string;
-    title: string;
-    viewerCount: number;
-    viewersFormatted: string;
-  } | null;
-  profileUrl: string;
-}
-
-interface PkBattleItem {
-  id: string;
-  roomId?: string | null;
-  roomNumber?: string;
-  title: string;
-  status: 'active' | 'upcoming' | 'completed';
-  isLiveRoom: boolean;
-  viewerCount: number;
-  viewersFormatted: string;
-  startedAt: string;
-  endedAt?: string | null;
-  hostA: {
-    id: string;
-    nickname: string;
-    poppoId: string;
-    avatarUrl: string;
-    hostLevel: number;
-    countryCode: string;
-    flagEmoji: string;
-    votes: number;
-    points: number;
-    pointsFormatted: string;
-  };
-  hostB: {
-    id: string;
-    nickname: string;
-    poppoId: string;
-    avatarUrl: string;
-    hostLevel: number;
-    countryCode: string;
-    flagEmoji: string;
-    votes: number;
-    points: number;
-    pointsFormatted: string;
-  };
-  watchUrl?: string | null;
-}
-
-interface FollowingFeedData {
-  authenticated: boolean;
-  message?: string;
-  isDemo?: boolean;
-  users?: FollowedUserItem[];
-  liveRooms: RoomItem[];
-  offlineUsers: Array<{
-    userId: string;
-    nickname: string;
-    poppoId: string;
-    avatarUrl: string;
-    country: string;
-    countryCode: string;
-    flagEmoji: string;
-    hostLevel: number;
-    isFollowing: boolean;
-  }>;
-  suggestedHosts: Array<{
-    roomId: string;
-    roomNumber: string;
-    title: string;
-    coverUrl: string;
-    viewersFormatted: string;
-    flagEmoji: string;
-    host: {
-      id: string;
-      nickname: string;
-      poppoId: string;
-      avatarUrl: string;
-      hostLevel: number;
-    };
-  }>;
-  totalFollowed: number;
-  liveCount: number;
-}
-
-interface DiscoveryShellProps {
-  initialTab?: DiscoveryTab | string;
-}
-
-export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) {
+export function DiscoveryShell({
+  initialTab = 'live',
+  activeNav,
+  children,
+}: DiscoveryShellProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { lang, toggleLang, isUr } = useLanguage();
-  const unreadNotifications = useUnreadNotificationsCount();
   const [isPending, startTransition] = useTransition();
 
-  const validatedInitialTab: DiscoveryTab =
-    initialTab === 'following' || initialTab === 'new' ? initialTab : 'explore';
-  const [activeTab, setActiveTab] = useState<DiscoveryTab>(validatedInitialTab);
+  // Normalize initial tab
+  const normalizedInitialTab = useMemo<string>(() => {
+    if (initialTab === 'explore') return 'live';
+    return initialTab || 'live';
+  }, [initialTab]);
+
+  const [activeTab, setActiveTab] = useState<string>(normalizedInitialTab);
   const [selectedCountry, setSelectedCountry] = useState<string>(
     searchParams.get('country')?.toUpperCase() || 'ALL'
   );
   const [showCountryModal, setShowCountryModal] = useState(false);
   const [countryModalSearch, setCountryModalSearch] = useState('');
-
   const [searchQuery, setSearchQuery] = useState('');
-  const [showSearchModal, setShowSearchModal] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [showAppDownloadModal, setShowAppDownloadModal] = useState(false);
+  const [showDesktopModal, setShowDesktopModal] = useState(false);
+  const [notificationBellUsers, setNotificationBellUsers] = useState<Record<string, boolean>>({});
 
-  // Tab specific data states
-  const [exploreRooms, setExploreRooms] = useState<RoomItem[]>([]);
-  const [followingData, setFollowingData] = useState<FollowingFeedData | null>(null);
-  const [newCreators, setNewCreators] = useState<NewCreatorItem[]>([]);
-
-  // Filter chips
-  const [newFilter, setNewFilter] = useState<'all' | 'live' | 'verified'>('all');
-
-  // User auth state
-  const [user, setUser] = useState<any | null>(null);
-  const [isAuthChecked, setIsAuthChecked] = useState(false);
-  const [showUserMenu, setShowUserMenu] = useState(false);
-
-  // Sync activeTab with pathname on browser back/forward
+  // Sync activeTab with pathname and query params
   useEffect(() => {
-    if (pathname.includes('/live/following')) setActiveTab('following');
-    else if (pathname.includes('/live/new')) setActiveTab('new');
-    else if (pathname.includes('/live/explore') || pathname === '/live') setActiveTab('explore');
-  }, [pathname]);
+    if (pathname.includes('/party')) {
+      setActiveTab('party');
+    } else if (pathname.includes('/inbox')) {
+      setActiveTab('message');
+    } else if (pathname.includes('/profile')) {
+      setActiveTab('profile');
+    } else if (pathname.includes('/live/following') || searchParams.get('tab') === 'following') {
+      setActiveTab('following');
+    } else if (pathname.includes('/live/new') || searchParams.get('tab') === 'new') {
+      setActiveTab('new');
+    } else if (pathname.includes('/near') || initialTab === 'near') {
+      setActiveTab('near');
+    } else if (pathname === '/live' || pathname === '/' || pathname.includes('/live')) {
+      setActiveTab('live');
+    }
+  }, [pathname, searchParams, initialTab]);
 
-  // Sync selectedCountry with URL search parameters
+  // Sync selectedCountry with searchParams
   useEffect(() => {
     const urlCountry = searchParams.get('country')?.toUpperCase();
     if (urlCountry && urlCountry !== selectedCountry) {
@@ -258,77 +122,59 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
     }
   }, [searchParams]);
 
-  // Check auth session once
-  useEffect(() => {
-    let isMounted = true;
-    async function checkAuth() {
-      try {
-        const sessRes = await fetch('/api/auth/session').catch(() => null);
-        if (sessRes && sessRes.ok) {
-          const sessData = await sessRes.json();
-          if (isMounted) {
-            setUser(sessData.authenticated ? sessData.user : null);
-            setIsAuthChecked(true);
-          }
-        }
-      } catch (err) {
-        console.error('Session check error:', err);
-      }
+  // Read data from DesignFixtures
+  const allLiveRooms = useMemo(() => {
+    try {
+      return DesignFixtures.liveRooms;
+    } catch {
+      return [];
     }
-    if (!isAuthChecked) checkAuth();
-    return () => { isMounted = false; };
-  }, [isAuthChecked]);
+  }, []);
 
-  // Tab & Country data fetching
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadTabData() {
-      setLoading(true);
-      try {
-        const countryParam = selectedCountry && selectedCountry !== 'ALL' ? `&country=${selectedCountry}` : '';
-
-        if (activeTab === 'explore') {
-          const url = `/api/discovery/explore?q=${encodeURIComponent(searchQuery)}${countryParam}`;
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            if (isMounted) setExploreRooms(data.rooms || []);
-          }
-        } else if (activeTab === 'following') {
-          const url = `/api/discovery/following?${countryParam ? countryParam.substring(1) : ''}`;
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            if (isMounted) setFollowingData(data);
-          }
-        } else if (activeTab === 'new') {
-          const url = `/api/discovery/new?filter=${newFilter}${countryParam}`;
-          const res = await fetch(url);
-          if (res.ok) {
-            const data = await res.json();
-            if (isMounted) setNewCreators(data.creators || []);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching discovery tab data:', err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
+  const allPartyRooms = useMemo(() => {
+    try {
+      return DesignFixtures.partyRooms;
+    } catch {
+      return [];
     }
+  }, []);
 
-    loadTabData();
-    return () => { isMounted = false; };
-  }, [activeTab, searchQuery, selectedCountry, newFilter]);
+  const followedUsers = useMemo(() => {
+    try {
+      return DesignFixtures.followers;
+    } catch {
+      return [];
+    }
+  }, []);
 
-  const handleTabChange = (tab: DiscoveryTab) => {
-    if (tab === activeTab) return;
-    setActiveTab(tab);
-    startTransition(() => {
-      const countryQuery = selectedCountry !== 'ALL' ? `?country=${selectedCountry}` : '';
-      router.push(`/live/${tab}${countryQuery}`, { scroll: false });
+  // Filter Live rooms by country and search query
+  const filteredLiveRooms = useMemo(() => {
+    return allLiveRooms.filter((room) => {
+      const matchesCountry =
+        selectedCountry === 'ALL' ||
+        room.countryCode.toUpperCase() === selectedCountry.toUpperCase();
+      const matchesSearch =
+        !searchQuery.trim() ||
+        room.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        room.hostNickname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        room.roomNumber.includes(searchQuery.trim());
+      return matchesCountry && matchesSearch;
     });
-  };
+  }, [allLiveRooms, selectedCountry, searchQuery]);
+
+  // Filter Party rooms by country and search query
+  const filteredPartyRooms = useMemo(() => {
+    return allPartyRooms.filter((room) => {
+      const matchesCountry =
+        selectedCountry === 'ALL' ||
+        room.countryCode.toUpperCase() === selectedCountry.toUpperCase();
+      const matchesSearch =
+        !searchQuery.trim() ||
+        room.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        room.hostNickname.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCountry && matchesSearch;
+    });
+  }, [allPartyRooms, selectedCountry, searchQuery]);
 
   const handleCountrySelect = (code: string) => {
     const cleanCode = code.toUpperCase();
@@ -338,699 +184,640 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
 
     startTransition(() => {
       const countryQuery = cleanCode !== 'ALL' ? `?country=${cleanCode}` : '';
-      router.replace(`/live/${activeTab}${countryQuery}`, { scroll: false });
+      router.replace(`${pathname}${countryQuery}`, { scroll: false });
     });
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/account/logout', { method: 'POST' });
-      setUser(null);
-      setShowUserMenu(false);
-      router.refresh();
-    } catch (err) {
-      console.error('Logout error:', err);
-    }
+  const handleToggleBell = (userId: string) => {
+    setNotificationBellUsers((prev) => ({
+      ...prev,
+      [userId]: !prev[userId],
+    }));
   };
 
-  const tabs: { id: DiscoveryTab; label_en: string; label_ur: string }[] = [
-    { id: 'explore', label_en: 'Explore', label_ur: 'دریافت' },
-    { id: 'following', label_en: 'Following', label_ur: 'فالوئنگ' },
-    { id: 'new', label_en: 'New', label_ur: 'نئے' },
-  ];
-
-  // Filtered country list for modal
-  const filteredModalCountries = COUNTRIES_LIST.filter(
-    (c) =>
-      c.name.toLowerCase().includes(countryModalSearch.toLowerCase()) ||
-      c.code.toLowerCase().includes(countryModalSearch.toLowerCase())
-  );
+  // Filter countries list for modal
+  const filteredModalCountries = useMemo(() => {
+    if (!countryModalSearch.trim()) return COUNTRIES_LIST;
+    const q = countryModalSearch.toLowerCase();
+    return COUNTRIES_LIST.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
+    );
+  }, [countryModalSearch]);
 
   const isCustomCountrySelected =
     selectedCountry !== 'ALL' &&
     !POPULAR_COUNTRY_SHORTCUTS.some((p) => p.code === selectedCountry);
 
+  // Tab switching in sub-headers
+  const liveSubTabs = [
+    { id: 'live', label_en: 'Explore', label_ur: 'دریافت' },
+    { id: 'following', label_en: 'Following', label_ur: 'فالوئنگ' },
+    { id: 'new', label_en: 'New', label_ur: 'نئے' },
+  ];
+
   return (
     <div
-      className="min-h-screen bg-[#080915] text-white flex flex-col font-sans selection:bg-[#FF2E74] selection:text-white pb-20 lg:pb-0"
+      className="min-h-screen bg-[#F8F9FA] text-gray-900 flex flex-col font-sans antialiased pb-16 md:pb-0"
       dir={isUr ? 'rtl' : 'ltr'}
     >
-      {/* 1. TOP HEADER (Responsive Desktop & Mobile) */}
-      <header className="sticky top-0 z-40 bg-[#0c0e1e]/90 backdrop-blur-xl border-b border-white/10 h-14 sm:h-16 px-4 sm:px-8 flex items-center justify-between gap-4">
-        
-        {/* Brand Logo & Back navigation on Mobile */}
-        <div className="flex items-center gap-3 shrink-0">
-          <button
-            onClick={() => router.back()}
-            aria-label="Back"
-            className="md:hidden w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/80 transition-colors"
-          >
-            <ArrowLeft className={`w-4 h-4 ${isUr ? 'rotate-180' : ''}`} />
-          </button>
+      {/* 1. TOP NAVIGATION BAR */}
+      <WebTopNav
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onSearchSubmit={(q) => {
+          if (q.trim()) router.push(`/search?q=${encodeURIComponent(q.trim())}`);
+        }}
+        onOpenAppModal={() => setShowAppDownloadModal(true)}
+        onOpenDesktopModal={() => setShowDesktopModal(true)}
+        isUr={isUr}
+        onToggleLang={toggleLang}
+      />
 
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-[#FF2E74] via-[#A855F7] to-[#3B82F6] p-[2px] shadow-lg shadow-pink-500/20 group-hover:scale-105 transition-transform">
-              <div className="w-full h-full bg-[#120B24] rounded-full flex items-center justify-center font-black text-xs sm:text-sm text-transparent bg-clip-text bg-gradient-to-tr from-[#FF2E74] to-yellow-300">
-                P
-              </div>
-            </div>
-            <span className="font-extrabold text-base sm:text-xl tracking-tight text-white flex items-center gap-1">
-              Popo <span className="text-[#FF2E74]">Live</span>
-            </span>
-          </Link>
-        </div>
-
-        {/* Center: Search Bar (Desktop) */}
-        <div className="flex-1 max-w-md mx-4 hidden md:block">
-          <div className="relative">
-            <Search className={`absolute ${isUr ? 'right-3.5' : 'left-3.5'} top-1/2 -translate-y-1/2 w-4 h-4 text-white/40`} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && searchQuery.trim()) {
-                  router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-                }
-              }}
-              placeholder={isUr ? 'لائیو براڈکاسٹ، آئی ڈی یا اسٹریمر تلاش کریں...' : 'Search streamers, live rooms, user ID...'}
-              className={`w-full ${isUr ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 bg-white/5 hover:bg-white/[0.08] focus:bg-[#15132d] rounded-full text-xs sm:text-sm text-white placeholder-white/35 border border-white/10 focus:border-[#FF2E74] outline-none transition-all`}
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className={`absolute ${isUr ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-white/40 hover:text-white`}
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Right Action Icons & User Dropdown */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Link
-            href="/search"
-            aria-label="Search"
-            className="md:hidden w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/80 transition-colors"
-          >
-            <Search className="w-4 h-4" />
-          </Link>
-
-          <Link
-            href="/recharge"
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/10 to-yellow-500/10 hover:from-amber-500/20 hover:to-yellow-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold transition-all"
-          >
-            <Coins className="w-3.5 h-3.5 text-amber-400" />
-            <span>{isUr ? 'کوائنز لیں' : 'Get Coins'}</span>
-          </Link>
-
-
-
-          <Link
-            href="/download"
-            className="hidden lg:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-semibold transition-colors"
-          >
-            <Download className="w-3.5 h-3.5 text-pink-400" />
-            <span>{isUr ? 'ایپ حاصل کریں' : 'Get App'}</span>
-          </Link>
-
-          <button
-            onClick={toggleLang}
-            className="px-2.5 py-1 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-[11px] font-bold text-white/80 transition-colors"
-          >
-            {isUr ? 'English' : 'اردو'}
-          </button>
-
-          {user ? (
-            <div className="relative">
-              <button
-                onClick={() => setShowUserMenu(!showUserMenu)}
-                className="flex items-center gap-2 p-1 rounded-full hover:bg-white/5 transition-colors border border-white/10"
-              >
-                <img
-                  src={user.avatarUrl || user.avatar_url || '/avatars/default.png'}
-                  alt={user.nickname}
-                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover ring-1 ring-[#FF2E74]"
-                />
-                <span className="text-xs font-bold hidden md:inline max-w-[90px] truncate text-white">
-                  {user.nickname}
-                </span>
-              </button>
-
-              {showUserMenu && (
-                <div
-                  className={`absolute ${isUr ? 'left-0' : 'right-0'} mt-2 w-56 rounded-2xl bg-[#121324] border border-white/10 shadow-2xl p-2 z-50 text-xs space-y-1`}
-                >
-                  <div className="p-2 border-b border-white/5 mb-1">
-                    <p className="font-bold text-white truncate">{user.nickname}</p>
-                    <p className="text-[10px] text-white/50">ID: {user.poppoId || user.poppo_id}</p>
-                  </div>
-
-                  <Link
-                    href="/profile"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <User className="w-3.5 h-3.5 text-pink-400" />
-                    <span>{isUr ? 'میری پروفائل' : 'My Profile'}</span>
-                  </Link>
-
-
-
-                  <Link
-                    href="/help"
-                    onClick={() => setShowUserMenu(false)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl text-white/80 hover:bg-white/5 hover:text-white transition-colors"
-                  >
-                    <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
-                    <span>{isUr ? 'ہیلپ سینٹر' : 'Help Center'}</span>
-                  </Link>
-
-                  <div className="pt-1 border-t border-white/5">
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors font-semibold"
-                    >
-                      <LogOut className="w-3.5 h-3.5" />
-                      <span>{isUr ? 'لاگ آؤٹ' : 'Log Out'}</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <Link
-                href="/login"
-                className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
-              >
-                {isUr ? 'لاگ ان' : 'Log In'}
-              </Link>
-              <Link
-                href="/register"
-                className="hidden sm:inline-block px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#FF2E74] to-[#A855F7] text-white text-xs font-bold shadow-md shadow-pink-500/20 hover:brightness-110 transition-all"
-              >
-                {isUr ? 'رجسٹر' : 'Sign Up'}
-              </Link>
-            </div>
-          )}
-        </div>
-      </header>
-
-      {/* 2. BODY LAYOUT: DESKTOP SIDEBAR + MAIN CONTENT */}
+      {/* 2. BODY LAYOUT: LEFT RAIL + MAIN CONTENT */}
       <div className="flex-1 max-w-7xl w-full mx-auto flex">
-        
-        {/* DESKTOP SIDEBAR */}
-        <aside className="w-64 shrink-0 hidden lg:flex flex-col justify-between py-6 px-4 border-r border-white/10 space-y-6">
-          <div className="space-y-4">
-            
-            <Link
-              href="/download"
-              className="w-full py-3 px-4 bg-gradient-to-r from-[#FF2E74] to-[#A855F7] hover:brightness-110 text-white rounded-2xl text-xs font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-pink-500/20 transition-all"
-            >
-              <Download className="w-4 h-4" />
-              <span>{isUr ? 'پوپو لائیو ایپ ڈاؤن لوڈ کریں' : 'Download Popo Live App'}</span>
-            </Link>
-
-            <div className="space-y-1">
-              <span className="text-[11px] font-bold text-white/40 uppercase tracking-wider px-3 block mb-2">
-                {isUr ? 'نیویگیشن' : 'Discovery'}
-              </span>
-
-              {[
-                { id: 'explore', label_en: 'Explore', label_ur: 'دریافت', icon: Compass, count: 'HOT' },
-                { id: 'following', label_en: 'Following', label_ur: 'فالوئنگ', icon: Heart, count: null },
-                { id: 'new', label_en: 'New Streamers', label_ur: 'نئے براڈکاسٹرز', icon: Sparkles, count: 'NEW' },
-              ].map((item) => {
-                const isSelected = activeTab === item.id;
-                const IconComponent = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => handleTabChange(item.id as DiscoveryTab)}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all ${
-                      isSelected
-                        ? 'bg-gradient-to-r from-[#FF2E74]/20 to-purple-600/20 text-white border border-[#FF2E74]/40 shadow-sm'
-                        : 'text-white/70 hover:bg-white/5 hover:text-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <IconComponent className={`w-4 h-4 ${isSelected ? 'text-[#FF2E74]' : 'text-white/50'}`} />
-                      <span>{isUr ? item.label_ur : item.label_en}</span>
-                    </div>
-                    {item.count && (
-                      <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${
-                        item.count === 'HOT'
-                          ? 'bg-[#FF2E74] text-white'
-                          : 'bg-purple-500/20 text-purple-300'
-                      }`}>
-                        {item.count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="space-y-1 pt-2 border-t border-white/5">
-              <span className="text-[11px] font-bold text-white/40 uppercase tracking-wider px-3 block mb-2">
-                {isUr ? 'خدمات' : 'Services'}
-              </span>
-
-              {[
-                { label_en: 'Agency Portal', label_ur: 'ایجنسی پورٹل', icon: Trophy, href: '/agency' },
-                { label_en: 'Recharge Coins', label_ur: 'کوائنز ریچارج', icon: Coins, href: '/recharge' },
-                { label_en: 'Help & Support', label_ur: 'مدد اور سوالات', icon: HelpCircle, href: '/help' },
-              ].map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold text-white/60 hover:bg-white/5 hover:text-white transition-colors"
-                >
-                  <item.icon className="w-4 h-4 text-white/40" />
-                  <span>{isUr ? item.label_ur : item.label_en}</span>
-                </Link>
-              ))}
-            </div>
-
-          </div>
-        </aside>
+        {/* LEFT NAVIGATION RAIL */}
+        <WebLeftRail
+          activeNav={activeNav || activeTab}
+          onSelectNav={(id) => {
+            if (id === 'app') {
+              setShowAppDownloadModal(true);
+            } else if (id === 'live') {
+              setActiveTab('live');
+            } else if (id === 'party') {
+              setActiveTab('party');
+            } else if (id === 'following') {
+              setActiveTab('following');
+            } else if (id === 'message') {
+              setActiveTab('message');
+            } else if (id === 'profile') {
+              setActiveTab('profile');
+            }
+          }}
+          onOpenAppModal={() => setShowAppDownloadModal(true)}
+          isUr={isUr}
+        />
 
         {/* MAIN CONTENT AREA */}
-        <main className="flex-1 flex flex-col min-w-0 px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5">
-          
-          {/* 3. TABS ROW */}
-          <div className="flex items-center justify-between pb-1">
-            <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto no-scrollbar py-1">
-              {tabs.map((tab) => {
-                const isSelected = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => handleTabChange(tab.id)}
-                    className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 flex-shrink-0 ${
-                      isSelected
-                        ? 'bg-gradient-to-r from-[#C2185B] via-[#D81B60] to-[#9C27B0] text-white shadow-lg shadow-pink-500/30 ring-1 ring-pink-400/30'
-                        : 'text-white/60 hover:text-white hover:bg-white/5'
-                    }`}
-                  >
-                    <span>{isUr ? tab.label_ur : tab.label_en}</span>
-                  </button>
-                );
-              })}
-            </div>
+        <main className="flex-1 flex flex-col min-w-0 px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6">
+          {children ? (
+            children
+          ) : (
+            <>
+              {/* ========================================================================= */}
+              {/* TAB 1: LIVE DISCOVERY PANEL */}
+              {/* ========================================================================= */}
+              {(activeTab === 'live' || activeTab === 'explore') && (
+                <div className="space-y-6 animate-in fade-in duration-150">
+                  {/* Sub Tab Switcher Bar */}
+                  <div className="flex items-center justify-between border-b border-gray-200/80 pb-2">
+                    <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar py-0.5">
+                      {liveSubTabs.map((tab) => {
+                        const isSelected = activeTab === tab.id;
+                        return (
+                          <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => {
+                              setActiveTab(tab.id);
+                              if (tab.id === 'following') router.push('/live?tab=following');
+                              else if (tab.id === 'new') router.push('/live?tab=new');
+                              else router.push('/live');
+                            }}
+                            className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 shrink-0 ${
+                              isSelected
+                                ? 'bg-[#FF1A6C] text-white shadow-xs'
+                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                            }`}
+                          >
+                            <span>{isUr ? tab.label_ur : tab.label_en}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
 
-            {loading && (
-              <div className="flex items-center gap-1.5 text-xs text-pink-400">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span className="hidden sm:inline">{isUr ? 'لوڈ ہو رہا ہے...' : 'Updating...'}</span>
-              </div>
-            )}
-          </div>
+                  {/* Country Filter Chips */}
+                  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs">
+                    {POPULAR_COUNTRY_SHORTCUTS.map((c) => {
+                      const isSelected = selectedCountry === c.code;
+                      return (
+                        <button
+                          key={c.code}
+                          type="button"
+                          onClick={() => handleCountrySelect(c.code)}
+                          className={`px-3.5 py-1.5 rounded-full font-bold flex items-center gap-1.5 shrink-0 transition-all ${
+                            isSelected
+                              ? 'bg-pink-50 text-[#FF1A6C] border border-pink-300 shadow-2xs'
+                              : 'bg-white hover:bg-gray-100 text-gray-700 border border-gray-200/80'
+                          }`}
+                        >
+                          <span className="text-sm leading-none">{c.flag}</span>
+                          <span>{c.name}</span>
+                        </button>
+                      );
+                    })}
 
-          {/* ========================================================================= */}
-          {/* 4. COUNTRY FILTERS BAR (Explore & New tabs, hidden on Following) */}
-          {/* ========================================================================= */}
-          {activeTab !== 'following' && (
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs">
-              {POPULAR_COUNTRY_SHORTCUTS.map((c) => {
-                const isSelected = selectedCountry === c.code;
-                return (
-                  <button
-                    key={c.code}
-                    type="button"
-                    onClick={() => handleCountrySelect(c.code)}
-                    className={`px-3.5 py-1.5 rounded-full font-bold flex items-center gap-1.5 flex-shrink-0 transition-all ${
-                      isSelected
-                        ? 'bg-white/20 text-white border border-pink-500 shadow-md shadow-pink-500/20'
-                        : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/5'
-                    }`}
-                  >
-                    <span className="text-sm leading-none">{c.flag}</span>
-                    <span>{c.name}</span>
-                  </button>
-                );
-              })}
+                    {/* Custom Country Pill */}
+                    {isCustomCountrySelected && (
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-50 border border-pink-300 text-[#FF1A6C] font-bold shrink-0 shadow-2xs">
+                        <span className="text-sm leading-none">{getCountryFlag(selectedCountry)}</span>
+                        <span>{getCountryName(selectedCountry)}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCountrySelect('ALL')}
+                          className="hover:bg-pink-100 rounded-full p-0.5 ml-0.5"
+                          title="Clear country filter"
+                        >
+                          <X className="w-3 h-3 text-[#FF1A6C]" />
+                        </button>
+                      </div>
+                    )}
 
-              {/* Custom Country Pill if selected from More Countries */}
-              {isCustomCountrySelected && (
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-500/20 border border-pink-500 text-white font-bold flex-shrink-0 shadow-md">
-                  <span className="text-sm leading-none">{getCountryFlag(selectedCountry)}</span>
-                  <span>{getCountryName(selectedCountry)}</span>
-                  <button
-                    onClick={() => handleCountrySelect('ALL')}
-                    className="hover:bg-white/20 rounded-full p-0.5 ml-0.5 text-white/70 hover:text-white"
-                    title="Clear country filter"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-
-              {/* More Countries Dropdown Trigger (Matching 03_03) */}
-              <button
-                type="button"
-                onClick={() => setShowCountryModal(true)}
-                className="px-3.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-white/80 hover:text-white border border-white/10 font-bold flex items-center gap-1.5 flex-shrink-0 transition-colors"
-              >
-                <Globe className="w-3.5 h-3.5 text-pink-400" />
-                <span>More Countries</span>
-                <ChevronDown className="w-3 h-3 text-white/50" />
-              </button>
-            </div>
-          )}
-
-          {/* ========================================================================= */}
-          {/* TAB 1: EXPLORE DISCOVERY TAB */}
-          {/* ========================================================================= */}
-          {activeTab === 'explore' && (
-            <div className="space-y-5 sm:space-y-6">
-              {/* 1. Promotional Banner Carousel (Matching 03_05 1:1) */}
-              <DiscoveryBannerCarousel />
-
-              {/* 2. Rank Door Shortcuts (Event, Rank, Agency, Notice) */}
-              <RankDoorSection />
-
-              {/* 3. Ranking Podium Preview (Rank 2 Silver, Rank 1 Gold Center, Rank 3 Bronze) */}
-              <RankingPreviewSection />
-
-              {loading && exploreRooms.length === 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
-                    <div key={i} className="aspect-[3/4] rounded-2xl sm:rounded-3xl bg-white/5 animate-pulse border border-white/5" />
-                  ))}
-                </div>
-              ) : exploreRooms.length === 0 ? (
-                <div className="p-12 text-center rounded-3xl bg-white/[0.02] border border-white/5 space-y-3">
-                  <Radio className="w-10 h-10 text-white/30 mx-auto" />
-                  <h3 className="text-sm font-bold text-white">
-                    {selectedCountry !== 'ALL'
-                      ? `No live streams from ${getCountryName(selectedCountry)} right now`
-                      : 'No active live streams right now'}
-                  </h3>
-                  <p className="text-xs text-white/50 max-w-sm mx-auto">
-                    {selectedCountry !== 'ALL'
-                      ? 'Try switching to Popular to see live creators broadcasting worldwide.'
-                      : 'Check back in a few moments or explore new broadcasters!'}
-                  </p>
-                  {selectedCountry !== 'ALL' && (
+                    {/* More Countries Trigger */}
                     <button
                       type="button"
-                      onClick={() => handleCountrySelect('ALL')}
-                      className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-bold shadow-md hover:brightness-110"
+                      onClick={() => setShowCountryModal(true)}
+                      className="px-3.5 py-1.5 rounded-full bg-white hover:bg-gray-100 text-gray-700 border border-gray-200/80 font-bold flex items-center gap-1.5 shrink-0 transition-colors"
                     >
-                      View Popular Worldwide (🔥)
+                      <Globe className="w-3.5 h-3.5 text-[#FF1A6C]" />
+                      <span>More Countries</span>
+                      <ChevronDown className="w-3 h-3 text-gray-400" />
                     </button>
-                  )}
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
-                  {exploreRooms.map((room) => (
-                    <LiveRoomCard key={room.roomId} room={room} />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                  </div>
 
-          {/* ========================================================================= */}
-          {/* TAB 2: FOLLOWING DISCOVERY TAB (STRICT REFERENCE IMAGE 03_08 IMPLEMENTATION) */}
-          {/* ========================================================================= */}
-          {activeTab === 'following' && (
-            <div className="w-full max-w-2xl mx-auto space-y-3 py-1">
-              {/* Header Status Bar & Quick Refresh */}
-              <div className="flex items-center justify-between px-2 pt-1 pb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase tracking-wider text-pink-400 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-pink-500 animate-ping inline-block" />
-                    <span>{isUr ? 'فالو کردہ براڈکاسٹرز' : 'Followed Broadcasters'}</span>
-                  </span>
-                  {followingData?.users && followingData.users.length > 0 && (
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30">
-                      {followingData.users.length} {isUr ? 'فالوئنگ' : 'FOLLOWING'}
-                    </span>
-                  )}
-                  {followingData?.isDemo && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-white/70">
-                      Preview
-                    </span>
-                  )}
-                </div>
+                  {/* 1. Promotional Carousel */}
+                  <DiscoveryBannerCarousel />
 
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setLoading(true);
-                    try {
-                      const res = await fetch('/api/discovery/following');
-                      if (res.ok) setFollowingData(await res.json());
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  className="flex items-center gap-1 text-[11px] font-semibold text-white/50 hover:text-white transition-colors px-2.5 py-1 rounded-lg hover:bg-white/5 cursor-pointer"
-                  title="Refresh followed broadcasters"
-                >
-                  <RefreshCw className={`w-3 h-3 ${loading ? 'animate-spin text-pink-400' : ''}`} />
-                  <span>{isUr ? 'تازہ کریں' : 'Refresh'}</span>
-                </button>
-              </div>
+                  {/* 2. Rank Door Shortcuts */}
+                  <RankDoorSection />
 
-              {/* 1. LOADING SKELETON STATE */}
-              {loading && (!followingData?.users || followingData.users.length === 0) ? (
-                <div className="space-y-3 p-1">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between py-4 px-3 rounded-2xl bg-white/[0.02] border border-white/5 animate-pulse"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-full bg-white/10 ring-2 ring-pink-500/30" />
-                        <div className="space-y-2">
-                          <div className="w-28 h-4 rounded-md bg-white/10" />
-                          <div className="w-20 h-3 rounded-md bg-white/5" />
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-14 h-7 rounded-full bg-white/10" />
-                        <div className="w-8 h-8 rounded-full bg-white/5" />
+                  {/* 3. Ranking Podium Preview */}
+                  <RankingPreviewSection />
+
+                  {/* 4. Live Rooms Grid (Light Portrait Cards) */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#FF1A6C] animate-pulse" />
+                        <h2 className="text-sm sm:text-base font-extrabold text-gray-900 tracking-tight">
+                          {isUr ? 'اس وقت لائیو' : 'Live Now'}
+                        </h2>
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-pink-100 text-[#FF1A6C]">
+                          {filteredLiveRooms.length}
+                        </span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : followingData?.users && followingData.users.length > 0 ? (
-                /* 2. NORMAL STATE: VERTICAL LIST STRICTLY MATCHING 03_08_following.png */
-                <div className="divide-y divide-white/[0.05] bg-white/[0.015] rounded-3xl border border-white/[0.06] p-1.5 sm:p-2.5 backdrop-blur-sm shadow-xl shadow-black/30">
-                  {followingData.users.map((followedUser) => (
-                    <FollowingUserCard
-                      key={followedUser.id || followedUser.userId}
-                      user={followedUser}
-                    />
-                  ))}
-                </div>
-              ) : (
-                /* 3. EMPTY STATE: WHEN USER FOLLOWS NO ONE */
-                <div className="p-12 text-center rounded-3xl bg-white/[0.02] border border-white/5 space-y-4 my-4">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-pink-500/20 to-purple-600/20 border border-pink-500/30 flex items-center justify-center mx-auto text-pink-400 shadow-lg shadow-pink-500/10">
-                    <Heart className="w-6 h-6 fill-pink-500/30 text-pink-400" />
+
+                    {filteredLiveRooms.length === 0 ? (
+                      <div className="p-10 text-center rounded-3xl bg-white border border-gray-200 shadow-xs space-y-3">
+                        <Radio className="w-10 h-10 text-gray-300 mx-auto" />
+                        <h3 className="text-sm font-bold text-gray-800">
+                          {selectedCountry !== 'ALL'
+                            ? `No live streams from ${getCountryName(selectedCountry)} right now`
+                            : 'No active live streams right now'}
+                        </h3>
+                        <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                          Try selecting All Countries to watch live broadcasters streaming worldwide.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => handleCountrySelect('ALL')}
+                          className="px-4 py-2 rounded-xl bg-[#FF1A6C] text-white text-xs font-bold shadow-xs hover:bg-[#e0125c]"
+                        >
+                          View All Countries (🔥)
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
+                        {filteredLiveRooms.map((room) => (
+                          <Link
+                            key={room.id}
+                            href={`/live/room/${room.id}`}
+                            className="group flex flex-col space-y-2 select-none"
+                          >
+                            {/* Portrait Card */}
+                            <div className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden bg-gray-100 border border-gray-200/80 shadow-xs group-hover:shadow-md group-hover:border-pink-300 transition-all">
+                              <img
+                                src={room.coverUrl}
+                                alt={room.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+
+                              {/* Top Bar on Card: Live Badge & Viewer Count */}
+                              <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between text-white text-[11px] font-bold">
+                                <span className="px-2 py-0.5 rounded-md bg-[#FF1A6C] text-white uppercase text-[10px] font-black tracking-wide flex items-center gap-1 shadow-xs">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                                  LIVE
+                                </span>
+                                <span className="px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs flex items-center gap-1">
+                                  <Eye className="w-3 h-3 text-gray-200" />
+                                  <span>{room.viewerCount.toLocaleString()}</span>
+                                </span>
+                              </div>
+
+                              {/* PK Badge if Active */}
+                              {room.isPkActive && (
+                                <div className="absolute top-10 left-2.5 px-2 py-0.5 rounded-md bg-gradient-to-r from-red-600 to-pink-600 text-white text-[10px] font-black flex items-center gap-1 shadow-xs">
+                                  <Swords className="w-3 h-3" />
+                                  PK
+                                </div>
+                              )}
+
+                              {/* Category Tag on bottom left */}
+                              <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-black/50 backdrop-blur-xs text-white text-[10px] font-semibold">
+                                {room.category}
+                              </div>
+                            </div>
+
+                            {/* Host Nickname & Room Title Under Card */}
+                            <div className="space-y-0.5 px-0.5">
+                              <div className="flex items-center justify-between">
+                                <p className="text-xs font-bold text-gray-900 truncate group-hover:text-[#FF1A6C] transition-colors">
+                                  {room.hostNickname}
+                                </p>
+                                <span className="text-xs leading-none">{room.flagEmoji}</span>
+                              </div>
+                              <p className="text-[11px] text-gray-500 truncate">
+                                {room.title}
+                              </p>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="space-y-1">
-                    <h3 className="text-sm font-bold text-white">
-                      {isUr ? 'آپ فی الحال کسی براڈکاسٹر کو فالو نہیں کر رہے' : 'You are not following any broadcasters yet'}
-                    </h3>
-                    <p className="text-xs text-white/50 max-w-sm mx-auto">
-                      {isUr
-                        ? 'مشہور لائیو براڈکاسٹرز کو فالو کریں تاکہ جب وہ لائیو آئیں تو آپ کو فوراً اطلاع ملے!'
-                        : 'Follow live streamers to get instant notifications and watch their broadcasts right here!'}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleTabChange('explore')}
-                    className="px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 active:scale-95 text-white text-xs font-bold shadow-lg shadow-pink-500/25 transition-all inline-flex items-center gap-2 cursor-pointer"
-                  >
-                    <Compass className="w-4 h-4" />
-                    <span>{isUr ? 'براڈکاسٹرز دریافت کریں' : 'Explore Broadcasters'}</span>
-                  </button>
                 </div>
               )}
 
-              {/* GUEST BANNER (If not authenticated, informative sign-in prompt below the list) */}
-              {!user && (
-                <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-pink-950/40 border border-pink-500/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left shadow-lg">
-                  <div className="space-y-0.5">
-                    <p className="text-xs sm:text-sm font-bold text-white">
-                      {isUr ? 'اپنے اکاؤنٹ میں لاگ ان کریں' : 'Sign in to customize your followed feed'}
-                    </p>
-                    <p className="text-[11px] text-white/60">
-                      {isUr
-                        ? 'اپنے پسندیدہ براڈکاسٹرز کی اطلاعات حاصل کرنے کے لیے سائن ان کریں۔'
-                        : 'Follow broadcasters, receive real-time push alerts, and join live chats.'}
-                    </p>
+              {/* ========================================================================= */}
+              {/* TAB 2: PARTY DISCOVERY PANEL */}
+              {/* ========================================================================= */}
+              {activeTab === 'party' && (
+                <div className="space-y-6 animate-in fade-in duration-150">
+                  {/* Party Header Banner */}
+                  <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-purple-50 via-pink-50 to-amber-50 border border-purple-100 flex items-center justify-between gap-4 shadow-xs">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-5 h-5 text-purple-600" />
+                        <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">
+                          {isUr ? '9 سیٹ پارٹی لاؤنجز' : '9-Seat Party Lounges'}
+                        </h2>
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                          {filteredPartyRooms.length} Rooms
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-600 max-w-md">
+                        {isUr
+                          ? 'دوستوں کے ساتھ آڈیو رومز میں شامل ہوں، گانے سنیں اور بات چیت کریں'
+                          : 'Join themed audio lounges, hang out with creators, and share real-time voice moments.'}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowAppDownloadModal(true)}
+                      className="px-4 py-2 rounded-xl bg-[#FF1A6C] hover:bg-[#e0125c] text-white text-xs font-bold shadow-xs transition-colors shrink-0 flex items-center gap-1.5"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>{isUr ? 'روم بنائیں' : 'Create Room'}</span>
+                    </button>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Link
-                      href="/login?redirect=/live/following"
-                      className="px-4 py-1.5 rounded-full bg-[#FF2E74] hover:bg-[#ff1a66] text-white text-xs font-bold transition-all shadow-md shadow-pink-500/20 cursor-pointer"
-                    >
-                      {isUr ? 'لاگ ان' : 'Log In'}
-                    </Link>
-                    <Link
-                      href="/register"
-                      className="px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all border border-white/10 cursor-pointer"
-                    >
-                      {isUr ? 'رجسٹر' : 'Sign Up'}
-                    </Link>
+
+                  {/* 6 Fixture Party Rooms */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredPartyRooms.map((room) => {
+                      const occupiedSeats = room.seats.filter((s) => s.isOccupied).length;
+                      return (
+                        <div
+                          key={room.id}
+                          className="p-4 rounded-2xl bg-white border border-gray-200 hover:border-pink-300 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-3.5"
+                        >
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={room.coverUrl}
+                              alt={room.title}
+                              className="w-14 h-14 rounded-2xl object-cover border border-gray-200/80 shrink-0"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-gray-900 truncate">
+                                  {room.title}
+                                </h3>
+                                <span className="text-xs">{room.flagEmoji}</span>
+                              </div>
+                              <p className="text-xs text-gray-500 truncate">
+                                Host: {room.hostNickname}
+                              </p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                                  {occupiedSeats} / 9 Seats
+                                </span>
+                                <span className="text-[10px] text-gray-400">
+                                  {room.category}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Seats Avatars Preview */}
+                          <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
+                            <div className="flex -space-x-1.5 overflow-hidden">
+                              {room.seats
+                                .filter((s) => s.isOccupied && s.avatarUrl)
+                                .slice(0, 5)
+                                .map((seat, i) => (
+                                  <img
+                                    key={i}
+                                    src={seat.avatarUrl || ''}
+                                    alt="Seat"
+                                    className="w-6 h-6 rounded-full object-cover ring-2 ring-white"
+                                  />
+                                ))}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => setShowAppDownloadModal(true)}
+                              className="px-3 py-1 rounded-xl bg-pink-50 hover:bg-pink-100 text-[#FF1A6C] text-xs font-bold border border-pink-200/80 transition-colors"
+                            >
+                              Join Seat
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
-            </div>
-          )}
 
-          {/* ========================================================================= */}
-          {/* TAB 3: NEW DISCOVERY TAB */}
-          {/* ========================================================================= */}
-          {activeTab === 'new' && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                {[
-                  { id: 'all', label: 'All New Creators' },
-                  { id: 'live', label: '🔴 Live Now' },
-                  { id: 'verified', label: '✓ Verified' },
-                ].map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => setNewFilter(f.id as any)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
-                      newFilter === f.id
-                        ? 'bg-white text-black shadow-md'
-                        : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
-                    }`}
-                  >
-                    {f.label}
-                  </button>
-                ))}
-              </div>
+              {/* ========================================================================= */}
+              {/* TAB 3: FOLLOWING BROADCASTERS PANEL */}
+              {/* ========================================================================= */}
+              {activeTab === 'following' && (
+                <div className="space-y-4 max-w-3xl mx-auto animate-in fade-in duration-150">
+                  <div className="flex items-center justify-between pb-2 border-b border-gray-200/80">
+                    <div className="flex items-center gap-2">
+                      <Heart className="w-4 h-4 text-[#FF1A6C] fill-current" />
+                      <h2 className="text-sm sm:text-base font-extrabold text-gray-900 tracking-tight">
+                        {isUr ? 'فالو کردہ براڈکاسٹرز' : 'Followed Broadcasters'}
+                      </h2>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pink-100 text-[#FF1A6C]">
+                        {followedUsers.length}
+                      </span>
+                    </div>
 
-              {loading && newCreators.length === 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                    <div key={i} className="h-44 rounded-2xl bg-white/5 animate-pulse border border-white/5" />
-                  ))}
+                    <span className="text-xs text-gray-400">
+                      {isUr ? 'آن لائن الرٹس آن ہیں' : 'Live push alerts enabled'}
+                    </span>
+                  </div>
+
+                  <div className="divide-y divide-gray-100 bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+                    {followedUsers.map((user) => {
+                      const isBellActive = notificationBellUsers[user.userId] ?? true;
+                      return (
+                        <div
+                          key={user.userId}
+                          className="flex items-center justify-between p-3.5 sm:p-4 hover:bg-gray-50/80 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="relative">
+                              <img
+                                src={user.avatarUrl}
+                                alt={user.nickname}
+                                className="w-12 h-12 rounded-full object-cover ring-2 ring-[#FF1A6C]/40"
+                              />
+                              {user.isOnline && (
+                                <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white" />
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-bold text-gray-900">
+                                {user.nickname}
+                              </h3>
+                              <p className="text-xs text-gray-500">
+                                {user.isOnline ? '🔴 Live Now' : 'Offline'} · {user.mutualCount} mutual
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleBell(user.userId)}
+                              className={`p-2 rounded-full transition-colors ${
+                                isBellActive
+                                  ? 'bg-pink-50 text-[#FF1A6C]'
+                                  : 'bg-gray-100 text-gray-400 hover:text-gray-700'
+                              }`}
+                              title="Toggle live notification alert"
+                            >
+                              <Bell className="w-4 h-4" />
+                            </button>
+
+                            <Link
+                              href="/live"
+                              className="px-3.5 py-1.5 rounded-xl bg-gray-900 hover:bg-black text-white text-xs font-bold transition-all"
+                            >
+                              Watch
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              ) : newCreators.length === 0 ? (
-                <div className="p-12 text-center rounded-3xl bg-white/[0.02] border border-white/5 space-y-2">
-                  <Sparkles className="w-8 h-8 text-white/30 mx-auto" />
-                  <p className="text-xs text-white/50">
-                    {selectedCountry !== 'ALL'
-                      ? `No new creators registered in ${getCountryName(selectedCountry)} for this filter.`
-                      : 'No new creators match the selected filter.'}
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-                  {newCreators.map((creator) => (
-                    <div
-                      key={creator.id}
-                      className="p-3.5 rounded-2xl bg-[#121324] border border-white/10 hover:border-pink-500/40 transition-all flex flex-col justify-between space-y-3"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="relative">
+              )}
+
+              {/* ========================================================================= */}
+              {/* TAB 4: NEW CREATORS */}
+              {/* ========================================================================= */}
+              {activeTab === 'new' && (
+                <div className="space-y-4 animate-in fade-in duration-150">
+                  <div className="flex items-center gap-2 pb-2 border-b border-gray-200/80">
+                    <Sparkles className="w-4 h-4 text-purple-600" />
+                    <h2 className="text-base font-extrabold text-gray-900">
+                      {isUr ? 'نئے براڈکاسٹرز' : 'New Broadcasters'}
+                    </h2>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    {DesignFixtures.userProfiles.map((creator) => (
+                      <div
+                        key={creator.userId}
+                        className="p-4 rounded-2xl bg-white border border-gray-200 hover:border-pink-300 shadow-xs flex flex-col justify-between space-y-3"
+                      >
+                        <div className="flex items-center gap-3">
                           <img
                             src={creator.avatarUrl}
                             alt={creator.nickname}
-                            className="w-12 h-12 rounded-full object-cover ring-2 ring-pink-500/30"
+                            className="w-12 h-12 rounded-full object-cover ring-2 ring-[#FF1A6C]/30"
                           />
-                          <span className="absolute -bottom-1 -right-1 text-xs">{creator.flagEmoji}</span>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-xs font-bold text-gray-900 truncate">
+                              {creator.nickname}
+                            </h3>
+                            <p className="text-[10px] text-gray-400">ID: {creator.poppoId}</p>
+                            <span className="text-[10px] text-gray-500">{creator.country}</span>
+                          </div>
                         </div>
 
-                        {creator.isLive ? (
-                          <span className="px-2 py-0.5 rounded-md bg-gradient-to-r from-pink-500 to-rose-600 text-white text-[9px] font-black uppercase animate-pulse">
-                            LIVE
-                          </span>
-                        ) : (
-                          <span className="text-[10px] text-zinc-500 flex items-center gap-1 font-medium">
-                            <Clock className="w-3 h-3" />
-                            {creator.joinedFormatted}
-                          </span>
-                        )}
+                        <Link
+                          href="/profile"
+                          className="w-full py-1.5 text-center rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold transition-colors"
+                        >
+                          View Profile
+                        </Link>
                       </div>
-
-                      <div className="space-y-0.5">
-                        <p className="text-xs font-bold text-white truncate">{creator.nickname}</p>
-                        <p className="text-[10px] text-zinc-400">ID: {creator.poppoId}</p>
-                        <p className="text-[10px] text-zinc-500">{creator.country}</p>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 pt-1">
-                        {creator.isLive && creator.liveRoom ? (
-                          <Link
-                            href={`/live/room/${creator.liveRoom.roomId}`}
-                            className="w-full py-1.5 text-center rounded-xl bg-gradient-to-r from-[#FF2E74] to-[#C2185B] text-white text-[11px] font-bold shadow-md hover:brightness-110"
-                          >
-                            Watch Live
-                          </Link>
-                        ) : (
-                          <Link
-                            href={creator.profileUrl}
-                            className="w-full py-1.5 text-center rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] font-semibold border border-white/10 transition-colors"
-                          >
-                            View Profile
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
-            </div>
+
+              {/* ========================================================================= */}
+              {/* TAB 5: MESSAGE (INBOX SHORTCUT CONTAINER) */}
+              {/* ========================================================================= */}
+              {activeTab === 'message' && (
+                <div className="p-8 max-w-2xl mx-auto rounded-3xl bg-white border border-gray-200 shadow-xs space-y-4 text-center animate-in fade-in duration-150">
+                  <div className="w-14 h-14 rounded-2xl bg-pink-50 border border-pink-200 flex items-center justify-center mx-auto text-[#FF1A6C]">
+                    <MessageSquare className="w-7 h-7" />
+                  </div>
+                  <div className="space-y-1">
+                    <h2 className="text-base font-extrabold text-gray-900">
+                      {isUr ? 'پیغامات اور چیٹ ان باکس' : 'Message & Chat Inbox'}
+                    </h2>
+                    <p className="text-xs text-gray-500 max-w-md mx-auto">
+                      {isUr
+                        ? 'اپنے پیغامات، فالوورز کی اطلاعات اور سسٹم نوٹس دیکھیں'
+                        : 'View direct message conversations, system notices, and official announcements.'}
+                    </p>
+                  </div>
+                  <Link
+                    href="/inbox"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#FF1A6C] hover:bg-[#e0125c] text-white text-xs font-bold shadow-xs transition-colors"
+                  >
+                    <span>{isUr ? 'مکمل ان باکس کھولیں' : 'Open Full Inbox'}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              )}
+
+              {/* ========================================================================= */}
+              {/* TAB 6: PROFILE (ME SHORTCUT CONTAINER) */}
+              {/* ========================================================================= */}
+              {activeTab === 'profile' && (
+                <div className="p-8 max-w-2xl mx-auto rounded-3xl bg-white border border-gray-200 shadow-xs space-y-4 text-center animate-in fade-in duration-150">
+                  <div className="w-16 h-16 rounded-full ring-2 ring-[#FF1A6C] p-0.5 mx-auto">
+                    <img
+                      src={DesignFixtures.currentUserProfile.avatarUrl}
+                      alt={DesignFixtures.currentUserProfile.nickname}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <h2 className="text-base font-extrabold text-gray-900">
+                      {DesignFixtures.currentUserProfile.nickname}
+                    </h2>
+                    <p className="text-xs text-gray-500">
+                      ID: {DesignFixtures.currentUserProfile.poppoId} · VIP {DesignFixtures.currentUserProfile.vipLevel}
+                    </p>
+                  </div>
+                  <Link
+                    href="/profile"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#FF1A6C] hover:bg-[#e0125c] text-white text-xs font-bold shadow-xs transition-colors"
+                  >
+                    <span>{isUr ? 'مکمل پروفائل دیکھیں' : 'View Full Profile & Centers'}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              )}
+
+              {/* ========================================================================= */}
+              {/* TAB 7: NEAR LOCATION CONTAINER */}
+              {/* ========================================================================= */}
+              {activeTab === 'near' && (
+                <div className="p-8 max-w-md mx-auto rounded-3xl bg-white border border-gray-200 shadow-xs space-y-3 text-center animate-in fade-in duration-150">
+                  <Compass className="w-10 h-10 text-gray-300 mx-auto" />
+                  <h3 className="text-sm font-bold text-gray-800">
+                    Near Feature Disabled
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Location-based live discovery is currently disabled by default. Please use Explore to discover broadcasters.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('live')}
+                    className="px-4 py-2 rounded-xl bg-[#FF1A6C] text-white text-xs font-bold shadow-xs hover:bg-[#e0125c]"
+                  >
+                    Explore Broadcasters
+                  </button>
+                </div>
+              )}
+            </>
           )}
-
-
-
         </main>
       </div>
 
-      {/* 5. SELECT COUNTRY MODAL (1:1 PIXEL MATCH TO 03_03_country_filters.png) */}
+      {/* 3. MOBILE BOTTOM NAVIGATION (< 768px) */}
+      <WebMobileNav
+        activeNav={activeNav || activeTab}
+        onOpenAppModal={() => setShowAppDownloadModal(true)}
+        isUr={isUr}
+      />
+
+      {/* 4. APP & DESKTOP DOWNLOAD MODAL */}
+      <AppDownloadModal
+        isOpen={showAppDownloadModal || showDesktopModal}
+        onClose={() => {
+          setShowAppDownloadModal(false);
+          setShowDesktopModal(false);
+        }}
+        isUr={isUr}
+      />
+
+      {/* 5. SELECT COUNTRY MODAL (Light Themed) */}
       {showCountryModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-150"
+          onClick={() => setShowCountryModal(false)}
+        >
           <div
-            className="w-full sm:max-w-md max-h-[85vh] sm:max-h-[75vh] bg-[#121326] rounded-t-3xl sm:rounded-3xl border border-white/10 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-6 duration-200"
+            className="w-full sm:max-w-md max-h-[85vh] sm:max-h-[75vh] bg-white rounded-t-3xl sm:rounded-3xl border border-gray-200 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-6 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-5 pt-5 pb-3">
-              <h2 className="text-base sm:text-lg font-bold text-white tracking-tight">
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-gray-100">
+              <h2 className="text-base font-extrabold text-gray-900 tracking-tight">
                 Select Country
               </h2>
               <button
+                type="button"
                 onClick={() => setShowCountryModal(false)}
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-800 transition-colors"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Search Input Box (Matching 03_03) */}
-            <div className="px-5 pb-3">
+            {/* Search Input Box */}
+            <div className="px-5 py-3 border-b border-gray-100">
               <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   autoFocus
                   value={countryModalSearch}
                   onChange={(e) => setCountryModalSearch(e.target.value)}
                   placeholder="Search country"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white/5 hover:bg-white/[0.08] focus:bg-[#1a1b32] text-sm text-white placeholder-white/35 border border-white/10 focus:border-[#FF2E74] outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2 rounded-xl bg-gray-100 text-sm text-gray-900 placeholder-gray-400 border border-transparent focus:border-[#FF1A6C] focus:bg-white outline-none transition-all"
                 />
                 {countryModalSearch && (
                   <button
+                    type="button"
                     onClick={() => setCountryModalSearch('')}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -1038,44 +825,39 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
               </div>
             </div>
 
-            {/* Scrollable Country List with Radio Indicators */}
-            <div className="flex-1 overflow-y-auto px-3 py-1 space-y-1 divide-y divide-white/[0.03]">
-              
-              {/* Option 1: All Countries / Popular */}
-              {(!countryModalSearch || 'all countries popular worldwide'.includes(countryModalSearch.toLowerCase())) && (
+            {/* Scrollable Country List */}
+            <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
+              {/* Option: All Countries */}
+              {(!countryModalSearch ||
+                'all countries popular worldwide'.includes(countryModalSearch.toLowerCase())) && (
                 <button
                   type="button"
                   onClick={() => handleCountrySelect('ALL')}
                   className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all ${
                     selectedCountry === 'ALL'
-                      ? 'bg-white/10 text-white'
-                      : 'hover:bg-white/5 text-white/80'
+                      ? 'bg-pink-50 text-[#FF1A6C] font-bold'
+                      : 'hover:bg-gray-50 text-gray-700 font-semibold'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    {/* All Countries ring icon */}
-                    <div className="w-6 h-6 rounded-full border-2 border-[#FF2E74] flex items-center justify-center">
-                      <span className="text-[10px] leading-none">🔥</span>
-                    </div>
-                    <span className="text-sm font-bold">All Countries</span>
+                    <span className="text-base">🔥</span>
+                    <span className="text-sm">All Countries</span>
                   </div>
-
-                  {/* Radio selection circle */}
                   <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                       selectedCountry === 'ALL'
-                        ? 'border-[#FF2E74] bg-[#FF2E74]'
-                        : 'border-zinc-600'
+                        ? 'border-[#FF1A6C] bg-[#FF1A6C]'
+                        : 'border-gray-300'
                     }`}
                   >
                     {selectedCountry === 'ALL' && (
-                      <div className="w-2 h-2 rounded-full bg-white shadow-sm" />
+                      <div className="w-2 h-2 rounded-full bg-white shadow-xs" />
                     )}
                   </div>
                 </button>
               )}
 
-              {/* Specific Countries List */}
+              {/* Specific Countries */}
               {filteredModalCountries.map((c) => {
                 const isSelected = selectedCountry === c.code;
                 return (
@@ -1084,44 +866,41 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
                     type="button"
                     onClick={() => handleCountrySelect(c.code)}
                     className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all ${
-                      isSelected ? 'bg-white/10 text-white' : 'hover:bg-white/5 text-white/80'
+                      isSelected
+                        ? 'bg-pink-50 text-[#FF1A6C] font-bold'
+                        : 'hover:bg-gray-50 text-gray-700 font-semibold'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-xl leading-none">{c.flag}</span>
-                      <span className="text-sm font-semibold text-white/90">{c.name}</span>
+                      <span className="text-sm">{c.name}</span>
                     </div>
-
-                    {/* Radio circle button (matching 03_03 reference) */}
                     <div
-                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                        isSelected ? 'border-[#FF2E74] bg-[#FF2E74]' : 'border-zinc-600'
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        isSelected
+                          ? 'border-[#FF1A6C] bg-[#FF1A6C]'
+                          : 'border-gray-300'
                       }`}
                     >
                       {isSelected && (
-                        <div className="w-2 h-2 rounded-full bg-white shadow-sm" />
+                        <div className="w-2 h-2 rounded-full bg-white shadow-xs" />
                       )}
                     </div>
                   </button>
                 );
               })}
-
-              {filteredModalCountries.length === 0 && (
-                <div className="py-8 text-center text-xs text-white/40">
-                  No countries match &quot;{countryModalSearch}&quot;
-                </div>
-              )}
             </div>
 
-            {/* Bottom Clear Filter footer */}
-            <div className="p-3 border-t border-white/5 flex items-center justify-between text-xs px-5 bg-black/20">
-              <span className="text-white/40">
-                Current: <strong className="text-white">{getCountryName(selectedCountry)}</strong>
+            {/* Bottom Footer */}
+            <div className="p-3 border-t border-gray-100 flex items-center justify-between text-xs px-5 bg-gray-50">
+              <span className="text-gray-500">
+                Current: <strong className="text-gray-900">{getCountryName(selectedCountry)}</strong>
               </span>
               {selectedCountry !== 'ALL' && (
                 <button
+                  type="button"
                   onClick={() => handleCountrySelect('ALL')}
-                  className="text-pink-400 hover:text-pink-300 font-bold"
+                  className="text-[#FF1A6C] hover:text-[#e0125c] font-bold"
                 >
                   Clear Selection
                 </button>
@@ -1130,34 +909,8 @@ export function DiscoveryShell({ initialTab = 'explore' }: DiscoveryShellProps) 
           </div>
         </div>
       )}
-
-
-
-      {/* SEARCH MODAL (Mobile) */}
-      {showSearchModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col p-4 animate-in fade-in">
-          <div className="flex items-center gap-3 pb-4 border-b border-white/10">
-            <Search className="w-5 h-5 text-pink-500" />
-            <input
-              type="text"
-              autoFocus
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search rooms, streamers, ID..."
-              className="flex-1 bg-transparent text-white text-sm outline-none placeholder-zinc-500"
-            />
-            <button
-              onClick={() => setShowSearchModal(false)}
-              className="p-1.5 rounded-full bg-white/10 text-white"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <div className="py-4 text-xs text-zinc-400">
-            Press enter or type above to filter live rooms instantly.
-          </div>
-        </div>
-      )}
     </div>
   );
 }
+
+export default DiscoveryShell;
