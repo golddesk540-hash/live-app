@@ -26,6 +26,7 @@ import SafetyToolsScreen from './SafetyToolsScreen';
 import LiveGiftAnimationOverlay, { LiveGiftBroadcastEvent } from '@/components/gifts/LiveGiftAnimationOverlay';
 import AnimationStageOverlay from '@/components/animations/AnimationStageOverlay';
 import type { AnimationQueueItem } from '@/lib/animations';
+import { DesignFixtures } from '@/lib/design/designFixtures';
 
 interface ViewerSessionData {
   isDemo?: boolean;
@@ -203,12 +204,26 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
           ? '/api/live/viewer/session?preview=demo'
           : `/api/live/viewer/session?roomId=${encodeURIComponent(activeRoomId)}`;
 
-        const res = await fetch(targetUrl);
-        const data = await res.json();
+        let data: any = null;
+        let resOk = false;
+        try {
+          const res = await fetch(targetUrl);
+          if (res.ok) {
+            data = await res.json();
+            resOk = Boolean(data.success);
+          }
+        } catch {
+          // Fall through to fixture room
+        }
 
         if (!isMounted) return;
 
-        if (res.ok && data.success) {
+        // Check for fixture room fallback
+        const fixtureRoom = DesignFixtures.liveRooms.find(
+          (r) => r.id === activeRoomId || r.roomNumber === activeRoomId
+        );
+
+        if (resOk && data?.success) {
           setSessionData(data);
           setIsFollowing(Boolean(data.room?.isFollowing));
           setViewerCount(data.room?.viewerCount || 7600);
@@ -235,8 +250,58 @@ export default function ViewerRoomScreen({ roomId }: { roomId?: string }) {
               }
             })
             .catch(() => {});
+        } else if (fixtureRoom) {
+          // Populate from DesignFixtures
+          const fixtureSession: ViewerSessionData = {
+            isDemo: true,
+            room: {
+              id: fixtureRoom.id,
+              roomNumber: fixtureRoom.roomNumber,
+              title: fixtureRoom.title,
+              category: fixtureRoom.category,
+              coverUrl: fixtureRoom.coverUrl,
+              status: fixtureRoom.isLive ? 'active' : 'ended',
+              isLive: fixtureRoom.isLive,
+              viewerCount: fixtureRoom.viewerCount,
+              viewerDisplay: fixtureRoom.viewerCount.toLocaleString(),
+              coinsEarned: 14200,
+              country: fixtureRoom.country,
+              countryCode: fixtureRoom.countryCode,
+              flagEmoji: fixtureRoom.flagEmoji,
+              startedAt: new Date().toISOString(),
+              isFollowing: false,
+            },
+            host: {
+              id: `u_${fixtureRoom.hostNickname.toLowerCase().replace(/\s+/g, '_')}`,
+              nickname: fixtureRoom.hostNickname,
+              poppoId: fixtureRoom.roomNumber,
+              avatarUrl: fixtureRoom.hostAvatar,
+              hostLevel: 32,
+              wealthLevel: 14,
+            },
+            chatPreview: [
+              { id: 1, user: 'Amina Fan', avatar: '/avatars/default.png', text: 'Welcome to the live stream! 💖', emoji: '💖' },
+              { id: 2, user: 'KarachiStar', avatar: '/avatars/default.png', text: 'Amazing acoustic performance! 🎶', emoji: '🎶' },
+              { id: 3, user: 'Bilal', avatar: '/avatars/default.png', text: 'Sending roses to host! 🌹', emoji: '🌹' },
+            ],
+            agora: {
+              appId: '',
+              channelName: `room_${fixtureRoom.roomNumber}`,
+              token: '',
+              uid: 1001,
+              role: 'audience',
+              isConfigured: false,
+              mode: 'live',
+            },
+          };
+          setSessionData(fixtureSession);
+          setIsFollowing(false);
+          setViewerCount(fixtureRoom.viewerCount);
+          setViewerDisplay(fixtureRoom.viewerCount.toLocaleString());
+          setChatMessages(fixtureSession.chatPreview);
+          setRoomState(fixtureRoom.isLive ? 'active' : 'stream_ended');
         } else {
-          setErrorMessage(data.error || 'Live broadcast unavailable or ended.');
+          setErrorMessage(data?.error || 'Live broadcast unavailable or ended.');
           setRoomState('error');
         }
       } catch (err: any) {

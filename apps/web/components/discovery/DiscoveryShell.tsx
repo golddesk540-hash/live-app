@@ -47,6 +47,7 @@ import AppDownloadModal from './AppDownloadModal';
 import DiscoveryBannerCarousel from './DiscoveryBannerCarousel';
 import RankDoorSection from './RankDoorSection';
 import RankingPreviewSection from './RankingPreviewSection';
+import LiveRoomCard from './LiveRoomCard';
 
 export type DiscoveryTab =
   | 'explore'
@@ -123,11 +124,14 @@ export function DiscoveryShell({
   }, [searchParams]);
 
   // Read data from DesignFixtures
-  const allLiveRooms = useMemo(() => {
+  const { allLiveRooms, fixturesError } = useMemo(() => {
     try {
-      return DesignFixtures.liveRooms;
-    } catch {
-      return [];
+      return { allLiveRooms: DesignFixtures.liveRooms, fixturesError: null };
+    } catch (err: any) {
+      return {
+        allLiveRooms: [] as FixtureLiveRoom[],
+        fixturesError: err?.message || 'Failed to load live broadcast rooms. Please try again.',
+      };
     }
   }, []);
 
@@ -368,7 +372,24 @@ export function DiscoveryShell({
                       </div>
                     </div>
 
-                    {filteredLiveRooms.length === 0 ? (
+                    {fixturesError ? (
+                      <div className="p-10 text-center rounded-3xl bg-white border border-red-200 shadow-xs space-y-3">
+                        <Radio className="w-10 h-10 text-red-400 mx-auto" />
+                        <h3 className="text-sm font-bold text-gray-800">
+                          {isUr ? 'لائیو رومز لوڈ کرنے میں مسئلہ پیش آیا' : 'Unable to load live rooms'}
+                        </h3>
+                        <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                          {fixturesError}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => window.location.reload()}
+                          className="px-4 py-2 rounded-xl bg-[#FF1A6C] text-white text-xs font-bold shadow-xs hover:bg-[#e0125c] transition-colors"
+                        >
+                          {isUr ? 'دوبارہ کوشش کریں' : 'Retry'}
+                        </button>
+                      </div>
+                    ) : filteredLiveRooms.length === 0 ? (
                       <div className="p-10 text-center rounded-3xl bg-white border border-gray-200 shadow-xs space-y-3">
                         <Radio className="w-10 h-10 text-gray-300 mx-auto" />
                         <h3 className="text-sm font-bold text-gray-800">
@@ -390,58 +411,7 @@ export function DiscoveryShell({
                     ) : (
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
                         {filteredLiveRooms.map((room) => (
-                          <Link
-                            key={room.id}
-                            href={`/live/room/${room.id}`}
-                            className="group flex flex-col space-y-2 select-none"
-                          >
-                            {/* Portrait Card */}
-                            <div className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden bg-gray-100 border border-gray-200/80 shadow-xs group-hover:shadow-md group-hover:border-pink-300 transition-all">
-                              <img
-                                src={room.coverUrl}
-                                alt={room.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              />
-
-                              {/* Top Bar on Card: Live Badge & Viewer Count */}
-                              <div className="absolute top-2.5 inset-x-2.5 flex items-center justify-between text-white text-[11px] font-bold">
-                                <span className="px-2 py-0.5 rounded-md bg-[#FF1A6C] text-white uppercase text-[10px] font-black tracking-wide flex items-center gap-1 shadow-xs">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                                  LIVE
-                                </span>
-                                <span className="px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-xs flex items-center gap-1">
-                                  <Eye className="w-3 h-3 text-gray-200" />
-                                  <span>{room.viewerCount.toLocaleString()}</span>
-                                </span>
-                              </div>
-
-                              {/* PK Badge if Active */}
-                              {room.isPkActive && (
-                                <div className="absolute top-10 left-2.5 px-2 py-0.5 rounded-md bg-gradient-to-r from-red-600 to-pink-600 text-white text-[10px] font-black flex items-center gap-1 shadow-xs">
-                                  <Swords className="w-3 h-3" />
-                                  PK
-                                </div>
-                              )}
-
-                              {/* Category Tag on bottom left */}
-                              <div className="absolute bottom-2.5 left-2.5 px-2 py-0.5 rounded-md bg-black/50 backdrop-blur-xs text-white text-[10px] font-semibold">
-                                {room.category}
-                              </div>
-                            </div>
-
-                            {/* Host Nickname & Room Title Under Card */}
-                            <div className="space-y-0.5 px-0.5">
-                              <div className="flex items-center justify-between">
-                                <p className="text-xs font-bold text-gray-900 truncate group-hover:text-[#FF1A6C] transition-colors">
-                                  {room.hostNickname}
-                                </p>
-                                <span className="text-xs leading-none">{room.flagEmoji}</span>
-                              </div>
-                              <p className="text-[11px] text-gray-500 truncate">
-                                {room.title}
-                              </p>
-                            </div>
-                          </Link>
+                          <LiveRoomCard key={room.id} room={room} />
                         ))}
                       </div>
                     )}
