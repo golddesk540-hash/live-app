@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../services/square/square_service.dart';
+import '../../design/design_fixtures.dart';
+import '../../theme/popo_theme.dart';
+import 'square_state.dart';
 
-/// Popo Live — Phase 8.4: Create Tools Frontend (Text, Photo, Video Posts)
-/// Frontend-only local state implementation aligned with 08_04_create_tools.png.
+/// Popo Live — Create Post Screen (Square Social Module)
 class CreatePostScreen extends StatefulWidget {
   const CreatePostScreen({super.key});
 
@@ -11,608 +12,409 @@ class CreatePostScreen extends StatefulWidget {
 }
 
 class _CreatePostScreenState extends State<CreatePostScreen> {
-  static const _bgDeep = Color(0xFF0C041C);
-  static const _cardBg = Color(0xFF180A33);
-  static const _surfaceBg = Color(0xFF211042);
-  static const _neonPink = Color(0xFFFF1A6C);
-  static const _gold = Color(0xFFFBBF24);
-  static const int _maxChars = 500;
-
-  final _captionController = TextEditingController();
-  final _videoTitleController = TextEditingController();
-
-  String _postType = 'text'; // text | photo | video
-  String _audience = 'Public'; // Public | Following | Private
-  bool _isPreview = false;
-  bool _isPublished = false;
-  bool _showEmojiStrip = false;
+  final TextEditingController _textController = TextEditingController();
+  String? _selectedImageUrl;
+  bool _isPublishing = false;
   String? _validationError;
 
-  final List<String> _selectedPhotos = [];
-  String? _selectedVideoName;
-  String? _selectedVideoDuration;
-
-  static const _emojis = ['✨', '🔥', '💜', '🎤', '👑', '🎉', '🎵', '👏'];
-  static const _samplePhotos = [
-    'acoustic_stage_night.jpg',
-    'neon_rooftop_lounge.jpg',
-    'studio_jam_session.jpg',
+  // Curated demo fixture photo choices
+  static const List<Map<String, String>> _fixturePresets = [
+    {
+      'label': 'Acoustic Stage',
+      'url':
+          'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600',
+    },
+    {
+      'label': 'Live Studio',
+      'url':
+          'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600',
+    },
+    {
+      'label': 'Neon Lounge',
+      'url':
+          'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600',
+    },
   ];
 
   @override
   void dispose() {
-    _captionController.dispose();
-    _videoTitleController.dispose();
+    _textController.dispose();
     super.dispose();
   }
 
-  void _showSnack(String msg) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF28124D),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  bool _validate() {
-    final text = _captionController.text.trim();
-    if (_captionController.text.length > _maxChars) {
-      setState(() => _validationError = 'Caption exceeds $_maxChars characters.');
-      return false;
+  void _onPublish() async {
+    final text = _textController.text.trim();
+    if (text.isEmpty && _selectedImageUrl == null) {
+      setState(() {
+        _validationError = 'Please write something or attach an image to post.';
+      });
+      return;
     }
-    if (_postType == 'text' && text.isEmpty) {
-      setState(() => _validationError = 'Please enter what you would like to share.');
-      return false;
-    }
-    if (_postType == 'photo' && _selectedPhotos.isEmpty) {
-      setState(() => _validationError = 'Please select at least 1 photo before previewing or publishing.');
-      return false;
-    }
-    if (_postType == 'video' && _selectedVideoName == null) {
-      setState(() => _validationError = 'Please select a video clip before continuing.');
-      return false;
-    }
-    setState(() => _validationError = null);
-    return true;
-  }
 
-  Future<void> _publishToBackend() async {
-    if (!_validate() || _isSubmitting) return;
-
-    setState(() => _isSubmitting = true);
-
-    try {
-      final content = _captionController.text.trim();
-      final List<String> hashtags = [];
-      final matches = RegExp(r'#[a-zA-Z0-9_]+').allMatches(content);
-      for (final m in matches) {
-        hashtags.add(m.group(0)!);
-      }
-
-      await SquareService.instance.createPost(
-        content: content.isEmpty ? 'Shared via Popo Live Square ✨' : content,
-        mediaType: _postType == 'photo'
-            ? (_selectedPhotos.length > 1 ? 'multi_images' : 'single_image')
-            : (_postType == 'video' ? 'video' : 'none'),
-        images: _selectedPhotos,
-        videoTitle: _videoTitleController.text.trim().isNotEmpty
-            ? _videoTitleController.text.trim()
-            : _selectedVideoName,
-        videoDuration: _selectedVideoDuration,
-        visibility: _audience,
-        hashtags: hashtags,
-      );
-
-      if (mounted) {
-        setState(() {
-          _isPublished = true;
-          _isPreview = false;
-          _isSubmitting = false;
-        });
-        _showSnack('Post published to Popo Live Square!');
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-        _showSnack(e.toString().replaceAll('Exception: ', ''));
-      }
-    }
-  }
-
-  void _clearAll() {
     setState(() {
-      _captionController.clear();
-      _videoTitleController.clear();
-      _selectedPhotos.clear();
-      _selectedVideoName = null;
-      _selectedVideoDuration = null;
-      _audience = 'Public';
       _validationError = null;
-      _isPreview = false;
-      _isPublished = false;
+      _isPublishing = true;
     });
-    _showSnack('Composer cleared');
+
+    // Simulated quick local processing
+    await Future.delayed(const Duration(milliseconds: 150));
+
+    if (!mounted) return;
+
+    SquareStateManager.instance.createPost(
+      text: text,
+      imageUrl: _selectedImageUrl,
+    );
+
+    Navigator.of(context).pop(true);
+  }
+
+  void _showImagePickerModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: PopoTheme.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Select Media Attachment',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: _fixturePresets.map((preset) {
+                  return InkWell(
+                    key: Key('preset_image_${preset['label']}'),
+                    onTap: () {
+                      setState(() {
+                        _selectedImageUrl = preset['url'];
+                        _validationError = null;
+                      });
+                      Navigator.of(ctx).pop();
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Column(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            preset['url']!,
+                            width: 95,
+                            height: 95,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          preset['label']!,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 18),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final currentUser = DesignFixtures.currentUserProfile;
+
     return Scaffold(
-      backgroundColor: _bgDeep,
+      backgroundColor: PopoTheme.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF120624),
+        backgroundColor: PopoTheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).maybePop(),
+          key: const Key('create_post_cancel_button'),
+          icon: const Icon(Icons.close_rounded, color: Colors.white),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        title: RichText(
-          text: const TextSpan(
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-            children: [
-              TextSpan(text: 'Popo ', style: TextStyle(color: Colors.white)),
-              TextSpan(text: 'Live', style: TextStyle(color: _neonPink)),
-            ],
+        title: const Text(
+          'Create Post',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
-          if (!_isPublished)
-            TextButton(
-              onPressed: () {
-                if (!_validate()) return;
-                setState(() => _isPreview = !_isPreview);
-              },
-              child: Text(
-                _isPreview ? 'Edit' : 'Preview',
-                style: const TextStyle(color: _neonPink, fontWeight: FontWeight.bold),
-              ),
-            ),
-          if (!_isPublished)
-            Padding(
-              padding: const EdgeInsets.only(right: 10),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: _neonPink, shape: const StadiumBorder()),
-                onPressed: _isSubmitting ? null : _publishToBackend,
-                child: _isSubmitting
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text('Publish', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-              ),
-            ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: _isPublishing
+                ? const Center(
+                    child: SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: PopoTheme.primary,
+                      ),
+                    ),
+                  )
+                : ElevatedButton(
+                    key: const Key('create_post_publish_button'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: PopoTheme.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                    ),
+                    onPressed: _onPublish,
+                    child: const Text(
+                      'Publish',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+          ),
         ],
       ),
-      body: _isPublished
-          ? _buildPublishedView()
-          : _isPreview
-              ? _buildPreviewView()
-              : _buildEditorView(),
-    );
-  }
-
-  Widget _buildPublishedView() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: _cardBg,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.greenAccent.withOpacity(0.4)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.check_circle, color: Colors.greenAccent, size: 52),
-              const SizedBox(height: 12),
-              const Text('Post Ready in Square (Local Demo)',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
-              const SizedBox(height: 8),
-              Text('Audience: $_audience • Type: ${_postType.toUpperCase()}',
-                  style: const TextStyle(color: Colors.white70, fontSize: 12)),
-              const SizedBox(height: 18),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: _neonPink, shape: const StadiumBorder()),
-                onPressed: _clearAll,
-                child: const Text('Create Another Post', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPreviewView() {
-    final text = _captionController.text.trim().isEmpty
-        ? 'Shared an update on Popo Live Square ✨'
-        : _captionController.text.trim();
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        const Text('Post Preview', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
-        const SizedBox(height: 4),
-        Text('Audience: $_audience', style: const TextStyle(color: Colors.white60, fontSize: 12)),
-        const SizedBox(height: 14),
-        Container(
+      body: SafeArea(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: _cardBg,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: _neonPink.withOpacity(0.4)),
-          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // User header row
               Row(
-                children: const [
-                  CircleAvatar(radius: 18, backgroundColor: _neonPink, child: Text('A', style: TextStyle(color: Colors.white))),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text('Ayesha Khan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                children: [
+                  CircleAvatar(
+                    radius: 22,
+                    backgroundColor: Colors.white12,
+                    backgroundImage: NetworkImage(currentUser.avatarUrl),
                   ),
-                  Icon(Icons.verified, color: _gold, size: 16),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(text, style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.4)),
-              if (_postType == 'photo' && _selectedPhotos.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: _selectedPhotos
-                      .map(
-                        (p) => Chip(
-                          backgroundColor: _surfaceBg,
-                          label: Text(p, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        currentUser.nickname,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
                         ),
-                      )
-                      .toList(),
-                ),
-              ],
-              if (_postType == 'video' && _selectedVideoName != null) ...[
-                const SizedBox(height: 12),
-                Container(
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: _surfaceBg,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Center(
-                    child: Text('Video Preview: $_selectedVideoName (${_selectedVideoDuration ?? "00:24"})',
-                        style: const TextStyle(color: _neonPink, fontWeight: FontWeight.bold, fontSize: 12)),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => setState(() => _isPreview = false),
-                child: const Text('Edit Post', style: TextStyle(color: Colors.white)),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: _neonPink),
-                onPressed: () => setState(() {
-                  _isPublished = true;
-                  _isPreview = false;
-                }),
-                child: const Text('Publish Locally', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEditorView() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        const Text('Create Post', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
-        const SizedBox(height: 2),
-        const Text('Share something with the community', style: TextStyle(color: Colors.white60, fontSize: 13)),
-        const SizedBox(height: 14),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: _cardBg,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.purpleAccent.withOpacity(0.2)),
-          ),
-          child: Row(
-            children: [
-              const CircleAvatar(radius: 22, backgroundColor: _neonPink, child: Text('A', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text('Ayesha Khan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 2),
-                    Text('What would you like to share?', style: TextStyle(color: Colors.white60, fontSize: 12)),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        const Text('Choose a creation', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 10),
-        _buildCreationOption('text', 'Text post', 'Share an update', Icons.edit_outlined),
-        _buildCreationOption('photo', 'Photo post', 'Add photos to your post', Icons.photo_library_outlined),
-        _buildCreationOption('video', 'Video post', 'Share a short video', Icons.play_arrow_rounded),
-        const SizedBox(height: 14),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: _cardBg,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.purpleAccent.withOpacity(0.2)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Post Content', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
-                  Text('${_captionController.text.length} / $_maxChars',
-                      style: TextStyle(
-                        color: _captionController.text.length > _maxChars ? Colors.redAccent : Colors.white54,
-                        fontSize: 11,
-                      )),
-                ],
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _captionController,
-                maxLines: 4,
-                onChanged: (_) => setState(() => _validationError = null),
-                style: const TextStyle(color: Colors.white, fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: 'What would you like to share?',
-                  hintStyle: const TextStyle(color: Colors.white38),
-                  filled: true,
-                  fillColor: _bgDeep,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  TextButton.icon(
-                    onPressed: () => setState(() => _showEmojiStrip = !_showEmojiStrip),
-                    icon: const Icon(Icons.sentiment_satisfied_alt, color: _gold, size: 18),
-                    label: const Text('Emoji', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  ),
-                  const Spacer(),
-                  if (_captionController.text.isNotEmpty)
-                    TextButton(
-                      onPressed: () => setState(() => _captionController.clear()),
-                      child: const Text('Clear text', style: TextStyle(color: Colors.redAccent, fontSize: 12)),
-                    ),
-                ],
-              ),
-              if (_showEmojiStrip)
-                Wrap(
-                  spacing: 6,
-                  children: _emojis
-                      .map(
-                        (e) => GestureDetector(
-                          onTap: () => setState(() => _captionController.text += e),
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(color: _surfaceBg, borderRadius: BorderRadius.circular(10)),
-                            child: Text(e, style: const TextStyle(fontSize: 18)),
+                      ),
+                      const SizedBox(height: 3),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: PopoTheme.surface,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: PopoTheme.borderSubtle,
+                            width: 0.8,
                           ),
                         ),
-                      )
-                      .toList(),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.public_rounded,
+                              color: PopoTheme.textSecondary,
+                              size: 11,
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Public',
+                              style: TextStyle(
+                                color: PopoTheme.textSecondary,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Validation error banner
+              if (_validationError != null) ...[
+                Container(
+                  key: const Key('create_post_validation_error'),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                    border:
+                        Border.all(color: Colors.redAccent.withOpacity(0.5)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.error_outline_rounded,
+                        color: Colors.redAccent,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _validationError!,
+                          style: const TextStyle(
+                            color: Colors.redAccent,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-            ],
-          ),
-        ),
-        if (_postType == 'photo') ...[
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: _cardBg, borderRadius: BorderRadius.circular(20)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                const SizedBox(height: 12),
+              ],
+
+              // Post text input
+              TextField(
+                key: const Key('create_post_text_input'),
+                controller: _textController,
+                maxLines: 6,
+                style: const TextStyle(color: Colors.white, fontSize: 15),
+                decoration: const InputDecoration(
+                  hintText: "What's happening in your live studio today? 🎶✨",
+                  hintStyle: TextStyle(
+                    color: PopoTheme.textSecondary,
+                    fontSize: 14,
+                  ),
+                  border: InputBorder.none,
+                ),
+                onChanged: (_) {
+                  if (_validationError != null) {
+                    setState(() => _validationError = null);
+                  }
+                },
+              ),
+
+              // Selected image preview with remove button
+              if (_selectedImageUrl != null) ...[
+                const SizedBox(height: 12),
+                Stack(
                   children: [
-                    const Text('Selected Photos', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(backgroundColor: _neonPink, shape: const StadiumBorder()),
-                      onPressed: () {
-                        if (_selectedPhotos.length < _samplePhotos.length) {
-                          setState(() => _selectedPhotos.add(_samplePhotos[_selectedPhotos.length]));
-                        }
-                      },
-                      icon: const Icon(Icons.add_photo_alternate_outlined, size: 16, color: Colors.white),
-                      label: const Text('Add Photos', style: TextStyle(color: Colors.white, fontSize: 12)),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.network(
+                        _selectedImageUrl!,
+                        key: const Key('create_post_image_preview'),
+                        width: double.infinity,
+                        height: 220,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: InkWell(
+                        key: const Key('create_post_remove_image'),
+                        onTap: () {
+                          setState(() => _selectedImageUrl = null);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            color: Colors.black87,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                if (_selectedPhotos.isEmpty)
-                  const Text('Tap Add Photos to attach demo gallery snapshots.',
-                      style: TextStyle(color: Colors.white54, fontSize: 12))
-                else
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _selectedPhotos.asMap().entries.map((entry) {
-                      return Chip(
-                        backgroundColor: _surfaceBg,
-                        deleteIconColor: _neonPink,
-                        onDeleted: () => setState(() => _selectedPhotos.removeAt(entry.key)),
-                        label: Text(entry.value, style: const TextStyle(color: Colors.white, fontSize: 11)),
-                      );
-                    }).toList(),
-                  ),
               ],
-            ),
-          ),
-        ],
-        if (_postType == 'video') ...[
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: _cardBg, borderRadius: BorderRadius.circular(20)),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _selectedVideoName ?? 'No video selected yet',
-                    style: TextStyle(color: _selectedVideoName == null ? Colors.white54 : Colors.white, fontSize: 12),
-                  ),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: _neonPink, shape: const StadiumBorder()),
-                  onPressed: () {
-                    setState(() {
-                      if (_selectedVideoName == null) {
-                        _selectedVideoName = 'evening_lounge_clip.mp4';
-                        _selectedVideoDuration = '00:24';
-                      } else {
-                        _selectedVideoName = null;
-                        _selectedVideoDuration = null;
-                      }
-                    });
-                  },
-                  child: Text(_selectedVideoName == null ? 'Select Video' : 'Remove',
-                      style: const TextStyle(color: Colors.white, fontSize: 12)),
-                ),
-              ],
-            ),
-          ),
-        ],
-        const SizedBox(height: 14),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: _cardBg, borderRadius: BorderRadius.circular(20)),
-          child: Row(
-            children: ['Public', 'Following', 'Private'].map((aud) {
-              final active = _audience == aud;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _audience = aud),
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    padding: const EdgeInsets.symmetric(vertical: 9),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: active ? _neonPink : _surfaceBg,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Text(aud,
-                        style: TextStyle(
-                          color: active ? Colors.white : Colors.white70,
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        )),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-        if (_validationError != null) ...[
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.18),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.redAccent),
-            ),
-            child: Text(_validationError!, style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
-          ),
-        ],
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _clearAll,
-                child: const Text('Clear', style: TextStyle(color: Colors.white70)),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: _neonPink),
-                onPressed: () {
-                  if (!_validate()) return;
-                  setState(() => _isPreview = true);
-                },
-                child: const Text('Preview Post', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
 
-  Widget _buildCreationOption(String id, String title, String subtitle, IconData icon) {
-    final active = _postType == id;
-    return GestureDetector(
-      onTap: () => setState(() {
-        _postType = id;
-        _validationError = null;
-      }),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: _cardBg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: active ? _neonPink : Colors.purpleAccent.withOpacity(0.18), width: active ? 1.5 : 1),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: active ? _neonPink : const Color(0xFF29134E),
-                borderRadius: BorderRadius.circular(14),
+              const SizedBox(height: 20),
+
+              // Attachment tool bar
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: PopoTheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: PopoTheme.borderSubtle, width: 0.8),
+                ),
+                child: Row(
+                  children: [
+                    const Text(
+                      'Add to your post',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      key: const Key('create_post_add_image_button'),
+                      icon: const Icon(
+                        Icons.photo_library_rounded,
+                        color: Color(0xFF00E676),
+                      ),
+                      tooltip: 'Attach Image',
+                      onPressed: _showImagePickerModal,
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.tag_rounded,
+                        color: PopoTheme.cyan,
+                      ),
+                      tooltip: 'Add Hashtag',
+                      onPressed: () {
+                        _textController.text += ' #PopoLive';
+                      },
+                    ),
+                  ],
+                ),
               ),
-              child: Icon(icon, color: active ? Colors.white : _neonPink, size: 22),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                  const SizedBox(height: 2),
-                  Text(subtitle, style: const TextStyle(color: Colors.white60, fontSize: 12)),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

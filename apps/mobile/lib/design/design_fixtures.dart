@@ -142,6 +142,16 @@ class DesignFixtures {
     isRetryable: true,
   );
 
+  static const squareError = FixtureModuleError(
+    module: 'square',
+    code: 'ERR_SQUARE_TIMEOUT',
+    title: 'Square Feed Unavailable',
+    message:
+        'Failed to synchronize community posts and comments. Pull down to refresh.',
+    actionLabel: 'Pull down to refresh',
+    isRetryable: true,
+  );
+
   static const walletError = FixtureModuleError(
     module: 'wallet',
     code: 'ERR_WALLET_SYNC_500',
@@ -1374,6 +1384,159 @@ class DesignFixtures {
             'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
         unreadCount: 24,
         isOnline: true,
+      ),
+    ];
+  }
+
+  // --------------------------------------------------------------------------
+  // SQUARE COMMUNITY SOCIAL FEED FIXTURES (6 POSTS)
+  // --------------------------------------------------------------------------
+  static List<FixtureSquarePost> get squarePosts {
+    if (isError) {
+      throw const DesignFixtureException(
+        message:
+            'Failed to synchronize community posts and comments. Pull down to refresh.',
+        code: 'ERR_SQUARE_TIMEOUT',
+        module: 'square',
+      );
+    }
+    if (isEmpty) return const [];
+    return const [
+      FixtureSquarePost(
+        id: 'post_01',
+        author: _profileAminaNoor,
+        content:
+            "Getting ready for tonight's acoustic session! Which song should we open with? Leave your requests below 🎸✨ #KarachiNights #LiveMusic",
+        imageUrl:
+            'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600',
+        timestamp: '2 hours ago',
+        initialLikes: 142,
+        initialIsLiked: false,
+        comments: [
+          FixtureSquareComment(
+            id: 'com_01_1',
+            authorId: 'u_sana_ali',
+            authorName: 'Sana Ali',
+            authorAvatar:
+                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+            text: 'Definitely start with the Sufi melody! Can’t wait! 🎤',
+            timestamp: '1 hour ago',
+            likes: 12,
+          ),
+          FixtureSquareComment(
+            id: 'com_01_2',
+            authorId: 'u_bilal_ahmed',
+            authorName: 'Bilal Ahmed',
+            authorAvatar:
+                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+            text: 'Tuning in from Lahore, front row ready! 🌟',
+            timestamp: '45 mins ago',
+            likes: 8,
+          ),
+        ],
+      ),
+      FixtureSquarePost(
+        id: 'post_02',
+        author: _profileSanaAli,
+        content:
+            'Big announcement! Joining the 1v1 PK tournament tomorrow evening. Who’s team are you on? Drop some fire in the comments! 🔥⚔️',
+        imageUrl:
+            'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600',
+        timestamp: '4 hours ago',
+        initialLikes: 89,
+        initialIsLiked: false,
+        comments: [
+          FixtureSquareComment(
+            id: 'com_02_1',
+            authorId: 'u_hamza_tariq',
+            authorName: 'Hamza Tariq',
+            authorAvatar:
+                'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+            text: 'Team Sana all the way! 🚀',
+            timestamp: '3 hours ago',
+            likes: 5,
+          ),
+        ],
+      ),
+      FixtureSquarePost(
+        id: 'post_03',
+        author: _profileBilalAhmed,
+        content:
+            'Studio upgrade complete! Added new dynamic microphone condenser for crisper audio in 9-seat party rooms. Check it out tonight! 🎙️🎧',
+        imageUrl:
+            'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600',
+        timestamp: 'Yesterday',
+        initialLikes: 215,
+        initialIsLiked: true,
+        comments: [
+          FixtureSquareComment(
+            id: 'com_03_1',
+            authorId: 'u_tariq_jamil',
+            authorName: 'Tariq Jamil',
+            authorAvatar:
+                'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
+            text: 'Looking professional Bilal bhai! Will test the mic later.',
+            timestamp: 'Yesterday',
+            likes: 14,
+          ),
+        ],
+      ),
+      FixtureSquarePost(
+        id: 'post_04',
+        author: _profileZainabKhan,
+        content:
+            'Thank you to everyone who sent Super Rockets during yesterday’s broadcast! We hit the Star Club milestone together! 💖🚀 #StarClub #Milestone',
+        imageUrl:
+            'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600',
+        timestamp: 'Yesterday',
+        initialLikes: 310,
+        initialIsLiked: false,
+        comments: [],
+      ),
+      FixtureSquarePost(
+        id: 'post_05',
+        author: _profileHamzaTariq,
+        content:
+            'Late night gaming squad starting in 15 minutes! Hosting an open 9-seat voice lounge for anyone who wants to hop on the mic. 🎮🕹️',
+        imageUrl: null,
+        timestamp: 'Nov 16',
+        initialLikes: 67,
+        initialIsLiked: false,
+        comments: [
+          FixtureSquareComment(
+            id: 'com_05_1',
+            authorId: 'u_faizan_sheikh',
+            authorName: 'Faizan Sheikh',
+            authorAvatar:
+                'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+            text: 'Count me in, grabbing headset now.',
+            timestamp: 'Nov 16',
+            likes: 3,
+          ),
+        ],
+      ),
+      FixtureSquarePost(
+        id: 'post_06',
+        author: _profileFaizanSheikh,
+        content:
+            'Burns Road food street exploration live stream was unforgettable. What city should we visit next? 🍲✨',
+        imageUrl:
+            'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600',
+        timestamp: 'Nov 15',
+        initialLikes: 198,
+        initialIsLiked: false,
+        comments: [
+          FixtureSquareComment(
+            id: 'com_06_1',
+            authorId: 'u_amina_noor',
+            authorName: 'Amina Noor',
+            authorAvatar:
+                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+            text: 'Anarkali in Lahore next for sure!',
+            timestamp: 'Nov 15',
+            likes: 19,
+          ),
+        ],
       ),
     ];
   }
@@ -3317,6 +3480,50 @@ class FixtureOfficialNotice {
     required this.senderAvatar,
     required this.unreadCount,
     required this.isOnline,
+  });
+}
+
+/// Square social comment model
+class FixtureSquareComment {
+  final String id;
+  final String authorId;
+  final String authorName;
+  final String authorAvatar;
+  final String text;
+  final String timestamp;
+  final int likes;
+
+  const FixtureSquareComment({
+    required this.id,
+    required this.authorId,
+    required this.authorName,
+    required this.authorAvatar,
+    required this.text,
+    required this.timestamp,
+    this.likes = 0,
+  });
+}
+
+/// Square social post model
+class FixtureSquarePost {
+  final String id;
+  final FixtureUserProfile author;
+  final String content;
+  final String? imageUrl;
+  final String timestamp;
+  final int initialLikes;
+  final bool initialIsLiked;
+  final List<FixtureSquareComment> comments;
+
+  const FixtureSquarePost({
+    required this.id,
+    required this.author,
+    required this.content,
+    this.imageUrl,
+    required this.timestamp,
+    required this.initialLikes,
+    this.initialIsLiked = false,
+    required this.comments,
   });
 }
 

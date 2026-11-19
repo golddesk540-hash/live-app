@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../services/square/square_service.dart';
-import 'square_posts_screen.dart';
+import '../../design/design_fixtures.dart';
+import '../../theme/popo_theme.dart';
+import '../../widgets/popo_empty_state.dart';
+import '../../widgets/popo_error_state.dart';
+import 'create_post_screen.dart';
+import 'square_comments_screen.dart';
+import 'square_state.dart';
 
-/// Popo Live — Module 8.10 Square Discovery (Flutter parity view)
-/// Mirrors Square Discovery featured posts, popular hashtags, search, and creator suggestions.
+/// Square Discovery & Social Feed Screen (Central Tab in Popo Live)
 class SquareDiscoveryScreen extends StatefulWidget {
   const SquareDiscoveryScreen({super.key});
 
@@ -11,322 +15,414 @@ class SquareDiscoveryScreen extends StatefulWidget {
   State<SquareDiscoveryScreen> createState() => _SquareDiscoveryScreenState();
 }
 
-class _SquareDiscoveryScreenState extends State<SquareDiscoveryScreen> {
-  String _searchQuery = '';
-  int _selectedTab = 0; // 0: For You, 1: Popular, 2: Following
-  bool _isLoading = false;
-  String? _errorMessage;
-  List<SquarePostModel> _posts = [];
+class _SquareDiscoveryScreenState extends State<SquareDiscoveryScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _loadDiscoveryPosts();
+    _tabController = TabController(length: 3, vsync: this);
+    SquareStateManager.instance.resetToFixtures();
+    SquareStateManager.instance.addListener(_onStateChange);
   }
 
-  Future<void> _loadDiscoveryPosts() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final tabKey = _selectedTab == 1
-          ? 'popular'
-          : (_selectedTab == 2 ? 'following' : 'for_you');
-
-      final posts = await SquareService.instance.fetchSquareFeed(
-        tab: tabKey,
-        search: _searchQuery,
-      );
-
-      if (mounted) {
-        setState(() {
-          _posts = posts;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = e.toString().replaceAll('Exception: ', '');
-          _isLoading = false;
-        });
-      }
-    }
+  @override
+  void dispose() {
+    SquareStateManager.instance.removeListener(_onStateChange);
+    _tabController.dispose();
+    super.dispose();
   }
 
-  void _onTabChanged(int index) {
-    if (_selectedTab != index) {
-      setState(() => _selectedTab = index);
-      _loadDiscoveryPosts();
-    }
+  void _onStateChange() {
+    if (mounted) setState(() {});
   }
 
-  void _onSearchChanged(String val) {
-    _searchQuery = val;
-    _loadDiscoveryPosts();
+  void _openCreatePost() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const CreatePostScreen(),
+      ),
+    );
+  }
+
+  void _openComments(String postId) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SquareCommentsScreen(postId: postId),
+      ),
+    );
+  }
+
+  void _sharePost(LocalSquarePost post) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Post link by ${post.author.nickname} copied to clipboard! 📋',
+          style: const TextStyle(color: Colors.white),
+        ),
+        duration: const Duration(seconds: 1),
+        backgroundColor: PopoTheme.surface,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0D031B),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF120624),
-        title: const Text(
-          'Square Discovery',
-          style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Color(0xFFFF1768)),
-            onPressed: _loadDiscoveryPosts,
+    // 1. Error state handling
+    if (DesignFixtures.isError) {
+      return Scaffold(
+        backgroundColor: PopoTheme.background,
+        appBar: _buildHeader(),
+        body: Center(
+          child: PopoErrorState(
+            key: const Key('square_error_state'),
+            title: DesignFixtures.squareError.title,
+            message: DesignFixtures.squareError.message,
+            retryText: DesignFixtures.squareError.actionLabel,
+            onRetry: () {
+              setState(() {
+                SquareStateManager.instance.resetToFixtures();
+              });
+            },
           ),
-        ],
-      ),
-      body: RefreshIndicator(
-        color: const Color(0xFFFF1768),
-        backgroundColor: const Color(0xFF170931),
-        onRefresh: _loadDiscoveryPosts,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            TextField(
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Search posts, creators, or #hashtags...',
-                hintStyle: const TextStyle(color: Color(0xFFD8B4FE)),
-                prefixIcon: const Icon(Icons.search, color: Color(0xFFFF4D8D)),
-                filled: true,
-                fillColor: const Color(0xFF170931),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide.none,
+        ),
+      );
+    }
+
+    // 2. Empty state handling
+    if (DesignFixtures.isEmpty) {
+      return Scaffold(
+        backgroundColor: PopoTheme.background,
+        appBar: _buildHeader(),
+        body: Center(
+          child: PopoEmptyState(
+            key: const Key('square_empty_state'),
+            icon: Icons.dynamic_feed_rounded,
+            title: 'No Posts Yet',
+            message:
+                'Community feeds are currently empty. Share the first update with creators and audience!',
+            actionText: 'Create First Post',
+            onActionTap: _openCreatePost,
+          ),
+        ),
+        floatingActionButton: _buildFab(),
+      );
+    }
+
+    final posts = SquareStateManager.instance.posts;
+
+    return Scaffold(
+      backgroundColor: PopoTheme.background,
+      appBar: _buildHeader(),
+      floatingActionButton: _buildFab(),
+      body: SafeArea(
+        child: RefreshIndicator(
+          color: PopoTheme.primary,
+          onRefresh: () async {
+            setState(() {
+              SquareStateManager.instance.resetToFixtures();
+            });
+          },
+          child: posts.isEmpty
+              ? Center(
+                  child: PopoEmptyState(
+                    key: const Key('square_empty_state'),
+                    icon: Icons.dynamic_feed_rounded,
+                    title: 'No Posts Yet',
+                    message:
+                        'Be the first to share an update with the community!',
+                    actionText: 'Create Post',
+                    onActionTap: _openCreatePost,
+                  ),
+                )
+              : ListView.separated(
+                  key: const Key('square_feed_list'),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  itemCount: posts.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 14),
+                  itemBuilder: (context, index) {
+                    final post = posts[index];
+                    return _buildPostCard(post);
+                  },
                 ),
-              ),
-              onChanged: _onSearchChanged,
-            ),
-            const SizedBox(height: 16),
-            SegmentedButton<int>(
-              style: SegmentedButton.styleFrom(
-                backgroundColor: const Color(0xFF170931),
-                selectedBackgroundColor: const Color(0xFFFF1768),
-                selectedForegroundColor: Colors.white,
-                foregroundColor: const Color(0xFFD8B4FE),
-              ),
-              segments: const [
-                ButtonSegment(value: 0, label: Text('For You')),
-                ButtonSegment(value: 1, label: Text('Popular')),
-                ButtonSegment(value: 2, label: Text('Following')),
-              ],
-              selected: {_selectedTab},
-              onSelectionChanged: (v) => _onTabChanged(v.first),
-            ),
-            const SizedBox(height: 16),
-            if (_searchQuery.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Text(
-                  'Filtering discovery for "$_searchQuery"',
-                  style: const TextStyle(color: Color(0xFFFF4D8D), fontSize: 12),
-                ),
-              ),
-            const Text(
-              'Featured & Popular Posts',
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            if (_isLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32),
-                  child: CircularProgressIndicator(color: Color(0xFFFF1768)),
-                ),
-              )
-            else if (_errorMessage != null)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF170931),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.redAccent.withOpacity(0.5)),
-                ),
-                child: Column(
-                  children: [
-                    const Icon(Icons.error_outline, color: Colors.redAccent, size: 36),
-                    const SizedBox(height: 8),
-                    Text(_errorMessage!, style: const TextStyle(color: Colors.white70)),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: _loadDiscoveryPosts,
-                      child: const Text('Try Again', style: TextStyle(color: Color(0xFFFF1768))),
-                    ),
-                  ],
-                ),
-              )
-            else if (_posts.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF170931),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Column(
-                  children: [
-                    Icon(Icons.feed_outlined, color: Color(0xFFD8B4FE), size: 40),
-                    SizedBox(height: 12),
-                    Text(
-                      'No community posts found',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Be the first to share an update on Popo Live Square!',
-                      style: TextStyle(color: Color(0xFFD8B4FE), fontSize: 12),
-                    ),
-                  ],
-                ),
-              )
-            else
-              ..._posts.map((post) => _buildPostCard(post)),
-          ],
         ),
       ),
     );
   }
 
-  Widget _buildPostCard(SquarePostModel post) {
+  PreferredSizeWidget _buildHeader() {
+    return AppBar(
+      backgroundColor: PopoTheme.surface,
+      elevation: 0,
+      titleSpacing: 16,
+      title: const Text(
+        'Square',
+        key: Key('square_feed_title'),
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0.3,
+        ),
+      ),
+      actions: [
+        IconButton(
+          key: const Key('square_create_post_button'),
+          icon: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: PopoTheme.primary.withOpacity(0.18),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.edit_note_rounded,
+              color: PopoTheme.primary,
+              size: 22,
+            ),
+          ),
+          tooltip: 'Create Post',
+          onPressed: _openCreatePost,
+        ),
+        const SizedBox(width: 8),
+      ],
+      bottom: TabBar(
+        controller: _tabController,
+        indicatorColor: PopoTheme.primary,
+        indicatorWeight: 3,
+        labelColor: Colors.white,
+        unselectedLabelColor: PopoTheme.textSecondary,
+        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        tabs: const [
+          Tab(text: 'For You'),
+          Tab(text: 'Following'),
+          Tab(text: 'Trending'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFab() {
+    return FloatingActionButton(
+      key: const Key('create_post_fab'),
+      backgroundColor: PopoTheme.primary,
+      onPressed: _openCreatePost,
+      tooltip: 'Create Post',
+      child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+    );
+  }
+
+  Widget _buildPostCard(LocalSquarePost post) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF170931),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.purpleAccent.withOpacity(0.2)),
+        color: PopoTheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: PopoTheme.borderSubtle, width: 0.8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundColor: post.ringColor,
-                child: CircleAvatar(
-                  radius: 16,
-                  backgroundColor: const Color(0xFF211042),
-                  child: Text(
-                    post.creatorName.isNotEmpty ? post.creatorName[0].toUpperCase() : 'P',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
+          // Author header row
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.white12,
+                  backgroundImage: NetworkImage(post.author.avatarUrl),
+                  key: Key('post_author_avatar_${post.id}'),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            post.creatorName,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14),
-                            overflow: TextOverflow.ellipsis,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              post.author.nickname,
+                              key: Key('post_author_name_${post.id}'),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
+                          const SizedBox(width: 4),
+                          Text(
+                            post.author.flagEmoji,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        post.timestamp,
+                        key: Key('post_timestamp_${post.id}'),
+                        style: const TextStyle(
+                          color: PopoTheme.textSecondary,
+                          fontSize: 11,
                         ),
-                        if (post.isVerified) ...[
-                          const SizedBox(width: 4),
-                          const Icon(Icons.verified, color: Color(0xFF00E5FF), size: 14),
-                        ],
-                        if (post.isVip) ...[
-                          const SizedBox(width: 4),
-                          const Icon(Icons.star, color: Color(0xFFFFB800), size: 14),
-                        ],
-                      ],
-                    ),
-                    Text(
-                      '${post.creatorHandle} · ${post.publishedAgo}',
-                      style: const TextStyle(color: Color(0xFFD8B4FE), fontSize: 11),
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.more_horiz_rounded,
+                    color: PopoTheme.textSecondary,
+                    size: 20,
+                  ),
+                  onPressed: () => _sharePost(post),
+                ),
+              ],
+            ),
+          ),
+
+          // Post text content
+          if (post.content.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Text(
+                post.content,
+                key: Key('post_content_${post.id}'),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  height: 1.4,
                 ),
               ),
-              if (post.hashtags.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF28124D),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    post.hashtags.first,
-                    style: const TextStyle(color: Color(0xFFFF4D8D), fontSize: 10, fontWeight: FontWeight.bold),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            post.text,
-            style: const TextStyle(color: Color(0xFFE2E8F0), fontSize: 13, height: 1.4),
-          ),
-          if (post.mediaType != 'none') ...[
+            ),
+
+          // Attached Image
+          if (post.imageUrl != null && post.imageUrl!.isNotEmpty) ...[
             const SizedBox(height: 10),
-            Container(
-              height: 140,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color(0xFF211042),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.purpleAccent.withOpacity(0.15)),
-              ),
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      post.mediaType == 'video' ? Icons.play_circle_fill : Icons.image,
-                      color: const Color(0xFFFF1768),
-                      size: 28,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      post.mediaType == 'video' ? 'Attached Video Clip' : 'Attached Photo',
-                      style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                  ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.network(
+                  post.imageUrl!,
+                  key: Key('post_image_${post.id}'),
+                  width: double.infinity,
+                  height: 200,
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
           ],
+
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(
-                post.isLiked ? Icons.favorite : Icons.favorite_border,
-                color: post.isLiked ? const Color(0xFFFF1768) : const Color(0xFFD8B4FE),
-                size: 16,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                '${post.likesCount}',
-                style: const TextStyle(color: Color(0xFFD8B4FE), fontSize: 12),
-              ),
-              const SizedBox(width: 16),
-              const Icon(Icons.chat_bubble_outline, color: Color(0xFFD8B4FE), size: 16),
-              const SizedBox(width: 4),
-              Text(
-                '${post.comments.length}',
-                style: const TextStyle(color: Color(0xFFD8B4FE), fontSize: 12),
-              ),
-              const Spacer(),
-              Text(
-                post.visibility,
-                style: const TextStyle(color: Colors.white38, fontSize: 11),
-              ),
-            ],
+          const Divider(color: PopoTheme.borderSubtle, height: 1),
+
+          // Action bar (Like, Comment, Share)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            child: Row(
+              children: [
+                // Like Button
+                InkWell(
+                  key: Key('post_like_button_${post.id}'),
+                  onTap: () {
+                    SquareStateManager.instance.toggleLike(post.id);
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          post.isLiked
+                              ? Icons.favorite_rounded
+                              : Icons.favorite_border_rounded,
+                          color: post.isLiked
+                              ? PopoTheme.primary
+                              : PopoTheme.textSecondary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${post.likesCount}',
+                          key: Key('post_like_count_${post.id}'),
+                          style: TextStyle(
+                            color: post.isLiked
+                                ? PopoTheme.primary
+                                : Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+
+                // Comment Button
+                InkWell(
+                  key: Key('post_comment_button_${post.id}'),
+                  onTap: () => _openComments(post.id),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          color: PopoTheme.textSecondary,
+                          size: 19,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${post.comments.length}',
+                          key: Key('post_comment_count_${post.id}'),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Spacer(),
+
+                // Share Button
+                IconButton(
+                  key: Key('post_share_button_${post.id}'),
+                  icon: const Icon(
+                    Icons.share_outlined,
+                    color: PopoTheme.textSecondary,
+                    size: 19,
+                  ),
+                  tooltip: 'Share',
+                  onPressed: () => _sharePost(post),
+                ),
+              ],
+            ),
           ),
         ],
       ),

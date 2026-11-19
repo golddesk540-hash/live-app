@@ -29,7 +29,8 @@ class SquarePostModel {
   final String visibility;
   final String text;
   final List<String> hashtags;
-  final String mediaType; // single_image | multi_image | video | live_invite | none
+  final String
+      mediaType; // single_image | multi_image | video | live_invite | none
   final String? liveRoomLabel;
   int likesCount;
   bool isLiked;
@@ -117,7 +118,8 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
         ringColor: _neonPink,
         publishedAgo: '2 hours ago',
         visibility: 'Public',
-        text: 'Beautiful evening with my Popo family! Ready for tonight’s acoustic live session and team PK!',
+        text:
+            'Beautiful evening with my Popo family! Ready for tonight’s acoustic live session and team PK!',
         hashtags: ['#AcousticLive', '#PopoFamily'],
         mediaType: 'single_image',
         likesCount: 248,
@@ -148,7 +150,8 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
         ringColor: const Color(0xFF3B82F6),
         publishedAgo: '5 hours ago',
         visibility: 'Public',
-        text: 'New live room is open. Come say hello! Nine seats unlocked — drop your favorite song.',
+        text:
+            'New live room is open. Come say hello! Nine seats unlocked — drop your favorite song.',
         hashtags: ['#LiveRoom', '#PartyTime'],
         mediaType: 'live_invite',
         liveRoomLabel: 'LIVE ROOM • JOIN',
@@ -173,7 +176,8 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
         ringColor: const Color(0xFFA855F7),
         publishedAgo: '8 hours ago',
         visibility: 'Public',
-        text: 'Weekend backstage gallery from the Dubai creator meetup. Grateful for every supporter!',
+        text:
+            'Weekend backstage gallery from the Dubai creator meetup. Grateful for every supporter!',
         hashtags: ['#CreatorMeetup', '#Highlights'],
         mediaType: 'multi_image',
         likesCount: 684,
@@ -191,7 +195,8 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
         ringColor: const Color(0xFF10B981),
         publishedAgo: '1 day ago',
         visibility: 'VIP Lounge',
-        text: 'Highlights reel from yesterday’s Golden Crown celebration! Check out the entrance effects.',
+        text:
+            'Highlights reel from yesterday’s Golden Crown celebration! Check out the entrance effects.',
         hashtags: ['#GoldenCrown', '#VIPHighlights'],
         mediaType: 'video',
         likesCount: 1290,
@@ -214,7 +219,8 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
         ringColor: _gold,
         publishedAgo: '2 days ago',
         visibility: 'Followers Only',
-        text: 'Quick question: Friday night karaoke theme — 90s Classics or Pop Hits? Vote in the comments!',
+        text:
+            'Quick question: Friday night karaoke theme — 90s Classics or Pop Hits? Vote in the comments!',
         hashtags: ['#KaraokeNight', '#CommunityPoll'],
         mediaType: 'none',
         likesCount: 175,
@@ -230,7 +236,8 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
     var items = _posts.where((p) {
       if (_hiddenPostIds.contains(p.id)) return false;
       if (_savedOnly && !p.isSaved) return false;
-      if (_activeTab == 'following' && !_followedCreators.contains(p.creatorId)) {
+      if (_activeTab == 'following' &&
+          !_followedCreators.contains(p.creatorId)) {
         return false;
       }
       if (q.isNotEmpty) {
@@ -244,7 +251,8 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
     }).toList();
 
     if (_activeTab == 'popular') {
-      items.sort((a, b) => (b.popularityScore + b.likesCount).compareTo(a.popularityScore + a.likesCount));
+      items.sort((a, b) => (b.popularityScore + b.likesCount)
+          .compareTo(a.popularityScore + a.likesCount));
     }
     return items;
   }
@@ -253,7 +261,9 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Text(msg,
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF28124D),
         behavior: SnackBarBehavior.floating,
       ),
@@ -288,7 +298,10 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
                     children: [
                       Text(
                         'Comments (${post.comments.length})',
-                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold),
                       ),
                       IconButton(
                         icon: const Icon(Icons.close, color: Colors.white70),
@@ -303,14 +316,17 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
                         ? const Padding(
                             padding: EdgeInsets.symmetric(vertical: 28),
                             child: Center(
-                              child: Text('No comments yet. Start the conversation!',
-                                  style: TextStyle(color: Colors.white54, fontSize: 12)),
+                              child: Text(
+                                  'No comments yet. Start the conversation!',
+                                  style: TextStyle(
+                                      color: Colors.white54, fontSize: 12)),
                             ),
                           )
                         : ListView.separated(
                             shrinkWrap: true,
                             itemCount: post.comments.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 10),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 10),
                             itemBuilder: (_, idx) {
                               final c = post.comments[idx];
                               return Row(
@@ -319,23 +335,36 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
                                   CircleAvatar(
                                     radius: 14,
                                     backgroundColor: _neonPink,
-                                    child: Text(c.authorName[0], style: const TextStyle(fontSize: 11, color: Colors.white)),
+                                    child: Text(c.authorName[0],
+                                        style: const TextStyle(
+                                            fontSize: 11, color: Colors.white)),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
                                           children: [
                                             Text(c.authorName,
-                                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                                                style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
                                             const SizedBox(width: 6),
-                                            Text(c.timestamp, style: const TextStyle(color: Colors.white38, fontSize: 10)),
+                                            Text(c.timestamp,
+                                                style: const TextStyle(
+                                                    color: Colors.white38,
+                                                    fontSize: 10)),
                                           ],
                                         ),
                                         const SizedBox(height: 2),
-                                        Text(c.text, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                                        Text(c.text,
+                                            style: const TextStyle(
+                                                color: Colors.white70,
+                                                fontSize: 12)),
                                       ],
                                     ),
                                   ),
@@ -350,13 +379,15 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
                       Expanded(
                         child: TextField(
                           controller: controller,
-                          style: const TextStyle(color: Colors.white, fontSize: 13),
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 13),
                           decoration: InputDecoration(
                             hintText: 'Write a demo comment...',
                             hintStyle: const TextStyle(color: Colors.white38),
                             filled: true,
                             fillColor: _surfaceBg,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(24),
                               borderSide: BorderSide.none,
@@ -386,9 +417,12 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
                           });
                           setSheetState(() {});
                           controller.clear();
-                          SquareService.instance.addComment(post.id, content: txt).catchError((_) => <String, dynamic>{});
+                          SquareService.instance
+                              .addComment(post.id, content: txt)
+                              .catchError((_) => <String, dynamic>{});
                         },
-                        child: const Icon(Icons.send_rounded, size: 18, color: Colors.white),
+                        child: const Icon(Icons.send_rounded,
+                            size: 18, color: Colors.white),
                       ),
                     ],
                   ),
@@ -422,9 +456,13 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('New Square Post (Demo)',
-                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            const Text('Full composer arrives in Module 8.4. Publish a quick text demo below.',
+            const Text(
+                'Full composer arrives in Module 8.4. Publish a quick text demo below.',
                 style: TextStyle(color: Colors.white54, fontSize: 12)),
             const SizedBox(height: 12),
             TextField(
@@ -480,7 +518,9 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
                   Navigator.pop(ctx);
                   _showSnack('Published post to Square locally');
                 },
-                child: const Text('Publish Demo Post', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: const Text('Publish Demo Post',
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -502,8 +542,11 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(post.isSaved ? Icons.bookmark : Icons.bookmark_border, color: _neonPink),
-              title: Text(post.isSaved ? 'Unsave post' : 'Save post', style: const TextStyle(color: Colors.white)),
+              leading: Icon(
+                  post.isSaved ? Icons.bookmark : Icons.bookmark_border,
+                  color: _neonPink),
+              title: Text(post.isSaved ? 'Unsave post' : 'Save post',
+                  style: const TextStyle(color: Colors.white)),
               onTap: () {
                 setState(() => post.isSaved = !post.isSaved);
                 Navigator.pop(ctx);
@@ -512,15 +555,19 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.link, color: Colors.cyanAccent),
-              title: const Text('Copy post link', style: TextStyle(color: Colors.white)),
+              title: const Text('Copy post link',
+                  style: TextStyle(color: Colors.white)),
               onTap: () {
                 Navigator.pop(ctx);
                 _showSnack('Post link copied');
               },
             ),
             ListTile(
-              leading: Icon(isFollowing ? Icons.person_remove : Icons.person_add, color: Colors.purpleAccent),
-              title: Text(isFollowing ? 'Unfollow creator' : 'Follow creator', style: const TextStyle(color: Colors.white)),
+              leading: Icon(
+                  isFollowing ? Icons.person_remove : Icons.person_add,
+                  color: Colors.purpleAccent),
+              title: Text(isFollowing ? 'Unfollow creator' : 'Follow creator',
+                  style: const TextStyle(color: Colors.white)),
               onTap: () {
                 setState(() {
                   if (isFollowing) {
@@ -530,25 +577,32 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
                   }
                 });
                 Navigator.pop(ctx);
-                _showSnack(isFollowing ? 'Unfollowed ${post.creatorName}' : 'Following ${post.creatorName}');
+                _showSnack(isFollowing
+                    ? 'Unfollowed ${post.creatorName}'
+                    : 'Following ${post.creatorName}');
               },
             ),
             ListTile(
               leading: const Icon(Icons.flag_outlined, color: Colors.amber),
-              title: const Text('Report post', style: TextStyle(color: Colors.amber)),
+              title: const Text('Report post',
+                  style: TextStyle(color: Colors.amber)),
               onTap: () {
                 Navigator.pop(ctx);
-                SquareService.instance.submitReport(
-                  targetType: 'post',
-                  targetId: post.id,
-                  reason: 'Inappropriate content',
-                ).catchError((_) => <String, dynamic>{});
+                SquareService.instance
+                    .submitReport(
+                      targetType: 'post',
+                      targetId: post.id,
+                      reason: 'Inappropriate content',
+                    )
+                    .catchError((_) => <String, dynamic>{});
                 _showSnack('Report submitted to moderation team');
               },
             ),
             ListTile(
-              leading: const Icon(Icons.visibility_off_outlined, color: Colors.redAccent),
-              title: const Text('Hide post', style: TextStyle(color: Colors.redAccent)),
+              leading: const Icon(Icons.visibility_off_outlined,
+                  color: Colors.redAccent),
+              title: const Text('Hide post',
+                  style: TextStyle(color: Colors.redAccent)),
               onTap: () {
                 setState(() => _hiddenPostIds.add(post.id));
                 Navigator.pop(ctx);
@@ -586,11 +640,13 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
             onPressed: _openCreatePreviewSheet,
           ),
           IconButton(
-            icon: Icon(Icons.search, color: _showSearch ? _neonPink : Colors.white70),
+            icon: Icon(Icons.search,
+                color: _showSearch ? _neonPink : Colors.white70),
             onPressed: () => setState(() => _showSearch = !_showSearch),
           ),
           IconButton(
-            icon: Icon(_savedOnly ? Icons.bookmark : Icons.bookmark_border, color: _savedOnly ? _neonPink : Colors.white70),
+            icon: Icon(_savedOnly ? Icons.bookmark : Icons.bookmark_border,
+                color: _savedOnly ? _neonPink : Colors.white70),
             onPressed: () => setState(() => _savedOnly = !_savedOnly),
           ),
         ],
@@ -598,9 +654,14 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Square', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
+          const Text('Square',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900)),
           const SizedBox(height: 2),
-          const Text('Posts from your community', style: TextStyle(color: Colors.white60, fontSize: 13)),
+          const Text('Posts from your community',
+              style: TextStyle(color: Colors.white60, fontSize: 13)),
           const SizedBox(height: 14),
           Row(
             children: [
@@ -622,7 +683,9 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
                 prefixIcon: const Icon(Icons.search, color: Colors.white54),
                 filled: true,
                 fillColor: _cardBg,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: BorderSide.none),
               ),
             ),
           ],
@@ -637,15 +700,24 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
               ),
               child: Column(
                 children: [
-                  const Icon(Icons.explore_off_outlined, size: 42, color: _neonPink),
+                  const Icon(Icons.explore_off_outlined,
+                      size: 42, color: _neonPink),
                   const SizedBox(height: 10),
-                  const Text('No Square Posts Found', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                  const Text('No Square Posts Found',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15)),
                   const SizedBox(height: 6),
-                  const Text('Try clearing search filters or switch back to For You.',
-                      textAlign: TextAlign.center, style: TextStyle(color: Colors.white54, fontSize: 12)),
+                  const Text(
+                      'Try clearing search filters or switch back to For You.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white54, fontSize: 12)),
                   const SizedBox(height: 12),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: _neonPink, shape: const StadiumBorder()),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: _neonPink,
+                        shape: const StadiumBorder()),
                     onPressed: () {
                       setState(() {
                         _searchQuery = '';
@@ -653,7 +725,8 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
                         _activeTab = 'for_you';
                       });
                     },
-                    child: const Text('Reset Feed', style: TextStyle(color: Colors.white)),
+                    child: const Text('Reset Feed',
+                        style: TextStyle(color: Colors.white)),
                   ),
                 ],
               ),
@@ -679,7 +752,10 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
           ),
           child: Text(
             label,
-            style: TextStyle(color: active ? Colors.white : Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: active ? Colors.white : Colors.white70,
+                fontSize: 12,
+                fontWeight: FontWeight.bold),
           ),
         ),
       ),
@@ -703,11 +779,15 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
             children: [
               Container(
                 padding: const EdgeInsets.all(2.5),
-                decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: post.ringColor, width: 2.5)),
+                decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: post.ringColor, width: 2.5)),
                 child: CircleAvatar(
                   radius: 18,
                   backgroundColor: _surfaceBg,
-                  child: Text(post.creatorName[0], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  child: Text(post.creatorName[0],
+                      style: const TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(width: 10),
@@ -717,15 +797,21 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
                   children: [
                     Row(
                       children: [
-                        Text(post.creatorName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                        Text(post.creatorName,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14)),
                         if (post.isVerified) ...[
                           const SizedBox(width: 4),
-                          const Icon(Icons.verified, color: Colors.lightBlueAccent, size: 14),
+                          const Icon(Icons.verified,
+                              color: Colors.lightBlueAccent, size: 14),
                         ],
                       ],
                     ),
                     Text('${post.publishedAgo} · ${post.visibility}',
-                        style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                        style: const TextStyle(
+                            color: Colors.white54, fontSize: 11)),
                   ],
                 ),
               ),
@@ -740,13 +826,17 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
                   });
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: isFollowing ? _surfaceBg : _neonPink,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Text(isFollowing ? 'Following' : 'Follow',
-                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold)),
                 ),
               ),
               IconButton(
@@ -756,13 +846,19 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          Text(post.text, style: const TextStyle(color: Colors.white, fontSize: 13.5, height: 1.4)),
+          Text(post.text,
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 13.5, height: 1.4)),
           if (post.hashtags.isNotEmpty) ...[
             const SizedBox(height: 6),
             Wrap(
               spacing: 6,
               children: post.hashtags
-                  .map((tag) => Text(tag, style: const TextStyle(color: Color(0xFFFF6BA3), fontSize: 11, fontWeight: FontWeight.bold)))
+                  .map((tag) => Text(tag,
+                      style: const TextStyle(
+                          color: Color(0xFFFF6BA3),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold)))
                   .toList(),
             ),
           ],
@@ -775,16 +871,25 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
                 gradient: LinearGradient(
                   colors: post.mediaType == 'live_invite'
                       ? [const Color(0xFF280D4F), const Color(0xFF1A0936)]
-                      : [const Color(0xFF4C1D73), const Color(0xFF9333EA), const Color(0xFFEC4899)],
+                      : [
+                          const Color(0xFF4C1D73),
+                          const Color(0xFF9333EA),
+                          const Color(0xFFEC4899)
+                        ],
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Center(
                 child: post.mediaType == 'live_invite'
                     ? Text(post.liveRoomLabel ?? 'LIVE ROOM • JOIN',
-                        style: const TextStyle(color: _neonPink, fontWeight: FontWeight.w900, letterSpacing: 1.1))
+                        style: const TextStyle(
+                            color: _neonPink,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.1))
                     : Icon(
-                        post.mediaType == 'video' ? Icons.play_circle_filled : Icons.photo_library_rounded,
+                        post.mediaType == 'video'
+                            ? Icons.play_circle_filled
+                            : Icons.photo_library_rounded,
                         color: Colors.white70,
                         size: 42,
                       ),
@@ -800,15 +905,20 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
                     post.isLiked = !post.isLiked;
                     post.likesCount += post.isLiked ? 1 : -1;
                   });
-                  SquareService.instance.togglePostLike(post.id, unlike: !post.isLiked).catchError((_) => <String, dynamic>{});
+                  SquareService.instance
+                      .togglePostLike(post.id, unlike: !post.isLiked)
+                      .catchError((_) => <String, dynamic>{});
                 },
                 child: Row(
                   children: [
                     Icon(post.isLiked ? Icons.favorite : Icons.favorite_border,
-                        color: post.isLiked ? _neonPink : Colors.white60, size: 18),
+                        color: post.isLiked ? _neonPink : Colors.white60,
+                        size: 18),
                     const SizedBox(width: 4),
                     Text('${post.likesCount}',
-                        style: TextStyle(color: post.isLiked ? _neonPink : Colors.white70, fontSize: 12)),
+                        style: TextStyle(
+                            color: post.isLiked ? _neonPink : Colors.white70,
+                            fontSize: 12)),
                   ],
                 ),
               ),
@@ -817,9 +927,12 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
                 onTap: () => _openCommentsSheet(post),
                 child: Row(
                   children: [
-                    const Icon(Icons.chat_bubble_outline, color: Colors.white60, size: 17),
+                    const Icon(Icons.chat_bubble_outline,
+                        color: Colors.white60, size: 17),
                     const SizedBox(width: 4),
-                    Text('${post.comments.length} comments', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                    Text('${post.comments.length} comments',
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 12)),
                   ],
                 ),
               ),
@@ -827,13 +940,17 @@ class _SquarePostsScreenState extends State<SquarePostsScreen> {
               GestureDetector(
                 onTap: () {
                   setState(() => post.sharesCount += 1);
-                  _showSnack('Shared ${post.creatorName}\'s post (${post.sharesCount})');
+                  _showSnack(
+                      'Shared ${post.creatorName}\'s post (${post.sharesCount})');
                 },
                 child: Row(
                   children: [
-                    const Icon(Icons.north_east_rounded, color: Colors.white60, size: 17),
+                    const Icon(Icons.north_east_rounded,
+                        color: Colors.white60, size: 17),
                     const SizedBox(width: 4),
-                    Text('Share (${post.sharesCount})', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                    Text('Share (${post.sharesCount})',
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 12)),
                   ],
                 ),
               ),

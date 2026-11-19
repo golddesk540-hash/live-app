@@ -67,7 +67,8 @@ class _CommentsReportsScreenState extends State<CommentsReportsScreen> {
     setState(() {
       _validationError = null;
       if (_replyingToCommentId != null) {
-        final target = _comments.firstWhere((c) => c.id == _replyingToCommentId);
+        final target =
+            _comments.firstWhere((c) => c.id == _replyingToCommentId);
         target.replies.add(
           _DemoReply(
             id: 'r_${DateTime.now().millisecondsSinceEpoch}',
@@ -112,7 +113,10 @@ class _CommentsReportsScreenState extends State<CommentsReportsScreen> {
             children: [
               Text(
                 'Report $targetType · $authorName',
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 12),
               ..._reportReasons.map(
@@ -121,7 +125,9 @@ class _CommentsReportsScreenState extends State<CommentsReportsScreen> {
                   value: reason,
                   groupValue: selectedReason,
                   activeColor: const Color(0xFFFF1A6C),
-                  title: Text(reason, style: const TextStyle(color: Colors.white, fontSize: 13)),
+                  title: Text(reason,
+                      style:
+                          const TextStyle(color: Colors.white, fontSize: 13)),
                   onChanged: (val) => setModalState(() => selectedReason = val),
                 ),
               ),
@@ -129,23 +135,35 @@ class _CommentsReportsScreenState extends State<CommentsReportsScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                  TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Cancel')),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF1A6C)),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF1A6C)),
                     onPressed: selectedReason == null
                         ? null
                         : () {
                             final reason = selectedReason!;
-                            setState(() => _reportedIds.add('$targetType:$targetId'));
+                            setState(() =>
+                                _reportedIds.add('$targetType:$targetId'));
                             Navigator.pop(ctx);
-                            SquareService.instance.submitReport(
-                              targetType: targetType.toLowerCase().contains('comment') ? 'comment' : 'post',
-                              targetId: targetId,
-                              reason: reason,
-                            ).catchError((_) => <String, dynamic>{});
+                            SquareService.instance
+                                .submitReport(
+                                  targetType: targetType
+                                          .toLowerCase()
+                                          .contains('comment')
+                                      ? 'comment'
+                                      : 'post',
+                                  targetId: targetId,
+                                  reason: reason,
+                                )
+                                .catchError((_) => <String, dynamic>{});
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Report submitted for $targetType ($reason)')),
+                              SnackBar(
+                                  content: Text(
+                                      'Report submitted for $targetType ($reason)')),
                             );
                           },
                     child: const Text('Submit Report'),
@@ -165,7 +183,8 @@ class _CommentsReportsScreenState extends State<CommentsReportsScreen> {
       backgroundColor: const Color(0xFF0D041C),
       appBar: AppBar(
         backgroundColor: const Color(0xFF120624),
-        title: const Text('Comments & Reports', style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text('Comments & Reports',
+            style: TextStyle(fontWeight: FontWeight.w800)),
       ),
       body: Column(
         children: [
@@ -178,56 +197,94 @@ class _CommentsReportsScreenState extends State<CommentsReportsScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0xFF16092D),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.purpleAccent.withOpacity(0.25)),
+                    border: Border.all(
+                        color: Colors.purpleAccent.withOpacity(0.25)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('POST', style: TextStyle(color: Color(0xFFFF1A6C), fontSize: 11, fontWeight: FontWeight.w900)),
+                      const Text('POST',
+                          style: TextStyle(
+                              color: Color(0xFFFF1A6C),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900)),
                       const SizedBox(height: 6),
-                      const Text('A beautiful day with friends!', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+                      const Text('A beautiful day with friends!',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700)),
                       const SizedBox(height: 4),
-                      Text('Ayesha Khan · ${_comments.length} comments', style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                      Text('Ayesha Khan · ${_comments.length} comments',
+                          style: const TextStyle(
+                              color: Colors.white60, fontSize: 12)),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text('Recent comments', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+                const Text('Recent comments',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800)),
                 const SizedBox(height: 10),
                 if (_comments.isEmpty)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 32),
-                    child: Center(child: Text('No comments yet.', style: TextStyle(color: Colors.white60))),
+                    child: Center(
+                        child: Text('No comments yet.',
+                            style: TextStyle(color: Colors.white60))),
                   )
                 else
                   ..._comments.map((c) => Card(
                         color: const Color(0xFF16092D),
                         margin: const EdgeInsets.only(bottom: 10),
                         child: ListTile(
-                          title: Text(c.author, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                          title: Text(c.author,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13)),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(c.text, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                              Text(c.text,
+                                  style: const TextStyle(
+                                      color: Colors.white70, fontSize: 12)),
                               Row(
                                 children: [
                                   TextButton(
-                                    onPressed: () => setState(() => c.isLiked ? (c.isLiked = false, c.likes--) : (c.isLiked = true, c.likes++)),
-                                    child: Text('♥ ${c.likes}', style: const TextStyle(color: Color(0xFFFF4D8D), fontSize: 11)),
+                                    onPressed: () => setState(() => c.isLiked
+                                        ? (c.isLiked = false, c.likes--)
+                                        : (c.isLiked = true, c.likes++)),
+                                    child: Text('♥ ${c.likes}',
+                                        style: const TextStyle(
+                                            color: Color(0xFFFF4D8D),
+                                            fontSize: 11)),
                                   ),
                                   TextButton(
-                                    onPressed: () => setState(() => _replyingToCommentId = c.id),
-                                    child: const Text('Reply', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                                    onPressed: () => setState(
+                                        () => _replyingToCommentId = c.id),
+                                    child: const Text('Reply',
+                                        style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 11)),
                                   ),
                                 ],
                               ),
                             ],
                           ),
                           trailing: IconButton(
-                            icon: Icon(c.isOwn ? Icons.delete_outline : Icons.flag_outlined, color: Colors.amberAccent),
+                            icon: Icon(
+                                c.isOwn
+                                    ? Icons.delete_outline
+                                    : Icons.flag_outlined,
+                                color: Colors.amberAccent),
                             onPressed: c.isOwn
-                                ? () => setState(() => _comments.removeWhere((item) => item.id == c.id))
-                                : () => _openReportSheet('comment', c.id, c.author),
+                                ? () => setState(() => _comments
+                                    .removeWhere((item) => item.id == c.id))
+                                : () =>
+                                    _openReportSheet('comment', c.id, c.author),
                           ),
                         ),
                       )),
@@ -237,7 +294,9 @@ class _CommentsReportsScreenState extends State<CommentsReportsScreen> {
           if (_validationError != null)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: Text(_validationError!, style: const TextStyle(color: Colors.amberAccent, fontSize: 12)),
+              child: Text(_validationError!,
+                  style:
+                      const TextStyle(color: Colors.amberAccent, fontSize: 12)),
             ),
           SafeArea(
             child: Padding(
@@ -249,17 +308,23 @@ class _CommentsReportsScreenState extends State<CommentsReportsScreen> {
                       controller: _commentController,
                       style: const TextStyle(color: Colors.white),
                       decoration: InputDecoration(
-                        hintText: _replyingToCommentId != null ? 'Write a reply...' : 'Write a comment...',
+                        hintText: _replyingToCommentId != null
+                            ? 'Write a reply...'
+                            : 'Write a comment...',
                         hintStyle: const TextStyle(color: Colors.white38),
                         filled: true,
                         fillColor: const Color(0xFF16092D),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide.none),
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF1A6C), shape: const StadiumBorder()),
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF1A6C),
+                        shape: const StadiumBorder()),
                     onPressed: _submitText,
                     child: const Text('Send'),
                   ),
