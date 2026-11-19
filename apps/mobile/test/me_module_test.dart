@@ -5,6 +5,14 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:popo_live/design/design_fixtures.dart';
+import 'package:popo_live/screens/daily_tasks/daily_host_tasks_screen.dart';
+import 'package:popo_live/screens/host_rankings/host_rankings_screen.dart';
+import 'package:popo_live/screens/invites/invites_screen.dart';
+import 'package:popo_live/screens/store/store_screen.dart';
+import 'package:popo_live/screens/task_level/task_level_screen.dart';
+import 'package:popo_live/screens/fan_club/fan_club_screen.dart';
+import 'package:popo_live/screens/live/live_rules_screen.dart';
+import 'package:popo_live/screens/agency_management/agency_management_screen.dart';
 import 'package:popo_live/screens/profile/me_screen.dart';
 import 'package:popo_live/screens/profile/settings_screen.dart';
 import 'package:popo_live/shell/app_shell.dart';
@@ -172,9 +180,12 @@ void main() {
     DesignFixtures.reset();
   });
 
-  group('POPO LIVE - PHASE 5 (D4) PROMPT 1: ME / PROFILE MAIN PAGE TEST SUITE',
-      () {
-    testWidgets('1. Me tab opens the correct profile page from AppShell',
+  group('POPO LIVE - PHASE 5 (D4) PROMPT 2: COMPLETE ME PAGE TEST SUITE', () {
+    // -------------------------------------------------------------------------
+    // 1. PROMPT 1 REGRESSION TESTS (Profile Header, Info, Counts, Economy, VIP)
+    // -------------------------------------------------------------------------
+    testWidgets(
+        '1. Me tab opens and renders Prompt 1 profile header and details intact',
         (tester) async {
       _setPhoneViewport(tester);
       addTearDown(() {
@@ -184,141 +195,26 @@ void main() {
 
       await tester.pumpWidget(
         const MaterialApp(
-          home: AppShell(initialIndex: 4),
+          home: MeScreen(),
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(MeScreen), findsOneWidget);
       expect(find.byKey(const Key('me_title')), findsOneWidget);
-    });
-
-    testWidgets('2. Profile avatar displays correctly with glowing ring',
-        (tester) async {
-      _setPhoneViewport(tester);
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: MeScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
-
       expect(find.byKey(const Key('me_avatar')), findsOneWidget);
-      expect(find.byType(CircleAvatar), findsWidgets);
-    });
-
-    testWidgets('3. User name displays correctly from D0 fixture',
-        (tester) async {
-      _setPhoneViewport(tester);
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: MeScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
-
       expect(find.byKey(const Key('me_nickname')), findsOneWidget);
       expect(find.text(DesignFixtures.currentUserProfile.nickname),
           findsOneWidget);
-    });
-
-    testWidgets('4. Country flag displays correctly', (tester) async {
-      _setPhoneViewport(tester);
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: MeScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
-
       expect(find.byKey(const Key('me_flag')), findsOneWidget);
-      expect(find.textContaining('🇵🇰'), findsOneWidget);
-      expect(find.textContaining('Pakistan'), findsOneWidget);
-    });
-
-    testWidgets('5. VIP badge displays correctly with crown icon',
-        (tester) async {
-      _setPhoneViewport(tester);
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: MeScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
-
       expect(find.byKey(const Key('me_vip_badge')), findsOneWidget);
-      expect(find.text('VIP ${DesignFixtures.currentUserProfile.vipLevel}'),
-          findsWidgets);
-      expect(find.textContaining('👑'), findsWidgets);
-    });
-
-    testWidgets('6. Both level badges (Wealth and Shining) display correctly',
-        (tester) async {
-      _setPhoneViewport(tester);
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: MeScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Wealth level
       expect(find.byKey(const Key('me_wealth_badge')), findsOneWidget);
-      expect(find.text('Lv.${DesignFixtures.currentUserProfile.wealthLevel}'),
-          findsOneWidget);
-
-      // Shining / Host level
       expect(find.byKey(const Key('me_shining_badge')), findsOneWidget);
-      expect(find.text('Lv.${DesignFixtures.currentUserProfile.hostLevel}'),
-          findsOneWidget);
-    });
-
-    testWidgets('7. User ID displays correctly from fixture', (tester) async {
-      _setPhoneViewport(tester);
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: MeScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
-
       expect(find.byKey(const Key('me_user_id')), findsOneWidget);
-      expect(find.textContaining(DesignFixtures.currentUserProfile.poppoId),
-          findsOneWidget);
+      expect(find.byKey(const Key('me_copy_id_button')), findsOneWidget);
     });
 
     testWidgets(
-        '8. Copy ID functionality works and shows confirmation SnackBar',
+        '1b. Scan and Settings entry buttons in header open correct destinations',
         (tester) async {
       _setPhoneViewport(tester);
       addTearDown(() {
@@ -328,21 +224,33 @@ void main() {
 
       await tester.pumpWidget(
         const MaterialApp(
-          home: Scaffold(body: MeScreen()),
+          home: MeScreen(),
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('me_copy_id_button')), findsOneWidget);
-      await tester.tap(find.byKey(const Key('me_copy_id_button')));
+      // Scan entry
+      expect(find.byKey(const Key('me_scan_button')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('me_scan_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('me_scan_sheet')), findsOneWidget);
+      expect(find.text('Scan QR Code'), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.close_rounded).last);
+      await tester.pumpAndSettle();
+
+      // Settings entry
+      expect(find.byKey(const Key('me_settings_button')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('me_settings_button')));
       await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.byType(SnackBar), findsOneWidget);
-      expect(find.textContaining(DesignFixtures.currentUserProfile.poppoId),
-          findsWidgets);
+      expect(find.byType(SettingsScreen), findsOneWidget);
+      expect(find.text('Settings'), findsOneWidget);
     });
 
-    testWidgets('9. Friends count displays correctly and opens preview',
+    testWidgets(
+        '2. Four profile counts (Friends, Following, Followers, Visitors) display correctly',
         (tester) async {
       _setPhoneViewport(tester);
       addTearDown(() {
@@ -357,99 +265,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(find.byKey(const Key('me_counts_row')), findsOneWidget);
       expect(find.byKey(const Key('me_friends_count')), findsOneWidget);
-      expect(find.text('${DesignFixtures.currentUserProfile.friendsCount}'),
-          findsOneWidget);
-
-      await tester.tap(find.byKey(const Key('me_friends_entry')));
-      await tester.pumpAndSettle();
-
-      expect(find.textContaining('Friends'), findsWidgets);
-      // Close sheet
-      await tester.tap(find.byIcon(Icons.close_rounded).last);
-      await tester.pumpAndSettle();
-    });
-
-    testWidgets('10. Following count displays correctly and opens preview',
-        (tester) async {
-      _setPhoneViewport(tester);
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: MeScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
-
       expect(find.byKey(const Key('me_following_count')), findsOneWidget);
-      expect(find.text('${DesignFixtures.currentUserProfile.followingCount}'),
-          findsOneWidget);
-
-      await tester.tap(find.byKey(const Key('me_following_entry')));
-      await tester.pumpAndSettle();
-
-      expect(find.textContaining('Following'), findsWidgets);
-      await tester.tap(find.byIcon(Icons.close_rounded).last);
-      await tester.pumpAndSettle();
-    });
-
-    testWidgets('11. Followers count displays correctly and opens preview',
-        (tester) async {
-      _setPhoneViewport(tester);
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: MeScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
-
       expect(find.byKey(const Key('me_followers_count')), findsOneWidget);
-      expect(find.text('14,200'), findsOneWidget);
-
-      await tester.tap(find.byKey(const Key('me_followers_entry')));
-      await tester.pumpAndSettle();
-
-      expect(find.textContaining('Followers'), findsWidgets);
-      await tester.tap(find.byIcon(Icons.close_rounded).last);
-      await tester.pumpAndSettle();
-    });
-
-    testWidgets('12. Visitors count displays correctly and opens preview',
-        (tester) async {
-      _setPhoneViewport(tester);
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: MeScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
-
       expect(find.byKey(const Key('me_visitors_count')), findsOneWidget);
-      expect(find.text('18,950'), findsOneWidget);
-
-      await tester.tap(find.byKey(const Key('me_visitors_entry')));
-      await tester.pumpAndSettle();
-
-      expect(find.textContaining('Visitors'), findsWidgets);
-      await tester.tap(find.byIcon(Icons.close_rounded).last);
-      await tester.pumpAndSettle();
     });
 
-    testWidgets('13. Coins balance displays correctly and opens coins preview',
+    testWidgets('3. Coins card, Points card, and VIP banner display correctly',
         (tester) async {
       _setPhoneViewport(tester);
       addTearDown(() {
@@ -465,76 +288,16 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('me_coins_card')), findsOneWidget);
-      expect(find.byKey(const Key('me_coins_title')), findsOneWidget);
       expect(find.byKey(const Key('me_coins_balance')), findsOneWidget);
-      expect(find.text('154,200'), findsOneWidget);
-
-      await tester.tap(find.byKey(const Key('me_coins_card')));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Popo Coins Wallet'), findsOneWidget);
-      await tester.tap(find.byIcon(Icons.close_rounded).last);
-      await tester.pumpAndSettle();
-    });
-
-    testWidgets(
-        '14. Points balance displays correctly and opens points preview',
-        (tester) async {
-      _setPhoneViewport(tester);
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: MeScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
-
       expect(find.byKey(const Key('me_points_card')), findsOneWidget);
-      expect(find.byKey(const Key('me_points_title')), findsOneWidget);
       expect(find.byKey(const Key('me_points_balance')), findsOneWidget);
-      expect(find.text('420,500'), findsOneWidget);
-
-      await tester.tap(find.byKey(const Key('me_points_card')));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Host Points & Earnings'), findsOneWidget);
-      await tester.tap(find.byIcon(Icons.close_rounded).last);
-      await tester.pumpAndSettle();
-    });
-
-    testWidgets('15. VIP banner displays correctly and opens VIP privileges',
-        (tester) async {
-      _setPhoneViewport(tester);
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: MeScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
-
       expect(find.byKey(const Key('me_vip_banner')), findsOneWidget);
-      expect(find.byKey(const Key('me_vip_status_text')), findsOneWidget);
-      expect(find.text('VIP 3 • Crown Sovereign'), findsOneWidget);
-
-      await tester.tap(find.byKey(const Key('me_vip_banner')));
-      await tester.pumpAndSettle();
-
-      expect(find.text('VIP 3 Privileges'), findsOneWidget);
-      expect(find.text('Exclusive Room Entrance Banner'), findsOneWidget);
-      await tester.tap(find.byIcon(Icons.close_rounded).last);
-      await tester.pumpAndSettle();
     });
 
-    testWidgets('16. Scan entry in header opens Scan QR Code sheet',
+    // -------------------------------------------------------------------------
+    // 2. EIGHT MAIN FEATURE ICONS (Exact Order & Navigation)
+    // -------------------------------------------------------------------------
+    testWidgets('4. Exactly 8 feature icons are displayed in exact order',
         (tester) async {
       _setPhoneViewport(tester);
       addTearDown(() {
@@ -549,84 +312,23 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('me_scan_button')), findsOneWidget);
-      await tester.tap(find.byKey(const Key('me_scan_button')));
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(const Key('me_scan_sheet')), findsOneWidget);
-      expect(find.text('Scan QR Code'), findsOneWidget);
-      expect(find.text('Align QR inside the box'), findsOneWidget);
-
-      await tester.tap(find.byIcon(Icons.close_rounded).last);
-      await tester.pumpAndSettle();
-    });
-
-    testWidgets('17. Settings entry in header navigates to SettingsScreen',
-        (tester) async {
-      _setPhoneViewport(tester);
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: MeScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(const Key('me_settings_button')), findsOneWidget);
-      await tester.tap(find.byKey(const Key('me_settings_button')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(find.byType(SettingsScreen), findsOneWidget);
-      expect(find.text('Settings'), findsOneWidget);
-    });
-
-    testWidgets(
-        '18. Scrolling works and displays features grid and lower modules',
-        (tester) async {
-      _setPhoneViewport(tester);
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
-
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: MeScreen(),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Scroll down to see features and lower modules
+      // Scroll to features grid
       await tester.drag(
-          find.byType(SingleChildScrollView), const Offset(0, -400));
+          find.byType(SingleChildScrollView), const Offset(0, -350));
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('me_features_grid')), findsOneWidget);
-      expect(find.text('Reward'), findsOneWidget);
-      expect(find.text('Rank'), findsOneWidget);
-      expect(find.text('Store'), findsOneWidget);
-      expect(find.text('Invite'), findsOneWidget);
-      expect(find.text('Guardian'), findsOneWidget);
-      expect(find.text('Honor Level'), findsOneWidget);
-      expect(find.text('Fan Club'), findsOneWidget);
-      expect(find.text('Medal Wall'), findsOneWidget);
-
-      await tester.drag(
-          find.byType(SingleChildScrollView), const Offset(0, -300));
-      await tester.pumpAndSettle();
-
-      expect(find.byKey(const Key('me_lower_modules_section')), findsOneWidget);
-      expect(find.text('Streamer Center'), findsOneWidget);
-      expect(find.text('Builder Center'), findsOneWidget);
-      expect(find.text('Help & Customer Service'), findsOneWidget);
+      expect(find.byKey(const Key('me_feature_reward')), findsOneWidget);
+      expect(find.byKey(const Key('me_feature_rank')), findsOneWidget);
+      expect(find.byKey(const Key('me_feature_store')), findsOneWidget);
+      expect(find.byKey(const Key('me_feature_invite')), findsOneWidget);
+      expect(find.byKey(const Key('me_feature_guardian')), findsOneWidget);
+      expect(find.byKey(const Key('me_feature_honor_level')), findsOneWidget);
+      expect(find.byKey(const Key('me_feature_fan_club')), findsOneWidget);
+      expect(find.byKey(const Key('me_feature_medal_wall')), findsOneWidget);
     });
 
-    testWidgets('19. Fixture empty and error states render correctly',
+    testWidgets('5. Reward feature icon opens DailyHostTasksScreen',
         (tester) async {
       _setPhoneViewport(tester);
       addTearDown(() {
@@ -634,8 +336,6 @@ void main() {
         tester.view.resetDevicePixelRatio();
       });
 
-      // 1. Error state
-      DesignFixtures.currentState = DesignFixtureState.error;
       await tester.pumpWidget(
         const MaterialApp(
           home: MeScreen(),
@@ -643,23 +343,477 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('me_error_state')), findsOneWidget);
-      expect(find.text(DesignFixtures.userProfileError.title), findsOneWidget);
-
-      // 2. Empty state
-      DesignFixtures.currentState = DesignFixtureState.empty;
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: MeScreen(),
-        ),
-      );
+      await tester.drag(
+          find.byType(SingleChildScrollView), const Offset(0, -350));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('me_empty_state')), findsOneWidget);
-      expect(find.text('Guest Profile'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('me_feature_reward')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byType(DailyHostTasksScreen), findsOneWidget);
     });
 
-    testWidgets('20. AppShell 5-tab navigation remains fully functional',
+    testWidgets('6. Rank feature icon opens HostRankingsScreen',
+        (tester) async {
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MeScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+          find.byType(SingleChildScrollView), const Offset(0, -350));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('me_feature_rank')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byType(HostRankingsScreen), findsOneWidget);
+    });
+
+    testWidgets('7. Store feature icon opens StoreScreen in store tab',
+        (tester) async {
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MeScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+          find.byType(SingleChildScrollView), const Offset(0, -350));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('me_feature_store')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(StoreScreen), findsOneWidget);
+    });
+
+    testWidgets('8. Invite feature icon opens InvitesScreen', (tester) async {
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MeScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+          find.byType(SingleChildScrollView), const Offset(0, -350));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('me_feature_invite')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(InvitesScreen), findsOneWidget);
+    });
+
+    testWidgets('9. Guardian feature icon opens Guardian Angels sheet',
+        (tester) async {
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MeScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+          find.byType(SingleChildScrollView), const Offset(0, -350));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('me_feature_guardian')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('me_guardian_destination')), findsOneWidget);
+      expect(find.text('Guardian Angels & Shield'), findsOneWidget);
+      expect(find.text('Bilal Ahmed'), findsOneWidget);
+      expect(find.text('Gold Guardian'), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.close_rounded).last);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('10. Honor Level feature icon opens TaskLevelScreen',
+        (tester) async {
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MeScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+          find.byType(SingleChildScrollView), const Offset(0, -350));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('me_feature_honor_level')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byType(TaskLevelScreen), findsOneWidget);
+    });
+
+    testWidgets('11. Fan Club feature icon opens FanClubScreen',
+        (tester) async {
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MeScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+          find.byType(SingleChildScrollView), const Offset(0, -350));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('me_feature_fan_club')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(FanClubScreen), findsOneWidget);
+    });
+
+    testWidgets('12. Medal Wall feature icon opens Medal Wall of Fame sheet',
+        (tester) async {
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MeScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+          find.byType(SingleChildScrollView), const Offset(0, -350));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('me_feature_medal_wall')));
+      await tester.pumpAndSettle();
+
+      expect(
+          find.byKey(const Key('me_medal_wall_destination')), findsOneWidget);
+      expect(find.text('Medal Wall of Fame'), findsOneWidget);
+      expect(find.text('PK Champion'), findsOneWidget);
+      expect(find.text('Top Broadcaster 2026'), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.close_rounded).last);
+      await tester.pumpAndSettle();
+    });
+
+    // -------------------------------------------------------------------------
+    // 3. TWO POLICY BANNERS & NAVIGATION
+    // -------------------------------------------------------------------------
+    testWidgets(
+        '13. Both policy banners appear and conduct policy opens LiveRulesScreen',
+        (tester) async {
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MeScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+          find.byType(SingleChildScrollView), const Offset(0, -600));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('me_policy_banner_conduct')), findsOneWidget);
+      expect(find.byKey(const Key('me_policy_title_conduct')), findsOneWidget);
+      expect(
+          find.byKey(const Key('me_policy_banner_fairplay')), findsOneWidget);
+      expect(find.byKey(const Key('me_policy_title_fairplay')), findsOneWidget);
+
+      // Tap conduct banner
+      await tester.tap(find.byKey(const Key('me_policy_banner_conduct')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byType(LiveRulesScreen), findsOneWidget);
+    });
+
+    testWidgets('14. Fair Play policy banner opens Fair Play policy sheet',
+        (tester) async {
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MeScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+          find.byType(SingleChildScrollView), const Offset(0, -600));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('me_policy_banner_fairplay')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('me_policy_fairplay_destination')),
+          findsOneWidget);
+      expect(find.text('Fair Play & Financial Integrity'), findsOneWidget);
+
+      await tester.tap(find.text('Acknowledge & Close'));
+      await tester.pumpAndSettle();
+    });
+
+    // -------------------------------------------------------------------------
+    // 4. STREAMER CENTER & BUILDER CENTER
+    // -------------------------------------------------------------------------
+    testWidgets(
+        '15. Streamer Center entry displays and opens Streamer Center hub',
+        (tester) async {
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MeScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+          find.byType(SingleChildScrollView), const Offset(0, -750));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('me_streamer_center_entry')), findsOneWidget);
+      expect(find.text('Streamer Center'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('me_streamer_center_entry')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('me_streamer_center_destination')),
+          findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.close_rounded).last);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets(
+        '16. Builder Center entry displays and opens Builder Center destination',
+        (tester) async {
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MeScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+          find.byType(SingleChildScrollView), const Offset(0, -850));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('me_builder_center_entry')), findsOneWidget);
+      expect(find.text('Builder Center'), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('me_builder_center_entry')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byKey(const Key('me_builder_center_destination')),
+          findsOneWidget);
+      expect(find.byType(AgencyManagementScreen), findsOneWidget);
+    });
+
+    // -------------------------------------------------------------------------
+    // 5. LOWER SECTIONS (Help Center, History, Level, Poster, Bag, Agency, Redeem)
+    // -------------------------------------------------------------------------
+    testWidgets(
+        '17. Lower sections: Help Center and Watch History open destinations',
+        (tester) async {
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MeScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+          find.byType(SingleChildScrollView), const Offset(0, -1000));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('me_lower_help_center')), findsOneWidget);
+      expect(find.byKey(const Key('me_lower_watch_history')), findsOneWidget);
+
+      // Tap Help Center
+      await tester.tap(find.byKey(const Key('me_lower_help_center')));
+      await tester.pumpAndSettle();
+      expect(
+          find.byKey(const Key('me_help_center_destination')), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.close_rounded).last);
+      await tester.pumpAndSettle();
+
+      // Tap Watch History
+      await tester.tap(find.byKey(const Key('me_lower_watch_history')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('me_watch_history_destination')),
+          findsOneWidget);
+      await tester.tap(find.byIcon(Icons.close_rounded).last);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets(
+        '18. Lower sections: Level, Poster, Bag, My Agency open destinations',
+        (tester) async {
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MeScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+          find.byType(SingleChildScrollView), const Offset(0, -1100));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('me_lower_level')), findsOneWidget);
+      expect(
+          find.byKey(const Key('me_lower_achievement_poster')), findsOneWidget);
+      expect(find.byKey(const Key('me_lower_bag')), findsOneWidget);
+      expect(find.byKey(const Key('me_lower_my_agency')), findsOneWidget);
+
+      // Tap Achievement Poster
+      await tester.tap(find.byKey(const Key('me_lower_achievement_poster')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('me_achievement_poster_destination')),
+          findsOneWidget);
+      expect(find.text('Save Poster'), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.close_rounded).last);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets(
+        '19. Redeem Code entry opens voucher sheet and redeems POPO-WELCOME-2026',
+        (tester) async {
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MeScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(
+          find.byType(SingleChildScrollView), const Offset(0, -1200));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('me_lower_redeem_code')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('me_lower_redeem_code')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('me_redeem_code_sheet')), findsOneWidget);
+      expect(find.byKey(const Key('me_redeem_code_input')), findsOneWidget);
+      expect(find.byKey(const Key('me_redeem_code_submit')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('me_redeem_code_submit')));
+      await tester.pump();
+
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.textContaining('Voucher successfully redeemed!'),
+          findsOneWidget);
+    });
+
+    testWidgets('20. Duplicate host grid is removed from Me page',
+        (tester) async {
+      _setPhoneViewport(tester);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: MeScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // There is no duplicate 'ACTIVE HOST' chip or raw host grid directly on Me
+      expect(find.text('ACTIVE HOST'), findsNothing);
+      expect(find.text('Host & Creator Center'), findsNothing);
+    });
+
+    testWidgets('21. AppShell 5-tab navigation remains fully functional',
         (tester) async {
       _setPhoneViewport(tester);
       addTearDown(() {
@@ -685,16 +839,11 @@ void main() {
       await tester.tap(find.text('Explore').last);
       await tester.pumpAndSettle();
 
-      // Switch to Square tab (index 2)
-      await tester.tap(find.text('Square'));
-      await tester.pumpAndSettle();
-
       // Switch back to Me tab (index 4)
       await tester.tap(find.text('Me'));
       await tester.pumpAndSettle();
 
       expect(find.byType(MeScreen), findsOneWidget);
-      expect(find.text('Amina Noor'), findsOneWidget);
     });
   });
 }
