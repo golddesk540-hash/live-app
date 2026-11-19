@@ -52,6 +52,7 @@ import WebPartyPanel from './WebPartyPanel';
 import WebFollowingPanel from './WebFollowingPanel';
 import WebMessagePanel from './WebMessagePanel';
 import WebProfilePanel from './WebProfilePanel';
+import GoLiveRedirectSheet from './GoLiveRedirectSheet';
 
 export type DiscoveryTab =
   | 'explore'
@@ -96,6 +97,7 @@ export function DiscoveryShell({
   const [searchQuery, setSearchQuery] = useState('');
   const [showAppDownloadModal, setShowAppDownloadModal] = useState(false);
   const [showDesktopModal, setShowDesktopModal] = useState(false);
+  const [showGoLiveSheet, setShowGoLiveSheet] = useState(false);
   const [notificationBellUsers, setNotificationBellUsers] = useState<Record<string, boolean>>({});
 
   // Sync activeTab with pathname and query params
@@ -508,6 +510,7 @@ export function DiscoveryShell({
                 <WebProfilePanel
                   isUr={isUr}
                   onOpenAppModal={() => setShowAppDownloadModal(true)}
+                  onOpenGoLive={() => setShowGoLiveSheet(true)}
                 />
               )}
 
@@ -689,6 +692,13 @@ export function DiscoveryShell({
           </div>
         </div>
       )}
+
+      {/* GO LIVE REDIRECT SHEET */}
+      <GoLiveRedirectSheet
+        isOpen={showGoLiveSheet}
+        onClose={() => setShowGoLiveSheet(false)}
+        isUr={isUr}
+      />
     </div>
   );
 }

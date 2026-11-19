@@ -66,8 +66,6 @@ const nextConfig = {
       // -------------------------------------------------------------
       // 4. SOCIAL AND COMMUNICATION (Mobile-Only -> /download?from=app)
       // -------------------------------------------------------------
-      { source: '/inbox', destination: '/download?from=app', permanent: false },
-      { source: '/inbox/:path*', destination: '/download?from=app', permanent: false },
       { source: '/system-notices', destination: '/download?from=app', permanent: false },
       { source: '/system-notices/:path*', destination: '/download?from=app', permanent: false },
       { source: '/notifications', destination: '/download?from=app', permanent: false },

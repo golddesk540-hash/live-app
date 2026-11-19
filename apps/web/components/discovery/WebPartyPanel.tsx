@@ -28,6 +28,7 @@ import {
   FixturePartySeat,
   FixtureLiveChatMessage,
 } from '@/lib/design/designFixtures';
+import PartySeatRedirectSheet from './PartySeatRedirectSheet';
 import {
   COUNTRIES_LIST,
   POPULAR_COUNTRY_SHORTCUTS,
@@ -59,6 +60,8 @@ export const WebPartyPanel: React.FC<WebPartyPanelProps> = ({
   const [chatMessages, setChatMessages] = useState<FixtureLiveChatMessage[]>([]);
   const [chatInputText, setChatInputText] = useState('');
   const [selectedSeat, setSelectedSeat] = useState<FixturePartySeat | null>(null);
+  const [showSeatRedirect, setShowSeatRedirect] = useState(false);
+  const [redirectSeatIndex, setRedirectSeatIndex] = useState<number>(6);
 
   // Create Room Modal State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -123,12 +126,10 @@ export const WebPartyPanel: React.FC<WebPartyPanelProps> = ({
     setSelectedSeat(null);
   };
 
-  const handleToggleSeatRequest = () => {
-    if (seatRequestStatus === 'none') {
-      setSeatRequestStatus('pending');
-    } else {
-      setSeatRequestStatus('none');
-    }
+  const handleToggleSeatRequest = (seatIdx?: number) => {
+    const targetIdx = seatIdx || activeRoom?.seats.find((s) => !s.isOccupied)?.index || 6;
+    setRedirectSeatIndex(targetIdx);
+    setShowSeatRedirect(true);
   };
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -259,7 +260,7 @@ export const WebPartyPanel: React.FC<WebPartyPanelProps> = ({
             {/* Seat Request Action Button */}
             <button
               type="button"
-              onClick={handleToggleSeatRequest}
+              onClick={() => handleToggleSeatRequest()}
               className={`px-4 py-2 rounded-xl text-xs font-extrabold shadow-xs transition-all flex items-center gap-1.5 ${
                 seatRequestStatus === 'pending'
                   ? 'bg-amber-100 text-amber-900 border border-amber-300'
@@ -342,7 +343,7 @@ export const WebPartyPanel: React.FC<WebPartyPanelProps> = ({
                         if (isOccupied) {
                           setSelectedSeat(seat);
                         } else {
-                          handleToggleSeatRequest();
+                          handleToggleSeatRequest(seat.index);
                         }
                       }}
                       className={`relative flex flex-col items-center justify-center p-3 sm:p-4 rounded-2xl transition-all cursor-pointer ${
@@ -521,6 +522,15 @@ export const WebPartyPanel: React.FC<WebPartyPanelProps> = ({
             </form>
           </div>
         </div>
+
+        {/* PARTY SEAT REDIRECT SHEET */}
+        <PartySeatRedirectSheet
+          isOpen={showSeatRedirect}
+          seatIndex={redirectSeatIndex}
+          roomTitle={activeRoom.title}
+          onClose={() => setShowSeatRedirect(false)}
+          isUr={isUr}
+        />
       </div>
     );
   }
