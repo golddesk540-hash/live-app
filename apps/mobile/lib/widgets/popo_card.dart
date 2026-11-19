@@ -77,7 +77,13 @@ class PopoCard extends StatelessWidget {
             ),
         ],
       ),
-      child: ClipRRect(borderRadius: effectiveBorderRadius, child: cardContent),
+      child: ClipRRect(
+        borderRadius: effectiveBorderRadius,
+        child: Material(
+          color: Colors.transparent,
+          child: cardContent,
+        ),
+      ),
     );
   }
 }
