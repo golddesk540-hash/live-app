@@ -1,12 +1,23 @@
-import React from 'react';
+import React, { Suspense } from 'react';
+import { DiscoveryShell } from '@/components/discovery/DiscoveryShell';
+import { Loader2 } from 'lucide-react';
 import type { Metadata } from 'next';
-import { InboxScreen } from '@/components/inbox/InboxScreen';
 
 export const metadata: Metadata = {
-  title: 'Inbox — Popo Live',
-  description: 'Popo Live Inbox: direct chats, contacts, and message requests.',
+  title: 'Messages & Chat Inbox | Popo Live',
+  description: 'Popo Live Messages: direct chats, system notices, and follower notifications.',
 };
 
 export default function InboxPage() {
-  return <InboxScreen />;
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center text-gray-900">
+          <Loader2 className="w-8 h-8 animate-spin text-[#FF1A6C]" />
+        </div>
+      }
+    >
+      <DiscoveryShell initialTab="message" />
+    </Suspense>
+  );
 }

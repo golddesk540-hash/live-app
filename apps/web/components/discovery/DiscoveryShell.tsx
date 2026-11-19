@@ -48,6 +48,10 @@ import DiscoveryBannerCarousel from './DiscoveryBannerCarousel';
 import RankDoorSection from './RankDoorSection';
 import RankingPreviewSection from './RankingPreviewSection';
 import LiveRoomCard from './LiveRoomCard';
+import WebPartyPanel from './WebPartyPanel';
+import WebFollowingPanel from './WebFollowingPanel';
+import WebMessagePanel from './WebMessagePanel';
+import WebProfilePanel from './WebProfilePanel';
 
 export type DiscoveryTab =
   | 'explore'
@@ -102,7 +106,7 @@ export function DiscoveryShell({
       setActiveTab('message');
     } else if (pathname.includes('/profile')) {
       setActiveTab('profile');
-    } else if (pathname.includes('/live/following') || searchParams.get('tab') === 'following') {
+    } else if (pathname.includes('/following') || pathname.includes('/live/following') || searchParams.get('tab') === 'following') {
       setActiveTab('following');
     } else if (pathname.includes('/live/new') || searchParams.get('tab') === 'new') {
       setActiveTab('new');
@@ -420,182 +424,25 @@ export function DiscoveryShell({
               )}
 
               {/* ========================================================================= */}
-              {/* TAB 2: PARTY DISCOVERY PANEL */}
+              {/* TAB 2: PARTY DISCOVERY & 9-SEAT VOICE LOUNGES PANEL */}
               {/* ========================================================================= */}
               {activeTab === 'party' && (
-                <div className="space-y-6 animate-in fade-in duration-150">
-                  {/* Party Header Banner */}
-                  <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-purple-50 via-pink-50 to-amber-50 border border-purple-100 flex items-center justify-between gap-4 shadow-xs">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Users className="w-5 h-5 text-purple-600" />
-                        <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">
-                          {isUr ? '9 سیٹ پارٹی لاؤنجز' : '9-Seat Party Lounges'}
-                        </h2>
-                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700">
-                          {filteredPartyRooms.length} Rooms
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-600 max-w-md">
-                        {isUr
-                          ? 'دوستوں کے ساتھ آڈیو رومز میں شامل ہوں، گانے سنیں اور بات چیت کریں'
-                          : 'Join themed audio lounges, hang out with creators, and share real-time voice moments.'}
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowAppDownloadModal(true)}
-                      className="px-4 py-2 rounded-xl bg-[#FF1A6C] hover:bg-[#e0125c] text-white text-xs font-bold shadow-xs transition-colors shrink-0 flex items-center gap-1.5"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>{isUr ? 'روم بنائیں' : 'Create Room'}</span>
-                    </button>
-                  </div>
-
-                  {/* 6 Fixture Party Rooms */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {filteredPartyRooms.map((room) => {
-                      const occupiedSeats = room.seats.filter((s) => s.isOccupied).length;
-                      return (
-                        <div
-                          key={room.id}
-                          className="p-4 rounded-2xl bg-white border border-gray-200 hover:border-pink-300 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-3.5"
-                        >
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={room.coverUrl}
-                              alt={room.title}
-                              className="w-14 h-14 rounded-2xl object-cover border border-gray-200/80 shrink-0"
-                            />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between">
-                                <h3 className="text-sm font-bold text-gray-900 truncate">
-                                  {room.title}
-                                </h3>
-                                <span className="text-xs">{room.flagEmoji}</span>
-                              </div>
-                              <p className="text-xs text-gray-500 truncate">
-                                Host: {room.hostNickname}
-                              </p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
-                                  {occupiedSeats} / 9 Seats
-                                </span>
-                                <span className="text-[10px] text-gray-400">
-                                  {room.category}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Seats Avatars Preview */}
-                          <div className="flex items-center justify-between pt-2 border-t border-gray-100 text-xs">
-                            <div className="flex -space-x-1.5 overflow-hidden">
-                              {room.seats
-                                .filter((s) => s.isOccupied && s.avatarUrl)
-                                .slice(0, 5)
-                                .map((seat, i) => (
-                                  <img
-                                    key={i}
-                                    src={seat.avatarUrl || ''}
-                                    alt="Seat"
-                                    className="w-6 h-6 rounded-full object-cover ring-2 ring-white"
-                                  />
-                                ))}
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => setShowAppDownloadModal(true)}
-                              className="px-3 py-1 rounded-xl bg-pink-50 hover:bg-pink-100 text-[#FF1A6C] text-xs font-bold border border-pink-200/80 transition-colors"
-                            >
-                              Join Seat
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                <WebPartyPanel
+                  isUr={isUr}
+                  onOpenAppModal={() => setShowAppDownloadModal(true)}
+                />
               )}
 
               {/* ========================================================================= */}
               {/* TAB 3: FOLLOWING BROADCASTERS PANEL */}
               {/* ========================================================================= */}
               {activeTab === 'following' && (
-                <div className="space-y-4 max-w-3xl mx-auto animate-in fade-in duration-150">
-                  <div className="flex items-center justify-between pb-2 border-b border-gray-200/80">
-                    <div className="flex items-center gap-2">
-                      <Heart className="w-4 h-4 text-[#FF1A6C] fill-current" />
-                      <h2 className="text-sm sm:text-base font-extrabold text-gray-900 tracking-tight">
-                        {isUr ? 'فالو کردہ براڈکاسٹرز' : 'Followed Broadcasters'}
-                      </h2>
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-pink-100 text-[#FF1A6C]">
-                        {followedUsers.length}
-                      </span>
-                    </div>
-
-                    <span className="text-xs text-gray-400">
-                      {isUr ? 'آن لائن الرٹس آن ہیں' : 'Live push alerts enabled'}
-                    </span>
-                  </div>
-
-                  <div className="divide-y divide-gray-100 bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
-                    {followedUsers.map((user) => {
-                      const isBellActive = notificationBellUsers[user.userId] ?? true;
-                      return (
-                        <div
-                          key={user.userId}
-                          className="flex items-center justify-between p-3.5 sm:p-4 hover:bg-gray-50/80 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="relative">
-                              <img
-                                src={user.avatarUrl}
-                                alt={user.nickname}
-                                className="w-12 h-12 rounded-full object-cover ring-2 ring-[#FF1A6C]/40"
-                              />
-                              {user.isOnline && (
-                                <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white" />
-                              )}
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-bold text-gray-900">
-                                {user.nickname}
-                              </h3>
-                              <p className="text-xs text-gray-500">
-                                {user.isOnline ? '🔴 Live Now' : 'Offline'} · {user.mutualCount} mutual
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleToggleBell(user.userId)}
-                              className={`p-2 rounded-full transition-colors ${
-                                isBellActive
-                                  ? 'bg-pink-50 text-[#FF1A6C]'
-                                  : 'bg-gray-100 text-gray-400 hover:text-gray-700'
-                              }`}
-                              title="Toggle live notification alert"
-                            >
-                              <Bell className="w-4 h-4" />
-                            </button>
-
-                            <Link
-                              href="/live"
-                              className="px-3.5 py-1.5 rounded-xl bg-gray-900 hover:bg-black text-white text-xs font-bold transition-all"
-                            >
-                              Watch
-                            </Link>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                <WebFollowingPanel
+                  isUr={isUr}
+                  onOpenMessage={() => {
+                    setActiveTab('message');
+                  }}
+                />
               )}
 
               {/* ========================================================================= */}
@@ -631,12 +478,13 @@ export function DiscoveryShell({
                           </div>
                         </div>
 
-                        <Link
-                          href="/profile"
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab('profile')}
                           className="w-full py-1.5 text-center rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold transition-colors"
                         >
                           View Profile
-                        </Link>
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -644,61 +492,23 @@ export function DiscoveryShell({
               )}
 
               {/* ========================================================================= */}
-              {/* TAB 5: MESSAGE (INBOX SHORTCUT CONTAINER) */}
+              {/* TAB 5: MESSAGE (COMPLETE INBOX & CHAT THREADS) */}
               {/* ========================================================================= */}
               {activeTab === 'message' && (
-                <div className="p-8 max-w-2xl mx-auto rounded-3xl bg-white border border-gray-200 shadow-xs space-y-4 text-center animate-in fade-in duration-150">
-                  <div className="w-14 h-14 rounded-2xl bg-pink-50 border border-pink-200 flex items-center justify-center mx-auto text-[#FF1A6C]">
-                    <MessageSquare className="w-7 h-7" />
-                  </div>
-                  <div className="space-y-1">
-                    <h2 className="text-base font-extrabold text-gray-900">
-                      {isUr ? 'پیغامات اور چیٹ ان باکس' : 'Message & Chat Inbox'}
-                    </h2>
-                    <p className="text-xs text-gray-500 max-w-md mx-auto">
-                      {isUr
-                        ? 'اپنے پیغامات، فالوورز کی اطلاعات اور سسٹم نوٹس دیکھیں'
-                        : 'View direct message conversations, system notices, and official announcements.'}
-                    </p>
-                  </div>
-                  <Link
-                    href="/inbox"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#FF1A6C] hover:bg-[#e0125c] text-white text-xs font-bold shadow-xs transition-colors"
-                  >
-                    <span>{isUr ? 'مکمل ان باکس کھولیں' : 'Open Full Inbox'}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
+                <WebMessagePanel
+                  isUr={isUr}
+                  onOpenLiveRoom={(roomId) => router.push(`/live/room/${roomId}`)}
+                />
               )}
 
               {/* ========================================================================= */}
-              {/* TAB 6: PROFILE (ME SHORTCUT CONTAINER) */}
+              {/* TAB 6: PROFILE (COMPLETE ME & CREATOR CENTERS PANEL) */}
               {/* ========================================================================= */}
               {activeTab === 'profile' && (
-                <div className="p-8 max-w-2xl mx-auto rounded-3xl bg-white border border-gray-200 shadow-xs space-y-4 text-center animate-in fade-in duration-150">
-                  <div className="w-16 h-16 rounded-full ring-2 ring-[#FF1A6C] p-0.5 mx-auto">
-                    <img
-                      src={DesignFixtures.currentUserProfile.avatarUrl}
-                      alt={DesignFixtures.currentUserProfile.nickname}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <h2 className="text-base font-extrabold text-gray-900">
-                      {DesignFixtures.currentUserProfile.nickname}
-                    </h2>
-                    <p className="text-xs text-gray-500">
-                      ID: {DesignFixtures.currentUserProfile.poppoId} · VIP {DesignFixtures.currentUserProfile.vipLevel}
-                    </p>
-                  </div>
-                  <Link
-                    href="/profile"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#FF1A6C] hover:bg-[#e0125c] text-white text-xs font-bold shadow-xs transition-colors"
-                  >
-                    <span>{isUr ? 'مکمل پروفائل دیکھیں' : 'View Full Profile & Centers'}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
+                <WebProfilePanel
+                  isUr={isUr}
+                  onOpenAppModal={() => setShowAppDownloadModal(true)}
+                />
               )}
 
               {/* ========================================================================= */}
