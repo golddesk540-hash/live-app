@@ -1,20 +1,16 @@
 import 'package:flutter/material.dart';
 
-import '../../api/api.dart';
-import '../../l10n/strings.dart';
-import '../../models/party/party_models.dart';
+import '../../design/design_fixtures.dart';
 import '../../theme/theme.dart';
-import '../../widgets/widgets.dart';
+import 'party_room_screen.dart';
 
-/// Screen for creating a new 9-seat Party Room
-/// Integrates endpoint: POST /api/party/create
+/// Screen for creating a local 9-seat Party Lounge session
+/// Implements Popo Live Phase 4 (D3) Prompt 1
 class CreatePartyScreen extends StatefulWidget {
-  final List<PartyCategory> categories;
-  final ValueChanged<PartyRoom>? onRoomCreated;
+  final ValueChanged<FixturePartyRoom>? onRoomCreated;
 
   const CreatePartyScreen({
     super.key,
-    this.categories = const [],
     this.onRoomCreated,
   });
 
@@ -23,135 +19,113 @@ class CreatePartyScreen extends StatefulWidget {
 }
 
 class _CreatePartyScreenState extends State<CreatePartyScreen> {
-  final PartyApiService _apiService = PartyApiService();
   final TextEditingController _titleController = TextEditingController();
 
-  List<PartyCategory> _categories = [];
-  String _selectedCategoryId = 'chill_chat';
-  String _selectedRoomType = 'public'; // 'public' or 'private'
+  static const List<Map<String, String>> _categories = [
+    {'name': 'Chill & Chat', 'emoji': '☕'},
+    {'name': 'Music & Singing', 'emoji': '🎸'},
+    {'name': 'Gaming Squad', 'emoji': '🎮'},
+    {'name': 'Poetry Circle', 'emoji': '📖'},
+    {'name': 'Talent Showcase', 'emoji': '🎤'},
+  ];
 
-  bool _isLoadingCategories = false;
-  bool _isSubmitting = false;
-  String? _titleError;
+  String _selectedCategory = 'Chill & Chat';
+  String _selectedPrivacy = 'Public';
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _categories = List.from(widget.categories);
-    if (_categories.isEmpty) {
-      _fetchCategories();
-    } else {
-      _selectedCategoryId = _categories.first.id;
-    }
-    _titleController.addListener(_validateTitle);
+    _titleController.text = 'Late Night Tea & Chai Lounge ☕';
+    _titleController.addListener(_clearError);
   }
 
   @override
   void dispose() {
-    _titleController.removeListener(_validateTitle);
+    _titleController.removeListener(_clearError);
     _titleController.dispose();
     super.dispose();
   }
 
-  Future<void> _fetchCategories() async {
-    setState(() => _isLoadingCategories = true);
-    try {
-      final res = await _apiService.getCategories();
-      if (res.isSuccess && res.data != null) {
-        final data = res.data as Map<String, dynamic>;
-        final rawCats = data['categories'] as List<dynamic>? ?? [];
-        final parsed = rawCats
-            .whereType<Map<String, dynamic>>()
-            .map((c) => PartyCategory.fromJson(c))
-            .toList();
-
-        if (mounted) {
-          setState(() {
-            _categories = parsed;
-            if (_categories.isNotEmpty) {
-              _selectedCategoryId = _categories.first.id;
-            }
-            _isLoadingCategories = false;
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) setState(() => _isLoadingCategories = false);
+  void _clearError() {
+    if (_errorMessage != null) {
+      setState(() => _errorMessage = null);
     }
   }
 
-  void _validateTitle() {
-    final text = _titleController.text.trim();
-    if (text.isEmpty) {
-      setState(() => _titleError = null);
-    } else if (text.length > 50) {
-      setState(
-        () => _titleError = 'Party title must not exceed 50 characters.',
-      );
-    } else {
-      setState(() => _titleError = null);
-    }
-  }
-
-  Future<void> _submitCreateRoom() async {
+  void _handleCreateRoom() {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      setState(() => _titleError = 'Party title cannot be empty.');
+      setState(() {
+        _errorMessage = 'Party title cannot be empty.';
+      });
       return;
     }
     if (title.length > 50) {
-      setState(
-        () => _titleError = 'Party title must not exceed 50 characters.',
-      );
+      setState(() {
+        _errorMessage = 'Party title must not exceed 50 characters.';
+      });
       return;
     }
 
-    if (_isSubmitting) return;
+    final currentUser = DesignFixtures.currentUserProfile;
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final roomNumber = '77${(timestamp % 9000) + 1000}';
 
-    setState(() => _isSubmitting = true);
+    // Exactly 9 seats: Seat 1 is occupied by the host (current user), seats 2..9 are vacant
+    final seats = <FixturePartySeat>[
+      FixturePartySeat(
+        index: 1,
+        userId: currentUser.userId,
+        nickname: currentUser.nickname,
+        avatarUrl: currentUser.avatarUrl,
+        isHost: true,
+        isMuted: false,
+        isSpeaking: false,
+        giftPoints: 0,
+        isOccupied: true,
+        isLocked: false,
+        canJoin: false,
+        joinRequestStatus: 'accepted',
+      ),
+      for (int i = 2; i <= 9; i++) FixturePartySeat.empty(i),
+    ];
 
-    try {
-      final res = await _apiService.createPartyRoom(
-        title: title,
-        categoryId: _selectedCategoryId,
-        roomType: _selectedRoomType,
-      );
+    final createdRoom = FixturePartyRoom(
+      id: 'party_local_$timestamp',
+      roomNumber: roomNumber,
+      title: title,
+      hostNickname: currentUser.nickname,
+      hostAvatar: currentUser.avatarUrl,
+      hostUserId: currentUser.userId,
+      coverUrl:
+          'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=500',
+      category: _selectedCategory,
+      country: 'Pakistan',
+      countryCode: 'PK',
+      flagEmoji: '🇵🇰',
+      viewerCount: 1,
+      maxSeats: 9,
+      occupiedSeatCount: 1,
+      joinStatus: 'open',
+      seats: seats,
+    );
 
-      if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Party lounge created successfully! 🎙️'),
+        backgroundColor: Color(0xFF00C853),
+        duration: Duration(seconds: 2),
+      ),
+    );
 
-      if (res.isSuccess && res.data != null) {
-        final data = res.data as Map<String, dynamic>;
-        final partyData = data['party'] as Map<String, dynamic>? ?? data;
-        final createdRoom = PartyRoom.fromJson(partyData);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Party room created successfully! 🎉'),
-            backgroundColor: Color(0xFF00C853),
-            duration: Duration(seconds: 2),
-          ),
-        );
-
-        Navigator.pop(context);
-        widget.onRoomCreated?.call(createdRoom);
-      } else {
-        setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              res.errorMessage ?? 'Failed to create party room. Try again.',
-            ),
-            backgroundColor: PopoTheme.primary,
-          ),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isSubmitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error creating party room: $e'),
-          backgroundColor: PopoTheme.primary,
+    if (widget.onRoomCreated != null) {
+      Navigator.of(context).pop();
+      widget.onRoomCreated!(createdRoom);
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => PartyRoomScreen(room: createdRoom),
         ),
       );
     }
@@ -165,19 +139,17 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
         backgroundColor: PopoTheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Colors.white,
-            size: 20,
-          ),
-          onPressed: () => Navigator.pop(context),
+          key: const Key('create_party_back_button'),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(
-          Strings.get(context, 'create_party_title'),
-          style: const TextStyle(
+        title: const Text(
+          'Create 9-Seat Party Lounge',
+          style: TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.bold,
             fontSize: 18,
+            fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
@@ -188,364 +160,390 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header Banner
-              _buildHeaderBanner(),
-              const SizedBox(height: 24),
-
-              // Room Title Field
-              _buildTitleSection(),
-              const SizedBox(height: 24),
-
-              // Category Selection Section
-              _buildCategorySection(),
-              const SizedBox(height: 24),
-
-              // Room Type Selection (Public vs Private)
-              _buildRoomTypeSection(),
-              const SizedBox(height: 36),
-
-              // Submit Action Button
-              _buildSubmitButton(),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeaderBanner() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: PopoTheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: PopoTheme.borderSubtle),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: PopoTheme.primary.withOpacity(0.15),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.weekend_rounded,
-              color: PopoTheme.primary,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Host a 9-Seat Party',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+              // Hero Lounge Banner
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF3B1E4A), Color(0xFF1E1E2E)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Seat 1 is reserved for you as host. 8 open seats for your guests & fans.',
-                  style: const TextStyle(
-                    color: PopoTheme.textSecondary,
-                    fontSize: 12,
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTitleSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              Strings.get(context, 'party_title_label'),
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
-            Text(
-              '${_titleController.text.length} / 50',
-              style: TextStyle(
-                color: _titleController.text.length > 50
-                    ? PopoTheme.primary
-                    : PopoTheme.textSecondary,
-                fontSize: 11,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _titleController,
-          maxLength: 50,
-          style: const TextStyle(color: Colors.white, fontSize: 14),
-          decoration: InputDecoration(
-            counterText: '',
-            hintText: Strings.get(context, 'party_title_hint'),
-            hintStyle: const TextStyle(
-              color: PopoTheme.textSecondary,
-              fontSize: 13,
-            ),
-            filled: true,
-            fillColor: PopoTheme.surface,
-            errorText: _titleError,
-            errorStyle: const TextStyle(color: PopoTheme.primary, fontSize: 12),
-            prefixIcon: const Icon(
-              Icons.edit_note_rounded,
-              color: PopoTheme.primary,
-              size: 22,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: PopoTheme.borderSubtle),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: PopoTheme.borderSubtle),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: PopoTheme.primary,
-                width: 1.5,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategorySection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          Strings.get(context, 'select_category'),
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
-        const SizedBox(height: 10),
-        if (_isLoadingCategories)
-          const Center(
-            child: PopoLoadingIndicator(color: PopoTheme.primary, size: 24),
-          )
-        else
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _categories.map((cat) {
-              final isSelected = _selectedCategoryId == cat.id;
-              return ChoiceChip(
-                label: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(cat.icon ?? '✨', style: const TextStyle(fontSize: 13)),
-                    const SizedBox(width: 6),
-                    Text(cat.name),
-                  ],
-                ),
-                selected: isSelected,
-                selectedColor: PopoTheme.primary,
-                backgroundColor: PopoTheme.surface,
-                labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : PopoTheme.textSecondary,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  fontSize: 12,
-                ),
-                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(
-                    color: isSelected
-                        ? PopoTheme.primary
-                        : PopoTheme.borderSubtle,
+                  border: Border.all(
+                    color: const Color(0xFFFF9800).withOpacity(0.3),
+                    width: 1,
                   ),
                 ),
-                onSelected: (selected) {
-                  if (selected) {
-                    setState(() => _selectedCategoryId = cat.id);
-                  }
-                },
-              );
-            }).toList(),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildRoomTypeSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Room Access & Privacy',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: _buildRoomTypeOption(
-                type: 'public',
-                title: Strings.get(context, 'room_type_public'),
-                description: 'Open to everyone in discovery feed',
-                icon: Icons.public_rounded,
-                accentColor: PopoTheme.cyan,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildRoomTypeOption(
-                type: 'private',
-                title: Strings.get(context, 'room_type_private'),
-                description: 'Locked / Invitation only',
-                icon: Icons.lock_rounded,
-                accentColor: PopoTheme.gold,
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRoomTypeOption({
-    required String type,
-    required String title,
-    required String description,
-    required IconData icon,
-    required Color accentColor,
-  }) {
-    final isSelected = _selectedRoomType == type;
-
-    return GestureDetector(
-      onTap: () => setState(() => _selectedRoomType = type),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? accentColor.withOpacity(0.12) : PopoTheme.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected ? accentColor : PopoTheme.borderSubtle,
-            width: isSelected ? 1.5 : 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(
-                  icon,
-                  color: isSelected ? accentColor : PopoTheme.textSecondary,
-                  size: 20,
-                ),
-                if (isSelected)
-                  Icon(
-                    Icons.check_circle_rounded,
-                    color: accentColor,
-                    size: 16,
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: TextStyle(
-                color: isSelected ? Colors.white : PopoTheme.textSecondary,
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              description,
-              style: const TextStyle(
-                color: PopoTheme.textSecondary,
-                fontSize: 10,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSubmitButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          padding: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        onPressed: _isSubmitting ? null : _submitCreateRoom,
-        child: Ink(
-          decoration: BoxDecoration(
-            gradient: _isSubmitting ? null : PopoTheme.primaryGradient,
-            color: _isSubmitting ? PopoTheme.surface : null,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            alignment: Alignment.center,
-            child: _isSubmitting
-                ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF9800).withOpacity(0.4),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
                         Icons.celebration_rounded,
                         color: Colors.white,
-                        size: 20,
+                        size: 26,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        Strings.get(context, 'create_party_room'),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Host Your 9-Seat Audio Lounge',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Broadcast voice, take callers on 8 guest microphones, and share audio gifts.',
+                            style: TextStyle(
+                              color: PopoTheme.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Title Input
+              const Text(
+                'Party Lounge Title',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                key: const Key('create_party_title_input'),
+                controller: _titleController,
+                maxLength: 50,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Enter a catchy title for your party...',
+                  hintStyle: const TextStyle(color: Colors.white38),
+                  filled: true,
+                  fillColor: PopoTheme.surface,
+                  errorText: _errorMessage,
+                  errorStyle: const TextStyle(color: PopoTheme.primary),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: PopoTheme.borderSubtle),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: Color(0xFFFF9800), width: 1.5),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: PopoTheme.borderSubtle),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Category Selector
+              const Text(
+                'Select Category',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _categories.map((cat) {
+                  final isSelected = _selectedCategory == cat['name'];
+                  return ChoiceChip(
+                    key: Key(
+                        'create_party_category_${cat['name']!.replaceAll(' ', '_')}'),
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(cat['emoji']!,
+                            style: const TextStyle(fontSize: 13)),
+                        const SizedBox(width: 6),
+                        Text(cat['name']!),
+                      ],
+                    ),
+                    selected: isSelected,
+                    selectedColor: const Color(0xFFFF9800),
+                    backgroundColor: PopoTheme.surface,
+                    labelStyle: TextStyle(
+                      color:
+                          isSelected ? Colors.white : PopoTheme.textSecondary,
+                      fontSize: 12,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.w500,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      side: BorderSide(
+                        color: isSelected
+                            ? Colors.transparent
+                            : PopoTheme.borderSubtle,
+                      ),
+                    ),
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() => _selectedCategory = cat['name']!);
+                      }
+                    },
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Seat Architecture Card
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: PopoTheme.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: PopoTheme.borderSubtle, width: 1),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: PopoTheme.cyan.withOpacity(0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.airline_seat_recline_normal_rounded,
+                        color: PopoTheme.cyan,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Standard 9-Seat Audio Lounge',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Seat 1: Host • Seats 2–9: Open Guest Caller Slots',
+                            style: TextStyle(
+                              color: PopoTheme.textSecondary,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: PopoTheme.cyan.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        '9 SEATS',
+                        style: TextStyle(
+                          color: PopoTheme.cyan,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Privacy Setting
+              const Text(
+                'Lounge Visibility',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setState(() => _selectedPrivacy = 'Public'),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _selectedPrivacy == 'Public'
+                              ? PopoTheme.primary.withOpacity(0.15)
+                              : PopoTheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _selectedPrivacy == 'Public'
+                                ? PopoTheme.primary
+                                : PopoTheme.borderSubtle,
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.public_rounded,
+                              size: 16,
+                              color: _selectedPrivacy == 'Public'
+                                  ? PopoTheme.primary
+                                  : PopoTheme.textSecondary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Public Party',
+                              style: TextStyle(
+                                color: _selectedPrivacy == 'Public'
+                                    ? Colors.white
+                                    : PopoTheme.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setState(() => _selectedPrivacy = 'Private'),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _selectedPrivacy == 'Private'
+                              ? PopoTheme.primary.withOpacity(0.15)
+                              : PopoTheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _selectedPrivacy == 'Private'
+                                ? PopoTheme.primary
+                                : PopoTheme.borderSubtle,
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.lock_rounded,
+                              size: 16,
+                              color: _selectedPrivacy == 'Private'
+                                  ? PopoTheme.primary
+                                  : PopoTheme.textSecondary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Private Party',
+                              style: TextStyle(
+                                color: _selectedPrivacy == 'Private'
+                                    ? Colors.white
+                                    : PopoTheme.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 36),
+
+              // Confirm Button
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF9800).withOpacity(0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
+                  child: ElevatedButton(
+                    key: const Key('confirm_create_party_button'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                    ),
+                    onPressed: _handleCreateRoom,
+                    child: const Text(
+                      'START PARTY LOUNGE',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

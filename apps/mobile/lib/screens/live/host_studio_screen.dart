@@ -668,8 +668,8 @@ class _HostStudioScreenState extends State<HostStudioScreen>
   }
 
   Widget _buildLiveChatList() {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxHeight: 180),
+    return SizedBox(
+      height: 180,
       child: ListView.separated(
         key: const Key('studio_chat_list'),
         controller: _chatScrollController,

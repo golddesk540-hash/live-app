@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 
-import '../../api/api.dart';
+import '../../design/design_fixtures.dart';
 import '../../l10n/strings.dart';
-import '../../models/party/party_models.dart';
 import '../../theme/theme.dart';
 import '../../widgets/widgets.dart';
 import 'create_party_screen.dart';
 import 'party_room_screen.dart';
 
 /// 9-Seat Party Room Discovery Screen (Tab 1 of App Shell)
-/// Connects to verified Next.js backend endpoints:
-/// - GET /api/discovery/party
-/// - GET /api/party/categories
+/// Implements Popo Live Complete Product Design v1.1 - Phase 4 (D3)
+///
+/// Features:
+/// - Following & Party 2-tab navigation
+/// - Horizontal country filtering chips (ALL, PK, AE, GB, TR)
+/// - Exactly 6 fixture party rooms with 9-seat faces and occupancy metrics
+/// - Prominent orange PARTY button opening local Create Party interface
+/// - Error, empty, and filled design state support
 class PartyDiscoveryScreen extends StatefulWidget {
   const PartyDiscoveryScreen({super.key});
 
@@ -19,125 +23,51 @@ class PartyDiscoveryScreen extends StatefulWidget {
   State<PartyDiscoveryScreen> createState() => _PartyDiscoveryScreenState();
 }
 
-class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen> {
-  final PartyApiService _apiService = PartyApiService();
+class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+  String _selectedCountryCode = 'ALL';
 
-  List<PartyCategory> _categories = [];
-  String _selectedCategoryId = 'all';
-
-  List<PartyRoom> _rooms = [];
-  bool _isLoading = true;
-  String? _errorMessage;
-
-  final TextEditingController _searchController = TextEditingController();
+  static const List<Map<String, String>> _countryChips = [
+    {'code': 'ALL', 'label': 'All', 'emoji': '🌍'},
+    {'code': 'PK', 'label': 'Pakistan', 'emoji': '🇵🇰'},
+    {'code': 'AE', 'label': 'UAE', 'emoji': '🇦🇪'},
+    {'code': 'GB', 'label': 'UK', 'emoji': '🇬🇧'},
+    {'code': 'TR', 'label': 'Turkey', 'emoji': '🇹🇷'},
+  ];
 
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
+    _tabController = TabController(length: 2, vsync: this, initialIndex: 1);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {});
+      }
+    });
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadInitialData() async {
-    await Future.wait([_fetchCategories(), _fetchRooms()]);
-  }
-
-  Future<void> _fetchCategories() async {
-    try {
-      final res = await _apiService.getCategories();
-      if (res.isSuccess && res.data != null) {
-        final data = res.data as Map<String, dynamic>;
-        final rawCats = data['categories'] as List<dynamic>? ?? [];
-        if (mounted) {
-          setState(() {
-            _categories = rawCats
-                .whereType<Map<String, dynamic>>()
-                .map((c) => PartyCategory.fromJson(c))
-                .toList();
-          });
-        }
-      }
-    } catch (e) {
-      debugPrint('[PartyDiscoveryScreen] Error loading categories: $e');
-    }
-  }
-
-  Future<void> _fetchRooms() async {
+  void _onCountrySelected(String code) {
+    if (_selectedCountryCode == code) return;
     setState(() {
-      _isLoading = true;
-      _errorMessage = null;
+      _selectedCountryCode = code;
     });
-
-    try {
-      final categoryParam = _selectedCategoryId == 'all'
-          ? null
-          : _selectedCategoryId;
-      final searchParam = _searchController.text.trim().isEmpty
-          ? null
-          : _searchController.text.trim();
-
-      final res = await _apiService.getPartyRooms(
-        category: categoryParam,
-        search: searchParam,
-      );
-
-      if (!mounted) return;
-
-      if (res.isSuccess && res.data != null) {
-        final data = res.data as Map<String, dynamic>;
-        final rawRooms = data['rooms'] as List<dynamic>? ?? [];
-        setState(() {
-          _rooms = rawRooms
-              .whereType<Map<String, dynamic>>()
-              .map((r) => PartyRoom.fromJson(r))
-              .toList();
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _errorMessage =
-              res.errorMessage ?? Strings.get(context, 'error_unknown');
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _errorMessage = 'Error loading party rooms: $e';
-        _isLoading = false;
-      });
-    }
   }
 
-  void _onCategorySelected(String categoryId) {
-    if (_selectedCategoryId == categoryId) return;
-    setState(() {
-      _selectedCategoryId = categoryId;
-    });
-    _fetchRooms();
-  }
-
-  void _navigateToCreateRoom() {
-    Navigator.push(
-      context,
+  void _openCreatePartyScreen() {
+    Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => CreatePartyScreen(
-          categories: _categories,
-          onRoomCreated: (PartyRoom newRoom) {
-            _fetchRooms();
-            Navigator.push(
-              context,
+          onRoomCreated: (newRoom) {
+            Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => PartyRoomScreen(
-                  roomId: newRoom.roomNumber.isNotEmpty
-                      ? newRoom.roomNumber
-                      : newRoom.id,
-                ),
+                builder: (_) => PartyRoomScreen(room: newRoom),
               ),
             );
           },
@@ -146,86 +76,133 @@ class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen> {
     );
   }
 
-  void _navigateToRoom(PartyRoom room) {
-    final roomId = room.roomNumber.isNotEmpty ? room.roomNumber : room.id;
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => PartyRoomScreen(roomId: roomId)),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: PopoTheme.background,
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _loadInitialData,
-          color: PopoTheme.primary,
-          backgroundColor: PopoTheme.surface,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              // Top Bar with Title, Language Switcher & Create Button
-              SliverToBoxAdapter(child: _buildHeader()),
-
-              // Category Filter Chips
-              SliverToBoxAdapter(child: _buildCategoryBar()),
-
-              // Room Grid or Loading / Error / Empty states
-              _buildContentSliver(),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-            ],
-          ),
-        ),
+  void _openPartyRoom(FixturePartyRoom room) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PartyRoomScreen(room: room),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  List<FixturePartyRoom> _getAllRooms() {
+    if (DesignFixtures.isError || DesignFixtures.isEmpty) {
+      return const [];
+    }
+    try {
+      return DesignFixtures.partyRooms;
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  List<FixturePartyRoom> _getFilteredPartyRooms() {
+    final allRooms = _getAllRooms();
+    if (_selectedCountryCode == 'ALL') {
+      return allRooms;
+    }
+    return allRooms
+        .where((r) =>
+            r.countryCode.toUpperCase() == _selectedCountryCode.toUpperCase())
+        .toList();
+  }
+
+  List<FixturePartyRoom> _getFollowingRooms() {
+    final allRooms = _getAllRooms();
+    // Followed hosts in fixture dataset: Amina Noor (party_001), Zainab Khan (party_002), Bilal Ahmed (party_004)
+    return allRooms
+        .where((r) => ['party_001', 'party_002', 'party_004'].contains(r.id))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<String>(
+      valueListenable: PopoStrings.currentLanguage,
+      builder: (context, lang, _) {
+        final isUrdu = lang == 'ur';
+        return Directionality(
+          textDirection: isUrdu ? TextDirection.rtl : TextDirection.ltr,
+          child: Scaffold(
+            backgroundColor: PopoTheme.background,
+            floatingActionButton: _buildOrangePartyButton(),
+            floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  _buildTopHeader(),
+                  _buildTabBar(),
+                  if (_tabController.index == 1) _buildCountryChips(),
+                  Expanded(child: _buildBody()),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTopHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: PopoTheme.primary.withOpacity(0.15),
-                    shape: BoxShape.circle,
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  child: const Icon(
-                    Icons.celebration_rounded,
-                    color: PopoTheme.primary,
-                    size: 20,
-                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF9800).withOpacity(0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
+                child: const Icon(
+                  Icons.celebration_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
                     Strings.get(context, 'party_discovery_title'),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w900,
                       letterSpacing: 0.3,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
-            ),
+                  const Text(
+                    '9-Seat Audio Lounges',
+                    style: TextStyle(
+                      color: PopoTheme.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Row(
+          const Row(
             children: [
-              // Language Switcher
               IconButton(
-                icon: const Icon(
+                key: Key('party_language_button'),
+                icon: Icon(
                   Icons.translate_rounded,
                   color: PopoTheme.cyan,
                   size: 20,
@@ -233,49 +210,6 @@ class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen> {
                 tooltip: 'Switch Language',
                 onPressed: PopoStrings.toggleLanguage,
               ),
-              const SizedBox(width: 4),
-
-              // Create Party Room Button
-              InkWell(
-                onTap: _navigateToCreateRoom,
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: PopoTheme.primaryGradient,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: PopoTheme.primary.withOpacity(0.35),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.add_rounded,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        Strings.get(context, 'create_party_room'),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ],
           ),
         ],
@@ -283,176 +217,300 @@ class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen> {
     );
   }
 
-  Widget _buildCategoryBar() {
+  Widget _buildTabBar() {
     return Container(
-      height: 44,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: [
-          _buildCategoryChip(id: 'all', label: 'All', icon: '🎉'),
-          ..._categories.map((cat) {
-            return _buildCategoryChip(
-              id: cat.id,
-              label: cat.name,
-              icon: cat.icon ?? '✨',
-            );
-          }),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: PopoTheme.surface,
+        borderRadius: BorderRadius.circular(25),
+        border: Border.all(color: PopoTheme.borderSubtle, width: 1),
+      ),
+      child: TabBar(
+        key: const Key('party_tab_bar'),
+        controller: _tabController,
+        indicator: BoxDecoration(
+          color: PopoTheme.primary,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: PopoTheme.primary.withOpacity(0.4),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        labelColor: Colors.white,
+        unselectedLabelColor: PopoTheme.textSecondary,
+        labelStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.3,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        tabs: const [
+          Tab(
+            key: Key('party_tab_following'),
+            text: 'Following',
+          ),
+          Tab(
+            key: Key('party_tab_party'),
+            text: 'Party',
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildCategoryChip({
-    required String id,
-    required String label,
-    required String icon,
-  }) {
-    final isSelected = _selectedCategoryId == id;
+  Widget _buildCountryChips() {
+    return Container(
+      height: 42,
+      margin: const EdgeInsets.only(top: 4, bottom: 8),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _countryChips.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final chip = _countryChips[index];
+          final code = chip['code']!;
+          final isSelected = _selectedCountryCode == code;
 
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: FilterChip(
-        label: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(icon, style: const TextStyle(fontSize: 13)),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : PopoTheme.textSecondary,
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+          return InkWell(
+            key: Key('party_country_chip_$code'),
+            onTap: () => _onCountrySelected(code),
+            borderRadius: BorderRadius.circular(20),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                gradient: isSelected ? PopoTheme.primaryGradient : null,
+                color: isSelected ? null : PopoTheme.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color:
+                      isSelected ? Colors.transparent : PopoTheme.borderSubtle,
+                  width: 1,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: PopoTheme.primary.withOpacity(0.35),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        )
+                      ]
+                    : null,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(chip['emoji']!, style: const TextStyle(fontSize: 13)),
+                  const SizedBox(width: 6),
+                  Text(
+                    chip['label']!,
+                    style: TextStyle(
+                      color:
+                          isSelected ? Colors.white : PopoTheme.textSecondary,
+                      fontSize: 12,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-        selected: isSelected,
-        selectedColor: PopoTheme.primary,
-        backgroundColor: PopoTheme.surface,
-        showCheckmark: false,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-          side: BorderSide(
-            color: isSelected ? PopoTheme.primary : PopoTheme.borderSubtle,
-            width: 1,
-          ),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        onSelected: (_) => _onCategorySelected(id),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildContentSliver() {
-    if (_isLoading) {
-      return const SliverFillRemaining(
-        child: Center(
-          child: PopoLoadingIndicator(color: PopoTheme.primary, size: 40),
-        ),
-      );
-    }
-
-    if (_errorMessage != null) {
-      return SliverFillRemaining(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: PopoErrorState(
-              message: _errorMessage!,
-              onRetry: _fetchRooms,
-            ),
+  Widget _buildBody() {
+    // 1. Error state check
+    if (DesignFixtures.isError) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: PopoErrorState(
+            key: const Key('party_error_state'),
+            message:
+                'Failed to connect to party room audio cluster. 9-seat rooms cannot be displayed right now.',
+            onRetry: () => setState(() {}),
           ),
         ),
       );
     }
 
-    if (_rooms.isEmpty) {
-      return SliverFillRemaining(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: PopoEmptyState(
-              icon: Icons.celebration_outlined,
-              iconColor: PopoTheme.cyan,
-              title: Strings.get(context, 'no_party_rooms'),
-              message:
-                  'Be the first host to start a 9-seat party in this category!',
-            ),
+    // 2. Empty state check
+    if (DesignFixtures.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: PopoEmptyState(
+            key: const Key('party_empty_state'),
+            icon: Icons.celebration_outlined,
+            iconColor: const Color(0xFFFF9800),
+            title: 'No Party Rooms Available',
+            message:
+                'All party lounges are currently quiet. Open a 9-seat room to invite your friends!',
+            actionText: 'Create Party Room',
+            onActionTap: _openCreatePartyScreen,
           ),
         ),
       );
     }
 
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 0.82,
-        ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) => _buildRoomCard(_rooms[index]),
-          childCount: _rooms.length,
-        ),
-      ),
+    return TabBarView(
+      controller: _tabController,
+      children: [
+        _buildFollowingTab(),
+        _buildPartyTab(),
+      ],
     );
   }
 
-  Widget _buildRoomCard(PartyRoom room) {
+  Widget _buildFollowingTab() {
+    final rooms = _getFollowingRooms();
+
+    if (rooms.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: PopoEmptyState(
+            key: const Key('party_empty_following_state'),
+            icon: Icons.people_outline_rounded,
+            iconColor: PopoTheme.cyan,
+            title: 'No Followed Party Lounges',
+            message:
+                'Follow your favorite creator hosts to join their 9-seat audio lounges here!',
+            actionText: 'Explore All Lounges',
+            onActionTap: () => _tabController.animateTo(1),
+          ),
+        ),
+      );
+    }
+
+    return _buildRoomGrid(rooms);
+  }
+
+  Widget _buildPartyTab() {
+    final rooms = _getFilteredPartyRooms();
+
+    if (rooms.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: PopoEmptyState(
+            key: const Key('party_empty_country_state'),
+            icon: Icons.travel_explore_rounded,
+            iconColor: PopoTheme.primary,
+            title: 'No Party Lounges Found',
+            message:
+                'No 9-seat rooms active in this region. Be the first to start a party!',
+            actionText: 'Show All Countries',
+            onActionTap: () => _onCountrySelected('ALL'),
+          ),
+        ),
+      );
+    }
+
+    return _buildRoomGrid(rooms);
+  }
+
+  Widget _buildRoomGrid(List<FixturePartyRoom> rooms) {
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 88),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.72,
+      ),
+      itemCount: rooms.length,
+      itemBuilder: (context, index) {
+        final room = rooms[index];
+        return _buildPartyRoomCard(room);
+      },
+    );
+  }
+
+  Widget _buildPartyRoomCard(FixturePartyRoom room) {
+    final occupiedSeats = room.seats.where((s) => s.isOccupied).toList();
+
     return InkWell(
-      onTap: () => _navigateToRoom(room),
+      key: Key('party_room_card_${room.id}'),
+      onTap: () => _openPartyRoom(room),
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
           color: PopoTheme.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: PopoTheme.borderSubtle, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Artwork Area with Status Pills
+            // Top Cover Area with Badges
             Expanded(
               flex: 5,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Fallback Gradient / Artwork
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [const Color(0xFF2B1F4A), PopoTheme.surface],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                  Image.network(
+                    room.coverUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF2A1B40), Color(0xFF161626)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                       ),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.group_work_rounded,
-                        color: PopoTheme.primary.withOpacity(0.4),
-                        size: 48,
+                      child: const Center(
+                        child: Icon(
+                          Icons.celebration_rounded,
+                          color: Color(0xFFFF9800),
+                          size: 38,
+                        ),
                       ),
                     ),
                   ),
-
-                  // Top Overlay Badges
+                  // Dark Vignette Gradient
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.black.withOpacity(0.55),
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.75),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                  // Top Left: LIVE AUDIO badge
                   Positioned(
                     top: 8,
                     left: 8,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
+                          horizontal: 6, vertical: 2.5),
                       decoration: BoxDecoration(
-                        color: PopoTheme.primary,
-                        borderRadius: BorderRadius.circular(6),
+                        gradient: PopoTheme.primaryGradient,
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -460,36 +518,34 @@ class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen> {
                           Icon(
                             Icons.fiber_manual_record_rounded,
                             color: Colors.white,
-                            size: 8,
+                            size: 7,
                           ),
                           SizedBox(width: 4),
                           Text(
-                            'LIVE',
+                            'LIVE AUDIO',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 9,
                               fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ),
-
-                  // 9-Seats Pill
+                  // Top Right: 9-Seat Occupancy Pill
                   Positioned(
                     top: 8,
                     right: 8,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
+                          horizontal: 6, vertical: 2.5),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.65),
-                        borderRadius: BorderRadius.circular(6),
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: PopoTheme.cyan.withOpacity(0.6),
+                          color: const Color(0xFFFF9800).withOpacity(0.8),
                           width: 0.8,
                         ),
                       ),
@@ -497,13 +553,13 @@ class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(
-                            Icons.weekend_rounded,
-                            color: PopoTheme.cyan,
-                            size: 10,
+                            Icons.airline_seat_recline_normal_rounded,
+                            color: Color(0xFFFF9800),
+                            size: 11,
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: 3),
                           Text(
-                            room.seatCountFormatted,
+                            '${room.occupiedSeatCount}/${room.maxSeats} Seats',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 9,
@@ -512,6 +568,84 @@ class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen> {
                           ),
                         ],
                       ),
+                    ),
+                  ),
+                  // Bottom on cover: Seat Face Avatars
+                  Positioned(
+                    bottom: 6,
+                    left: 8,
+                    right: 8,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Seat Faces Row
+                        Row(
+                          children: [
+                            for (int i = 0;
+                                i < occupiedSeats.take(4).length;
+                                i++)
+                              Align(
+                                widthFactor: 0.72,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: i == 0
+                                          ? PopoTheme.gold
+                                          : Colors.white,
+                                      width: 1.2,
+                                    ),
+                                  ),
+                                  child: CircleAvatar(
+                                    radius: 10,
+                                    backgroundImage: NetworkImage(
+                                      occupiedSeats[i].avatarUrl ??
+                                          room.hostAvatar,
+                                    ),
+                                    backgroundColor: const Color(0xFF33334D),
+                                  ),
+                                ),
+                              ),
+                            if (occupiedSeats.length > 4)
+                              Container(
+                                margin: const EdgeInsets.only(left: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 4, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: Colors.black87,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '+${occupiedSeats.length - 4}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        // Viewer Count
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.remove_red_eye_rounded,
+                              color: Colors.white70,
+                              size: 11,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${room.viewerCount}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -522,72 +656,60 @@ class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen> {
             Expanded(
               flex: 4,
               child: Padding(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Title
+                    // Room Title
                     Text(
                       room.title,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.bold,
+                        height: 1.2,
                       ),
                     ),
 
-                    // Category & Room Type tag
+                    // Status Line / Category Tag
                     Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 5,
-                            vertical: 1.5,
-                          ),
+                              horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(
-                            color: PopoTheme.primary.withOpacity(0.12),
+                            color: const Color(0xFFFF9800).withOpacity(0.15),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             room.category,
                             style: const TextStyle(
-                              color: PopoTheme.primary,
+                              color: Color(0xFFFF9800),
                               fontSize: 9,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                        if (room.isPrivate) ...[
-                          const SizedBox(width: 4),
-                          const Icon(
-                            Icons.lock_rounded,
-                            color: PopoTheme.gold,
-                            size: 10,
-                          ),
-                        ],
+                        const SizedBox(width: 4),
+                        Text(
+                          room.flagEmoji,
+                          style: const TextStyle(fontSize: 11),
+                        ),
                       ],
                     ),
 
                     // Host Row
                     Row(
                       children: [
-                        Container(
-                          width: 18,
-                          height: 18,
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Color(0xFF33334D),
-                          ),
-                          child: const Icon(
-                            Icons.person_rounded,
-                            color: Colors.white70,
-                            size: 12,
-                          ),
+                        CircleAvatar(
+                          radius: 8,
+                          backgroundImage: NetworkImage(room.hostAvatar),
+                          backgroundColor: const Color(0xFF33334D),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 5),
                         Expanded(
                           child: Text(
                             room.hostNickname,
@@ -596,6 +718,7 @@ class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen> {
                             style: const TextStyle(
                               color: PopoTheme.textSecondary,
                               fontSize: 11,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
@@ -606,6 +729,57 @@ class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrangePartyButton() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF9800).withOpacity(0.45),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          key: const Key('orange_party_button'),
+          onTap: _openCreatePartyScreen,
+          borderRadius: BorderRadius.circular(30),
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.celebration_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  'PARTY',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

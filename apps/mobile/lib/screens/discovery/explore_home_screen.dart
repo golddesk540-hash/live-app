@@ -209,6 +209,7 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
                     ),
                   ),
                   child: TabBar(
+                    key: const Key('explore_tab_bar'),
                     controller: _tabController,
                     isScrollable: false,
                     indicatorColor: PopoTheme.primary,

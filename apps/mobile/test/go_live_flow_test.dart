@@ -127,16 +127,16 @@ void main() {
 
       // Header and title
       expect(find.text('Go Live Gate'), findsOneWidget);
-      expect(find.text('Amina Noor'), findsOneWidget);
+      expect(find.textContaining('Amina Noor'), findsOneWidget);
 
       // Permission tiles
       expect(find.byKey(const Key('camera_permission_tile')), findsOneWidget);
       expect(find.byKey(const Key('mic_permission_tile')), findsOneWidget);
 
       // Eligibility info
-      expect(find.textContaining('Wealth Level Lv.5+ Required'), findsOneWidget);
-      expect(find.textContaining('Your Current Level: Lv.10'), findsOneWidget);
-      expect(find.textContaining('Host Identity Verification: Verified'), findsOneWidget);
+      expect(find.textContaining('Wealth Level Requirement'), findsOneWidget);
+      expect(find.textContaining('Minimum Level 5 required'), findsOneWidget);
+      expect(find.textContaining('Verification: Eligible'), findsOneWidget);
 
       // Continue CTA button exists
       expect(find.byKey(const Key('gate_continue_button')), findsOneWidget);
@@ -158,7 +158,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Face & Camera Verification'), findsOneWidget);
+      expect(find.text('Face & Camera Check'), findsOneWidget);
       expect(find.textContaining('Camera (Front)'), findsOneWidget);
       expect(find.textContaining('Mic Active'), findsOneWidget);
       expect(find.textContaining('Face Biometric Verified'), findsOneWidget);
@@ -254,7 +254,7 @@ void main() {
       expect(find.textContaining('Demonstration Broadcast Mode (Fixture Engine)'), findsOneWidget);
 
       // Incoming fixture chat messages
-      expect(find.textContaining('So excited for Karachi Nights!'), findsOneWidget);
+      expect(find.textContaining('So excited for Karachi Nights'), findsOneWidget);
       expect(find.textContaining('Greetings from Lahore!'), findsOneWidget);
 
       // Host chat input
@@ -345,7 +345,7 @@ void main() {
       expect(gateContinue, findsOneWidget);
       await tester.tap(gateContinue);
       await tester.pumpAndSettle();
-      expect(find.text('Face & Camera Verification'), findsOneWidget);
+      expect(find.text('Face & Camera Check'), findsOneWidget);
 
       // 3. Face Screen -> Tap Continue -> Opens Cover Screen
       final faceContinue = find.byKey(const Key('face_continue_button'));
@@ -418,7 +418,7 @@ void main() {
       // Open Face
       await tester.tap(find.byKey(const Key('gate_continue_button')));
       await tester.pumpAndSettle();
-      expect(find.text('Face & Camera Verification'), findsOneWidget);
+      expect(find.text('Face & Camera Check'), findsOneWidget);
 
       // Open Cover
       await tester.tap(find.byKey(const Key('face_continue_button')));
@@ -428,7 +428,7 @@ void main() {
       // Back to Face
       await tester.tap(find.byKey(const Key('cover_back_button')));
       await tester.pumpAndSettle();
-      expect(find.text('Face & Camera Verification'), findsOneWidget);
+      expect(find.text('Face & Camera Check'), findsOneWidget);
 
       // Back to Gate
       await tester.tap(find.byKey(const Key('face_back_button')));

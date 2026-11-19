@@ -247,11 +247,13 @@ class _PkBattleTypeScreenState extends State<PkBattleTypeScreen> {
                           Icon(Icons.flash_on_rounded,
                               color: PopoTheme.gold, size: 16),
                           SizedBox(width: 6),
-                          Text(
-                            'Live dynamic score bar & interactive cheering',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
+                          Expanded(
+                            child: Text(
+                              'Live dynamic score bar & interactive cheering',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         ],
