@@ -4,10 +4,10 @@ import '../api_response.dart';
 
 /// Central API Service for Push Notifications (FCM / APNs)
 /// Implements Popo Live Phase 8 (P8-P8) Device Token Registration & Push Preferences
-class PushNotificationService {
+class PushNotificationApiService {
   final ApiClient _client;
 
-  PushNotificationService({ApiClient? client}) : _client = client ?? ApiClient.instance;
+  PushNotificationApiService({ApiClient? client}) : _client = client ?? ApiClient.instance;
 
   /// Registers an active FCM or APNs device push token on user login
   Future<ApiResponse<dynamic>> registerDeviceToken({
