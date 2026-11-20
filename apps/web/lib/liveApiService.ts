@@ -17,11 +17,22 @@ export interface ViewerSessionResult {
   sessionId?: string;
 }
 
+/**
+ * Module-level feature flag controlling whether Web Live Streaming components
+ * read from the live backend database (true) or design fixtures (false).
+ * Configured via NEXT_PUBLIC_USE_LIVE_API (defaults to true in Phase 7).
+ */
+export const USE_LIVE_API: boolean = process.env.NEXT_PUBLIC_USE_LIVE_API !== 'false';
+
 export class LiveApiService {
   /**
    * Fetch active live rooms from backend database with fallback to design fixtures
    */
   static async getLiveRooms(params: LiveRoomFilterParams = {}): Promise<FixtureLiveRoom[]> {
+    if (!USE_LIVE_API) {
+      return DesignFixtures.liveRooms;
+    }
+
     try {
       const searchParams = new URLSearchParams();
       if (params.country && params.country !== 'ALL') searchParams.set('country', params.country);
@@ -75,6 +86,10 @@ export class LiveApiService {
    * Fetch specific live room details by ID
    */
   static async getRoomDetails(roomId: string): Promise<FixtureLiveRoom | null> {
+    if (!USE_LIVE_API) {
+      return null;
+    }
+
     try {
       const res = await fetch(`/api/live/rooms/${roomId}`, {
         method: 'GET',

@@ -23,6 +23,11 @@ class ApiConfig {
   static const Duration connectTimeout = Duration(seconds: 15);
   static const Duration receiveTimeout = Duration(seconds: 15);
 
+  /// Module-level feature flag controlling whether the Live Streaming screens
+  /// read from the live backend database (true) or design fixtures (false).
+  /// Preserves full design fixture compatibility when disabled.
+  static bool useLiveApi = const bool.fromEnvironment('USE_LIVE_API', defaultValue: false);
+
   /// Application version header for backend analytics
   static const String appVersion = '1.0.0';
 
