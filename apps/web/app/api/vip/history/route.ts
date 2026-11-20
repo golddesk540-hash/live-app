@@ -1,44 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getVipMembershipHistory, resolveVipTargetUser } from '@/lib/vip';
-import { vipErrorJson } from '@/lib/vipRouteHelpers';
+import { getAuthenticatedUser } from '@/lib/auth';
+import { getVipHistory } from '@/lib/vipApiService';
 import { resolveWalletActor } from '@/lib/walletAuth';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * GET /api/vip/history
+ * PART 4 & Test 5: Returns VIP subscription history for the authenticated user.
+ */
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = req.nextUrl;
-    const isPreviewDemo = searchParams.get('preview') === 'demo';
-    const actor = await resolveWalletActor(req);
-    const target = resolveVipTargetUser(actor, searchParams.get('userId'), isPreviewDemo);
-    if (!target.allowed) {
+    let user = await getAuthenticatedUser(req);
+    let targetUserId = user?.id;
+
+    if (!targetUserId) {
+      // Fallback for wallet actor if present
+      const actor = await resolveWalletActor(req).catch(() => null);
+      if (actor && actor.user && actor.user.id) {
+        targetUserId = actor.user.id;
+      }
+    }
+
+    if (!targetUserId) {
       return NextResponse.json(
-        { success: false, errorCode: target.errorCode, error: target.error },
-        { status: target.statusCode }
+        { success: false, error: 'Authentication required to view VIP history.', code: 'UNAUTHORIZED' },
+        { status: 401 }
       );
     }
 
-    const page = parseInt(searchParams.get('page') || '1', 10) || 1;
-    const limit = parseInt(searchParams.get('limit') || '20', 10) || 20;
-    const statusFilter = searchParams.get('status') || 'all';
-
-    const history = await getVipMembershipHistory({
-      actor,
-      userId: target.userId,
-      statusFilter,
-      page,
-      limit,
-      isPreviewDemo,
-    });
+    const history = await getVipHistory(targetUserId);
 
     return NextResponse.json({
       success: true,
-      module: '7.7',
-      userId: target.userId,
-      ...history,
+      userId: targetUserId,
+      history,
+      records: history,
+      total: history.length,
     });
   } catch (err: any) {
     console.error('GET /api/vip/history error:', err);
-    return vipErrorJson(err, 'Failed to load VIP membership history.');
+    return NextResponse.json(
+      { success: false, error: err.message || 'Failed to retrieve VIP history.' },
+      { status: 500 }
+    );
   }
 }

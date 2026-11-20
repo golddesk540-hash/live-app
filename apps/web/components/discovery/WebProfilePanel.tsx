@@ -41,6 +41,7 @@ import {
   FixtureHelpTopic,
   FixtureAgencyMember,
 } from '@/lib/design/designFixtures';
+import { USE_VIP_API } from '@/lib/vipApiService';
 
 export interface WebProfilePanelProps {
   isUr?: boolean;
@@ -100,6 +101,32 @@ export const WebProfilePanel: React.FC<WebProfilePanelProps> = ({
       return 154200;
     }
   });
+
+  const [liveVipLevel, setLiveVipLevel] = useState<number | null>(null);
+  const [liveWealthLevel, setLiveWealthLevel] = useState<number | null>(null);
+  const [liveShiningLevel, setLiveShiningLevel] = useState<number | null>(null);
+
+  React.useEffect(() => {
+    if (!USE_VIP_API) return;
+    fetch('/api/vip/active')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.vip) {
+          setLiveVipLevel(data.vip.vipLevel);
+        }
+      })
+      .catch(() => {});
+
+    fetch(`/api/honor/levels/${user.userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          if (data.wealth) setLiveWealthLevel(data.wealth.level);
+          if (data.shining) setLiveShiningLevel(data.shining.level);
+        }
+      })
+      .catch(() => {});
+  }, [user.userId]);
 
   const wallet = useMemo(() => {
     try {
@@ -244,17 +271,17 @@ export const WebProfilePanel: React.FC<WebProfilePanelProps> = ({
               </h1>
               <span className="text-base">{user.flagEmoji}</span>
               <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-black uppercase tracking-wider shadow-xs">
-                VIP {user.vipLevel}
+                VIP {liveVipLevel !== null ? liveVipLevel : user.vipLevel}
               </span>
             </div>
 
             {/* Badges Row */}
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-xs">
               <span className="px-2.5 py-0.5 rounded-md bg-amber-50 text-amber-800 font-extrabold border border-amber-200 text-[10px]">
-                Wealth Lv. {user.wealthLevel}
+                Wealth Lv. {liveWealthLevel !== null ? liveWealthLevel : user.wealthLevel}
               </span>
               <span className="px-2.5 py-0.5 rounded-md bg-pink-50 text-[#FF1A6C] font-extrabold border border-pink-200 text-[10px]">
-                Shining Lv. {user.hostLevel}
+                Shining Lv. {liveShiningLevel !== null ? liveShiningLevel : user.hostLevel}
               </span>
               <span className="text-[11px] text-gray-400">
                 {user.bio}

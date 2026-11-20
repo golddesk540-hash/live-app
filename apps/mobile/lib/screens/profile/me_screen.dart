@@ -6,6 +6,7 @@ import '../../l10n/strings.dart';
 import '../../design/design_fixtures.dart';
 import '../../api/api_config.dart';
 import '../../api/services/economy_api_service.dart';
+import '../../api/services/vip_api_service.dart';
 import '../../widgets/popo_card.dart';
 import '../../widgets/popo_icon_button.dart';
 import '../../widgets/popo_empty_state.dart';
@@ -37,6 +38,10 @@ class MeScreen extends StatefulWidget {
 class _MeScreenState extends State<MeScreen> {
   int? _liveCoinsBalance;
   int? _livePointsBalance;
+  int? _liveVipLevel;
+  String? _liveVipLabel;
+  int? _liveWealthLevel;
+  int? _liveShiningLevel;
 
   @override
   void initState() {
@@ -44,6 +49,39 @@ class _MeScreenState extends State<MeScreen> {
     if (ApiConfig.useEconomyApi) {
       _loadLiveEconomyBalances();
     }
+    if (ApiConfig.useVipApi) {
+      _loadLiveVipAndHonor();
+    }
+  }
+
+  Future<void> _loadLiveVipAndHonor() async {
+    try {
+      final vipService = VipApiService.instance;
+      final vipRes = await vipService.fetchActiveVip();
+      final honorRes = await vipService.fetchHonorLevels('me');
+
+      if (mounted) {
+        setState(() {
+          if (vipRes.isSuccess && vipRes.data != null) {
+            final vip = vipRes.data!['vip'] as Map<String, dynamic>?;
+            if (vip != null) {
+              _liveVipLevel = (vip['vipLevel'] as num?)?.toInt();
+              _liveVipLabel = vip['badgeLabel']?.toString();
+            }
+          }
+          if (honorRes.isSuccess && honorRes.data != null) {
+            final wealth = honorRes.data!['wealth'] as Map<String, dynamic>?;
+            if (wealth != null) {
+              _liveWealthLevel = (wealth['level'] as num?)?.toInt();
+            }
+            final shining = honorRes.data!['shining'] as Map<String, dynamic>?;
+            if (shining != null) {
+              _liveShiningLevel = (shining['level'] as num?)?.toInt();
+            }
+          }
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadLiveEconomyBalances() async {
@@ -2025,14 +2063,14 @@ class _MeScreenState extends State<MeScreen> {
                         // Wealth Level badge
                         _buildBadge(
                           key: const Key('me_wealth_badge'),
-                          label: 'Lv.${user.wealthLevel}',
+                          label: 'Lv.${(ApiConfig.useVipApi && _liveWealthLevel != null) ? _liveWealthLevel : user.wealthLevel}',
                           color: PopoTheme.gold,
                           icon: Icons.diamond_rounded,
                         ),
                         // Shining Level badge
                         _buildBadge(
                           key: const Key('me_shining_badge'),
-                          label: 'Lv.${user.hostLevel}',
+                          label: 'Lv.${(ApiConfig.useVipApi && _liveShiningLevel != null) ? _liveShiningLevel : user.hostLevel}',
                           color: PopoTheme.primary,
                           icon: Icons.star_rounded,
                         ),
@@ -2109,6 +2147,12 @@ class _MeScreenState extends State<MeScreen> {
 
   // VIP Badge Pill
   Widget _buildVipBadge(FixtureUserProfile user) {
+    final displayLabel = (ApiConfig.useVipApi && _liveVipLabel != null && _liveVipLabel!.isNotEmpty)
+        ? _liveVipLabel!
+        : ((ApiConfig.useVipApi && _liveVipLevel != null)
+            ? 'VIP ${_liveVipLevel!}'
+            : 'VIP ${user.vipLevel}');
+
     return Container(
       key: const Key('me_vip_badge'),
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
@@ -2124,7 +2168,7 @@ class _MeScreenState extends State<MeScreen> {
           const Text('👑', style: TextStyle(fontSize: 10)),
           const SizedBox(width: 3),
           Text(
-            'VIP ${user.vipLevel}',
+            displayLabel,
             style: const TextStyle(
               color: Colors.black,
               fontSize: 10,

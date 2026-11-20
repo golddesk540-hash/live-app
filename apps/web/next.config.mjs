@@ -53,7 +53,6 @@ const nextConfig = {
       { source: '/topup', destination: '/download?from=app', permanent: false },
       { source: '/topup/:path*', destination: '/download?from=app', permanent: false },
       { source: '/vip', destination: '/download?from=app', permanent: false },
-      { source: '/vip/:path*', destination: '/download?from=app', permanent: false },
       { source: '/store', destination: '/download?from=app', permanent: false },
       { source: '/store/:path*', destination: '/download?from=app', permanent: false },
       { source: '/recognition', destination: '/download?from=app', permanent: false },
@@ -164,6 +163,30 @@ const nextConfig = {
       {
         source: '/economy/:path*',
         destination: '/api/economy/:path*',
+      },
+      {
+        source: '/vip/:path*',
+        destination: '/api/vip/:path*',
+      },
+      {
+        source: '/rewards/:path*',
+        destination: '/api/rewards/:path*',
+      },
+      {
+        source: '/rewards',
+        destination: '/api/rewards',
+      },
+      {
+        source: '/rankings/:path*',
+        destination: '/api/rankings/:path*',
+      },
+      {
+        source: '/honor/:path*',
+        destination: '/api/honor/:path*',
+      },
+      {
+        source: '/medals/:path*',
+        destination: '/api/medals/:path*',
       },
     ];
   },

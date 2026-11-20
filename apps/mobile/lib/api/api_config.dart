@@ -43,6 +43,11 @@ class ApiConfig {
   /// Preserves full design fixture compatibility when disabled.
   static bool useEconomyApi = const bool.fromEnvironment('USE_ECONOMY_API', defaultValue: false);
 
+  /// Module-level feature flag controlling whether VIP, Rewards, Rankings, Honor & Medals screens
+  /// read from the live backend database (true) or design fixtures (false).
+  /// Preserves full design fixture compatibility when disabled.
+  static bool useVipApi = const bool.fromEnvironment('USE_VIP_API', defaultValue: false);
+
   /// Application version header for backend analytics
   static const String appVersion = '1.0.0';
 
