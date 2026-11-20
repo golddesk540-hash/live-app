@@ -263,6 +263,10 @@ const nextConfig = {
         source: '/webhooks/payments',
         destination: '/api/webhooks/payments',
       },
+      {
+        source: '/notifications/:path*',
+        destination: '/api/notifications/:path*',
+      },
     ];
   },
 };
