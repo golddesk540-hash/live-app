@@ -54,7 +54,6 @@ const nextConfig = {
       { source: '/topup/:path*', destination: '/download?from=app', permanent: false },
       { source: '/vip', destination: '/download?from=app', permanent: false },
       { source: '/store', destination: '/download?from=app', permanent: false },
-      { source: '/store/:path*', destination: '/download?from=app', permanent: false },
       { source: '/recognition', destination: '/download?from=app', permanent: false },
       { source: '/recognition/:path*', destination: '/download?from=app', permanent: false },
       { source: '/earnings', destination: '/download?from=app', permanent: false },
@@ -187,6 +186,34 @@ const nextConfig = {
       {
         source: '/medals/:path*',
         destination: '/api/medals/:path*',
+      },
+      {
+        source: '/store/categories',
+        destination: '/api/store/categories',
+      },
+      {
+        source: '/store/products',
+        destination: '/api/store/products',
+      },
+      {
+        source: '/store/products/:path*',
+        destination: '/api/store/products/:path*',
+      },
+      {
+        source: '/bag',
+        destination: '/api/bag',
+      },
+      {
+        source: '/bag/:path*',
+        destination: '/api/bag/:path*',
+      },
+      {
+        source: '/redeem/:path*',
+        destination: '/api/redeem/:path*',
+      },
+      {
+        source: '/profile/:userId/equipped',
+        destination: '/api/profile/:userId/equipped',
       },
     ];
   },

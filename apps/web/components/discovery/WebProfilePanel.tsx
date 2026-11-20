@@ -105,6 +105,7 @@ export const WebProfilePanel: React.FC<WebProfilePanelProps> = ({
   const [liveVipLevel, setLiveVipLevel] = useState<number | null>(null);
   const [liveWealthLevel, setLiveWealthLevel] = useState<number | null>(null);
   const [liveShiningLevel, setLiveShiningLevel] = useState<number | null>(null);
+  const [equippedItems, setEquippedItems] = useState<Record<string, any>>({});
 
   React.useEffect(() => {
     if (!USE_VIP_API) return;
@@ -123,6 +124,15 @@ export const WebProfilePanel: React.FC<WebProfilePanelProps> = ({
         if (data.success) {
           if (data.wealth) setLiveWealthLevel(data.wealth.level);
           if (data.shining) setLiveShiningLevel(data.shining.level);
+        }
+      })
+      .catch(() => {});
+
+    fetch(`/api/profile/${user.userId}/equipped`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.equipped) {
+          setEquippedItems(data.equipped);
         }
       })
       .catch(() => {});
@@ -203,9 +213,45 @@ export const WebProfilePanel: React.FC<WebProfilePanelProps> = ({
     }
   };
 
-  const handleRedeemCode = (e: React.FormEvent) => {
+  const handleRedeemCode = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!redeemInput.trim()) return;
+
+    if (process.env.NEXT_PUBLIC_USE_STORE_API !== 'false') {
+      try {
+        const res = await fetch('/api/redeem/redeem', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code: redeemInput.trim() }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setRedeemResult({
+            code: redeemInput.trim(),
+            isValid: true,
+            coinReward: data.coinReward,
+            bonusItem: data.bonusItem,
+            message: data.message || `🎉 Code redeemed: +${data.coinReward.toLocaleString()} Coins!`,
+          });
+          if (data.newBalance !== undefined) {
+            setCoinBalance(data.newBalance);
+          }
+          showToast(`🎉 Code redeemed: +${data.coinReward.toLocaleString()} Coins!`);
+          return;
+        } else {
+          setRedeemResult({
+            code: redeemInput.trim(),
+            isValid: false,
+            coinReward: 0,
+            bonusItem: null,
+            message: data.error || 'Invalid or expired voucher code.',
+          });
+          return;
+        }
+      } catch (err: any) {
+        // Fall back to fixture below if offline
+      }
+    }
 
     try {
       const result = DesignFixtures.redeemCode(redeemInput.trim());

@@ -7,6 +7,7 @@ import '../../design/design_fixtures.dart';
 import '../../api/api_config.dart';
 import '../../api/services/economy_api_service.dart';
 import '../../api/services/vip_api_service.dart';
+import '../../api/services/store_api_service.dart';
 import '../../widgets/popo_card.dart';
 import '../../widgets/popo_icon_button.dart';
 import '../../widgets/popo_empty_state.dart';
@@ -42,6 +43,7 @@ class _MeScreenState extends State<MeScreen> {
   String? _liveVipLabel;
   int? _liveWealthLevel;
   int? _liveShiningLevel;
+  Map<String, dynamic>? _liveEquippedLoadout;
 
   @override
   void initState() {
@@ -52,6 +54,21 @@ class _MeScreenState extends State<MeScreen> {
     if (ApiConfig.useVipApi) {
       _loadLiveVipAndHonor();
     }
+    if (ApiConfig.useStoreApi) {
+      _loadLiveEquippedLoadout();
+    }
+  }
+
+  Future<void> _loadLiveEquippedLoadout() async {
+    try {
+      final storeService = StoreApiService.instance;
+      final res = await storeService.fetchEquippedProfile(DesignFixtures.currentUserProfile.userId);
+      if (res.isSuccess && res.data != null && mounted) {
+        setState(() {
+          _liveEquippedLoadout = res.data['equipped'] as Map<String, dynamic>?;
+        });
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadLiveVipAndHonor() async {
@@ -1949,8 +1966,10 @@ class _MeScreenState extends State<MeScreen> {
               Container(
                 key: const Key('me_avatar'),
                 padding: const EdgeInsets.all(2.5),
-                decoration: const BoxDecoration(
-                  gradient: PopoTheme.goldGradient,
+                decoration: BoxDecoration(
+                  gradient: _liveEquippedLoadout?['profile_frame'] != null
+                      ? const LinearGradient(colors: [Color(0xFFFF2E74), Color(0xFFFF9900), Color(0xFF9D00FF)])
+                      : PopoTheme.goldGradient,
                   shape: BoxShape.circle,
                 ),
                 child: CircleAvatar(
