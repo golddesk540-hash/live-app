@@ -28,6 +28,11 @@ class ApiConfig {
   /// Preserves full design fixture compatibility when disabled.
   static bool useLiveApi = const bool.fromEnvironment('USE_LIVE_API', defaultValue: false);
 
+  /// Module-level feature flag controlling whether Party screens
+  /// read from the live backend database (true) or design fixtures (false).
+  /// Preserves full design fixture compatibility when disabled.
+  static bool usePartyApi = const bool.fromEnvironment('USE_PARTY_API', defaultValue: false);
+
   /// Application version header for backend analytics
   static const String appVersion = '1.0.0';
 

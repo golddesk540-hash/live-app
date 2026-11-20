@@ -119,6 +119,22 @@ const nextConfig = {
       { source: '/settings/blacklist/:path*', destination: '/download?from=app', permanent: false },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: '/party/rooms',
+        destination: '/api/party/rooms',
+      },
+      {
+        source: '/party/rooms/:path*',
+        destination: '/api/party/rooms/:path*',
+      },
+      {
+        source: '/party/categories',
+        destination: '/api/party/categories',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { USE_PARTY_API } from '@/lib/partyApiService';
 import {
   Users,
   Sparkles,
@@ -69,6 +70,66 @@ export const WebPartyPanel: React.FC<WebPartyPanelProps> = ({
   const [newRoomCategory, setNewRoomCategory] = useState('ChitChat');
   const [newRoomNotice, setNewRoomNotice] = useState('');
 
+  // Live Database Rooms via USE_PARTY_API
+  const [apiRooms, setApiRooms] = useState<FixturePartyRoom[] | null>(null);
+
+  useEffect(() => {
+    if (!USE_PARTY_API) return;
+    let isCancelled = false;
+    async function fetchLivePartyRooms() {
+      try {
+        const queryParams = new URLSearchParams({
+          tab: subTab,
+          country: selectedCountry,
+        });
+        const res = await fetch(`/api/party/rooms?${queryParams.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (!isCancelled && data.success && Array.isArray(data.rooms)) {
+            const mapped: FixturePartyRoom[] = data.rooms.map((r: any) => ({
+              id: r.id,
+              roomNumber: r.roomNumber,
+              title: r.title,
+              hostNickname: r.hostNickname,
+              hostAvatar: r.hostAvatar,
+              hostUserId: r.hostUserId || '',
+              coverUrl: r.collageUrl,
+              category: r.category,
+              country: r.country,
+              countryCode: r.countryCode,
+              flagEmoji: r.flagEmoji,
+              viewerCount: r.viewerCount || 0,
+              maxSeats: r.maxSeats || 9,
+              occupiedSeatCount: r.currentMembers || 1,
+              joinStatus: 'open',
+              seats: Array.from({ length: 9 }).map((_, i) => ({
+                index: i + 1,
+                userId: i === 0 ? r.hostUserId : undefined,
+                nickname: i === 0 ? r.hostNickname : undefined,
+                avatarUrl: i === 0 ? r.hostAvatar : (r.seatFaces && r.seatFaces[i] ? r.seatFaces[i] : undefined),
+                isHost: i === 0,
+                isMuted: false,
+                isSpeaking: false,
+                giftPoints: 0,
+                isOccupied: i < (r.currentMembers || 1),
+                isLocked: false,
+                canJoin: i > 0,
+                joinRequestStatus: 'none',
+              })),
+            }));
+            setApiRooms(mapped);
+          }
+        }
+      } catch (err) {
+        console.warn('API party rooms fetch failed, falling back to fixtures:', err);
+      }
+    }
+    fetchLivePartyRooms();
+    return () => {
+      isCancelled = true;
+    };
+  }, [subTab, selectedCountry]);
+
   // Retrieve Party Rooms from DesignFixtures
   const { allPartyRooms, partyError } = useMemo(() => {
     try {
@@ -83,6 +144,9 @@ export const WebPartyPanel: React.FC<WebPartyPanelProps> = ({
 
   // Filter party rooms by tab & country
   const filteredPartyRooms = useMemo(() => {
+    if (USE_PARTY_API && apiRooms !== null) {
+      return apiRooms;
+    }
     return allPartyRooms.filter((room) => {
       const matchesCountry =
         selectedCountry === 'ALL' ||
@@ -91,7 +155,7 @@ export const WebPartyPanel: React.FC<WebPartyPanelProps> = ({
         subTab === 'party' || room.hostNickname === 'Amina Noor'; // Following demo
       return matchesCountry && matchesSubTab;
     });
-  }, [allPartyRooms, selectedCountry, subTab]);
+  }, [allPartyRooms, selectedCountry, subTab, apiRooms]);
 
   // When a room is opened, load its initial chat
   const handleOpenRoom = (room: FixturePartyRoom) => {
@@ -562,7 +626,10 @@ export const WebPartyPanel: React.FC<WebPartyPanelProps> = ({
         {/* PARTY / CREATE ROOM BUTTON */}
         <button
           type="button"
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => {
+            setRedirectSeatIndex(1);
+            setShowSeatRedirect(true);
+          }}
           className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FF1A6C] to-[#E0125C] hover:opacity-95 text-white text-xs font-black tracking-wide shadow-md transition-all flex items-center gap-2 shrink-0 active:scale-95"
           data-testid="party-create-btn"
         >

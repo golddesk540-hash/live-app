@@ -33,10 +33,12 @@ class PartyApiService {
     String? country,
     String? category,
     String? search,
+    String tab = 'party',
   }) async {
     return _client.get(
-      '/api/discovery/party',
+      '/api/party/rooms',
       queryParameters: {
+        'tab': tab,
         if (country != null && country.isNotEmpty && country != 'ALL')
           'country': country,
         if (category != null && category.isNotEmpty && category != 'all')
@@ -56,25 +58,82 @@ class PartyApiService {
     required String title,
     required String categoryId,
     String roomType = 'public',
+    int maxSeats = 9,
   }) async {
     return _client.post(
-      '/api/party/create',
+      '/api/party/rooms',
       body: {
         'title': title.trim(),
         'categoryId': categoryId,
         'roomType': roomType,
+        'maxSeats': maxSeats,
       },
     );
   }
 
   /// Loads details for a specific party room
   Future<ApiResponse<dynamic>> getPartyRoomDetails(String roomId) async {
-    return _client.get('/api/party/$roomId');
+    return _client.get('/api/party/rooms/$roomId');
   }
 
   /// Loads real-time 9-seat occupancy and participant status for a party room
   Future<ApiResponse<dynamic>> getPartySeats(String roomId) async {
-    return _client.get('/api/party/$roomId/seats');
+    return _client.get('/api/party/rooms/$roomId/seats');
+  }
+
+  /// Leaves seat n (self-leave or host-kick)
+  Future<ApiResponse<dynamic>> leaveSeat({
+    required String roomId,
+    required int seatNumber,
+  }) async {
+    return _client.post('/api/party/rooms/$roomId/seats/$seatNumber/leave');
+  }
+
+  /// Toggles microphone for seat n
+  Future<ApiResponse<dynamic>> toggleSeatMic({
+    required String roomId,
+    required int seatNumber,
+  }) async {
+    return _client.post('/api/party/rooms/$roomId/seats/$seatNumber/mic');
+  }
+
+  /// Submits a guest seat join request for Seats 2 to 9
+  Future<ApiResponse<dynamic>> requestPartySeat({
+    required String roomId,
+    int? seatNumber,
+  }) async {
+    return _client.post(
+      '/api/party/rooms/$roomId/requests',
+      body: {
+        if (seatNumber != null) 'seatNumber': seatNumber,
+      },
+    );
+  }
+
+  /// Retrieves pending seat requests for the room (Host only)
+  Future<ApiResponse<dynamic>> getPartyRequests(String roomId) async {
+    return _client.get('/api/party/rooms/$roomId/requests');
+  }
+
+  /// Host accepts a seat request atomically
+  Future<ApiResponse<dynamic>> acceptPartyRequest({
+    required String roomId,
+    required String requestId,
+  }) async {
+    return _client.post('/api/party/rooms/$roomId/requests/$requestId/accept');
+  }
+
+  /// Host rejects a seat request
+  Future<ApiResponse<dynamic>> rejectPartyRequest({
+    required String roomId,
+    required String requestId,
+  }) async {
+    return _client.post('/api/party/rooms/$roomId/requests/$requestId/reject');
+  }
+
+  /// Reads party room chat messages
+  Future<ApiResponse<dynamic>> getPartyChat(String roomId) async {
+    return _client.get('/api/party/rooms/$roomId/chat');
   }
 
   /// Directly occupies a seat (or host takes Seat 1)

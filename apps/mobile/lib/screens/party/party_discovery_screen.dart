@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../api/api_config.dart';
+import '../../api/services/party_api_service.dart';
 import '../../design/design_fixtures.dart';
 import '../../l10n/strings.dart';
 import '../../theme/theme.dart';
@@ -27,6 +29,8 @@ class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   String _selectedCountryCode = 'ALL';
+  List<FixturePartyRoom> _apiRooms = [];
+  bool _isLoadingApi = false;
 
   static const List<Map<String, String>> _countryChips = [
     {'code': 'ALL', 'label': 'All', 'emoji': '🌍'},
@@ -43,8 +47,69 @@ class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen>
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() {});
+        if (ApiConfig.usePartyApi) _fetchLivePartyRooms();
       }
     });
+    if (ApiConfig.usePartyApi) {
+      _fetchLivePartyRooms();
+    }
+  }
+
+  Future<void> _fetchLivePartyRooms() async {
+    setState(() => _isLoadingApi = true);
+    try {
+      final tab = _tabController.index == 0 ? 'following' : 'party';
+      final res = await PartyApiService().getPartyRooms(
+        country: _selectedCountryCode == 'ALL' ? null : _selectedCountryCode,
+        tab: tab,
+      );
+      if (res.isSuccess && res.data != null) {
+        final list = (res.data['rooms'] as List?) ?? [];
+        setState(() {
+          _apiRooms = list.map<FixturePartyRoom>((r) {
+            final occupied = (r['currentMembers'] as num?)?.toInt() ?? 1;
+            final maxS = (r['maxSeats'] as num?)?.toInt() ?? 9;
+            return FixturePartyRoom(
+              id: r['id']?.toString() ?? '',
+              roomNumber: r['roomNumber']?.toString() ?? '',
+              title: r['title']?.toString() ?? 'Party Room',
+              hostNickname: r['hostNickname']?.toString() ?? 'Host',
+              hostAvatar: r['hostAvatar']?.toString() ?? '',
+              hostUserId: r['hostUserId']?.toString() ?? '',
+              coverUrl: r['collageUrl']?.toString() ?? '',
+              category: r['category']?.toString() ?? 'Party',
+              country: r['country']?.toString() ?? 'Pakistan',
+              countryCode: r['countryCode']?.toString() ?? 'PK',
+              flagEmoji: r['flagEmoji']?.toString() ?? '🎉',
+              viewerCount: (r['viewerCount'] as num?)?.toInt() ?? occupied,
+              maxSeats: maxS,
+              occupiedSeatCount: occupied,
+              joinStatus: 'open',
+              seats: List.generate(
+                9,
+                (i) => FixturePartySeat(
+                  index: i + 1,
+                  userId: i == 0 ? r['hostUserId']?.toString() : null,
+                  nickname: i == 0 ? r['hostNickname']?.toString() : null,
+                  avatarUrl: i == 0 ? r['hostAvatar']?.toString() : null,
+                  isHost: i == 0,
+                  isMuted: false,
+                  isSpeaking: false,
+                  giftPoints: 0,
+                  isOccupied: i < occupied,
+                  isLocked: false,
+                  canJoin: i > 0,
+                  joinRequestStatus: 'none',
+                ),
+              ),
+            );
+          }).toList();
+        });
+      }
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _isLoadingApi = false);
+    }
   }
 
   @override
@@ -58,6 +123,9 @@ class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen>
     setState(() {
       _selectedCountryCode = code;
     });
+    if (ApiConfig.usePartyApi) {
+      _fetchLivePartyRooms();
+    }
   }
 
   void _openCreatePartyScreen() {
@@ -85,6 +153,9 @@ class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen>
   }
 
   List<FixturePartyRoom> _getAllRooms() {
+    if (ApiConfig.usePartyApi && _apiRooms.isNotEmpty) {
+      return _apiRooms;
+    }
     if (DesignFixtures.isError || DesignFixtures.isEmpty) {
       return const [];
     }
