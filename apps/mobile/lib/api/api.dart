@@ -19,3 +19,4 @@ export 'services/event_service.dart';
 export 'services/agency_service.dart';
 export 'services/agent_financial_service.dart';
 export 'services/ws_service.dart';
+export 'services/media_stream_service.dart';

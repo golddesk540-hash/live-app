@@ -243,6 +243,14 @@ const nextConfig = {
         source: '/profiles/:path*',
         destination: '/api/profiles/:path*',
       },
+      {
+        source: '/live/rooms/:path*',
+        destination: '/api/live/rooms/:path*',
+      },
+      {
+        source: '/live/stream/:path*',
+        destination: '/api/live/stream/:path*',
+      },
     ];
   },
 };
