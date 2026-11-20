@@ -133,6 +133,34 @@ const nextConfig = {
         source: '/party/categories',
         destination: '/api/party/categories',
       },
+      {
+        source: '/message/conversations/:path*',
+        destination: '/api/message/conversations/:path*',
+      },
+      {
+        source: '/message/conversations',
+        destination: '/api/message/conversations',
+      },
+      {
+        source: '/message/official/:path*',
+        destination: '/api/message/official/:path*',
+      },
+      {
+        source: '/message/official',
+        destination: '/api/message/official',
+      },
+      {
+        source: '/message/unread-count',
+        destination: '/api/message/unread-count',
+      },
+      {
+        source: '/message/search',
+        destination: '/api/message/search',
+      },
+      {
+        source: '/message/users/:path*',
+        destination: '/api/message/users/:path*',
+      },
     ];
   },
 };

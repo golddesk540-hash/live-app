@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { USE_MESSAGE_API } from '@/lib/messageApiService';
 import {
   MessageSquare,
   Search,
@@ -69,6 +70,39 @@ export const WebMessagePanel: React.FC<WebMessagePanelProps> = ({
 
   const [chats, setChats] = useState<FixtureChatThread[]>(initialChats);
 
+  // Load conversations from database if USE_MESSAGE_API is enabled
+  useEffect(() => {
+    if (!USE_MESSAGE_API) return;
+    let isCancelled = false;
+    async function loadApiConversations() {
+      try {
+        const res = await fetch('/api/message/conversations');
+        if (res.ok) {
+          const data = await res.json();
+          if (!isCancelled && data.success && Array.isArray(data.conversations)) {
+            const mapped: FixtureChatThread[] = data.conversations.map((c: any) => ({
+              threadId: c.threadId || c.id,
+              peerUserId: c.peerUserId || c.peerId,
+              peerNickname: c.peerNickname,
+              peerAvatar: c.peerAvatar,
+              lastMessage: c.lastMessage || '',
+              lastMessageTime: c.lastMessageTime || '',
+              unreadCount: c.unreadCount || 0,
+              isPinned: Boolean(c.isPinned),
+            }));
+            setChats(mapped);
+          }
+        }
+      } catch (err) {
+        console.warn('API conversations load warning, fallback to fixtures:', err);
+      }
+    }
+    loadApiConversations();
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
   // Local message histories per thread (allows in-state message sending)
   const [threadMessages, setThreadMessages] = useState<Record<string, LocalChatMessage[]>>(() => {
     const map: Record<string, LocalChatMessage[]> = {};
@@ -135,16 +169,63 @@ export const WebMessagePanel: React.FC<WebMessagePanelProps> = ({
   };
 
   // Handle sending a message in the active thread
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!composerText.trim() || !activeThreadId || !currentChat) return;
+
+    const textToSend = composerText.trim();
+    setComposerText('');
+
+    if (USE_MESSAGE_API) {
+      try {
+        const res = await fetch(`/api/message/conversations/${activeThreadId}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: textToSend }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.message) {
+            const apiMsg: LocalChatMessage = {
+              id: data.message.id,
+              senderId: data.message.senderId,
+              senderNickname: data.message.senderNickname || 'Me',
+              senderAvatar: data.message.senderAvatar || '/avatars/default.png',
+              text: data.message.text,
+              timestamp: data.message.timestamp || 'Just now',
+              isMe: true,
+            };
+
+            setThreadMessages((prev) => ({
+              ...prev,
+              [activeThreadId]: [...(prev[activeThreadId] || []), apiMsg],
+            }));
+
+            setChats((prev) =>
+              prev.map((c) =>
+                c.threadId === activeThreadId
+                  ? {
+                      ...c,
+                      lastMessage: textToSend,
+                      lastMessageTime: 'Just now',
+                    }
+                  : c
+              )
+            );
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('API message send failed, fallback to local state:', err);
+      }
+    }
 
     const newMsg: LocalChatMessage = {
       id: `local_${Date.now()}`,
       senderId: DesignFixtures.currentUserProfile.userId,
       senderNickname: DesignFixtures.currentUserProfile.nickname,
       senderAvatar: DesignFixtures.currentUserProfile.avatarUrl,
-      text: composerText.trim(),
+      text: textToSend,
       timestamp: 'Just now',
       isMe: true,
     };
@@ -161,14 +242,12 @@ export const WebMessagePanel: React.FC<WebMessagePanelProps> = ({
         c.threadId === activeThreadId
           ? {
               ...c,
-              lastMessage: composerText.trim(),
+              lastMessage: textToSend,
               lastMessageTime: 'Just now',
             }
           : c
       )
     );
-
-    setComposerText('');
   };
 
   // Handle quick emoji tap

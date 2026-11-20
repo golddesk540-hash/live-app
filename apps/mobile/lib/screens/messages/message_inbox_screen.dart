@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../api/api_config.dart';
 import '../../design/design_fixtures.dart';
 import '../../theme/popo_theme.dart';
 import '../../widgets/popo_empty_state.dart';
@@ -26,6 +27,9 @@ class _MessageInboxScreenState extends State<MessageInboxScreen> {
     super.initState();
     MessageStateManager.instance.resetToFixtures();
     MessageStateManager.instance.addListener(_onStateChange);
+    if (ApiConfig.useMessageApi) {
+      MessageStateManager.instance.fetchLiveInbox();
+    }
   }
 
   @override

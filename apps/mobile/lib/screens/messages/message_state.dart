@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import '../../api/api_config.dart';
+import '../../api/services/message_api_service.dart';
 import '../../design/design_fixtures.dart';
 
 /// Single chat message in a 1:1 conversation
@@ -377,6 +379,99 @@ class MessageStateManager extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  /// Fetches live conversations from database backend when USE_MESSAGE_API is enabled
+  Future<void> fetchLiveInbox() async {
+    if (!ApiConfig.useMessageApi) return;
+    try {
+      final res = await MessageApiService().getConversations();
+      if (res.isSuccess && res.data != null) {
+        final list = (res.data['conversations'] as List?) ?? [];
+        _threads.clear();
+        for (final c in list) {
+          _threads.add(
+            LocalChatThread(
+              threadId: c['threadId']?.toString() ?? c['id']?.toString() ?? '',
+              peerUserId: c['peerUserId']?.toString() ?? c['peerId']?.toString() ?? '',
+              peerNickname: c['peerNickname']?.toString() ?? 'User',
+              peerAvatar: c['peerAvatar']?.toString() ?? '',
+              lastMessage: c['lastMessage']?.toString() ?? '',
+              lastMessageTime: c['lastMessageTime']?.toString() ?? '',
+              unreadCount: (c['unreadCount'] as num?)?.toInt() ?? 0,
+              isOnline: true,
+              messages: [],
+            ),
+          );
+        }
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  /// Fetches live messages for a thread from database backend
+  Future<void> fetchLiveMessages(String threadId) async {
+    if (!ApiConfig.useMessageApi) return;
+    try {
+      final res = await MessageApiService().getMessages(threadId);
+      if (res.isSuccess && res.data != null) {
+        final list = (res.data['messages'] as List?) ?? [];
+        final idx = _threads.indexWhere((t) => t.threadId == threadId);
+        if (idx != -1) {
+          _threads[idx].messages.clear();
+          for (final m in list) {
+            _threads[idx].messages.add(
+              LocalChatMessage(
+                id: m['id']?.toString() ?? '',
+                senderId: m['senderId']?.toString() ?? '',
+                senderName: m['senderNickname']?.toString() ?? '',
+                text: m['text']?.toString() ?? m['content']?.toString() ?? '',
+                timestamp: m['timestamp']?.toString() ?? '',
+                isMine: m['isMe'] == true,
+              ),
+            );
+          }
+          notifyListeners();
+        }
+      }
+    } catch (_) {}
+  }
+
+  /// Sends a message via API or local fallback
+  Future<void> sendLiveMessage(String threadId, String text) async {
+    if (text.trim().isEmpty) return;
+    if (ApiConfig.useMessageApi) {
+      try {
+        final res = await MessageApiService().sendMessage(threadId, text);
+        if (res.isSuccess && res.data != null && res.data['message'] != null) {
+          final m = res.data['message'];
+          final idx = _threads.indexWhere((t) => t.threadId == threadId);
+          if (idx != -1) {
+            final thread = _threads[idx];
+            thread.messages.add(
+              LocalChatMessage(
+                id: m['id']?.toString() ?? '',
+                senderId: m['senderId']?.toString() ?? '',
+                senderName: m['senderNickname']?.toString() ?? '',
+                text: m['text']?.toString() ?? text.trim(),
+                timestamp: m['timestamp']?.toString() ?? 'Just now',
+                isMine: true,
+              ),
+            );
+            thread.lastMessage = text.trim();
+            thread.lastMessageTime = 'Just now';
+            if (idx > 0) {
+              _threads.removeAt(idx);
+              _threads.insert(0, thread);
+            }
+            notifyListeners();
+            return;
+          }
+        }
+      } catch (_) {}
+    }
+    // Fallback to local
+    sendMessage(threadId, text);
   }
 
   /// Marks a thread as read
