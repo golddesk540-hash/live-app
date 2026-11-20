@@ -77,6 +77,7 @@ class ApiConfig {
   static bool useRealPayments = const bool.fromEnvironment('USE_REAL_PAYMENTS', defaultValue: false);
   static bool useRealPush = const bool.fromEnvironment('USE_REAL_PUSH', defaultValue: false);
   static bool useRealKyc = const bool.fromEnvironment('USE_REAL_KYC', defaultValue: false);
+  static bool useRealPayout = const bool.fromEnvironment('USE_REAL_PAYOUT', defaultValue: false);
   static bool useRealAdmin = const bool.fromEnvironment('USE_REAL_ADMIN', defaultValue: false);
 
   /// Application version header for backend analytics

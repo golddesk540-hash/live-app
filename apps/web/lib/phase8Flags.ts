@@ -19,6 +19,7 @@ export interface Phase8FeatureFlags {
   useRealPayments: boolean;
   useRealPush: boolean;
   useRealKyc: boolean;
+  useRealPayout: boolean;
   useRealAdmin: boolean;
 }
 
@@ -33,6 +34,7 @@ export function getPhase8Flags(): Phase8FeatureFlags {
     useRealPayments: process.env.USE_REAL_PAYMENTS === 'true',
     useRealPush: process.env.USE_REAL_PUSH === 'true',
     useRealKyc: process.env.USE_REAL_KYC === 'true',
+    useRealPayout: process.env.USE_REAL_PAYOUT === 'true',
     useRealAdmin: process.env.USE_REAL_ADMIN === 'true',
   };
 }

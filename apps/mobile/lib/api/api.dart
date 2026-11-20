@@ -23,3 +23,4 @@ export 'services/media_stream_service.dart';
 export 'services/party_media_service.dart';
 export 'services/payment_service.dart';
 export 'services/push_notification_service.dart';
+export 'services/kyc_payout_service.dart';

@@ -267,6 +267,10 @@ const nextConfig = {
         source: '/notifications/:path*',
         destination: '/api/notifications/:path*',
       },
+      {
+        source: '/kyc/:path*',
+        destination: '/api/kyc/:path*',
+      },
     ];
   },
 };
