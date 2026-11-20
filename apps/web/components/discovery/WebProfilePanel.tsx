@@ -41,8 +41,7 @@ import {
   FixtureHelpTopic,
   FixtureAgencyMember,
 } from '@/lib/design/designFixtures';
-import { USE_VIP_API } from '@/lib/vipApiService';
-import { USE_FINAL_API } from '@/lib/finalApiService';
+import { USE_VIP_API, USE_FINAL_API } from '@/lib/clientFlags';
 
 export interface WebProfilePanelProps {
   isUr?: boolean;

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { USE_MESSAGE_API } from '@/lib/messageApiService';
+import { USE_MESSAGE_API } from '@/lib/clientFlags';
 import {
   MessageSquare,
   Search,

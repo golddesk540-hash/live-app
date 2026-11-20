@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { USE_PARTY_API } from '@/lib/partyApiService';
+import { USE_PARTY_API } from '@/lib/clientFlags';
 import {
   Users,
   Sparkles,

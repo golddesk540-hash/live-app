@@ -20,7 +20,7 @@ import type {
   CoinTransactionRecord,
   PointsTransactionRecord,
 } from '@/lib/wallet';
-import { USE_ECONOMY_API } from '@/lib/economyApiService';
+import { USE_ECONOMY_API } from '@/lib/clientFlags';
 
 const DEFAULT_DEMO_WALLET_USER_ID = 'user_wallet_demo_701';
 
