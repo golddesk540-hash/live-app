@@ -136,15 +136,16 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { preferredLanguage, isPinEnabled } = body;
+    const { preferredLanguage, language, isPinEnabled, notifications } = body;
+    const lang = preferredLanguage || language;
 
     const updates: string[] = [];
     const values: any[] = [];
     let idx = 1;
 
-    if (preferredLanguage && ['en', 'ur'].includes(preferredLanguage)) {
+    if (lang && ['en', 'ur', 'es', 'ar', 'hi'].includes(lang)) {
       updates.push(`preferred_language = $${idx++}`);
-      values.push(preferredLanguage);
+      values.push(lang);
     }
 
     if (typeof isPinEnabled === 'boolean') {
@@ -160,7 +161,28 @@ export async function PATCH(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true, message: 'Settings updated successfully.' });
+    if (notifications) {
+      await query(
+        `INSERT INTO popolive.user_notification_settings (
+          user_id, account_notifications, security_notifications, system_announcements, promotional_notifications, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, NOW())
+        ON CONFLICT (user_id) DO UPDATE SET
+          account_notifications = COALESCE($2, popolive.user_notification_settings.account_notifications),
+          security_notifications = COALESCE($3, popolive.user_notification_settings.security_notifications),
+          system_announcements = COALESCE($4, popolive.user_notification_settings.system_announcements),
+          promotional_notifications = COALESCE($5, popolive.user_notification_settings.promotional_notifications),
+          updated_at = NOW()`,
+        [
+          user.id,
+          notifications.accountNotifications ?? null,
+          notifications.securityNotifications ?? null,
+          notifications.systemAnnouncements ?? null,
+          notifications.promotionalNotifications ?? null,
+        ]
+      );
+    }
+
+    return NextResponse.json({ success: true, message: 'Settings updated successfully.', language: lang || 'en' });
   } catch (err: any) {
     console.error('Error in PATCH /api/settings:', err);
     return NextResponse.json({ error: 'Failed to update settings.' }, { status: 500 });

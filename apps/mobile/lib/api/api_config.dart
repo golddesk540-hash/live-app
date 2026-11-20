@@ -59,6 +59,11 @@ class ApiConfig {
   /// Preserves full design fixture compatibility when disabled.
   static bool useCommunityApi = const bool.fromEnvironment('USE_COMMUNITY_API', defaultValue: false);
 
+  /// Module-level feature flag controlling whether Business Centers, Support,
+  /// Settings, and Profiles final screens read from the live backend database (true)
+  /// or design fixtures (false). Preserves full design fixture compatibility when disabled.
+  static bool useFinalApi = const bool.fromEnvironment('USE_FINAL_API', defaultValue: false);
+
   /// Application version header for backend analytics
   static const String appVersion = '1.0.0';
 

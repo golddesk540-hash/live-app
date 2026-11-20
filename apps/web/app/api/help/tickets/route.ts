@@ -2,8 +2,30 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { query } from '@/lib/db';
+import { getUserTickets } from '@/lib/finalApiService';
 
 export const dynamic = 'force-dynamic';
+
+export async function GET(req: NextRequest) {
+  try {
+    const user = await getAuthenticatedUser(req);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Authentication required.' }, { status: 401 });
+    }
+
+    const tickets = await getUserTickets(user.id);
+    return NextResponse.json({
+      success: true,
+      tickets,
+      count: tickets.length,
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      { success: false, error: err.message, code: err.code || 'GET_TICKETS_ERROR' },
+      { status: err.status || 500 }
+    );
+  }
+}
 
 const VALID_CATEGORIES = [
   'account_issues',
@@ -45,14 +67,13 @@ export async function POST(req: NextRequest) {
       attachmentUrl,
     } = body;
 
-    // 1. Validation
-    if (!fullName || typeof fullName !== 'string' || fullName.trim().length < 2) {
-      return NextResponse.json({ error: 'Please provide your full name (at least 2 characters).' }, { status: 400 });
-    }
+    const resolvedFullName = (fullName && typeof fullName === 'string' && fullName.trim().length >= 2)
+      ? fullName.trim()
+      : (user?.nickname || 'Support User');
 
-    if (!email || typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      return NextResponse.json({ error: 'Please provide a valid email address.' }, { status: 400 });
-    }
+    const resolvedEmail = (email && typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
+      ? email.trim().toLowerCase()
+      : (user?.email?.toLowerCase() || 'support@popolive.internal');
 
     if (poppoId && typeof poppoId === 'string' && !/^\d{4,12}$/.test(poppoId.trim())) {
       return NextResponse.json({ error: 'Popo Live User ID must be a numeric ID.' }, { status: 400 });
@@ -93,8 +114,8 @@ export async function POST(req: NextRequest) {
       [
         ticketNumber,
         userId,
-        fullName.trim(),
-        email.trim().toLowerCase(),
+        resolvedFullName,
+        resolvedEmail,
         finalPoppoId,
         category,
         subject.trim(),
@@ -113,7 +134,7 @@ export async function POST(req: NextRequest) {
       [
         ticketId,
         userId,
-        fullName.trim(),
+        resolvedFullName,
         description.trim(),
         attachmentUrl || null,
       ]

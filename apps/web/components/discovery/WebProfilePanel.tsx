@@ -42,6 +42,7 @@ import {
   FixtureAgencyMember,
 } from '@/lib/design/designFixtures';
 import { USE_VIP_API } from '@/lib/vipApiService';
+import { USE_FINAL_API } from '@/lib/finalApiService';
 
 export interface WebProfilePanelProps {
   isUr?: boolean;
@@ -156,6 +157,18 @@ export const WebProfilePanel: React.FC<WebProfilePanelProps> = ({
         }
       })
       .catch(() => {});
+
+    if (USE_FINAL_API) {
+      fetch('/api/profiles/me')
+        .then((res) => res.json())
+        .catch(() => {});
+      fetch('/api/settings')
+        .then((res) => res.json())
+        .catch(() => {});
+      fetch('/api/help/topics')
+        .then((res) => res.json())
+        .catch(() => {});
+    }
   }, [user.userId]);
 
   const wallet = useMemo(() => {

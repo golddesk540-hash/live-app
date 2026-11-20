@@ -56,7 +56,10 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      ticket,
+      ticket: {
+        ...ticket,
+        messages: replies,
+      },
       replies,
     });
   } catch (err: any) {

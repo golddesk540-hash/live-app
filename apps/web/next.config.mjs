@@ -219,6 +219,26 @@ const nextConfig = {
         source: '/community/:path*',
         destination: '/api/community/:path*',
       },
+      {
+        source: '/streamer/:path*',
+        destination: '/api/streamer/:path*',
+      },
+      {
+        source: '/builder/:path*',
+        destination: '/api/builder/:path*',
+      },
+      {
+        source: '/help/:path*',
+        destination: '/api/help/:path*',
+      },
+      {
+        source: '/settings/:path*',
+        destination: '/api/settings/:path*',
+      },
+      {
+        source: '/profiles/:path*',
+        destination: '/api/profiles/:path*',
+      },
     ];
   },
 };
