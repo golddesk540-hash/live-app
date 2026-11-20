@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../../api/api_config.dart';
 
 /// ============================================================================
 /// Popo Live — Phase 7 Module 7.1: Host Points History (Flutter Mobile)
@@ -72,9 +73,10 @@ class _PointsHistoryScreenState extends State<PointsHistoryScreen> {
     try {
       final statusParam = _statusFilter == 'all' ? '' : '&status=$_statusFilter';
       final previewParam = widget.previewDemo ? '&preview=demo' : '';
-      final uri = Uri.parse(
-        '${widget.apiBaseUrl}/api/wallet/points/history?userId=${Uri.encodeComponent(widget.userId)}&page=$nextPage&limit=$_limit$statusParam$previewParam',
-      );
+      final endpoint = ApiConfig.useEconomyApi
+          ? '${widget.apiBaseUrl}/api/economy/points/history?page=$nextPage&limit=$_limit'
+          : '${widget.apiBaseUrl}/api/wallet/points/history?userId=${Uri.encodeComponent(widget.userId)}&page=$nextPage&limit=$_limit$statusParam$previewParam';
+      final uri = Uri.parse(endpoint);
       final res = await http.get(uri, headers: _headers()).timeout(const Duration(seconds: 12));
       final data = jsonDecode(res.body) as Map<String, dynamic>;
       if (res.statusCode == 200 && data['success'] == true) {
@@ -84,8 +86,8 @@ class _PointsHistoryScreenState extends State<PointsHistoryScreen> {
         final pagination = data['pagination'] as Map<String, dynamic>?;
         if (!mounted) return;
         setState(() {
-          _currentPoints = (data['currentPoints'] as num?)?.toInt() ?? _currentPoints;
-          _totalPages = (pagination?['totalPages'] as num?)?.toInt() ?? 1;
+          _currentPoints = (data['currentPoints'] as num?)?.toInt() ?? (data['diamondPoints'] as num?)?.toInt() ?? _currentPoints;
+          _totalPages = (data['totalPages'] as num?)?.toInt() ?? (pagination?['totalPages'] as num?)?.toInt() ?? 1;
           _page = nextPage;
           if (reset) {
             _items = fetched;

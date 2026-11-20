@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../../api/api_config.dart';
 import 'coin_history_screen.dart';
 import 'points_history_screen.dart';
 import 'host_earnings_screen.dart';
@@ -95,6 +96,36 @@ class _WalletScreenState extends State<WalletScreen> {
     });
 
     try {
+      if (ApiConfig.useEconomyApi) {
+        final responses = await Future.wait([
+          http.get(Uri.parse('${widget.apiBaseUrl}/api/economy/coins/balance'), headers: _buildHeaders()).timeout(const Duration(seconds: 12)),
+          http.get(Uri.parse('${widget.apiBaseUrl}/api/economy/points/balance'), headers: _buildHeaders()).timeout(const Duration(seconds: 12)),
+          http.get(Uri.parse('${widget.apiBaseUrl}/api/economy/coins/history?page=1&limit=5'), headers: _buildHeaders()).timeout(const Duration(seconds: 12)),
+          http.get(Uri.parse('${widget.apiBaseUrl}/api/economy/points/history?page=1&limit=5'), headers: _buildHeaders()).timeout(const Duration(seconds: 12)),
+        ]);
+
+        final coinBalData = jsonDecode(responses[0].body) as Map<String, dynamic>;
+        final pointsBalData = jsonDecode(responses[1].body) as Map<String, dynamic>;
+        final coinHistData = jsonDecode(responses[2].body) as Map<String, dynamic>;
+        final pointsHistData = jsonDecode(responses[3].body) as Map<String, dynamic>;
+
+        if (!mounted) return;
+        setState(() {
+          _coinBalance = (coinBalData['coins'] as num?)?.toInt() ?? 0;
+          _pointsBalance = (pointsBalData['points'] as num?)?.toInt() ?? (pointsBalData['diamondPoints'] as num?)?.toInt() ?? 0;
+          _isFrozen = coinBalData['isFrozen'] == true;
+          _hostGiftSharePercent = (pointsBalData['hostSharePercent'] as num?)?.toDouble() ?? 70.0;
+          _recentCoinTxns = ((coinHistData['transactions'] as List?) ?? [])
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
+          _recentPointsTxns = ((pointsHistData['transactions'] as List?) ?? [])
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
+          _loading = false;
+        });
+        return;
+      }
+
       final freshParam = forceFresh ? '&fresh=true' : '';
       final balanceUri = Uri.parse(
         '${widget.apiBaseUrl}/api/wallet/balance?userId=${Uri.encodeComponent(widget.userId)}$freshParam${_previewSuffix()}',

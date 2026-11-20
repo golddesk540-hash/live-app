@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import '../../theme/popo_theme.dart';
 import '../../l10n/strings.dart';
 import '../../design/design_fixtures.dart';
+import '../../api/api_config.dart';
+import '../../api/services/economy_api_service.dart';
 import '../../widgets/popo_card.dart';
 import '../../widgets/popo_icon_button.dart';
 import '../../widgets/popo_empty_state.dart';
@@ -33,6 +35,37 @@ class MeScreen extends StatefulWidget {
 }
 
 class _MeScreenState extends State<MeScreen> {
+  int? _liveCoinsBalance;
+  int? _livePointsBalance;
+
+  @override
+  void initState() {
+    super.initState();
+    if (ApiConfig.useEconomyApi) {
+      _loadLiveEconomyBalances();
+    }
+  }
+
+  Future<void> _loadLiveEconomyBalances() async {
+    try {
+      final economyService = EconomyApiService();
+      final coinRes = await economyService.getCoinBalance();
+      final pointsRes = await economyService.getPointsBalance();
+
+      if (mounted) {
+        setState(() {
+          if (coinRes.isSuccess && coinRes.data != null) {
+            _liveCoinsBalance = (coinRes.data['coins'] as num?)?.toInt();
+          }
+          if (pointsRes.isSuccess && pointsRes.data != null) {
+            _livePointsBalance = (pointsRes.data['points'] as num?)?.toInt() ??
+                (pointsRes.data['diamondPoints'] as num?)?.toInt();
+          }
+        });
+      }
+    } catch (_) {}
+  }
+
   // Helper to format large numbers with commas
   String _formatNumber(int number) {
     final str = number.toString();
@@ -2260,6 +2293,13 @@ class _MeScreenState extends State<MeScreen> {
 
   // Coins Card & Points Card side-by-side
   Widget _buildEconomyRow(FixtureWallet wallet) {
+    final int displayCoins = (ApiConfig.useEconomyApi && _liveCoinsBalance != null)
+        ? _liveCoinsBalance!
+        : wallet.coinBalance;
+    final int displayPoints = (ApiConfig.useEconomyApi && _livePointsBalance != null)
+        ? _livePointsBalance!
+        : wallet.pointsBalance;
+
     return Row(
       children: [
         // Coins Card
@@ -2270,7 +2310,7 @@ class _MeScreenState extends State<MeScreen> {
             hasGlow: true,
             glowColor: PopoTheme.gold,
             child: InkWell(
-              onTap: () => _showCoinsPreview(wallet.coinBalance),
+              onTap: () => _showCoinsPreview(displayCoins),
               borderRadius: BorderRadius.circular(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2314,7 +2354,7 @@ class _MeScreenState extends State<MeScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    _formatNumber(wallet.coinBalance),
+                    _formatNumber(displayCoins),
                     key: const Key('me_coins_balance'),
                     style: const TextStyle(
                       color: Color(0xFFFFD700),
@@ -2337,7 +2377,7 @@ class _MeScreenState extends State<MeScreen> {
             hasGlow: true,
             glowColor: PopoTheme.cyan,
             child: InkWell(
-              onTap: () => _showPointsPreview(wallet.pointsBalance),
+              onTap: () => _showPointsPreview(displayPoints),
               borderRadius: BorderRadius.circular(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2381,7 +2421,7 @@ class _MeScreenState extends State<MeScreen> {
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    _formatNumber(wallet.pointsBalance),
+                    _formatNumber(displayPoints),
                     key: const Key('me_points_balance'),
                     style: const TextStyle(
                       color: Color(0xFF00E5FF),

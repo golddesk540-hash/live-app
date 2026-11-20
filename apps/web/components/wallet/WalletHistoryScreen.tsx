@@ -20,6 +20,7 @@ import type {
   CoinTransactionRecord,
   PointsTransactionRecord,
 } from '@/lib/wallet';
+import { USE_ECONOMY_API } from '@/lib/economyApiService';
 
 const DEFAULT_DEMO_WALLET_USER_ID = 'user_wallet_demo_701';
 
@@ -56,6 +57,26 @@ export default function WalletHistoryScreen({
   const fetchHistory = useCallback(async () => {
     setIsLoading(true);
     try {
+      if (USE_ECONOMY_API) {
+        const endpoint = mode === 'coins' ? '/api/economy/coins/history' : '/api/economy/points/history';
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: '10',
+        });
+        const res = await fetch(`${endpoint}?${params.toString()}`);
+        const data = await res.json();
+        if (data.success) {
+          if (mode === 'coins') {
+            setCoinTxs(data.transactions || []);
+          } else {
+            setPointsTxs(data.transactions || []);
+          }
+          setTotalPages(data.totalPages ?? 1);
+          setTotalItems(data.total ?? 0);
+        }
+        return;
+      }
+
       const endpoint = mode === 'coins' ? '/api/wallet/coins/history' : '/api/wallet/points/history';
       const params = new URLSearchParams({
         userId,

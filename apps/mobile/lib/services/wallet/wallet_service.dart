@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../models/wallet/wallet_models.dart';
+import '../../api/api_config.dart';
 
 /// Service response wrapper
 class WalletApiResponse<T> {
@@ -59,13 +60,46 @@ class WalletService {
     return headers;
   }
 
-  /// 1. Fetch Current Wallet Balance (GET /api/wallet/balance)
+  /// 1. Fetch Current Wallet Balance (GET /api/wallet/balance or /api/economy/coins/balance)
   Future<WalletApiResponse<WalletBalanceInfo>> getBalance({
     String? userId,
     String? authToken,
     bool previewDemo = false,
   }) async {
     try {
+      if (ApiConfig.useEconomyApi) {
+        final coinUri = Uri.parse('$baseUrl/api/economy/coins/balance');
+        final ptsUri = Uri.parse('$baseUrl/api/economy/points/balance');
+        final headers = _buildHeaders(authToken: authToken, userId: userId);
+
+        final responses = await Future.wait([
+          _client.get(coinUri, headers: headers).timeout(const Duration(seconds: 10)),
+          _client.get(ptsUri, headers: headers).timeout(const Duration(seconds: 10)),
+        ]);
+
+        final coinJson = jsonDecode(responses[0].body) as Map<String, dynamic>;
+        final ptsJson = jsonDecode(responses[1].body) as Map<String, dynamic>;
+
+        if (responses[0].statusCode == 200 && coinJson['success'] == true) {
+          final info = WalletBalanceInfo(
+            walletId: coinJson['walletId']?.toString() ?? '',
+            userId: coinJson['userId']?.toString() ?? (userId ?? ''),
+            coins: (coinJson['coins'] as num?)?.toInt() ?? 0,
+            points: (ptsJson['points'] as num?)?.toInt() ?? (ptsJson['diamondPoints'] as num?)?.toInt() ?? 0,
+            isFrozen: coinJson['isFrozen'] == true,
+            hostSharePercentage: (ptsJson['hostSharePercent'] as num?)?.toDouble() ?? 70.0,
+            updatedAt: coinJson['updatedAt'] != null
+                ? DateTime.tryParse(coinJson['updatedAt'].toString()) ?? DateTime.now()
+                : DateTime.now(),
+          );
+          return WalletApiResponse(
+            isSuccess: true,
+            data: info,
+            statusCode: 200,
+          );
+        }
+      }
+
       final queryParams = <String, String>{};
       if (userId != null && userId.isNotEmpty) queryParams['userId'] = userId;
       if (previewDemo) queryParams['preview'] = 'demo';
@@ -100,11 +134,28 @@ class WalletService {
     }
   }
 
-  /// 2. Fetch Coin Packages Catalogue (GET /api/topup/packages)
+  /// 2. Fetch Coin Packages Catalogue (GET /api/topup/packages or /api/economy/coins/packages)
   Future<WalletApiResponse<List<CoinPackage>>> getCoinPackages({
     bool includeInactive = false,
   }) async {
     try {
+      if (ApiConfig.useEconomyApi) {
+        final uri = Uri.parse('$baseUrl/api/economy/coins/packages');
+        final res = await _client.get(uri).timeout(const Duration(seconds: 10));
+        final json = jsonDecode(res.body) as Map<String, dynamic>;
+        if (res.statusCode == 200 && json['success'] == true) {
+          final list = (json['packages'] as List?)
+                  ?.map((item) => CoinPackage.fromJson(item as Map<String, dynamic>))
+                  .toList() ??
+              [];
+          return WalletApiResponse(
+            isSuccess: true,
+            data: list,
+            statusCode: res.statusCode,
+          );
+        }
+      }
+
       final uri = Uri.parse('$baseUrl/api/topup/packages${includeInactive ? "?includeInactive=true" : ""}');
       final res = await _client.get(uri).timeout(const Duration(seconds: 10));
 
@@ -336,7 +387,7 @@ class WalletService {
     }
   }
 
-  /// 7. Coin Transaction History (GET /api/wallet/coins/history)
+  /// 7. Coin Transaction History (GET /api/wallet/coins/history or /api/economy/coins/history)
   Future<WalletApiResponse<List<WalletTransactionRecord>>> getCoinTransactionHistory({
     String? userId,
     String? authToken,
@@ -346,6 +397,27 @@ class WalletService {
     bool previewDemo = false,
   }) async {
     try {
+      if (ApiConfig.useEconomyApi) {
+        final uri = Uri.parse('$baseUrl/api/economy/coins/history?page=$page&limit=$limit');
+        final res = await _client.get(
+          uri,
+          headers: _buildHeaders(authToken: authToken, userId: userId),
+        ).timeout(const Duration(seconds: 10));
+
+        final json = jsonDecode(res.body) as Map<String, dynamic>;
+        if (res.statusCode == 200 && json['success'] == true) {
+          final list = (json['transactions'] as List?)
+                  ?.map((item) => WalletTransactionRecord.fromJson(item as Map<String, dynamic>))
+                  .toList() ??
+              [];
+          return WalletApiResponse(
+            isSuccess: true,
+            data: list,
+            statusCode: res.statusCode,
+          );
+        }
+      }
+
       final queryParams = <String, String>{
         'page': page.toString(),
         'limit': limit.toString(),

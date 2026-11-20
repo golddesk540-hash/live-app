@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../../api/api_config.dart';
 
 /// ============================================================================
 /// Popo Live — Phase 7 Module 7.1: Coin Transaction History (Flutter Mobile)
@@ -72,9 +73,10 @@ class _CoinHistoryScreenState extends State<CoinHistoryScreen> {
     try {
       final statusParam = _statusFilter == 'all' ? '' : '&status=$_statusFilter';
       final previewParam = widget.previewDemo ? '&preview=demo' : '';
-      final uri = Uri.parse(
-        '${widget.apiBaseUrl}/api/wallet/coins/history?userId=${Uri.encodeComponent(widget.userId)}&page=$nextPage&limit=$_limit$statusParam$previewParam',
-      );
+      final endpoint = ApiConfig.useEconomyApi
+          ? '${widget.apiBaseUrl}/api/economy/coins/history?page=$nextPage&limit=$_limit'
+          : '${widget.apiBaseUrl}/api/wallet/coins/history?userId=${Uri.encodeComponent(widget.userId)}&page=$nextPage&limit=$_limit$statusParam$previewParam';
+      final uri = Uri.parse(endpoint);
       final res = await http.get(uri, headers: _headers()).timeout(const Duration(seconds: 12));
       final data = jsonDecode(res.body) as Map<String, dynamic>;
       if (res.statusCode == 200 && data['success'] == true) {
@@ -85,7 +87,7 @@ class _CoinHistoryScreenState extends State<CoinHistoryScreen> {
         if (!mounted) return;
         setState(() {
           _currentBalance = (data['currentCoins'] as num?)?.toInt() ?? _currentBalance;
-          _totalPages = (pagination?['totalPages'] as num?)?.toInt() ?? 1;
+          _totalPages = (data['totalPages'] as num?)?.toInt() ?? (pagination?['totalPages'] as num?)?.toInt() ?? 1;
           _page = nextPage;
           if (reset) {
             _items = fetched;

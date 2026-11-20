@@ -30,6 +30,7 @@ import type {
   CoinTransactionRecord,
   PointsTransactionRecord,
 } from '@/lib/wallet';
+import { USE_ECONOMY_API } from '@/lib/economyApiService';
 
 const DEFAULT_DEMO_WALLET_USER_ID = 'user_wallet_demo_701';
 
@@ -66,6 +67,43 @@ export default function WalletScreen({
     async (uid: string, forceFresh: boolean = false) => {
       try {
         if (forceFresh) setIsRefreshing(true);
+
+        if (USE_ECONOMY_API) {
+          const [coinBalRes, ptsBalRes, coinHistRes, ptsHistRes] = await Promise.all([
+            fetch(`/api/economy/coins/balance`).catch(() => null),
+            fetch(`/api/economy/points/balance`).catch(() => null),
+            fetch(`/api/economy/coins/history?limit=5`).catch(() => null),
+            fetch(`/api/economy/points/history?limit=5`).catch(() => null),
+          ]);
+
+          const coinBal = coinBalRes ? await coinBalRes.json().catch(() => ({})) : {};
+          const ptsBal = ptsBalRes ? await ptsBalRes.json().catch(() => ({})) : {};
+          const coinData = coinHistRes ? await coinHistRes.json().catch(() => ({})) : {};
+          const ptsData = ptsHistRes ? await ptsHistRes.json().catch(() => ({})) : {};
+
+          if (coinBal.success && ptsBal.success) {
+            setWallet({
+              walletId: coinBal.walletId || '',
+              userId: coinBal.userId || uid,
+              coins: coinBal.coins || 0,
+              points: ptsBal.points || 0,
+              totalSpentCoins: 0,
+              totalReceivedPoints: 0,
+              isFrozen: coinBal.isFrozen || false,
+              hostSharePercentage: ptsBal.hostSharePercent || 70,
+              createdAt: coinBal.updatedAt || '',
+              updatedAt: coinBal.updatedAt || '',
+            });
+          }
+          if (coinData.success && Array.isArray(coinData.transactions)) {
+            setRecentCoinTxs(coinData.transactions);
+          }
+          if (ptsData.success && Array.isArray(ptsData.transactions)) {
+            setRecentPointsTxs(ptsData.transactions);
+          }
+          return;
+        }
+
         const [balRes, coinHistRes, ptsHistRes] = await Promise.all([
           fetch(`/api/wallet/balance?userId=${encodeURIComponent(uid)}${forceFresh ? '&fresh=true' : ''}${querySuffix}`),
           fetch(`/api/wallet/coins/history?userId=${encodeURIComponent(uid)}&limit=5${querySuffix}`),

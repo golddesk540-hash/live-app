@@ -38,6 +38,11 @@ class ApiConfig {
   /// Preserves full design fixture compatibility when disabled.
   static bool useMessageApi = const bool.fromEnvironment('USE_MESSAGE_API', defaultValue: false);
 
+  /// Module-level feature flag controlling whether Economy (Coins/Points/Gifts/Transactions) screens
+  /// read from the live backend database (true) or design fixtures (false).
+  /// Preserves full design fixture compatibility when disabled.
+  static bool useEconomyApi = const bool.fromEnvironment('USE_ECONOMY_API', defaultValue: false);
+
   /// Application version header for backend analytics
   static const String appVersion = '1.0.0';
 
