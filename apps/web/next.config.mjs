@@ -215,6 +215,10 @@ const nextConfig = {
         source: '/profile/:userId/equipped',
         destination: '/api/profile/:userId/equipped',
       },
+      {
+        source: '/community/:path*',
+        destination: '/api/community/:path*',
+      },
     ];
   },
 };

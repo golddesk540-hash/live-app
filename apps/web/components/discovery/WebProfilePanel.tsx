@@ -105,6 +105,7 @@ export const WebProfilePanel: React.FC<WebProfilePanelProps> = ({
   const [liveVipLevel, setLiveVipLevel] = useState<number | null>(null);
   const [liveWealthLevel, setLiveWealthLevel] = useState<number | null>(null);
   const [liveShiningLevel, setLiveShiningLevel] = useState<number | null>(null);
+  const [liveFanClubBadge, setLiveFanClubBadge] = useState<string | null>(null);
   const [equippedItems, setEquippedItems] = useState<Record<string, any>>({});
 
   React.useEffect(() => {
@@ -133,6 +134,25 @@ export const WebProfilePanel: React.FC<WebProfilePanelProps> = ({
       .then((data) => {
         if (data.success && data.equipped) {
           setEquippedItems(data.equipped);
+        }
+      })
+      .catch(() => {});
+
+    fetch(`/api/community/honor/${user.userId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          if (data.wealth) setLiveWealthLevel(data.wealth.level);
+          if (data.shining) setLiveShiningLevel(data.shining.level);
+        }
+      })
+      .catch(() => {});
+
+    fetch(`/api/community/fan-clubs/club_sana`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.club?.badgeLabel) {
+          setLiveFanClubBadge(data.club.badgeLabel);
         }
       })
       .catch(() => {});

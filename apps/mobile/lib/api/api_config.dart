@@ -53,6 +53,12 @@ class ApiConfig {
   /// Preserves full design fixture compatibility when disabled.
   static bool useStoreApi = const bool.fromEnvironment('USE_STORE_API', defaultValue: false);
 
+  /// Module-level feature flag controlling whether Community screens
+  /// (Fan Club, Guardian, Invite, Honor/Level, Poster, Watch History)
+  /// read from the live backend database (true) or design fixtures (false).
+  /// Preserves full design fixture compatibility when disabled.
+  static bool useCommunityApi = const bool.fromEnvironment('USE_COMMUNITY_API', defaultValue: false);
+
   /// Application version header for backend analytics
   static const String appVersion = '1.0.0';
 
