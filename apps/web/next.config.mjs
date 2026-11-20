@@ -132,6 +132,10 @@ const nextConfig = {
         destination: '/api/party/categories',
       },
       {
+        source: '/party/media/:path*',
+        destination: '/api/party/media/:path*',
+      },
+      {
         source: '/message/conversations/:path*',
         destination: '/api/message/conversations/:path*',
       },

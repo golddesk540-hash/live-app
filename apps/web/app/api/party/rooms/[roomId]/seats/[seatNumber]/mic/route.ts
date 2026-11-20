@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { resolvePartyRoom } from '@/lib/partyApiService';
+import { partyMediaService } from '@/lib/partyMediaService';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,13 +93,16 @@ export async function POST(
     );
 
     const updatedSeat = updateRes[0];
+    const isMuted = Boolean(updatedSeat.is_muted);
+    const audioEnabled = partyMediaService.setSeatAudioTrackState(room.id, seatNum, isMuted);
 
     return NextResponse.json({
       success: true,
       seatNumber: updatedSeat.seat_number,
-      isMuted: Boolean(updatedSeat.is_muted),
+      isMuted,
+      audioEnabled,
       participantName: updatedSeat.participant_name,
-      message: `Microphone ${updatedSeat.is_muted ? 'muted' : 'unmuted'} for Seat #${updatedSeat.seat_number}.`,
+      message: `Microphone ${isMuted ? 'muted' : 'unmuted'} for Seat #${updatedSeat.seat_number}.`,
     });
   } catch (error: any) {
     return NextResponse.json(
