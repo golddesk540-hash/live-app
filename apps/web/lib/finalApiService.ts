@@ -397,7 +397,7 @@ export async function saveEarningIdentity(
   return rows[0];
 }
 
-export async function getGoLiveEligibility(user: AuthUser): Promise<{ eligible: boolean; reasons: string[] }> {
+export async function getGoLiveEligibility(user: AuthUser): Promise<{ eligible: boolean; reasons: string[]; isAdult?: boolean; isActive?: boolean }> {
   const reasons: string[] = [];
   const safeId = toSafeUuid(user.id);
 

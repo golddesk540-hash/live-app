@@ -64,6 +64,20 @@ class ApiConfig {
   /// or design fixtures (false). Preserves full design fixture compatibility when disabled.
   static bool useFinalApi = const bool.fromEnvironment('USE_FINAL_API', defaultValue: false);
 
+  // =========================================================================
+  // Phase 8: Production Provider Feature Flags (All Default false)
+  // When false, application strictly maintains Phase 7 database / mock logic.
+  // =========================================================================
+  static bool useRealOtp = const bool.fromEnvironment('USE_REAL_OTP', defaultValue: false);
+  static bool useRealStorage = const bool.fromEnvironment('USE_REAL_STORAGE', defaultValue: false);
+  static bool useRealWebsocket = const bool.fromEnvironment('USE_REAL_WEBSOCKET', defaultValue: false);
+  static bool useRealMedia = const bool.fromEnvironment('USE_REAL_MEDIA', defaultValue: false);
+  static bool useRealPartyMedia = const bool.fromEnvironment('USE_REAL_PARTY_MEDIA', defaultValue: false);
+  static bool useRealPayments = const bool.fromEnvironment('USE_REAL_PAYMENTS', defaultValue: false);
+  static bool useRealPush = const bool.fromEnvironment('USE_REAL_PUSH', defaultValue: false);
+  static bool useRealKyc = const bool.fromEnvironment('USE_REAL_KYC', defaultValue: false);
+  static bool useRealAdmin = const bool.fromEnvironment('USE_REAL_ADMIN', defaultValue: false);
+
   /// Application version header for backend analytics
   static const String appVersion = '1.0.0';
 
