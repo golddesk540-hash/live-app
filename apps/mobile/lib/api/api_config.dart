@@ -70,6 +70,7 @@ class ApiConfig {
   // =========================================================================
   static bool useRealOtp = const bool.fromEnvironment('USE_REAL_OTP', defaultValue: false);
   static bool useRealStorage = const bool.fromEnvironment('USE_REAL_STORAGE', defaultValue: false);
+  static bool useRealPosterGen = const bool.fromEnvironment('USE_REAL_POSTER_GEN', defaultValue: false);
   static bool useRealWebsocket = const bool.fromEnvironment('USE_REAL_WEBSOCKET', defaultValue: false);
   static bool useRealMedia = const bool.fromEnvironment('USE_REAL_MEDIA', defaultValue: false);
   static bool useRealPartyMedia = const bool.fromEnvironment('USE_REAL_PARTY_MEDIA', defaultValue: false);

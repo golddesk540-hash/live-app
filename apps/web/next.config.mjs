@@ -160,6 +160,10 @@ const nextConfig = {
         destination: '/api/message/users/:path*',
       },
       {
+        source: '/message/media/:path*',
+        destination: '/api/message/media/:path*',
+      },
+      {
         source: '/economy/:path*',
         destination: '/api/economy/:path*',
       },

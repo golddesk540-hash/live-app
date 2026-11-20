@@ -12,6 +12,7 @@
 export interface Phase8FeatureFlags {
   useRealOtp: boolean;
   useRealStorage: boolean;
+  useRealPosterGen: boolean;
   useRealWebsocket: boolean;
   useRealMedia: boolean;
   useRealPartyMedia: boolean;
@@ -25,6 +26,7 @@ export function getPhase8Flags(): Phase8FeatureFlags {
   return {
     useRealOtp: process.env.USE_REAL_OTP === 'true',
     useRealStorage: process.env.USE_REAL_STORAGE === 'true',
+    useRealPosterGen: process.env.USE_REAL_POSTER_GEN === 'true',
     useRealWebsocket: process.env.USE_REAL_WEBSOCKET === 'true',
     useRealMedia: process.env.USE_REAL_MEDIA === 'true',
     useRealPartyMedia: process.env.USE_REAL_PARTY_MEDIA === 'true',
