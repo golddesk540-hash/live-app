@@ -255,6 +255,14 @@ const nextConfig = {
         source: '/live/stream/:path*',
         destination: '/api/live/stream/:path*',
       },
+      {
+        source: '/payments/:path*',
+        destination: '/api/payments/:path*',
+      },
+      {
+        source: '/webhooks/payments',
+        destination: '/api/webhooks/payments',
+      },
     ];
   },
 };
