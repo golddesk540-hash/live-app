@@ -323,7 +323,7 @@ export async function validateSessionToken(sessionToken: string): Promise<AuthUs
             s.expires_at, s.is_revoked
      FROM popolive.sessions s
      JOIN popolive.users u ON s.user_id = u.id
-     WHERE s.session_token = $1 AND s.expires_at > CURRENT_TIMESTAMP AND s.is_revoked = false AND u.status = 'active'
+     WHERE s.session_token = $1 AND s.expires_at > CURRENT_TIMESTAMP AND s.is_revoked = false
      LIMIT 1`,
     [sessionToken]
   );
@@ -412,7 +412,13 @@ export async function revokeAllOtherSessions(userId: string, currentSessionToken
 }
 
 export async function getAuthenticatedUser(req: NextRequest): Promise<AuthUser | null> {
-  const token = req.cookies.get('poppo_session')?.value;
+  let token = req.cookies.get('poppo_session')?.value;
+  if (!token) {
+    const authHeader = req.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.substring(7).trim();
+    }
+  }
   if (!token) return null;
   return validateSessionToken(token);
 }

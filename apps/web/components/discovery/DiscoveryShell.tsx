@@ -53,6 +53,7 @@ import WebFollowingPanel from './WebFollowingPanel';
 import WebMessagePanel from './WebMessagePanel';
 import WebProfilePanel from './WebProfilePanel';
 import GoLiveRedirectSheet from './GoLiveRedirectSheet';
+import { LiveApiService } from '@/lib/liveApiService';
 
 export type DiscoveryTab =
   | 'explore'
@@ -129,17 +130,31 @@ export function DiscoveryShell({
     }
   }, [searchParams]);
 
-  // Read data from DesignFixtures
-  const { allLiveRooms, fixturesError } = useMemo(() => {
+  // Read data from DesignFixtures (Initial State) with Live API Service Hydration
+  const [liveRoomsState, setLiveRoomsState] = useState<FixtureLiveRoom[]>(() => {
     try {
-      return { allLiveRooms: DesignFixtures.liveRooms, fixturesError: null };
-    } catch (err: any) {
-      return {
-        allLiveRooms: [] as FixtureLiveRoom[],
-        fixturesError: err?.message || 'Failed to load live broadcast rooms. Please try again.',
-      };
+      return DesignFixtures.liveRooms;
+    } catch {
+      return [] as FixtureLiveRoom[];
     }
-  }, []);
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    LiveApiService.getLiveRooms({
+      country: selectedCountry,
+      search: searchQuery,
+    }).then((rooms) => {
+      if (isMounted && rooms && rooms.length > 0) {
+        setLiveRoomsState(rooms);
+      }
+    }).catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedCountry, searchQuery]);
+
+  const fixturesError = null;
 
   const allPartyRooms = useMemo(() => {
     try {
@@ -159,7 +174,7 @@ export function DiscoveryShell({
 
   // Filter Live rooms by country and search query
   const filteredLiveRooms = useMemo(() => {
-    return allLiveRooms.filter((room) => {
+    return liveRoomsState.filter((room) => {
       const matchesCountry =
         selectedCountry === 'ALL' ||
         room.countryCode.toUpperCase() === selectedCountry.toUpperCase();
@@ -170,7 +185,7 @@ export function DiscoveryShell({
         room.roomNumber.includes(searchQuery.trim());
       return matchesCountry && matchesSearch;
     });
-  }, [allLiveRooms, selectedCountry, searchQuery]);
+  }, [liveRoomsState, selectedCountry, searchQuery]);
 
   // Filter Party rooms by country and search query
   const filteredPartyRooms = useMemo(() => {

@@ -41,6 +41,7 @@ import {
   FixtureLiveChatMessage,
   FixtureCoinPackage,
 } from '@/lib/design/designFixtures';
+import { LiveApiService } from '@/lib/liveApiService';
 import SafetyToolsScreen from './SafetyToolsScreen';
 
 export interface ViewerRoomScreenProps {
@@ -240,6 +241,37 @@ export default function ViewerRoomScreen({ roomId }: ViewerRoomScreenProps) {
   const [theatreMode, setTheatreMode] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [showSafetyTools, setShowSafetyTools] = useState(false);
+
+  // Real-time viewer count synchronized with backend live room presence
+  const [liveViewerCount, setLiveViewerCount] = useState<number>(room.viewerCount);
+
+  useEffect(() => {
+    setLiveViewerCount(room.viewerCount);
+    let active = true;
+
+    // Fetch latest room details from backend
+    LiveApiService.getRoomDetails(room.id)
+      .then((freshRoom) => {
+        if (active && freshRoom && typeof freshRoom.viewerCount === 'number') {
+          setLiveViewerCount(freshRoom.viewerCount);
+        }
+      })
+      .catch(() => {});
+
+    // Register viewer presence join
+    LiveApiService.joinViewerSession(room.id)
+      .then((result) => {
+        if (active && result && typeof result.viewerCount === 'number') {
+          setLiveViewerCount(result.viewerCount);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+      LiveApiService.leaveViewerSession(room.id).catch(() => {});
+    };
+  }, [room.id, room.viewerCount]);
 
   // Coin Balance (Initialized from DesignFixtures.currentCoinBalance)
   const [coinBalance, setCoinBalance] = useState<number>(() => DesignFixtures.currentCoinBalance);
@@ -518,7 +550,7 @@ export default function ViewerRoomScreen({ roomId }: ViewerRoomScreenProps) {
 
           <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white/10 text-white text-xs font-semibold">
             <Eye className="w-3.5 h-3.5 text-cyan-400" />
-            <span>{host.viewerCount.toLocaleString()}</span>
+            <span>{liveViewerCount.toLocaleString()}</span>
           </div>
 
           {room.isPkActive && (
