@@ -1,21 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateSessionToken } from '@/lib/auth';
+import { getAuthenticatedUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const sessionToken = req.cookies.get('poppo_session')?.value;
-
-    if (!sessionToken) {
-      return NextResponse.json({ authenticated: false, user: null });
-    }
-
-    const user = await validateSessionToken(sessionToken);
+    const user = await getAuthenticatedUser(req);
 
     if (!user) {
       const res = NextResponse.json({ authenticated: false, user: null });
-      // Clear expired / invalid cookie
+      // Clear expired / invalid cookie if present
       res.cookies.set('poppo_session', '', { path: '/', httpOnly: true, maxAge: 0 });
       return res;
     }

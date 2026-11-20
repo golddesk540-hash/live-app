@@ -49,9 +49,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Rate limit registrations: max 5 per hour per IP
+    // Rate limit registrations: max 5 per hour per IP (relaxed in development/testing)
     const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
-    const rateCheck = await checkRateLimit(`reg_${clientIp}`, 5, 3600);
+    const maxRegPerIp = (process.env.NODE_ENV !== 'production' || clientIp === '127.0.0.1' || clientIp === '::1') ? 100 : 5;
+    const rateCheck = await checkRateLimit(`reg_${clientIp}`, maxRegPerIp, 3600);
     if (!rateCheck.allowed) {
       return NextResponse.json(
         { error: 'Too many registrations from this IP address. Please try again later.' },
@@ -114,6 +115,7 @@ export async function POST(req: NextRequest) {
         isProfileCompleted: false,
         status: newUser.status,
       },
+      sessionToken,
     });
 
     setAuthSessionCookie(res, sessionToken, expiresAt);

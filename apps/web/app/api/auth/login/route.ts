@@ -118,6 +118,7 @@ export async function POST(req: NextRequest) {
       success: true,
       message: 'Logged in successfully',
       user: safeUser,
+      sessionToken,
     });
 
     setAuthSessionCookie(res, sessionToken, expiresAt);

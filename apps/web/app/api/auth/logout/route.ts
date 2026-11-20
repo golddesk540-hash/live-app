@@ -5,7 +5,9 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const sessionToken = req.cookies.get('poppo_session')?.value;
+    const authHeader = req.headers.get('authorization');
+    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+    const sessionToken = req.cookies.get('poppo_session')?.value || bearerToken;
     if (sessionToken) {
       await destroySession(sessionToken);
     }

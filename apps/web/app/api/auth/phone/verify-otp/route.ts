@@ -100,6 +100,7 @@ export async function POST(req: NextRequest) {
       success: true,
       message: isNewUser ? 'Welcome to Popo Live! Account created.' : 'Logged in successfully.',
       user: safeUser,
+      sessionToken,
     });
 
     setAuthSessionCookie(res, sessionToken, expiresAt);

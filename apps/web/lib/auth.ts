@@ -467,7 +467,7 @@ export async function destroySession(sessionToken: string): Promise<void> {
 // 6. Connect Terms Gate & 18+ Verification (Prompt 01 Connection)
 // -------------------------------------------------------------
 export function verifyTermsGateCompliance(req: NextRequest): { compliant: boolean; error?: string } {
-  const cookie = req.cookies.get('poppo_terms_consent')?.value;
+  const cookie = req.cookies.get('poppo_terms_consent')?.value || req.headers.get('x-terms-consent');
   if (!cookie) {
     return {
       compliant: false,
