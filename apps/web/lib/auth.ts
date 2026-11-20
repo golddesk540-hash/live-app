@@ -116,6 +116,8 @@ export async function checkRateLimit(
   }
 }
 
+import { otpService } from './otpService';
+
 // -------------------------------------------------------------
 // 4. OTP Generation, Delivery & Verification
 // -------------------------------------------------------------
@@ -123,7 +125,7 @@ export function hashOtp(otp: string): string {
   return crypto.createHmac('sha256', AUTH_SECRET).update(otp).digest('hex');
 }
 
-export async function createAndSendOtp(phone: string): Promise<{ success: boolean; message: string; cooldown: number; devOtp?: string }> {
+export async function createAndSendOtp(phone: string, clientIp?: string): Promise<{ success: boolean; message: string; cooldown: number; devOtp?: string }> {
   // Check rate limit: max 5 requests per hour per phone
   const hourlyLimit = await checkRateLimit(`otp_hourly_${phone}`, 5, 3600);
   if (!hourlyLimit.allowed) {
@@ -136,8 +138,16 @@ export async function createAndSendOtp(phone: string): Promise<{ success: boolea
     throw new Error('Please wait 60 seconds before requesting another code.');
   }
 
+  // Check IP rate limit if IP provided: max 10 requests per 15 minutes
+  if (clientIp) {
+    const ipCheck = await checkRateLimit(`otp_ip_${clientIp}`, 10, 900);
+    if (!ipCheck.allowed) {
+      throw new Error('Too many requests from this IP address. Please wait a few minutes.');
+    }
+  }
+
   // Generate cryptographically random 6-digit OTP
-  const otp = String(crypto.randomInt(100000, 999999));
+  const otp = otpService.generateOtp();
   const otpHash = hashOtp(otp);
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes validity
 
@@ -151,44 +161,25 @@ export async function createAndSendOtp(phone: string): Promise<{ success: boolea
     [phone, otpHash, expiresAt]
   );
 
-  // Dispatch OTP: If Twilio credentials are provided, send SMS; otherwise safely log to console
-  const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-  const twilioToken = process.env.TWILIO_AUTH_TOKEN;
-  const twilioFrom = process.env.TWILIO_PHONE_NUMBER;
+  // Dispatch OTP via production-ready hybrid provider service
+  const deliveryResult = await otpService.sendSmsOtp(phone, otp);
 
-  if (twilioSid && twilioToken && twilioFrom && twilioSid.startsWith('AC')) {
-    try {
-      const auth = Buffer.from(`${twilioSid}:${twilioToken}`).toString('base64');
-      const params = new URLSearchParams({
-        To: phone,
-        From: twilioFrom,
-        Body: `[Popo Live] Your verification code is ${otp}. Valid for 5 minutes. Do not share with anyone.`,
-      });
-      await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${auth}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: params.toString(),
-      });
-      console.log(`[SMS-SENT] Live OTP dispatched to ${phone}`);
-    } catch (err) {
-      console.error('Failed to send SMS via Twilio:', err);
-    }
-  } else {
-    // Development / Local Simulation mode
-    console.log(`\n======================================================`);
-    console.log(`🔑 [POPO LIVE DEV OTP] Phone: ${phone} | Code: ${otp}`);
-    console.log(`======================================================\n`);
-  }
+  const isReal = otpService.isRealOtpRequired();
 
-  return { success: true, message: 'Verification code sent successfully', cooldown: 60, devOtp: otp };
+  return {
+    success: true,
+    message: deliveryResult.message,
+    cooldown: deliveryResult.cooldown,
+    // Only return devOtp when real OTP is disabled and not in production
+    ...(!isReal && deliveryResult.devOtp ? { devOtp: deliveryResult.devOtp } : {}),
+  };
 }
 
 export async function verifyPhoneOtp(phone: string, otp: string): Promise<boolean> {
-  // Allow universal master dev code '123456' in development
-  if (otp === '123456') {
+  const isRealRequired = process.env.USE_REAL_OTP === 'true' || process.env.NODE_ENV === 'production';
+
+  // Allow universal master dev code '123456' ONLY in development mode when real OTP is not forced
+  if (otp === '123456' && !isRealRequired) {
     await query('UPDATE popolive.otp_verifications SET verified = true WHERE phone = $1', [phone]);
     return true;
   }
@@ -222,7 +213,11 @@ export async function verifyPhoneOtp(phone: string, otp: string): Promise<boolea
 
   const providedHash = hashOtp(otp);
   if (providedHash !== record.otp_hash) {
-    await query('UPDATE popolive.otp_verifications SET attempts = attempts + 1 WHERE id = $1', [record.id]);
+    const updatedAttempts = record.attempts + 1;
+    await query('UPDATE popolive.otp_verifications SET attempts = $1 WHERE id = $2', [updatedAttempts, record.id]);
+    if (updatedAttempts >= 5) {
+      throw new Error('Too many incorrect attempts. Please request a new code.');
+    }
     throw new Error('Invalid verification code. Please check and try again.');
   }
 

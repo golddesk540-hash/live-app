@@ -26,19 +26,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await createAndSendOtp(trimmedPhone);
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
+    const result = await createAndSendOtp(trimmedPhone, clientIp);
 
     return NextResponse.json({
       success: true,
       message: result.message,
       cooldown: result.cooldown,
-      devOtp: result.devOtp,
+      ...(result.devOtp ? { devOtp: result.devOtp } : {}),
     });
   } catch (err: any) {
-    console.error('Error in send-otp:', err);
+    const isRateLimit = err.message?.includes('wait') || err.message?.includes('Too many');
+    const isProvider = err.code === 'SMS_PROVIDER_ERROR' || err.status === 502;
+    const status = isRateLimit ? 429 : (isProvider ? 502 : 400);
+
     return NextResponse.json(
       { error: err.message || 'Failed to send verification code. Please try again.' },
-      { status: 400 }
+      { status }
     );
   }
 }
