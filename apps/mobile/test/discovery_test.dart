@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:popo_live/api/api_config.dart';
 import 'package:popo_live/l10n/strings.dart';
 import 'package:popo_live/models/models.dart';
 import 'package:popo_live/repositories/discovery_repository.dart';
@@ -11,7 +12,12 @@ import 'package:popo_live/screens/discovery/search_screen.dart';
 
 void main() {
   setUp(() {
+    ApiConfig.useLiveApi = false;
     PopoStrings.setLanguage('en');
+  });
+
+  tearDown(() {
+    ApiConfig.useLiveApi = true;
   });
 
   group('M2 Strongly Typed Model Parsing Tests', () {

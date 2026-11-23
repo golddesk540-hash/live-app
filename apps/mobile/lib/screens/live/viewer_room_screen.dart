@@ -6,6 +6,8 @@ import '../../theme/popo_theme.dart';
 import '../../design/design_fixtures.dart';
 import '../../widgets/popo_error_state.dart';
 import '../../widgets/popo_empty_state.dart';
+import '../../api/api_config.dart';
+import '../../api/services/live_api_service.dart';
 import '../pk/pk_battle_type_screen.dart';
 
 /// Professional Live Room Viewer Screen for Audience Experience
@@ -58,10 +60,37 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
   int _activeFloatingGiftQty = 1;
   Timer? _floatingGiftTimer;
 
+  // Real Database Presence and Live Viewer Count (Phase B4)
+  int? _liveViewerCount;
+  String? _liveViewerDisplay;
+  Timer? _liveHeartbeatTimer;
+  final LiveApiService _liveApiService = LiveApiService();
+
+  // Real Database Live Chat (Phase B4 Prompt 4)
+  Timer? _liveChatPollTimer;
+  String? _lastChatTimestamp;
+  final Set<String> _seenChatMessageIds = {};
+  bool _isChatSending = false;
+
+  // Real Database Economy & Coins (Phase B5)
+  int? _liveCoinBalance;
+  bool _isSendingGift = false;
+
   @override
   void initState() {
     super.initState();
     _initializeRoomData();
+
+    // Connect to real database presence & chat when USE_LIVE_API is active
+    if (ApiConfig.useLiveApi && !Platform.environment.containsKey('FLUTTER_TEST')) {
+      _joinLiveRoom();
+      _startLiveChatPolling();
+    }
+
+    // Connect to real economy wallet balance when USE_ECONOMY_API is active
+    if (ApiConfig.useEconomyApi && !Platform.environment.containsKey('FLUTTER_TEST')) {
+      _fetchViewerCoinBalance();
+    }
 
     // Elapsed live watch timer (disabled in automated flutter test environment)
     if (!Platform.environment.containsKey('FLUTTER_TEST')) {
@@ -77,9 +106,79 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
   void dispose() {
     _durationTimer?.cancel();
     _floatingGiftTimer?.cancel();
+    _liveHeartbeatTimer?.cancel();
+    _liveChatPollTimer?.cancel();
+    if (ApiConfig.useLiveApi && !Platform.environment.containsKey('FLUTTER_TEST')) {
+      _leaveLiveRoom();
+    }
     _chatController.dispose();
     _chatScrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchViewerCoinBalance() async {
+    try {
+      final res = await _liveApiService.getCoinBalance();
+      if (res.isSuccess && res.data is Map) {
+        final data = res.data as Map<String, dynamic>;
+        if (data['coins'] != null && mounted) {
+          setState(() {
+            _liveCoinBalance = (data['coins'] as num).toInt();
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _joinLiveRoom() async {
+    try {
+      final res = await _liveApiService.joinViewer(roomId: widget.roomId);
+      if (res.isSuccess && res.data != null) {
+        final data = res.data is Map ? res.data as Map : {};
+        if (mounted) {
+          setState(() {
+            _liveViewerCount = int.tryParse(data['viewerCount']?.toString() ?? '');
+            _liveViewerDisplay = data['viewerDisplay']?.toString();
+          });
+        }
+      } else if (res.statusCode == 400 && (res.errorMessage?.toLowerCase().contains('ended') ?? false)) {
+        if (mounted) {
+          setState(() => _isError = true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('This live broadcast has ended.')),
+          );
+        }
+        return;
+      }
+    } catch (_) {}
+
+    // Periodic heartbeat to keep presence alive and synchronize real viewer count
+    _liveHeartbeatTimer?.cancel();
+    _liveHeartbeatTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
+      if (!mounted) return;
+      try {
+        final beatRes = await _liveApiService.heartbeat(roomId: widget.roomId);
+        if (beatRes.isSuccess && beatRes.data != null) {
+          final data = beatRes.data is Map ? beatRes.data as Map : {};
+          if (mounted) {
+            setState(() {
+              _liveViewerCount = int.tryParse(data['viewerCount']?.toString() ?? '') ?? _liveViewerCount;
+              _liveViewerDisplay = data['viewerDisplay']?.toString();
+            });
+          }
+        } else if (beatRes.statusCode == 400 && (beatRes.errorMessage?.toLowerCase().contains('ended') ?? false)) {
+          if (mounted) {
+            setState(() => _isError = true);
+          }
+        }
+      } catch (_) {}
+    });
+  }
+
+  void _leaveLiveRoom() async {
+    try {
+      await _liveApiService.leaveViewer(roomId: widget.roomId);
+    } catch (_) {}
   }
 
   void _initializeRoomData() {
@@ -123,11 +222,15 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
     }
     _room = matchedRoom;
 
-    // Load recent chat messages from fixture
-    try {
-      _chatMessages = List.from(DesignFixtures.liveViewer.recentChatMessages);
-    } catch (_) {
+    // Load chat messages: live database when USE_LIVE_API is active, else design fixtures
+    if (ApiConfig.useLiveApi) {
       _chatMessages = [];
+    } else {
+      try {
+        _chatMessages = List.from(DesignFixtures.liveViewer.recentChatMessages);
+      } catch (_) {
+        _chatMessages = [];
+      }
     }
 
     // Load top contributors from fixture
@@ -136,6 +239,77 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
     } catch (_) {
       _topContributors = [];
     }
+  }
+
+  void _startLiveChatPolling() {
+    _liveChatPollTimer?.cancel();
+    _fetchLiveChatMessages(isInitial: true);
+
+    // Poll for new live room chat messages every 2.5 seconds
+    _liveChatPollTimer = Timer.periodic(const Duration(milliseconds: 2500), (_) {
+      if (!mounted) return;
+      _fetchLiveChatMessages();
+    });
+  }
+
+  Future<void> _fetchLiveChatMessages({bool isInitial = false}) async {
+    try {
+      final res = await _liveApiService.getChatMessages(
+        roomId: widget.roomId,
+        after: isInitial ? null : _lastChatTimestamp,
+        limit: 50,
+      );
+
+      if (res.isSuccess && res.data != null && mounted) {
+        final data = res.data is Map ? res.data as Map : {};
+        final rawList = data['messages'] as List? ?? [];
+
+        bool hasNew = false;
+        for (final item in rawList) {
+          if (item is Map) {
+            final id = item['id']?.toString() ?? '';
+            if (id.isNotEmpty && !_seenChatMessageIds.contains(id)) {
+              _seenChatMessageIds.add(id);
+              final content = item['content']?.toString() ?? item['messageText']?.toString() ?? '';
+              final nickname = item['senderNickname']?.toString() ?? 'Viewer';
+              final avatar = item['senderAvatarUrl']?.toString() ?? '/avatars/default.png';
+              final role = item['senderRole']?.toString() ?? 'viewer';
+              final level = int.tryParse(item['wealthLevel']?.toString() ?? '1') ?? 1;
+              final createdAt = item['createdAt']?.toString();
+
+              final msg = FixtureLiveChatMessage(
+                id: id,
+                senderNickname: nickname,
+                senderAvatar: avatar,
+                senderLevel: level,
+                isVip: role == 'vip' || role == 'admin',
+                content: content,
+                timestamp: _formatMessageTime(createdAt),
+              );
+
+              _chatMessages.add(msg);
+              _lastChatTimestamp = createdAt ?? _lastChatTimestamp;
+              hasNew = true;
+            }
+          }
+        }
+
+        if (hasNew && mounted) {
+          setState(() {});
+          _scrollToBottom();
+        }
+      }
+    } catch (_) {}
+  }
+
+  String _formatMessageTime(String? isoString) {
+    if (isoString == null) return 'Just now';
+    final dt = DateTime.tryParse(isoString);
+    if (dt == null) return 'Just now';
+    final diff = DateTime.now().difference(dt);
+    if (diff.inSeconds < 60) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
   void _scrollToBottom() {
@@ -178,26 +352,92 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
     );
   }
 
-  void _handleSendChatMessage() {
+  void _handleSendChatMessage() async {
     final text = _chatController.text.trim();
     if (text.isEmpty) return;
 
-    final user = DesignFixtures.currentUserProfile;
-    final newMsg = FixtureLiveChatMessage(
-      id: 'lmsg_${DateTime.now().millisecondsSinceEpoch}',
-      senderNickname: user.nickname,
-      senderAvatar: user.avatarUrl,
-      senderLevel: user.wealthLevel,
-      isVip: user.vipLevel > 0,
-      content: text,
-      timestamp: 'Just now',
-    );
+    if (!ApiConfig.useLiveApi) {
+      final user = DesignFixtures.currentUserProfile;
+      final newMsg = FixtureLiveChatMessage(
+        id: 'lmsg_${DateTime.now().millisecondsSinceEpoch}',
+        senderNickname: user.nickname,
+        senderAvatar: user.avatarUrl,
+        senderLevel: user.wealthLevel,
+        isVip: user.vipLevel > 0,
+        content: text,
+        timestamp: 'Just now',
+      );
 
-    setState(() {
-      _chatMessages.add(newMsg);
-    });
+      setState(() {
+        _chatMessages.add(newMsg);
+      });
+      _chatController.clear();
+      _scrollToBottom();
+      return;
+    }
+
+    if (_isChatSending) return;
+    if (text.length > 500) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Message cannot exceed 500 characters.')),
+      );
+      return;
+    }
+
+    _isChatSending = true;
     _chatController.clear();
-    _scrollToBottom();
+
+    try {
+      final res = await _liveApiService.sendChatMessage(
+        roomId: widget.roomId,
+        text: text,
+      );
+
+      if (res.isSuccess && res.data != null && mounted) {
+        final data = res.data is Map ? res.data as Map : {};
+        final m = data['message'] is Map ? data['message'] as Map : data;
+        final id = m['id']?.toString() ?? 'msg_${DateTime.now().millisecondsSinceEpoch}';
+
+        if (!_seenChatMessageIds.contains(id)) {
+          _seenChatMessageIds.add(id);
+          final content = m['content']?.toString() ?? m['messageText']?.toString() ?? text;
+          final nickname = m['senderNickname']?.toString() ?? 'You';
+          final avatar = m['senderAvatarUrl']?.toString() ?? '/avatars/default.png';
+          final role = m['senderRole']?.toString() ?? 'viewer';
+          final level = int.tryParse(m['wealthLevel']?.toString() ?? '1') ?? 1;
+          final createdAt = m['createdAt']?.toString();
+
+          final savedMsg = FixtureLiveChatMessage(
+            id: id,
+            senderNickname: nickname,
+            senderAvatar: avatar,
+            senderLevel: level,
+            isVip: role == 'vip' || role == 'admin',
+            content: content,
+            timestamp: 'Just now',
+          );
+
+          setState(() {
+            _chatMessages.add(savedMsg);
+          });
+          _lastChatTimestamp = createdAt ?? _lastChatTimestamp;
+          _scrollToBottom();
+        }
+      } else if (mounted) {
+        // Show visible error and DO NOT display unsaved message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res.errorMessage ?? 'Failed to send message.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Network error. Failed to send message.')),
+        );
+      }
+    } finally {
+      _isChatSending = false;
+    }
   }
 
   void _insertEmoji(String emoji) {
@@ -650,7 +890,7 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  _formatNumber(_room.viewerCount),
+                  _liveViewerDisplay ?? _formatNumber(_liveViewerCount ?? _room.viewerCount),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10.5,
@@ -1180,7 +1420,9 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
 
     return StatefulBuilder(
       builder: (ctx, setSheetState) {
-        final currentBal = DesignFixtures.currentCoinBalance;
+        final currentBal = ApiConfig.useEconomyApi && _liveCoinBalance != null
+            ? _liveCoinBalance!
+            : DesignFixtures.currentCoinBalance;
         final selectedGift = gifts.isNotEmpty ? gifts[selectedGiftIndex] : null;
         final totalCost =
             selectedGift != null ? selectedGift.priceCoins * selectedQuantity : 0;
@@ -1464,10 +1706,106 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
                         color: Colors.transparent,
                         child: InkWell(
                           borderRadius: BorderRadius.circular(24),
-                          onTap: () {
+                          onTap: () async {
                             if (selectedGift == null) return;
 
-                            // 1. Check if sufficient coins exist
+                            // Real PostgreSQL Database Gift Send when USE_ECONOMY_API is active
+                            if (ApiConfig.useEconomyApi) {
+                              if (_isSendingGift) return;
+                              setSheetState(() => _isSendingGift = true);
+
+                              try {
+                                final idempotencyKey =
+                                    'm_gift_${DateTime.now().millisecondsSinceEpoch}_${selectedGift.id}';
+                                final res = await _liveApiService.sendGift(
+                                  roomId: _room.id,
+                                  giftId: selectedGift.id,
+                                  quantity: selectedQuantity,
+                                  idempotencyKey: idempotencyKey,
+                                );
+
+                                if (res.isSuccess && res.data is Map) {
+                                  final resJson = res.data as Map<String, dynamic>;
+                                  final remaining = (resJson['remainingCoins'] as num?)?.toInt() ?? 0;
+                                  if (mounted) {
+                                    setState(() {
+                                      _liveCoinBalance = remaining;
+                                      _activeFloatingGift = selectedGift;
+                                      _activeFloatingGiftQty = selectedQuantity;
+                                      _floatingGiftTimer?.cancel();
+                                      _floatingGiftTimer = Timer(
+                                        const Duration(milliseconds: 2800),
+                                        () {
+                                          if (mounted) {
+                                            setState(() => _activeFloatingGift = null);
+                                          }
+                                        },
+                                      );
+
+                                      _chatMessages.add(
+                                        FixtureLiveChatMessage(
+                                          id: 'lmsg_gift_${DateTime.now().millisecondsSinceEpoch}',
+                                          senderNickname: DesignFixtures.currentUserProfile.nickname,
+                                          senderAvatar: DesignFixtures.currentUserProfile.avatarUrl,
+                                          senderLevel: DesignFixtures.currentUserProfile.wealthLevel,
+                                          isVip: true,
+                                          content: 'Sent ${selectedGift.name} x$selectedQuantity 🎁✨',
+                                          timestamp: 'Just now',
+                                        ),
+                                      );
+                                    });
+                                    _scrollToBottom();
+                                  }
+
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Sent ${selectedGift.name} x$selectedQuantity to ${_room.hostNickname}! 🎁',
+                                        ),
+                                        backgroundColor: const Color(0xFF161622),
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                    if (sheetCtx.mounted) {
+                                      Navigator.pop(sheetCtx);
+                                    }
+                                  }
+                                } else {
+                                  final errMsg = res.errorMessage ?? 'Gift sending failed.';
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          errMsg.contains('INSUFFICIENT_COINS')
+                                              ? 'Insufficient coins: $errMsg'
+                                              : errMsg,
+                                        ),
+                                        backgroundColor: const Color(0xFFFF1768),
+                                        duration: const Duration(seconds: 3),
+                                      ),
+                                    );
+                                  }
+                                }
+                              } catch (err) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Gift send failed: $err'),
+                                      backgroundColor: const Color(0xFFFF1768),
+                                      duration: const Duration(seconds: 3),
+                                    ),
+                                  );
+                                }
+                              } finally {
+                                if (mounted) {
+                                  setSheetState(() => _isSendingGift = false);
+                                }
+                              }
+                              return;
+                            }
+
+                            // 1. Fallback to fixture mode when economy API is false
                             if (currentBal < totalCost) {
                               // Insufficient coins error: keeps sheet open
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -1603,7 +1941,7 @@ class _ViewerRoomScreenState extends State<ViewerRoomScreen>
                     ),
                   ),
                   Text(
-                    '${_formatNumber(_room.viewerCount)} Viewers Online',
+                    '${_liveViewerDisplay ?? _formatNumber(_liveViewerCount ?? _room.viewerCount)} Viewers Online',
                     style: const TextStyle(
                       color: PopoTheme.textSecondary,
                       fontSize: 11,

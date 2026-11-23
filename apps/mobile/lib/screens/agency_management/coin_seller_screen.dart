@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../api/api.dart';
 import '../../theme/popo_theme.dart';
+import '../../design/design_fixtures.dart';
+import '../../widgets/popo_error_state.dart';
 
 /// Popo Live — Phase 4 Module 8: Authorized Coin Seller Portal
 /// Coin Package Inventory, Direct User Coin Transfers, Commission Tracking & Sales Audit
@@ -52,37 +54,67 @@ class _CoinSellerScreenState extends State<CoinSellerScreen> with SingleTickerPr
     });
 
     try {
-      final results = await Future.wait([
-        AgentFinancialService.instance.getSellerPackages(),
-        AgentFinancialService.instance.getSellerSales(),
-        AgentFinancialService.instance.getEarnings(),
-      ]);
-
-      if (!mounted) return;
-
-      final pkgRes = results[0];
-      final salesRes = results[1];
-      final earningsRes = results[2];
-
-      if (pkgRes.isSuccess && pkgRes.data != null) {
-        _packages = (pkgRes.data['packages'] as List<dynamic>?) ?? [];
-        _sellerCoinBalance = (pkgRes.data['sellerCoinBalance'] as num?)?.toInt() ?? 0;
-        _commissionRate = (pkgRes.data['commissionRate'] as num?)?.toDouble() ?? 8.0;
-
-        if (_packages.isNotEmpty && _selectedPackageId == null) {
-          _selectedPackageId = _packages[0]['packageId']?.toString();
-        }
+      if (DesignFixtures.isError) {
+        throw const DesignFixtureException(
+          message: 'Authorized coin seller directory offline [ERR_SELLER_503]',
+        );
       }
 
-      if (salesRes.isSuccess && salesRes.data != null) {
-        _sales = (salesRes.data['sales'] as List<dynamic>?) ?? [];
+      if (DesignFixtures.isEmpty) {
+        setState(() {
+          _packages = [];
+          _sellerCoinBalance = 0;
+          _commissionRate = 8.0;
+          _totalSalesCount = 0;
+          _totalCoinsSold = 0;
+          _sales = [];
+          _isLoading = false;
+        });
+        return;
       }
 
-      if (earningsRes.isSuccess && earningsRes.data != null) {
-        final d = earningsRes.data['earnings'] as Map<String, dynamic>? ?? {};
-        _totalSalesCount = (d['totalSalesCount'] as num?)?.toInt() ?? _sales.length;
-        _totalCoinsSold = (d['totalCoinsSold'] as num?)?.toInt() ?? 0;
+      final seller = DesignFixtures.coinSellerInfo;
+      final coinPkgs = DesignFixtures.coinPackages;
+
+      _packages = coinPkgs
+          .map((p) => {
+                'packageId': p.id,
+                'totalCoins': p.coins,
+                'baseCoins': p.coins,
+                'bonusCoins': 0,
+                'priceAmount': p.priceUsd,
+              })
+          .toList();
+
+      _sellerCoinBalance = 250000;
+      _commissionRate = 8.0;
+      _totalSalesCount = seller.totalOrdersCompleted;
+      _totalCoinsSold = 18500000;
+
+      if (_packages.isNotEmpty && _selectedPackageId == null) {
+        _selectedPackageId = _packages[0]['packageId']?.toString();
       }
+
+      _sales = [
+        {
+          'id': 'sale_01',
+          'saleReference': 'CS-88910',
+          'customerNickname': 'Sana Ali',
+          'coinsDelivered': 7000,
+          'priceAmount': 10.0,
+          'commissionEarnedPoints': 800,
+          'createdAt': 'Today, 11:20 AM',
+        },
+        {
+          'id': 'sale_02',
+          'saleReference': 'CS-88909',
+          'customerNickname': 'Bilal Ahmed',
+          'coinsDelivered': 35000,
+          'priceAmount': 50.0,
+          'commissionEarnedPoints': 4000,
+          'createdAt': 'Yesterday, 04:45 PM',
+        },
+      ];
 
       setState(() {
         _isLoading = false;
@@ -90,7 +122,10 @@ class _CoinSellerScreenState extends State<CoinSellerScreen> with SingleTickerPr
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = e
+            .toString()
+            .replaceFirst('Exception: ', '')
+            .replaceFirst('DesignFixtureException: ', '');
         _isLoading = false;
       });
     }
@@ -281,6 +316,55 @@ class _CoinSellerScreenState extends State<CoinSellerScreen> with SingleTickerPr
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Seller Profile Card (R4)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: PopoTheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: PopoTheme.borderSubtle),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: PopoTheme.gold.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.verified, color: PopoTheme.gold, size: 26),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          DesignFixtures.coinSellerInfo.sellerName,
+                          style: const TextStyle(
+                            color: PopoTheme.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Agent: ${DesignFixtures.coinSellerInfo.agentName} • WhatsApp: ${DesignFixtures.coinSellerInfo.whatsappContact}',
+                          style: const TextStyle(
+                            color: PopoTheme.textSecondary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             // Inventory & Stats Card
             Container(
               width: double.infinity,

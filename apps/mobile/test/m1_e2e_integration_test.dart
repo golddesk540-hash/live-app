@@ -13,6 +13,7 @@ import 'package:popo_live/shell/app_shell.dart';
 
 void main() {
   setUp(() async {
+    TokenStorage.useInMemoryOnly = true;
     PopoStrings.setLanguage('en');
     await TokenStorage.clearAll();
   });
@@ -76,7 +77,8 @@ void main() {
       (tester) async {
         await tester.pumpWidget(const MaterialApp(home: SplashScreen()));
         await tester.pump(const Duration(milliseconds: 900));
-        await tester.pumpAndSettle();
+        await tester.pump(const Duration(milliseconds: 350));
+        await tester.pump(const Duration(milliseconds: 100));
 
         expect(find.byType(AgeGateScreen), findsOneWidget);
       },
@@ -89,7 +91,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tap Register button without filling fields
-      await tester.tap(find.text('Create Account'));
+      await tester.tap(find.text('Create Account').last);
       await tester.pumpAndSettle();
 
       expect(find.text('Please enter a valid email address.'), findsOneWidget);
@@ -101,11 +103,11 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: LoginScreen()));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Sign In'));
+      await tester.tap(find.text(PopoStrings.get('login_btn')));
       await tester.pumpAndSettle();
 
       expect(
-        find.text('Please enter your email, phone, or User ID.'),
+        find.text(PopoStrings.get('err_empty_identifier')),
         findsOneWidget,
       );
     });

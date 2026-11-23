@@ -36,7 +36,6 @@ class _FinancialTransactionsScreenState extends State<FinancialTransactionsScree
   FinancialHistorySummary _summary = const FinancialHistorySummary();
   int _currentPage = 1;
   int _totalPages = 1;
-  int _totalRecords = 0;
 
   final List<Map<String, String>> _categories = const [
     {'key': 'all', 'label': 'All', 'labelUr': 'تمام'},
@@ -109,7 +108,6 @@ class _FinancialTransactionsScreenState extends State<FinancialTransactionsScree
         _transactions = items;
         _summary = summary;
         _totalPages = (pagination['totalPages'] as num?)?.toInt() ?? 1;
-        _totalRecords = (pagination['total'] as num?)?.toInt() ?? items.length;
       });
     } else {
       setState(() {

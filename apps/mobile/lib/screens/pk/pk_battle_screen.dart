@@ -3,11 +3,10 @@ import 'package:flutter/material.dart';
 import '../../models/pk/pk_models.dart';
 import '../../services/live/agora_rtc_service.dart';
 import '../../services/pk/pk_session_manager.dart';
-import '../../theme/popo_theme.dart';
-import '../../widgets/widgets.dart';
 import 'widgets/pk_gift_sheet_dialog.dart';
 import 'widgets/pk_gift_animation_overlay.dart';
 import 'pk_result_screen.dart';
+import '../../design/design_fixtures.dart';
 import '../gifts/widgets/gift_animation_banner.dart';
 
 /// 1v1 PK Battle Screen
@@ -334,20 +333,56 @@ class _PkBattleScreenState extends State<PkBattleScreen>
                 ),
                 onPressed: () {
                   Navigator.pop(ctx);
+                  final rHostA = FixtureLiveRoom(
+                    id: widget.battle.hostA.roomNumber.isNotEmpty ? widget.battle.hostA.roomNumber : 'room_host_a',
+                    roomNumber: widget.battle.hostA.roomNumber.isNotEmpty ? widget.battle.hostA.roomNumber : '1001',
+                    title: '${result.hostANickname} Live',
+                    hostNickname: result.hostANickname,
+                    hostAvatar: widget.battle.hostA.avatar,
+                    coverUrl: widget.battle.hostA.avatar,
+                    category: 'Live',
+                    country: 'Pakistan',
+                    countryCode: 'PK',
+                    flagEmoji: '🇵🇰',
+                    viewerCount: 120,
+                    heatScore: 12000,
+                    isLive: true,
+                    isPkActive: false,
+                    tags: const ['Live', 'PK'],
+                  );
+                  final rHostB = FixtureLiveRoom(
+                    id: widget.battle.hostB.roomNumber.isNotEmpty ? widget.battle.hostB.roomNumber : 'room_host_b',
+                    roomNumber: widget.battle.hostB.roomNumber.isNotEmpty ? widget.battle.hostB.roomNumber : '1002',
+                    title: '${result.hostBNickname} Live',
+                    hostNickname: result.hostBNickname,
+                    hostAvatar: widget.battle.hostB.avatar,
+                    coverUrl: widget.battle.hostB.avatar,
+                    category: 'Live',
+                    country: 'United Arab Emirates',
+                    countryCode: 'AE',
+                    flagEmoji: '🇦🇪',
+                    viewerCount: 95,
+                    heatScore: 9500,
+                    isLive: true,
+                    isPkActive: false,
+                    tags: const ['Live', 'PK'],
+                  );
+                  final isTie = result.winnerHostId == null || result.winnerHostId!.isEmpty;
+                  final winner = result.winnerHostId == widget.battle.hostA.id ? rHostA : rHostB;
+                  final loser = result.winnerHostId == widget.battle.hostA.id ? rHostB : rHostA;
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => PKResultScreen(
-                        battleId: widget.battle.id,
-                        initialResult: result,
-                        onClose: () {
-                          Navigator.pop(context);
-                          if (widget.onExitBattle != null) {
-                            widget.onExitBattle!();
-                          } else {
-                            Navigator.of(context).pop();
-                          }
-                        },
+                      builder: (_) => PkResultScreen(
+                        hostARoom: rHostA,
+                        hostBRoom: rHostB,
+                        winnerRoom: winner,
+                        loserRoom: loser,
+                        winnerScore: result.hostAScore >= result.hostBScore ? result.hostAScore : result.hostBScore,
+                        loserScore: result.hostAScore >= result.hostBScore ? result.hostBScore : result.hostAScore,
+                        scoreA: result.hostAScore,
+                        scoreB: result.hostBScore,
+                        isTie: isTie,
                       ),
                     ),
                   );

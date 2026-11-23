@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'vip_history_screen.dart';
+import '../../design/design_fixtures.dart';
 
 /// ============================================================================
 /// Popo Live — Phase 7 Module 7.7: Complete VIP Membership Screen
@@ -19,10 +20,10 @@ class VipMembershipScreen extends StatefulWidget {
 
   const VipMembershipScreen({
     super.key,
-    required this.apiBaseUrl,
+    this.apiBaseUrl = '',
     this.userId = 'user_wallet_demo_701',
     this.headers,
-    this.previewDemo = false,
+    this.previewDemo = true,
     this.initialUrdu = false,
   });
 
@@ -70,40 +71,127 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
   Future<void> _loadData() async {
     setState(() => _loading = true);
     try {
-      final res = await Future.wait([
-        http.get(
-          Uri.parse('${widget.apiBaseUrl}/api/vip/plans?platform=$_platformName'),
-          headers: widget.headers,
-        ),
-        http.get(
-          Uri.parse('${widget.apiBaseUrl}/api/vip/status$_qs'),
-          headers: widget.headers,
-        ),
-      ]);
-      final plansJson = jsonDecode(res[0].body);
-      final statusJson = jsonDecode(res[1].body);
+      if (DesignFixtures.isError) {
+        throw const DesignFixtureException(
+          message:
+              'VIP membership status could not be loaded [ERR_VIP_LOAD_FAILED]',
+        );
+      }
+
+      final plan = DesignFixtures.vipPlan;
       if (!mounted) return;
       setState(() {
-        if (plansJson['success'] == true) {
-          _plans = List<Map<String, dynamic>>.from(plansJson['plans'] ?? []);
-          _providers = List<Map<String, dynamic>>.from(plansJson['providers'] ?? []);
-          if (_selectedPlanId == null && _plans.isNotEmpty) {
-            final popular = _plans.firstWhere(
-              (p) => p['isPopular'] == true,
-              orElse: () => _plans.first,
-            );
-            _selectedPlanId = popular['planId'].toString();
-          }
-        }
-        if (statusJson['success'] == true) {
-          _vipProfile = Map<String, dynamic>.from(statusJson['vip'] ?? {});
+        _vipProfile = {
+          'hasActiveVip': plan.isActive,
+          'planName': plan.tierName,
+          'badgeLabel': 'Tier ${plan.tierLevel}',
+          'expiryDate': plan.expiryDate,
+          'daysRemaining': plan.daysRemaining,
+          'progressPercentage': plan.progressPercentage,
+          'status': plan.isActive ? 'Active' : 'Inactive',
+          'membershipId': 'mem_crown_786',
+        };
+
+        if (DesignFixtures.isEmpty) {
+          _plans = [];
+          _vipProfile = {'hasActiveVip': false, 'status': 'Standard'};
+        } else {
+          _plans = [
+            {
+              'planId': 'vip_silver',
+              'name': 'Silver Noble',
+              'tierLevel': 1,
+              'price': 9.99,
+              'pricePkr': 2800,
+              'durationDays': 30,
+              'isPopular': false,
+              'badgeLabel': 'Tier 1',
+              'benefits': [
+                {
+                  'title': 'Custom Entrance Animation',
+                  'description': 'Silver carriage entrance effect',
+                  'icon': 'login'
+                },
+                {
+                  'title': 'Chat Highlight',
+                  'description': 'Silver username badge in chat',
+                  'icon': 'chat'
+                },
+              ],
+            },
+            {
+              'planId': 'vip_diamond',
+              'name': 'Diamond Aristocrat',
+              'tierLevel': 2,
+              'price': 29.99,
+              'pricePkr': 8400,
+              'durationDays': 30,
+              'isPopular': false,
+              'badgeLabel': 'Tier 2',
+              'benefits': [
+                {
+                  'title': 'Glowing Avatar Ring',
+                  'description': 'Animated prismatic profile ring',
+                  'icon': 'ring'
+                },
+                {
+                  'title': 'Stealth Mode Visitor',
+                  'description': 'Browse without appearing in visitor list',
+                  'icon': 'eye'
+                },
+                {
+                  'title': '5% Gift Discount',
+                  'description': 'Save 5% coins on gift sending',
+                  'icon': 'discount'
+                },
+              ],
+            },
+            {
+              'planId': 'vip_crown',
+              'name': 'Crown Sovereign',
+              'tierLevel': 3,
+              'price': 49.99,
+              'pricePkr': 14000,
+              'durationDays': 30,
+              'isPopular': true,
+              'badgeLabel': 'Tier 3',
+              'benefits': [
+                {
+                  'title': 'Golden Carriage Entrance',
+                  'description':
+                      'Grand entrance animation on joining live rooms',
+                  'icon': 'carriage'
+                },
+                {
+                  'title': 'Exclusive Glowing Ring',
+                  'description': 'Prismatic animated avatar border',
+                  'icon': 'ring'
+                },
+                {
+                  'title': 'Golden Bubble Chat',
+                  'description': 'Golden chat bubble in live stream comments',
+                  'icon': 'bubble'
+                },
+                {
+                  'title': 'Stealth Visitor Mode',
+                  'description': 'Browse rooms anonymously',
+                  'icon': 'stealth'
+                },
+              ],
+            },
+          ];
+          _selectedPlanId = 'vip_crown';
         }
         _loading = false;
       });
+      return;
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _bannerMsg = e.toString();
+        _bannerMsg = e
+            .toString()
+            .replaceFirst('Exception: ', '')
+            .replaceFirst('DesignFixtureException: ', '');
         _bannerIsErr = true;
         _loading = false;
       });
@@ -125,7 +213,8 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
       _bannerMsg = null;
     });
     try {
-      final path = orderType == 'renewal' ? '/api/vip/renew' : '/api/vip/purchase';
+      final path =
+          orderType == 'renewal' ? '/api/vip/renew' : '/api/vip/purchase';
       final res = await http.post(
         Uri.parse('${widget.apiBaseUrl}$path$_qs'),
         headers: {'Content-Type': 'application/json', ...?widget.headers},
@@ -133,8 +222,9 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
           'planId': plan['planId'],
           'providerKey': _selectedProviderKey,
           'platform': _platformName,
-          'membershipId':
-              (orderType == 'renewal') ? (_vipProfile != null ? _vipProfile!['membershipId'] : null) : null,
+          'membershipId': (orderType == 'renewal')
+              ? (_vipProfile != null ? _vipProfile!['membershipId'] : null)
+              : null,
           'autoRenewConsent': _autoRenewConsent,
           'idempotencyKey': 'mob_vip_${DateTime.now().millisecondsSinceEpoch}',
         }),
@@ -144,7 +234,8 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
       if (res.statusCode >= 400 || data['success'] != true) {
         setState(() {
           _bannerIsErr = true;
-          _bannerMsg = '${data['errorCode'] ?? 'ERROR'}: ${data['error'] ?? 'Checkout failed'}';
+          _bannerMsg =
+              '${data['errorCode'] ?? 'ERROR'}: ${data['error'] ?? 'Checkout failed'}';
           _busy = false;
         });
         return;
@@ -162,7 +253,8 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
 
       final order = data['order'];
       if (order != null && _selectedProviderKey == 'sandbox_verified') {
-        await _showSandboxConfirmDialog(order['orderId'].toString(), plan['planName'].toString());
+        await _showSandboxConfirmDialog(
+            order['orderId'].toString(), plan['planName'].toString());
       }
       setState(() => _busy = false);
     } catch (e) {
@@ -175,14 +267,16 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
     }
   }
 
-  Future<void> _showSandboxConfirmDialog(String orderId, String planName) async {
+  Future<void> _showSandboxConfirmDialog(
+      String orderId, String planName) async {
     final outcome = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: _cardColor,
         title: Text(
           _isUrdu ? 'تصدیق شدہ VIP ادائیگی' : 'Verify VIP Sandbox Checkout',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+          style:
+              const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
         ),
         content: Text(
           'Order: $orderId\nPlan: $planName\nPending orders grant ZERO active VIP perks until verified.',
@@ -191,12 +285,15 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop('fail'),
-            child: const Text('Simulate Fail', style: TextStyle(color: Colors.redAccent)),
+            child: const Text('Simulate Fail',
+                style: TextStyle(color: Colors.redAccent)),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: _goldAccent, foregroundColor: Colors.black),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: _goldAccent, foregroundColor: Colors.black),
             onPressed: () => Navigator.of(ctx).pop('succeed'),
-            child: const Text('Verify & Activate', style: TextStyle(fontWeight: FontWeight.w800)),
+            child: const Text('Verify & Activate',
+                style: TextStyle(fontWeight: FontWeight.w800)),
           ),
         ],
       ),
@@ -212,7 +309,9 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
     if (!mounted) return;
     setState(() {
       _bannerIsErr = outcome == 'fail' || data['success'] != true;
-      _bannerMsg = data['message']?.toString() ?? data['error']?.toString() ?? 'Completed';
+      _bannerMsg = data['message']?.toString() ??
+          data['error']?.toString() ??
+          'Completed';
     });
     await _loadData();
   }
@@ -231,7 +330,8 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
           backgroundColor: _bgTop,
           foregroundColor: Colors.white,
           elevation: 0,
-          title: const Text('Popo Live', style: TextStyle(fontWeight: FontWeight.w900)),
+          title: const Text('Popo Live',
+              style: TextStyle(fontWeight: FontWeight.w900)),
           actions: [
             IconButton(
               onPressed: () => setState(() => _isUrdu = !_isUrdu),
@@ -282,7 +382,8 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
                                 ),
                               ],
                             ),
-                            child: const Icon(Icons.workspace_premium_rounded, color: _goldAccent, size: 48),
+                            child: const Icon(Icons.workspace_premium_rounded,
+                                color: _goldAccent, size: 48),
                           ),
                           const SizedBox(height: 10),
                           Text(
@@ -298,7 +399,10 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
                             hasActiveVip
                                 ? '${_vipProfile?['planName']} (${_vipProfile?['badgeLabel']}) • Exp ${_vipProfile?['expiryDate']?.toString().split('T').first ?? ''}'
                                 : 'Status: ${(_vipProfile?['status'] ?? 'Standard').toString().toUpperCase()}',
-                            style: const TextStyle(color: _goldAccent, fontSize: 12, fontWeight: FontWeight.w700),
+                            style: const TextStyle(
+                                color: _goldAccent,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700),
                           ),
                         ],
                       ),
@@ -309,15 +413,21 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: (_bannerIsErr ? Colors.redAccent : const Color(0xFF34D399)).withOpacity(0.15),
+                          color: (_bannerIsErr
+                                  ? Colors.redAccent
+                                  : const Color(0xFF34D399))
+                              .withOpacity(0.15),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: _bannerIsErr ? Colors.redAccent : const Color(0xFF34D399),
+                            color: _bannerIsErr
+                                ? Colors.redAccent
+                                : const Color(0xFF34D399),
                           ),
                         ),
                         child: Text(
                           _bannerMsg!,
-                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 12),
                         ),
                       ),
                     SizedBox(
@@ -330,21 +440,27 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
                           final p = _plans[i];
                           final selected = p['planId'] == plan?['planId'];
                           return GestureDetector(
-                            onTap: () => setState(() => _selectedPlanId = p['planId'].toString()),
+                            onTap: () => setState(
+                                () => _selectedPlanId = p['planId'].toString()),
                             child: Container(
                               width: 142,
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: selected ? const Color(0xFF2B155D) : _cardColor,
+                                color: selected
+                                    ? const Color(0xFF2B155D)
+                                    : _cardColor,
                                 borderRadius: BorderRadius.circular(18),
                                 border: Border.all(
-                                  color: selected ? _goldAccent : Colors.purpleAccent.withOpacity(0.25),
+                                  color: selected
+                                      ? _goldAccent
+                                      : Colors.purpleAccent.withOpacity(0.25),
                                   width: selected ? 2 : 1,
                                 ),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     '${p['badgeLabel']} • ${p['durationDays']}d',
@@ -355,7 +471,10 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
                                     ),
                                   ),
                                   Text(
-                                    _isUrdu ? (p['planNameUr'] ?? p['planName']).toString() : p['planName'].toString(),
+                                    _isUrdu
+                                        ? (p['planNameUr'] ?? p['planName'])
+                                            .toString()
+                                        : p['planName'].toString(),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
@@ -365,7 +484,7 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
                                     ),
                                   ),
                                   Text(
-                                    '\$${Number.tryParse('${p['priceAmount'] ?? 0}')?.toStringAsFixed(2) ?? '0.00'} ${p['currency'] ?? 'USD'}',
+                                    '\$${num.tryParse('${p['priceAmount'] ?? 0}')?.toStringAsFixed(2) ?? '0.00'} ${p['currency'] ?? 'USD'}',
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w900,
@@ -385,7 +504,8 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
                       decoration: BoxDecoration(
                         color: _cardColor,
                         borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: Colors.purpleAccent.withOpacity(0.28)),
+                        border: Border.all(
+                            color: Colors.purpleAccent.withOpacity(0.28)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -395,11 +515,15 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 6),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.star_rounded, color: _goldAccent, size: 22),
+                                  const Icon(Icons.star_rounded,
+                                      color: _goldAccent, size: 22),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
-                                      _isUrdu ? (b['titleUr'] ?? b['title']).toString() : b['title'].toString(),
+                                      _isUrdu
+                                          ? (b['titleUr'] ?? b['title'])
+                                              .toString()
+                                          : b['title'].toString(),
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w700,
@@ -429,14 +553,20 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
                         child: ListTile(
                           dense: true,
                           onTap: () => setState(
-                            () => _selectedProviderKey = prov['providerKey'].toString(),
+                            () => _selectedProviderKey =
+                                prov['providerKey'].toString(),
                           ),
                           title: Text(
                             prov['displayName'].toString(),
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13),
                           ),
                           trailing: Text(
-                            prov['isReadyForPayment'] == true ? 'READY' : 'PENDING KEY',
+                            prov['isReadyForPayment'] == true
+                                ? 'READY'
+                                : 'PENDING KEY',
                             style: TextStyle(
                               color: prov['isReadyForPayment'] == true
                                   ? const Color(0xFF34D399)
@@ -449,55 +579,69 @@ class _VipMembershipScreenState extends State<VipMembershipScreen> {
                       ),
                     CheckboxListTile(
                       value: _autoRenewConsent,
-                      onChanged: (v) => setState(() => _autoRenewConsent = v ?? false),
+                      onChanged: (v) =>
+                          setState(() => _autoRenewConsent = v ?? false),
                       activeColor: _neonPink,
                       title: Text(
-                        _isUrdu ? 'تجدید کی اختیاری رضامندی' : 'Optional auto-renewal consent',
-                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        _isUrdu
+                            ? 'تجدید کی اختیاری رضامندی'
+                            : 'Optional auto-renewal consent',
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 12),
                       ),
                     ),
                     const SizedBox(height: 8),
                     ElevatedButton(
-                      onPressed: _busy ? null : () => _startPurchase('purchase'),
+                      onPressed:
+                          _busy ? null : () => _startPurchase('purchase'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _goldAccent,
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30)),
                       ),
                       child: Text(
                         _busy
                             ? 'Processing...'
                             : _isUrdu
-                            ? 'وی آئی پی اپ گریڈ کریں'
-                            : 'Upgrade VIP',
-                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
+                                ? 'وی آئی پی اپ گریڈ کریں'
+                                : 'Upgrade VIP',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w900, fontSize: 16),
                       ),
                     ),
                     if (_vipProfile?['membershipId'] != null) ...[
                       const SizedBox(height: 10),
                       OutlinedButton(
-                        onPressed: _busy ? null : () => _startPurchase('renewal'),
+                        onPressed:
+                            _busy ? null : () => _startPurchase('renewal'),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: _neonPink),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30)),
                         ),
-                        child: Text(_isUrdu ? 'VIP تجدید کریں' : 'Renew Membership'),
+                        child: Text(
+                            _isUrdu ? 'VIP تجدید کریں' : 'Renew Membership'),
                       ),
                     ],
                     const SizedBox(height: 18),
                     Center(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 5),
                         decoration: BoxDecoration(
                           color: _neonPink,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text(
                           'P7.7  •  VIP',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12),
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 12),
                         ),
                       ),
                     ),

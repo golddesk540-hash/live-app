@@ -8,6 +8,7 @@ import '../../api/api_config.dart';
 import '../../api/services/economy_api_service.dart';
 import '../../api/services/vip_api_service.dart';
 import '../../api/services/store_api_service.dart';
+import '../../api/services/final_api_service.dart';
 import '../../widgets/popo_card.dart';
 import '../../widgets/popo_icon_button.dart';
 import '../../widgets/popo_empty_state.dart';
@@ -20,11 +21,16 @@ import '../task_level/task_level_screen.dart';
 import '../fan_club/fan_club_screen.dart';
 import '../live/live_rules_screen.dart';
 import '../agency_management/agency_management_screen.dart';
-import '../event_leaderboard/event_leaderboard_screen.dart';
 import '../earning_identity/earning_identity_screen.dart';
 import 'edit_profile_screen.dart';
 import 'public_profile_screen.dart';
 import 'settings_screen.dart';
+import 'user_relation_list_screen.dart';
+import '../wallet/wallet_screen.dart';
+import '../vip/vip_screen.dart';
+import '../recognition/recognition_screen.dart';
+import '../live/go_live_gate_screen.dart';
+import '../new_host_pack/new_host_pack_screen.dart';
 
 /// Complete Me / Profile Screen for Popo Live (Phase 5 - D4 Prompt 2)
 /// Integrates all 17 layout sections, 8 feature icons, 2 policy banners,
@@ -37,6 +43,9 @@ class MeScreen extends StatefulWidget {
 }
 
 class _MeScreenState extends State<MeScreen> {
+  FixtureUserProfile? _liveProfile;
+  bool _isLoadingProfile = false;
+  String? _profileError;
   int? _liveCoinsBalance;
   int? _livePointsBalance;
   int? _liveVipLevel;
@@ -48,6 +57,9 @@ class _MeScreenState extends State<MeScreen> {
   @override
   void initState() {
     super.initState();
+    if (ApiConfig.useFinalApi) {
+      _loadLiveProfile();
+    }
     if (ApiConfig.useEconomyApi) {
       _loadLiveEconomyBalances();
     }
@@ -56,6 +68,42 @@ class _MeScreenState extends State<MeScreen> {
     }
     if (ApiConfig.useStoreApi) {
       _loadLiveEquippedLoadout();
+    }
+  }
+
+  Future<void> _loadLiveProfile() async {
+    setState(() {
+      _isLoadingProfile = true;
+      _profileError = null;
+    });
+    try {
+      final res = await FinalApiService.instance.fetchMyProfile();
+      if (!mounted) return;
+      if (res.isSuccess && res.data != null) {
+        final data = res.data;
+        final profileMap = (data is Map<String, dynamic> && data['profile'] is Map<String, dynamic>)
+            ? data['profile'] as Map<String, dynamic>
+            : (data is Map<String, dynamic> ? data : null);
+        if (profileMap != null) {
+          setState(() {
+            _liveProfile = FixtureUserProfile.fromMap(profileMap);
+            _isLoadingProfile = false;
+            _profileError = null;
+          });
+          return;
+        }
+      }
+      setState(() {
+        _profileError = res.error ?? 'Failed to load profile';
+        _isLoadingProfile = false;
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _profileError = e.toString();
+          _isLoadingProfile = false;
+        });
+      }
     }
   }
 
@@ -258,425 +306,31 @@ class _MeScreenState extends State<MeScreen> {
       ],
     );
   }
-
-  // Interactive sheet preview for profile counts
-  void _showCountPreview(String title, int count, String description) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        decoration: const BoxDecoration(
-          color: Color(0xFF1B1829),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          border: Border(
-            top: BorderSide(color: Color(0x33FF1768), width: 1.5),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 44,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '$title (${_formatNumber(count)})',
-                  style: const TextStyle(
-                    color: PopoTheme.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded,
-                      color: PopoTheme.textSecondary),
-                  onPressed: () => Navigator.of(ctx).pop(),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              description,
-              style: const TextStyle(
-                color: PopoTheme.textSecondary,
-                fontSize: 13,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: PopoTheme.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: PopoTheme.borderSubtle),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline_rounded,
-                      color: PopoTheme.primary, size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Detailed $title list module will be available in Phase D5.',
-                      style: const TextStyle(
-                          color: PopoTheme.textPrimary, fontSize: 12),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Interactive sheet preview for Coins
+  // Interactive destination for Coins
   void _showCoinsPreview(int balance) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        decoration: const BoxDecoration(
-          color: Color(0xFF1B1829),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          border: Border(
-            top: BorderSide(color: Color(0x33FFD700), width: 1.5),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 44,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Row(
-                  children: [
-                    Text('🪙', style: TextStyle(fontSize: 22)),
-                    SizedBox(width: 8),
-                    Text(
-                      'Popo Coins Wallet',
-                      style: TextStyle(
-                        color: PopoTheme.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded,
-                      color: PopoTheme.textSecondary),
-                  onPressed: () => Navigator.of(ctx).pop(),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF2A200B), Color(0xFF1E1706)],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0x66FFD700)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Current Balance',
-                        style: TextStyle(color: Colors.white60, fontSize: 12),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_formatNumber(balance)} Coins',
-                        style: const TextStyle(
-                          color: Color(0xFFFFD700),
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      gradient: PopoTheme.goldGradient,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      'Recharge',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Coins are used for sending gifts to hosts and unlocking interactive effects. (Local fixture data demonstration)',
-              style: TextStyle(color: PopoTheme.textSecondary, fontSize: 12),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const WalletScreen(initialTab: 'coins'),
       ),
     );
   }
-
-  // Interactive sheet preview for Points
+  // Interactive destination for Points
   void _showPointsPreview(int balance) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        decoration: const BoxDecoration(
-          color: Color(0xFF1B1829),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          border: Border(
-            top: BorderSide(color: Color(0x3300E5FF), width: 1.5),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 44,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Row(
-                  children: [
-                    Text('💎', style: TextStyle(fontSize: 22)),
-                    SizedBox(width: 8),
-                    Text(
-                      'Host Points & Earnings',
-                      style: TextStyle(
-                        color: PopoTheme.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded,
-                      color: PopoTheme.textSecondary),
-                  onPressed: () => Navigator.of(ctx).pop(),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF09202E), Color(0xFF06141D)],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0x6600E5FF)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Points Balance',
-                        style: TextStyle(color: Colors.white60, fontSize: 12),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_formatNumber(balance)} Points',
-                        style: const TextStyle(
-                          color: Color(0xFF00E5FF),
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF00E5FF),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      'Exchange',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Points represent earnings from live broadcasting gifts and can be exchanged for coins or withdrawn. (Local fixture data demonstration)',
-              style: TextStyle(color: PopoTheme.textSecondary, fontSize: 12),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const WalletScreen(initialTab: 'points'),
       ),
     );
   }
-
-  // Interactive sheet preview for VIP
+  // Interactive destination for VIP
   void _showVipPreview(FixtureUserProfile user) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        decoration: const BoxDecoration(
-          color: Color(0xFF1B1829),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          border: Border(
-            top: BorderSide(color: Color(0x44FFD700), width: 1.5),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 44,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    const Text('👑', style: TextStyle(fontSize: 22)),
-                    const SizedBox(width: 8),
-                    Text(
-                      'VIP ${user.vipLevel} Privileges',
-                      style: const TextStyle(
-                        color: Color(0xFFFFD700),
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded,
-                      color: PopoTheme.textSecondary),
-                  onPressed: () => Navigator.of(ctx).pop(),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Status: ${user.vipStatus}',
-              style: const TextStyle(
-                color: PopoTheme.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildVipPerkRow(
-                Icons.auto_awesome_rounded, 'Exclusive Room Entrance Banner'),
-            _buildVipPerkRow(
-                Icons.military_tech_rounded, 'Animated Luxury Avatar Ring'),
-            _buildVipPerkRow(
-                Icons.chat_bubble_rounded, 'Distinctive Gold Chat Bubble'),
-            _buildVipPerkRow(
-                Icons.card_giftcard_rounded, 'Monthly VIP Privilege Gift Pack'),
-            const SizedBox(height: 24),
-          ],
-        ),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const VipMembershipScreen(),
       ),
     );
   }
 
-  Widget _buildVipPerkRow(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: const BoxDecoration(
-              color: Color(0x22FFD700),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: const Color(0xFFFFD700), size: 16),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style:
-                  const TextStyle(color: PopoTheme.textPrimary, fontSize: 13),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ---------------------------------------------------------------------------
   // PROMPT 2: DESTINATIONS FOR THE 8 ICONS & LOWER SECTIONS
@@ -1128,6 +782,19 @@ class _MeScreenState extends State<MeScreen> {
               children: [
                 Expanded(
                   child: _buildCenterToolTile(
+                    icon: Icons.card_giftcard_rounded,
+                    label: 'Starter Pack',
+                    color: const Color(0xFFFF5252),
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const NewHostPackScreen()));
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _buildCenterToolTile(
                     icon: Icons.verified_user_rounded,
                     label: 'Earning KYC',
                     color: const Color(0xFF00E5FF),
@@ -1138,19 +805,6 @@ class _MeScreenState extends State<MeScreen> {
                     },
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildCenterToolTile(
-                    icon: Icons.leaderboard_rounded,
-                    label: 'Rankings',
-                    color: const Color(0xFFFFD166),
-                    onTap: () {
-                      Navigator.of(ctx).pop();
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => const HostRankingsScreen()));
-                    },
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 10),
@@ -1158,26 +812,13 @@ class _MeScreenState extends State<MeScreen> {
               children: [
                 Expanded(
                   child: _buildCenterToolTile(
-                    icon: Icons.emoji_events_rounded,
-                    label: 'Leaderboard',
-                    color: const Color(0xFFF97316),
+                    icon: Icons.videocam_rounded,
+                    label: 'Go Live Studio',
+                    color: const Color(0xFF4CAF50),
                     onTap: () {
                       Navigator.of(ctx).pop();
                       Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => const EventLeaderboardScreen()));
-                    },
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _buildCenterToolTile(
-                    icon: Icons.business_rounded,
-                    label: 'My Agency',
-                    color: const Color(0xFF29B6F6),
-                    onTap: () {
-                      Navigator.of(ctx).pop();
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => const AgencyManagementScreen()));
+                          builder: (_) => const GoLiveGateScreen()));
                     },
                   ),
                 ),
@@ -1818,8 +1459,36 @@ class _MeScreenState extends State<MeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Final API live profile loading & error handling
+    if (ApiConfig.useFinalApi) {
+      if (_isLoadingProfile && _liveProfile == null) {
+        return Scaffold(
+          backgroundColor: PopoTheme.background,
+          appBar: _buildAppBar(),
+          body: const Center(
+            child: CircularProgressIndicator(color: PopoTheme.primary),
+          ),
+        );
+      }
+      if (_profileError != null && _liveProfile == null) {
+        return Scaffold(
+          backgroundColor: PopoTheme.background,
+          appBar: _buildAppBar(),
+          body: Center(
+            child: PopoErrorState(
+              key: const Key('me_error_state'),
+              title: 'Profile Error',
+              message: _profileError!,
+              retryText: 'Retry',
+              onRetry: _loadLiveProfile,
+            ),
+          ),
+        );
+      }
+    }
+
     // 1. Error state handling
-    if (DesignFixtures.isError) {
+    if (!ApiConfig.useFinalApi && DesignFixtures.isError) {
       return Scaffold(
         backgroundColor: PopoTheme.background,
         appBar: _buildAppBar(),
@@ -1836,7 +1505,7 @@ class _MeScreenState extends State<MeScreen> {
     }
 
     // 2. Empty state handling
-    if (DesignFixtures.isEmpty) {
+    if (!ApiConfig.useFinalApi && DesignFixtures.isEmpty) {
       return Scaffold(
         backgroundColor: PopoTheme.background,
         appBar: _buildAppBar(),
@@ -1855,7 +1524,7 @@ class _MeScreenState extends State<MeScreen> {
     }
 
     // 3. Normal filled state
-    final user = DesignFixtures.currentUserProfile;
+    final user = (ApiConfig.useFinalApi && _liveProfile != null) ? _liveProfile! : DesignFixtures.currentUserProfile;
     final wallet = DesignFixtures.wallet;
 
     return Scaffold(
@@ -1863,7 +1532,21 @@ class _MeScreenState extends State<MeScreen> {
       appBar: _buildAppBar(),
       body: RefreshIndicator(
         onRefresh: () async {
-          setState(() {});
+          if (ApiConfig.useFinalApi) {
+            await _loadLiveProfile();
+          }
+          if (ApiConfig.useEconomyApi) {
+            await _loadLiveEconomyBalances();
+          }
+          if (ApiConfig.useVipApi) {
+            await _loadLiveVipAndHonor();
+          }
+          if (ApiConfig.useStoreApi) {
+            await _loadLiveEquippedLoadout();
+          }
+          if (!ApiConfig.useFinalApi) {
+            setState(() {});
+          }
         },
         color: PopoTheme.primary,
         backgroundColor: PopoTheme.surface,
@@ -2246,11 +1929,17 @@ class _MeScreenState extends State<MeScreen> {
             count: user.friendsCount,
             title: 'Friends',
             icon: Icons.people_alt_rounded,
-            onTap: () => _showCountPreview(
-              'Friends',
-              user.friendsCount,
-              'Mutual friends connected with you on Popo Live.',
-            ),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => UserRelationListScreen(
+                  type: UserRelationType.friends,
+                  count: user.friendsCount,
+                  userId: user.userId,
+                ),
+              ),
+            ).then((_) {
+              if (mounted && ApiConfig.useFinalApi) _loadLiveProfile();
+            }),
           ),
           _buildCountDivider(),
           _buildCountItem(
@@ -2259,11 +1948,17 @@ class _MeScreenState extends State<MeScreen> {
             count: user.followingCount,
             title: 'Following',
             icon: Icons.person_add_alt_1_rounded,
-            onTap: () => _showCountPreview(
-              'Following',
-              user.followingCount,
-              'Broadcasters and friends you currently follow.',
-            ),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => UserRelationListScreen(
+                  type: UserRelationType.following,
+                  count: user.followingCount,
+                  userId: user.userId,
+                ),
+              ),
+            ).then((_) {
+              if (mounted && ApiConfig.useFinalApi) _loadLiveProfile();
+            }),
           ),
           _buildCountDivider(),
           _buildCountItem(
@@ -2272,11 +1967,17 @@ class _MeScreenState extends State<MeScreen> {
             count: user.followersCount,
             title: 'Followers',
             icon: Icons.favorite_rounded,
-            onTap: () => _showCountPreview(
-              'Followers',
-              user.followersCount,
-              'Users and fans following your broadcasts and profile.',
-            ),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => UserRelationListScreen(
+                  type: UserRelationType.followers,
+                  count: user.followersCount,
+                  userId: user.userId,
+                ),
+              ),
+            ).then((_) {
+              if (mounted && ApiConfig.useFinalApi) _loadLiveProfile();
+            }),
           ),
           _buildCountDivider(),
           _buildCountItem(
@@ -2285,11 +1986,17 @@ class _MeScreenState extends State<MeScreen> {
             count: user.visitorCount,
             title: 'Visitors',
             icon: Icons.remove_red_eye_rounded,
-            onTap: () => _showCountPreview(
-              'Visitors',
-              user.visitorCount,
-              'Recent viewers who browsed your profile page.',
-            ),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => UserRelationListScreen(
+                  type: UserRelationType.visitors,
+                  count: user.visitorCount,
+                  userId: user.userId,
+                ),
+              ),
+            ).then((_) {
+              if (mounted && ApiConfig.useFinalApi) _loadLiveProfile();
+            }),
           ),
         ],
       ),
@@ -2358,10 +2065,10 @@ class _MeScreenState extends State<MeScreen> {
   Widget _buildEconomyRow(FixtureWallet wallet) {
     final int displayCoins = (ApiConfig.useEconomyApi && _liveCoinsBalance != null)
         ? _liveCoinsBalance!
-        : wallet.coinBalance;
+        : ((ApiConfig.useFinalApi && _liveProfile != null) ? _liveProfile!.coinBalance : wallet.coinBalance);
     final int displayPoints = (ApiConfig.useEconomyApi && _livePointsBalance != null)
         ? _livePointsBalance!
-        : wallet.pointsBalance;
+        : ((ApiConfig.useFinalApi && _liveProfile != null) ? _liveProfile!.pointsBalance : wallet.pointsBalance);
 
     return Row(
       children: [
@@ -2545,13 +2252,16 @@ class _MeScreenState extends State<MeScreen> {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        'VIP ${user.vipLevel} • ${user.vipStatus}',
-                        key: const Key('me_vip_status_text'),
-                        style: const TextStyle(
-                          color: Color(0xFFFFD700),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
+                      Expanded(
+                        child: Text(
+                          'VIP ${user.vipLevel} • ${user.vipStatus}',
+                          key: const Key('me_vip_status_text'),
+                          style: const TextStyle(
+                            color: Color(0xFFFFD700),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -2675,7 +2385,7 @@ class _MeScreenState extends State<MeScreen> {
         'color': const Color(0xFFE040FB),
         'onTap': () {
           Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const TaskLevelScreen()),
+            MaterialPageRoute(builder: (_) => const RecognitionScreen()),
           );
         },
       },
@@ -3090,7 +2800,7 @@ class _MeScreenState extends State<MeScreen> {
                 'Wealth Level (Lv.${user.wealthLevel}) & Shining Host Level (Lv.${user.hostLevel})',
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const TaskLevelScreen()),
+                MaterialPageRoute(builder: (_) => const RecognitionScreen()),
               );
             },
           ),

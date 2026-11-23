@@ -71,6 +71,7 @@ export interface FixtureUserProfile {
   flagEmoji: string;
   wealthLevel: number;
   hostLevel: number;
+  honorLevel?: number;
   vipLevel: number;
   vipStatus: string;
   coinBalance: number;
@@ -345,6 +346,26 @@ export interface FixtureUserRelation {
   relationType: string;
   isOnline: boolean;
   mutualCount: number;
+  country?: string;
+  isFollowing?: boolean;
+}
+
+export interface FixtureInvitedUser {
+  userId: string;
+  nickname: string;
+  avatarUrl: string;
+  wealthLevel: number;
+  hostLevel: number;
+  joinedAgo: string;
+  bonusEarned: number;
+}
+
+export interface FixtureInvitationInfo {
+  inviteCode: string;
+  inviteUrl: string;
+  totalInvited: number;
+  totalCoinsEarned: number;
+  joinedUsers: FixtureInvitedUser[];
 }
 
 export interface FixtureProfileVisitor {
@@ -522,10 +543,48 @@ export class DesignFixtures {
     this.currentState = 'filled';
     this.mutableCoinBalance = 154200;
     this.mutablePointsBalance = 420500;
+    this.followedUserIds = new Set([
+      'u_sana_ali',
+      'u_bilal_ahmed',
+      'u_zainab_khan',
+      'u_hamza_tariq',
+      'u_hira_malik',
+      'u_faizan_sheikh',
+    ]);
   }
 
   private static mutableCoinBalance = 154200;
   private static mutablePointsBalance = 420500;
+  private static followedUserIds: Set<string> = new Set([
+    'u_sana_ali',
+    'u_bilal_ahmed',
+    'u_zainab_khan',
+    'u_hamza_tariq',
+    'u_hira_malik',
+    'u_faizan_sheikh',
+  ]);
+
+  public static isUserFollowed(userId: string): boolean {
+    return this.followedUserIds.has(userId);
+  }
+
+  public static toggleFollow(userId: string): boolean {
+    if (this.followedUserIds.has(userId)) {
+      this.followedUserIds.delete(userId);
+      return false;
+    } else {
+      this.followedUserIds.add(userId);
+      return true;
+    }
+  }
+
+  public static followUser(userId: string): void {
+    this.followedUserIds.add(userId);
+  }
+
+  public static unfollowUser(userId: string): void {
+    this.followedUserIds.delete(userId);
+  }
 
   public static get currentCoinBalance(): number {
     return this.mutableCoinBalance;
@@ -1701,6 +1760,28 @@ export class DesignFixtures {
     ];
   }
 
+  public static get totalChatUnread(): number {
+    if (this.isError || this.isEmpty) return 0;
+    try {
+      return this.inboxChats.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
+    } catch {
+      return 0;
+    }
+  }
+
+  public static get totalNoticeUnread(): number {
+    if (this.isError || this.isEmpty) return 0;
+    try {
+      return this.officialNotices.reduce((acc, n) => acc + (n.unreadCount || 0), 0);
+    } catch {
+      return 0;
+    }
+  }
+
+  public static get totalUnreadMessages(): number {
+    return this.totalChatUnread + this.totalNoticeUnread;
+  }
+
   // --------------------------------------------------------------------------
   // SQUARE COMMUNITY SOCIAL FEED FIXTURES (6 POSTS)
   // --------------------------------------------------------------------------
@@ -2290,6 +2371,65 @@ export class DesignFixtures {
     };
   }
 
+  public static get invitationInfo(): FixtureInvitationInfo {
+    if (this.isError) {
+      throw new DesignFixtureError("Invitation referral server unavailable [ERR_INVITE_503]", "ERR_INVITE_503", "invites");
+    }
+    if (this.isEmpty) {
+      return {
+        inviteCode: "POPO883901",
+        inviteUrl: "https://popolive.app/invite/POPO883901",
+        totalInvited: 0,
+        totalCoinsEarned: 0,
+        joinedUsers: [],
+      };
+    }
+    return {
+      inviteCode: "POPO883901",
+      inviteUrl: "https://popolive.app/invite/POPO883901",
+      totalInvited: 4,
+      totalCoinsEarned: 20000,
+      joinedUsers: [
+        {
+          userId: "u_sana_ali",
+          nickname: "Sana Ali",
+          avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+          wealthLevel: 14,
+          hostLevel: 15,
+          joinedAgo: "3 days ago",
+          bonusEarned: 5000,
+        },
+        {
+          userId: "u_bilal_ahmed",
+          nickname: "Bilal Ahmed",
+          avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+          wealthLevel: 10,
+          hostLevel: 14,
+          joinedAgo: "1 week ago",
+          bonusEarned: 5000,
+        },
+        {
+          userId: "u_zainab_khan",
+          nickname: "Zainab Khan",
+          avatarUrl: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150",
+          wealthLevel: 9,
+          hostLevel: 12,
+          joinedAgo: "2 weeks ago",
+          bonusEarned: 5000,
+        },
+        {
+          userId: "u_hamza_tariq",
+          nickname: "Hamza Tariq",
+          avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150",
+          wealthLevel: 12,
+          hostLevel: 10,
+          joinedAgo: "3 weeks ago",
+          bonusEarned: 5000,
+        },
+      ],
+    };
+  }
+
   public static get guardians(): FixtureGuardian[] {
     if (this.isError) {
       throw new DesignFixtureError('Guardian angel shield status unknown [ERR_SHIELD_404]', 'ERR_SHIELD_404');
@@ -2333,7 +2473,7 @@ export class DesignFixtures {
   }
 
   // --------------------------------------------------------------------------
-  // 12. FRIENDS, FOLLOWERS, AND PROFILE VISITORS
+  // 12. FRIENDS, FOLLOWING, FOLLOWERS, AND PROFILE VISITORS (Section 4, R2)
   // --------------------------------------------------------------------------
   public static get friends(): FixtureUserRelation[] {
     if (this.isError) {
@@ -2348,6 +2488,8 @@ export class DesignFixtures {
         relationType: 'friend',
         isOnline: true,
         mutualCount: 18,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_sana_ali'),
       },
       {
         userId: 'u_bilal_ahmed',
@@ -2356,6 +2498,8 @@ export class DesignFixtures {
         relationType: 'friend',
         isOnline: true,
         mutualCount: 24,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_bilal_ahmed'),
       },
       {
         userId: 'u_zainab_khan',
@@ -2364,6 +2508,8 @@ export class DesignFixtures {
         relationType: 'friend',
         isOnline: false,
         mutualCount: 12,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_zainab_khan'),
       },
       {
         userId: 'u_hamza_tariq',
@@ -2372,6 +2518,77 @@ export class DesignFixtures {
         relationType: 'friend',
         isOnline: true,
         mutualCount: 15,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_hamza_tariq'),
+      },
+    ];
+  }
+
+  public static get following(): FixtureUserRelation[] {
+    if (this.isError) {
+      throw new DesignFixtureError('Following list synchronization failed [ERR_FOLLOWING_503]', 'ERR_FOLLOWING_503');
+    }
+    if (this.isEmpty) return [];
+    return [
+      {
+        userId: 'u_sana_ali',
+        nickname: 'Sana Ali',
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        relationType: 'following',
+        isOnline: true,
+        mutualCount: 18,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_sana_ali'),
+      },
+      {
+        userId: 'u_bilal_ahmed',
+        nickname: 'Bilal Ahmed',
+        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+        relationType: 'following',
+        isOnline: true,
+        mutualCount: 24,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_bilal_ahmed'),
+      },
+      {
+        userId: 'u_zainab_khan',
+        nickname: 'Zainab Khan',
+        avatarUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
+        relationType: 'following',
+        isOnline: false,
+        mutualCount: 12,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_zainab_khan'),
+      },
+      {
+        userId: 'u_hamza_tariq',
+        nickname: 'Hamza Tariq',
+        avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+        relationType: 'following',
+        isOnline: true,
+        mutualCount: 15,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_hamza_tariq'),
+      },
+      {
+        userId: 'u_hira_malik',
+        nickname: 'Hira Malik',
+        avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+        relationType: 'following',
+        isOnline: false,
+        mutualCount: 6,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_hira_malik'),
+      },
+      {
+        userId: 'u_faizan_sheikh',
+        nickname: 'Faizan Sheikh',
+        avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+        relationType: 'following',
+        isOnline: true,
+        mutualCount: 9,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_faizan_sheikh'),
       },
     ];
   }
@@ -2389,6 +2606,8 @@ export class DesignFixtures {
         relationType: 'follower',
         isOnline: false,
         mutualCount: 6,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_hira_malik'),
       },
       {
         userId: 'u_faizan_sheikh',
@@ -2397,6 +2616,8 @@ export class DesignFixtures {
         relationType: 'follower',
         isOnline: true,
         mutualCount: 9,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_faizan_sheikh'),
       },
       {
         userId: 'u_tariq_jamil',
@@ -2405,6 +2626,8 @@ export class DesignFixtures {
         relationType: 'follower',
         isOnline: false,
         mutualCount: 14,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_tariq_jamil'),
       },
       {
         userId: 'u_ayesha_siddiqui',
@@ -2413,6 +2636,67 @@ export class DesignFixtures {
         relationType: 'follower',
         isOnline: true,
         mutualCount: 8,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_ayesha_siddiqui'),
+      },
+    ];
+  }
+
+  public static get visitors(): FixtureUserRelation[] {
+    if (this.isError) {
+      throw new DesignFixtureError('Profile visitor tracking unavailable [ERR_VISITOR_503]', 'ERR_VISITOR_503');
+    }
+    if (this.isEmpty) return [];
+    return [
+      {
+        userId: 'u_sana_ali',
+        nickname: 'Sana Ali',
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        relationType: 'visitor',
+        isOnline: true,
+        mutualCount: 18,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_sana_ali'),
+      },
+      {
+        userId: 'u_bilal_ahmed',
+        nickname: 'Bilal Ahmed',
+        avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+        relationType: 'visitor',
+        isOnline: true,
+        mutualCount: 24,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_bilal_ahmed'),
+      },
+      {
+        userId: 'u_hamza_tariq',
+        nickname: 'Hamza Tariq',
+        avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+        relationType: 'visitor',
+        isOnline: true,
+        mutualCount: 15,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_hamza_tariq'),
+      },
+      {
+        userId: 'u_zainab_khan',
+        nickname: 'Zainab Khan',
+        avatarUrl: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
+        relationType: 'visitor',
+        isOnline: false,
+        mutualCount: 12,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_zainab_khan'),
+      },
+      {
+        userId: 'u_hira_malik',
+        nickname: 'Hira Malik',
+        avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+        relationType: 'visitor',
+        isOnline: false,
+        mutualCount: 6,
+        country: 'Pakistan',
+        isFollowing: this.isUserFollowed('u_hira_malik'),
       },
     ];
   }
@@ -3049,6 +3333,7 @@ export class DesignFixtures {
     flagEmoji: '🇵🇰',
     wealthLevel: 12,
     hostLevel: 18,
+    honorLevel: 5,
     vipLevel: 3,
     vipStatus: 'Crown Sovereign',
     coinBalance: 154200,

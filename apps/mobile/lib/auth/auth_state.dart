@@ -223,24 +223,7 @@ class AuthState extends ChangeNotifier {
       return false;
     }
 
-    // Fixture user check: Amina Noor or Sana Ali
-    final cleanId = identifier.trim().toLowerCase();
-    if (cleanId == 'amina.noor' ||
-        cleanId == 'u_amina_noor' ||
-        cleanId == 'amina' ||
-        cleanId == '03001234567' ||
-        cleanId == '8839201' ||
-        cleanId == 'amina@popolive.com') {
-      return loginWithFixtureUser(userId: 'u_amina_noor');
-    } else if (cleanId == 'sana.ali' ||
-        cleanId == 'u_sana_ali' ||
-        cleanId == 'sana' ||
-        cleanId == '8839202' ||
-        cleanId == 'sana@popolive.com') {
-      return loginWithFixtureUser(userId: 'u_sana_ali');
-    }
-
-    // Attempt real backend service if reachable
+    // Attempt real backend service
     try {
       final response = await _authService.login(
         identifier: identifier,
@@ -252,18 +235,62 @@ class AuthState extends ChangeNotifier {
         _currentUser = response.data['user'] != null
             ? Map<String, dynamic>.from(response.data['user'])
             : null;
+        final token = response.data['sessionToken'];
+        if (token != null && token is String && token.isNotEmpty) {
+          await TokenStorage.saveSessionToken(token);
+        }
         _status = AuthStatus.authenticated;
         _errorMessage = null;
         PushNotificationService.instance.registerTokenWithBackend();
         notifyListeners();
         return true;
+      } else if (TokenStorage.useInMemoryOnly) {
+        // Headless in-memory test execution mode without active HTTP server
+        final cleanId = identifier.trim().toLowerCase();
+        if (cleanId == 'amina.noor' ||
+            cleanId == 'u_amina_noor' ||
+            cleanId == 'amina' ||
+            cleanId == '03001234567' ||
+            cleanId == '8839201' ||
+            cleanId == 'amina@popolive.com') {
+          return await loginWithFixtureUser(userId: 'u_amina_noor');
+        } else if (cleanId == 'sana.ali' ||
+            cleanId == 'u_sana_ali' ||
+            cleanId == 'sana' ||
+            cleanId == '8839202' ||
+            cleanId == 'sana@popolive.com') {
+          return await loginWithFixtureUser(userId: 'u_sana_ali');
+        } else {
+          _status = AuthStatus.unauthenticated;
+          _errorMessage = response.error ??
+              'Invalid credentials. Please check your details.';
+          notifyListeners();
+          return false;
+        }
+      } else {
+        _status = AuthStatus.unauthenticated;
+        _errorMessage =
+            response.error ?? 'Invalid credentials. Please check your details.';
+        notifyListeners();
+        return false;
       }
-    } catch (_) {
-      // Backend unavailable; in D1 offline/fixture mode accept login with fixture user
+    } catch (e) {
+      if (TokenStorage.useInMemoryOnly) {
+        final cleanId = identifier.trim().toLowerCase();
+        if (cleanId == 'amina.noor' ||
+            cleanId == 'u_amina_noor' ||
+            cleanId == 'amina' ||
+            cleanId == '03001234567' ||
+            cleanId == '8839201' ||
+            cleanId == 'amina@popolive.com') {
+          return await loginWithFixtureUser(userId: 'u_amina_noor');
+        }
+      }
+      _status = AuthStatus.unauthenticated;
+      _errorMessage = 'Authentication network error: $e';
+      notifyListeners();
+      return false;
     }
-
-    // Fallback: accept fixture login without requiring database
-    return loginWithFixtureUser();
   }
 
   /// Register a new account
@@ -285,7 +312,7 @@ class AuthState extends ChangeNotifier {
       password: password,
     );
 
-    // Attempt real backend service if reachable
+    // Attempt real backend service
     try {
       final response = await _authService.register(
         nickname: nickname,
@@ -300,37 +327,77 @@ class AuthState extends ChangeNotifier {
         _currentUser = response.data['user'] != null
             ? Map<String, dynamic>.from(response.data['user'])
             : null;
+        final token = response.data['sessionToken'];
+        if (token != null && token is String && token.isNotEmpty) {
+          await TokenStorage.saveSessionToken(token);
+        }
         _status = AuthStatus.authenticated;
         _errorMessage = null;
         PushNotificationService.instance.registerTokenWithBackend();
         notifyListeners();
         return true;
+      } else if (TokenStorage.useInMemoryOnly) {
+        // In-memory test execution mode without active HTTP server
+        _currentUser = {
+          'id': 'u_registered_test',
+          'poppoId': '8839200',
+          'nickname': nickname,
+          'email': email,
+          'phone': phone,
+          'gender': gender,
+          'birthdate': birthdate,
+          'country': 'Pakistan',
+          'countryCode': 'PK',
+          'wealthLevel': 1,
+          'hostLevel': 1,
+          'vipLevel': 0,
+          'vipStatus': 'None',
+          'coinBalance': 0,
+          'pointsBalance': 0,
+          'isProfileCompleted': false,
+        };
+        _status = AuthStatus.authenticated;
+        _errorMessage = null;
+        notifyListeners();
+        return true;
+      } else {
+        _status = AuthStatus.unauthenticated;
+        _errorMessage =
+            response.error ?? 'Registration failed. Please try again.';
+        notifyListeners();
+        return false;
       }
-    } catch (_) {}
-
-    // Offline / fixture flow: register succeeds and moves to OTP/Profile
-    _currentUser = {
-      'id': 'u_registered_${DateTime.now().millisecondsSinceEpoch}',
-      'poppoId': '8839${2000 + DateTime.now().millisecond}',
-      'nickname': nickname,
-      'email': email,
-      'phone': phone,
-      'gender': gender,
-      'birthdate': birthdate,
-      'country': 'Pakistan',
-      'countryCode': 'PK',
-      'wealthLevel': 1,
-      'hostLevel': 1,
-      'vipLevel': 0,
-      'vipStatus': 'None',
-      'coinBalance': 0,
-      'pointsBalance': 0,
-      'isProfileCompleted': false,
-    };
-    _status = AuthStatus.authenticated;
-    _errorMessage = null;
-    notifyListeners();
-    return true;
+    } catch (e) {
+      if (TokenStorage.useInMemoryOnly) {
+        // In-memory test execution mode without active HTTP server
+        _currentUser = {
+          'id': 'u_registered_test',
+          'poppoId': '8839200',
+          'nickname': nickname,
+          'email': email,
+          'phone': phone,
+          'gender': gender,
+          'birthdate': birthdate,
+          'country': 'Pakistan',
+          'countryCode': 'PK',
+          'wealthLevel': 1,
+          'hostLevel': 1,
+          'vipLevel': 0,
+          'vipStatus': 'None',
+          'coinBalance': 0,
+          'pointsBalance': 0,
+          'isProfileCompleted': false,
+        };
+        _status = AuthStatus.authenticated;
+        _errorMessage = null;
+        notifyListeners();
+        return true;
+      }
+      _status = AuthStatus.unauthenticated;
+      _errorMessage = 'Registration network error: $e';
+      notifyListeners();
+      return false;
+    }
   }
 
   /// Dispatches 6-digit verification code to the phone number
@@ -343,17 +410,35 @@ class AuthState extends ChangeNotifier {
           'success': true,
           'cooldown': response.data['cooldown'] ?? 60,
           'message': response.data['message'],
-          'devOtp': response.data['devOtp'] ?? '123456',
+          'devOtp': response.data['devOtp'],
+        };
+      } else if (TokenStorage.useInMemoryOnly) {
+        return {
+          'success': true,
+          'cooldown': 60,
+          'devOtp': '123456',
+          'message': 'Fixture OTP code: 123456',
+        };
+      } else {
+        return {
+          'success': false,
+          'message': response.error ?? 'Failed to dispatch verification code.',
         };
       }
-    } catch (_) {}
-
-    return {
-      'success': true,
-      'cooldown': 60,
-      'devOtp': '123456',
-      'message': 'Fixture OTP code: 123456',
-    };
+    } catch (e) {
+      if (TokenStorage.useInMemoryOnly) {
+        return {
+          'success': true,
+          'cooldown': 60,
+          'devOtp': '123456',
+          'message': 'Fixture OTP code: 123456',
+        };
+      }
+      return {
+        'success': false,
+        'message': 'Network error: $e',
+      };
+    }
   }
 
   /// Verifies 6-digit phone OTP and provisions/authenticates session
@@ -366,37 +451,105 @@ class AuthState extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
-    // Check invalid OTP state
-    if (otp != '123456') {
+    if (otp.length != 6) {
       _status = AuthStatus.unauthenticated;
       _errorMessage = PopoStrings.get('err_invalid_otp');
       notifyListeners();
       return false;
     }
 
-    await Future.delayed(const Duration(milliseconds: 100));
+    try {
+      final response = await _authService.verifyPhoneOtp(
+        phone: phone,
+        otp: otp,
+        rememberMe: rememberMe,
+      );
 
-    _currentUser = {
-      'id': 'u_phone_user_${DateTime.now().millisecondsSinceEpoch}',
-      'poppoId': '8839${1000 + DateTime.now().millisecond}',
-      'phone': phone,
-      'nickname': _pendingNickname ?? 'Amina Noor',
-      'country': 'Pakistan',
-      'countryCode': 'PK',
-      'gender': 'unspecified',
-      'wealthLevel': 1,
-      'hostLevel': 1,
-      'vipLevel': 0,
-      'vipStatus': 'None',
-      'coinBalance': 0,
-      'pointsBalance': 0,
-      'isProfileCompleted': false,
-    };
-    _status = AuthStatus.authenticated;
-    _errorMessage = null;
-    await TokenStorage.saveSessionToken('fixture_phone_session_token');
-    notifyListeners();
-    return true;
+      if (response.isSuccess && response.data is Map) {
+        _currentUser = response.data['user'] != null
+            ? Map<String, dynamic>.from(response.data['user'])
+            : null;
+        final token = response.data['sessionToken'];
+        if (token != null && token is String && token.isNotEmpty) {
+          await TokenStorage.saveSessionToken(token);
+        }
+        _status = AuthStatus.authenticated;
+        _errorMessage = null;
+        PushNotificationService.instance.registerTokenWithBackend();
+        notifyListeners();
+        return true;
+      } else if (TokenStorage.useInMemoryOnly) {
+        // Headless test execution mode without active HTTP server
+        if (otp == '123456') {
+          _currentUser = {
+            'id': 'u_phone_user_test',
+            'poppoId': '8839200',
+            'phone': phone,
+            'nickname': _pendingNickname ?? 'Amina Noor',
+            'country': 'Pakistan',
+            'countryCode': 'PK',
+            'gender': 'unspecified',
+            'wealthLevel': 1,
+            'hostLevel': 1,
+            'vipLevel': 0,
+            'vipStatus': 'None',
+            'coinBalance': 0,
+            'pointsBalance': 0,
+            'isProfileCompleted': false,
+          };
+          _status = AuthStatus.authenticated;
+          _errorMessage = null;
+          await TokenStorage.saveSessionToken('test_phone_session_token');
+          notifyListeners();
+          return true;
+        } else {
+          _status = AuthStatus.unauthenticated;
+          _errorMessage = PopoStrings.get('err_invalid_otp');
+          notifyListeners();
+          return false;
+        }
+      } else {
+        _status = AuthStatus.unauthenticated;
+        _errorMessage = response.error ?? PopoStrings.get('err_invalid_otp');
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      if (TokenStorage.useInMemoryOnly) {
+        if (otp == '123456') {
+          _currentUser = {
+            'id': 'u_phone_user_test',
+            'poppoId': '8839200',
+            'phone': phone,
+            'nickname': _pendingNickname ?? 'Amina Noor',
+            'country': 'Pakistan',
+            'countryCode': 'PK',
+            'gender': 'unspecified',
+            'wealthLevel': 1,
+            'hostLevel': 1,
+            'vipLevel': 0,
+            'vipStatus': 'None',
+            'coinBalance': 0,
+            'pointsBalance': 0,
+            'isProfileCompleted': false,
+          };
+          _status = AuthStatus.authenticated;
+          _errorMessage = null;
+          await TokenStorage.saveSessionToken('test_phone_session_token');
+          notifyListeners();
+          return true;
+        } else {
+          _status = AuthStatus.unauthenticated;
+          _errorMessage = PopoStrings.get('err_invalid_otp');
+          notifyListeners();
+          return false;
+        }
+      }
+      _status = AuthStatus.unauthenticated;
+      _errorMessage = 'OTP verification network error: $e';
+      notifyListeners();
+      return false;
+    }
   }
 
   /// Completes user profile setup with fixture support without database

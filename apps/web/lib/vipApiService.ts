@@ -10,7 +10,7 @@ import { getOrCreateUserWallet } from '@/lib/economyApiService';
  * honor level bars, and read-only medal wall.
  */
 
-export const USE_VIP_API: boolean = process.env.NEXT_PUBLIC_USE_VIP_API !== 'false';
+export const USE_VIP_API: boolean = process.env.NEXT_PUBLIC_USE_VIP_API === 'true';
 
 // Helper to convert arbitrary user id strings to a UUID if needed
 export function toSafeUuid(id: string): string {

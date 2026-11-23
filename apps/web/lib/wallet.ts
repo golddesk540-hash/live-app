@@ -191,28 +191,32 @@ export async function getFinanceRules(dbClient?: any): Promise<FinanceRulesConfi
     ? (sql: string, params?: any[]) => dbClient.query(sql, params).then((r: any) => r.rows)
     : query;
 
-  try {
-    const rows = await exec(`SELECT rule_key, rule_value FROM popolive.finance_rules`);
-    const map: Record<string, number> = {};
-    for (const r of rows) {
-      map[r.rule_key] = parseFloat(String(r.rule_value));
-    }
-    return {
-      hostGiftSharePercent: map.host_gift_share_percent ?? DEFAULT_HOST_SHARE_PERCENT,
-      newUserInitialCoins: map.new_user_initial_coins ?? 0,
-      newUserInitialPoints: map.new_user_initial_points ?? 0,
-      minTransactionAmount: map.min_transaction_amount ?? 1,
-      maxSingleTransactionAmount: map.max_single_transaction_amount ?? 10000000,
-    };
-  } catch {
-    return {
-      hostGiftSharePercent: DEFAULT_HOST_SHARE_PERCENT,
-      newUserInitialCoins: 0,
-      newUserInitialPoints: 0,
-      minTransactionAmount: 1,
-      maxSingleTransactionAmount: 10000000,
-    };
+  const rows = await exec(`SELECT rule_key, rule_value FROM popolive.finance_rules`);
+  const map: Record<string, number> = {};
+  for (const r of rows) {
+    map[r.rule_key] = parseFloat(String(r.rule_value));
   }
+
+  if (
+    map.host_gift_share_percent === undefined ||
+    isNaN(map.host_gift_share_percent) ||
+    map.host_gift_share_percent <= 0
+  ) {
+    const err: any = new Error(
+      "FINANCE_RULE_MISSING: Authoritative 'host_gift_share_percent' rule is missing or invalid in popolive.finance_rules."
+    );
+    err.code = 'FINANCE_RULE_MISSING';
+    err.status = 500;
+    throw err;
+  }
+
+  return {
+    hostGiftSharePercent: map.host_gift_share_percent,
+    newUserInitialCoins: map.new_user_initial_coins ?? 0,
+    newUserInitialPoints: map.new_user_initial_points ?? 0,
+    minTransactionAmount: map.min_transaction_amount ?? 1,
+    maxSingleTransactionAmount: map.max_single_transaction_amount ?? 10000000,
+  };
 }
 
 export async function calculateHostShare(

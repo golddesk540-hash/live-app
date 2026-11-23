@@ -281,26 +281,29 @@ export async function POST(req: NextRequest) {
       return createdRoom;
     });
 
+    const roomPayload = {
+      id: result.id,
+      roomNumber: result.room_number,
+      title: result.title,
+      category: result.category,
+      categoryId: result.category_id,
+      roomType: result.room_type,
+      isPrivate: result.is_private,
+      hostNickname: result.host_nickname,
+      hostAvatar: result.host_avatar,
+      hostUserId: result.host_user_id,
+      maxSeats: 9,
+      currentMembers: 1,
+      status: result.status,
+      isLive: result.is_live,
+      createdAt: result.created_at,
+    };
+
     return NextResponse.json(
       {
         success: true,
-        room: {
-          id: result.id,
-          roomNumber: result.room_number,
-          title: result.title,
-          category: result.category,
-          categoryId: result.category_id,
-          roomType: result.room_type,
-          isPrivate: result.is_private,
-          hostNickname: result.host_nickname,
-          hostAvatar: result.host_avatar,
-          hostUserId: result.host_user_id,
-          maxSeats: 9,
-          currentMembers: 1,
-          status: result.status,
-          isLive: result.is_live,
-          createdAt: result.created_at,
-        },
+        room: roomPayload,
+        party: roomPayload,
         seatsCount: 9,
       },
       { status: 201 }

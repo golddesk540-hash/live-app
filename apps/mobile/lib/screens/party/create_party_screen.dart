@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../api/api.dart';
 import '../../design/design_fixtures.dart';
 import '../../theme/theme.dart';
 import 'party_room_screen.dart';
@@ -32,6 +33,7 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
   String _selectedCategory = 'Chill & Chat';
   String _selectedPrivacy = 'Public';
   String? _errorMessage;
+  bool _isCreating = false;
 
   @override
   void initState() {
@@ -53,7 +55,9 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
     }
   }
 
-  void _handleCreateRoom() {
+  Future<void> _handleCreateRoom() async {
+    if (_isCreating) return;
+
     final title = _titleController.text.trim();
     if (title.isEmpty) {
       setState(() {
@@ -68,6 +72,124 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
       return;
     }
 
+    // Convert category name to canonical categoryId
+    String categoryId = 'chill_chat';
+    if (_selectedCategory.contains('Music') ||
+        _selectedCategory.contains('Singing')) {
+      categoryId = 'singing';
+    } else if (_selectedCategory.contains('Gaming')) {
+      categoryId = 'gaming';
+    } else if (_selectedCategory.contains('Poetry')) {
+      categoryId = 'poetry';
+    } else if (_selectedCategory.contains('Talent')) {
+      categoryId = 'talent';
+    }
+
+    if (ApiConfig.usePartyApi) {
+      setState(() {
+        _isCreating = true;
+        _errorMessage = null;
+      });
+
+      try {
+        final res = await PartyApiService().createPartyRoom(
+          title: title,
+          categoryId: categoryId,
+          roomType: _selectedPrivacy.toLowerCase(),
+          maxSeats: 9,
+        );
+
+        if (!mounted) return;
+
+        if (res.isSuccess && res.data != null) {
+          final data = res.data as Map<String, dynamic>;
+          final roomData = (data['party'] ?? data['room'] ?? data)
+              as Map<String, dynamic>;
+          final realRoomId = roomData['id']?.toString() ??
+              'party_${DateTime.now().millisecondsSinceEpoch}';
+          final realRoomNumber = roomData['roomNumber']?.toString() ??
+              roomData['room_number']?.toString() ??
+              '7001';
+
+          final currentUser = DesignFixtures.currentUserProfile;
+          final seats = <FixturePartySeat>[
+            FixturePartySeat(
+              index: 1,
+              userId: currentUser.userId,
+              nickname: currentUser.nickname,
+              avatarUrl: currentUser.avatarUrl,
+              isHost: true,
+              isMuted: false,
+              isSpeaking: false,
+              giftPoints: 0,
+              isOccupied: true,
+              isLocked: false,
+              canJoin: false,
+              joinRequestStatus: 'accepted',
+            ),
+            for (int i = 2; i <= 9; i++) FixturePartySeat.empty(i),
+          ];
+
+          final createdRoom = FixturePartyRoom(
+            id: realRoomId,
+            roomNumber: realRoomNumber,
+            title: title,
+            hostNickname: currentUser.nickname,
+            hostAvatar: currentUser.avatarUrl,
+            hostUserId: currentUser.userId,
+            coverUrl: roomData['collageUrl']?.toString() ??
+                'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=500',
+            category: _selectedCategory,
+            country: 'Pakistan',
+            countryCode: 'PK',
+            flagEmoji: '🇵🇰',
+            viewerCount: 1,
+            maxSeats: 9,
+            occupiedSeatCount: 1,
+            joinStatus: 'open',
+            seats: seats,
+          );
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Party lounge created successfully! 🎙️'),
+              backgroundColor: Color(0xFF00C853),
+              duration: Duration(seconds: 2),
+            ),
+          );
+
+          if (widget.onRoomCreated != null) {
+            Navigator.of(context).pop();
+            widget.onRoomCreated!(createdRoom);
+          } else {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => PartyRoomScreen(room: createdRoom),
+              ),
+            );
+          }
+          return;
+        } else {
+          setState(() {
+            _isCreating = false;
+            _errorMessage = res.error ??
+                'Failed to create party room. Please try again.';
+          });
+          return;
+        }
+      } catch (e) {
+        setState(() {
+          _isCreating = false;
+          _errorMessage = 'Network error: $e';
+        });
+        return;
+      }
+    }
+
+    _createLocalRoom(title);
+  }
+
+  void _createLocalRoom(String title) {
     final currentUser = DesignFixtures.currentUserProfile;
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final roomNumber = '77${(timestamp % 9000) + 1000}';
@@ -530,16 +652,25 @@ class _CreatePartyScreenState extends State<CreatePartyScreen> {
                         borderRadius: BorderRadius.circular(25),
                       ),
                     ),
-                    onPressed: _handleCreateRoom,
-                    child: const Text(
-                      'START PARTY LOUNGE',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
+                    onPressed: _isCreating ? null : _handleCreateRoom,
+                    child: _isCreating
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'START PARTY LOUNGE',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.0,
+                            ),
+                          ),
                   ),
                 ),
               ),

@@ -6,21 +6,30 @@ import { X, Smartphone, Radio, QrCode, CheckCircle, ArrowRight, Video, Sparkles 
 export interface GoLiveRedirectSheetProps {
   isOpen: boolean;
   onClose: () => void;
+  seatIndex?: number | null;
+  roomTitle?: string;
+  source?: string;
   isUr?: boolean;
 }
 
 export const GoLiveRedirectSheet: React.FC<GoLiveRedirectSheetProps> = ({
   isOpen,
   onClose,
+  seatIndex,
+  roomTitle,
+  source,
   isUr = false,
 }) => {
   if (!isOpen) return null;
+
+  const hasSeat = typeof seatIndex === 'number' && seatIndex > 0;
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       data-testid="go-live-redirect-sheet"
+      data-seat-index={hasSeat ? seatIndex : undefined}
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={onClose}
     >
@@ -47,10 +56,16 @@ export const GoLiveRedirectSheet: React.FC<GoLiveRedirectSheetProps> = ({
           <div>
             <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-pink-500/20 border border-pink-500/40 text-[#FF1A6C] text-[10px] font-black uppercase">
               <span className="w-1.5 h-1.5 rounded-full bg-[#FF1A6C] animate-ping" />
-              <span>Broadcasting</span>
+              <span>{hasSeat ? `Party Seat #${seatIndex}` : 'Broadcasting'}</span>
             </div>
             <h2 className="text-base sm:text-lg font-extrabold text-white tracking-tight mt-1">
-              {isUr ? 'براڈکاسٹنگ پوپو لائیو موبائل پر دستیاب ہے' : 'Go Live on Popo Live Mobile'}
+              {hasSeat
+                ? isUr
+                  ? `سیٹ #${seatIndex} پر شامل ہوں (موبائل ایپ)`
+                  : `Join Seat #${seatIndex} on Mobile`
+                : isUr
+                ? 'براڈکاسٹنگ پوپو لائیو موبائل پر دستیاب ہے'
+                : 'Go Live on Popo Live Mobile'}
             </h2>
           </div>
         </div>
@@ -58,16 +73,20 @@ export const GoLiveRedirectSheet: React.FC<GoLiveRedirectSheetProps> = ({
         {/* Explanatory Banner */}
         <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 space-y-2 text-xs">
           <p className="text-zinc-300 leading-relaxed">
-            {isUr
-              ? 'کیمرہ براڈکاسٹنگ، بیوٹی فلٹرز، اسٹوڈیو اینیمیشنز اور پی کے بیٹلز مکمل طور پر پوپو لائیو موبائل ایپ پر میسر ہیں۔'
-              : 'Live camera streaming, face beautification filters, virtual studio effects, and PK battles are hosted exclusively on the Popo Live mobile app.'}
+            {hasSeat
+              ? isUr
+                ? `کیمرہ اور مائیکروفون براڈکاسٹنگ آپ کے موبائل فون پر رہتی ہے۔ سیٹ #${seatIndex} پر بولنے اور آڈیو اسٹریمنگ کے لیے پوپو لائیو موبائل ایپ استعمال کریں۔`
+                : `Camera and microphone stay on phone. Speaking and broadcasting from Seat #${seatIndex} are hosted exclusively on the Popo Live mobile app.`
+              : isUr
+              ? 'کیمرہ براڈکاسٹنگ، بیوٹی فلٹرز، اسٹوڈیو اینیمیشنز اور پی کے بیٹلز مکمل طور پر پوپو لائیو موبائل ایپ پر میسر ہیں۔ کیمرہ اور مائیکروفون فون پر رہتے ہیں۔'
+              : 'Camera and microphone stay on phone. Live camera streaming, face beautification filters, virtual studio effects, and PK battles are hosted exclusively on the Popo Live mobile app.'}
           </p>
           <div className="flex items-center gap-2 text-[11px] text-amber-300 font-semibold pt-1">
             <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <span>
               {isUr
-                ? 'ڈیسک ٹاپ ویب پر لائیو ویونگ، چیٹ اور گفٹس کا بھرپور لطف اٹھائیں۔'
-                : 'Desktop web provides full live viewing, interactive chat, and gifting.'}
+                ? 'ڈیسک ٹاپ ویب پر لائیو ویونگ، چیٹ اور گفٹس کا بھرپور لطف اٹھائیں جبکہ لاؤنج کھلا رہتا ہے۔'
+                : 'Desktop web provides full live viewing, interactive chat, and gifting while your room remains active.'}
             </span>
           </div>
         </div>

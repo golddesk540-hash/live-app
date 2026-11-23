@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
+import '../../design/design_fixtures.dart';
 import '../../l10n/strings.dart';
 import '../../widgets/popo_primary_button.dart';
 import '../../widgets/popo_icon_button.dart';
@@ -49,16 +50,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   void _populateCurrentData() {
+    final fixtureUser = DesignFixtures.currentUserProfile;
     final user = AuthState.instance.currentUser;
-    if (user != null) {
-      _nicknameController.text = user['nickname']?.toString() ?? '';
-      _bioController.text = user['bio']?.toString() ?? '';
-      _selectedCountry = user['country']?.toString() ?? 'Pakistan';
-      _selectedCountryCode = user['countryCode']?.toString() ?? 'PK';
-      _selectedGender = user['gender']?.toString() ?? 'unspecified';
-      _birthdate = user['birthdate']?.toString() ?? '';
-      _avatarUrl = user['avatarUrl']?.toString();
-    }
+
+    _nicknameController.text =
+        (user?['nickname']?.toString().isNotEmpty == true)
+            ? user!['nickname'].toString()
+            : fixtureUser.nickname;
+    _bioController.text = (user?['bio']?.toString().isNotEmpty == true)
+        ? user!['bio'].toString()
+        : fixtureUser.bio;
+    _selectedCountry = (user?['country']?.toString().isNotEmpty == true)
+        ? user!['country'].toString()
+        : fixtureUser.country;
+    _selectedCountryCode =
+        (user?['countryCode']?.toString().isNotEmpty == true)
+            ? user!['countryCode'].toString()
+            : fixtureUser.countryCode;
+    _selectedGender = (user?['gender']?.toString().isNotEmpty == true)
+        ? user!['gender'].toString()
+        : fixtureUser.gender;
+    _birthdate = user?['birthdate']?.toString() ?? '1998-05-14';
+    _avatarUrl = user?['avatarUrl']?.toString() ?? fixtureUser.avatarUrl;
   }
 
   @override
@@ -92,32 +105,49 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _errorMessage = null;
     });
 
-    final response = await _profileService.updateProfile(
+    DesignFixtures.updateCurrentUserProfile(
       nickname: nickname,
       bio: bio,
       country: _selectedCountry,
-      countryCode: _selectedCountryCode,
-      gender: _selectedGender,
+      avatarUrl: _avatarUrl,
     );
+
+    if (ApiConfig.useLiveApi) {
+      try {
+        await _profileService.updateProfile(
+          nickname: nickname,
+          bio: bio,
+          country: _selectedCountry,
+          countryCode: _selectedCountryCode,
+          gender: _selectedGender,
+        );
+        await AuthState.instance.restoreSession();
+      } catch (e) {
+        if (!mounted) return;
+        setState(() { _isLoading = false; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update profile: ' + e.toString()),
+            backgroundColor: Colors.redAccent,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+        return;
+      }
+    }
 
     if (!mounted) return;
 
-    if (response.isSuccess) {
-      await AuthState.instance.restoreSession();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(PopoStrings.get('profile_updated_success')),
-          backgroundColor: PopoTheme.surface,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(PopoStrings.get('profile_updated_success')),
+        backgroundColor: PopoTheme.surface,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+    setState(() { _isLoading = false; });
+    if (Navigator.of(context).canPop()) {
       Navigator.of(context).pop(true);
-    } else {
-      setState(() {
-        _isLoading = false;
-        _errorMessage =
-            response.message ?? 'Failed to update profile. Please try again.';
-      });
     }
   }
 

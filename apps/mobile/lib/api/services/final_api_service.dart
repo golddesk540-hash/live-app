@@ -280,4 +280,74 @@ class FinalApiService {
       body: {'avatarUrl': avatarUrl},
     );
   }
+
+  // ===========================================================================
+  // SOCIAL GRAPH & AUDIENCE (B3 PROMPT 3)
+  // ===========================================================================
+
+  /// Fetches users followed by userId
+  Future<ApiResponse<dynamic>> fetchFollowing(
+    String userId, {
+    int page = 1,
+    int limit = 20,
+    String? search,
+  }) async {
+    final query = StringBuffer('page=$page&limit=$limit');
+    if (search != null && search.isNotEmpty) {
+      query.write('&search=${Uri.encodeComponent(search)}');
+    }
+    return _client.get('/api/users/$userId/following?$query');
+  }
+
+  /// Fetches followers of userId
+  Future<ApiResponse<dynamic>> fetchFollowers(
+    String userId, {
+    int page = 1,
+    int limit = 20,
+    String? search,
+  }) async {
+    final query = StringBuffer('page=$page&limit=$limit');
+    if (search != null && search.isNotEmpty) {
+      query.write('&search=${Uri.encodeComponent(search)}');
+    }
+    return _client.get('/api/users/$userId/followers?$query');
+  }
+
+  /// Fetches mutual friends of userId
+  Future<ApiResponse<dynamic>> fetchFriends(
+    String userId, {
+    int page = 1,
+    int limit = 20,
+    String? search,
+  }) async {
+    final query = StringBuffer('page=$page&limit=$limit');
+    if (search != null && search.isNotEmpty) {
+      query.write('&search=${Uri.encodeComponent(search)}');
+    }
+    return _client.get('/api/users/$userId/friends?$query');
+  }
+
+  /// Fetches profile visitors of userId
+  Future<ApiResponse<dynamic>> fetchVisitors(
+    String userId, {
+    int page = 1,
+    int limit = 20,
+    String? search,
+  }) async {
+    final query = StringBuffer('page=$page&limit=$limit');
+    if (search != null && search.isNotEmpty) {
+      query.write('&search=${Uri.encodeComponent(search)}');
+    }
+    return _client.get('/api/users/$userId/visitors?$query');
+  }
+
+  /// Follows target user in PostgreSQL
+  Future<ApiResponse<dynamic>> followUser(String userId) async {
+    return _client.post('/api/users/$userId/follow');
+  }
+
+  /// Unfollows target user in PostgreSQL
+  Future<ApiResponse<dynamic>> unfollowUser(String userId) async {
+    return _client.delete('/api/users/$userId/follow');
+  }
 }

@@ -151,7 +151,7 @@ class _PkGiftSheetDialogState extends State<PkGiftSheetDialog> {
     if (_selectedGift == null || _isSending) return;
 
     final totalCoins = _selectedGift!.coinPrice * _selectedQuantity;
-    final currentCoins = _manager.wallet?.coins ?? 3600;
+    final currentCoins = _manager.wallet?.coins ?? 0;
 
     if (currentCoins < totalCoins) {
       ScaffoldMessenger.of(context).showSnackBar(

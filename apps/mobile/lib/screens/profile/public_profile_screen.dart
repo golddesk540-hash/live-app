@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../theme/popo_theme.dart';
+import '../../design/design_fixtures.dart';
 import '../../l10n/strings.dart';
 import '../../widgets/popo_primary_button.dart';
 import '../../widgets/popo_icon_button.dart';
@@ -21,8 +22,6 @@ class PublicProfileScreen extends StatefulWidget {
 }
 
 class _PublicProfileScreenState extends State<PublicProfileScreen> {
-  final ProfileService _profileService = ProfileService();
-
   bool _isLoading = true;
   String? _errorMessage;
   Map<String, dynamic>? _profile;
@@ -40,22 +39,132 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
       _errorMessage = null;
     });
 
-    final response = await _profileService.getPublicProfile(widget.userId);
+    try {
+      if (ApiConfig.useFinalApi) {
+        final res = await FinalApiService.instance.fetchPublicProfile(widget.userId);
+        if (!mounted) return;
+        if (res.isSuccess && res.data != null) {
+          final data = res.data;
+          final profileMap = (data is Map<String, dynamic> && data['profile'] is Map<String, dynamic>)
+              ? data['profile'] as Map<String, dynamic>
+              : (data is Map<String, dynamic> ? data : null);
+          if (profileMap != null) {
+            setState(() {
+              _profile = profileMap;
+              _isFollowing = profileMap['isFollowing'] == true;
+              _isLoading = false;
+            });
+            return;
+          }
+        }
+        setState(() {
+          _errorMessage = res.error ?? res.message ?? 'User not found';
+          _isLoading = false;
+        });
+        return;
+      }
 
-    if (!mounted) return;
+      if (DesignFixtures.isError) {
+        throw const DesignFixtureException(
+          message: 'User profile query failed: Server busy [ERR_PROFILE_503]',
+        );
+      }
 
-    if (response.isSuccess &&
-        response.data is Map &&
-        response.data['profile'] != null) {
+      // Check relations in DesignFixtures
+      FixtureUserRelation? matchRelation;
+      final allRelations = [
+        ...DesignFixtures.friends,
+        ...DesignFixtures.following,
+        ...DesignFixtures.followers,
+        ...DesignFixtures.visitors,
+      ];
+      for (final rel in allRelations) {
+        if (rel.userId == widget.userId) {
+          matchRelation = rel;
+          break;
+        }
+      }
+
+      final currentUser = DesignFixtures.currentUserProfile;
+      final isSelf = widget.userId == currentUser.userId ||
+          widget.userId == currentUser.poppoId ||
+          widget.userId.isEmpty;
+
+      if (isSelf) {
+        setState(() {
+          _profile = {
+            'nickname': currentUser.nickname,
+            'poppoId': currentUser.poppoId,
+            'avatarUrl': currentUser.avatarUrl,
+            'country': currentUser.country,
+            'countryCode': currentUser.countryCode,
+            'bio': currentUser.bio,
+            'followersCount': currentUser.followersCount,
+            'followingCount': currentUser.followingCount,
+            'totalGifts': 3420,
+            'wealthLevel': currentUser.wealthLevel,
+            'hostLevel': currentUser.hostLevel,
+            'isFollowing': false,
+            'isSelf': true,
+          };
+          _isFollowing = false;
+          _isLoading = false;
+        });
+        return;
+      }
+
+      if (matchRelation != null) {
+        setState(() {
+          _profile = {
+            'nickname': matchRelation!.nickname,
+            'poppoId': matchRelation.userId,
+            'avatarUrl': matchRelation.avatarUrl,
+            'country': matchRelation.country,
+            'countryCode': 'PK',
+            'bio': 'Streaming creator & Popo Live community star 🌟',
+            'followersCount': 12400,
+            'followingCount': 230,
+            'totalGifts': 8920,
+            'wealthLevel': 14,
+            'hostLevel': 16,
+            'isFollowing': DesignFixtures.isUserFollowed(widget.userId),
+            'isSelf': false,
+          };
+          _isFollowing = DesignFixtures.isUserFollowed(widget.userId);
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Default fallback profile
       setState(() {
-        _profile = Map<String, dynamic>.from(response.data['profile']);
-        _isFollowing = _profile?['isFollowing'] == true;
+        _profile = {
+          'nickname': 'Ayesha Khan',
+          'poppoId': widget.userId,
+          'avatarUrl':
+              'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+          'country': 'Pakistan',
+          'countryCode': 'PK',
+          'bio': 'Popo Live Host & Musician 🎵',
+          'followersCount': 8900,
+          'followingCount': 150,
+          'totalGifts': 5400,
+          'wealthLevel': 12,
+          'hostLevel': 15,
+          'isFollowing': DesignFixtures.isUserFollowed(widget.userId),
+          'isSelf': false,
+        };
+        _isFollowing = DesignFixtures.isUserFollowed(widget.userId);
         _isLoading = false;
       });
-    } else {
+    } catch (e) {
+      if (!mounted) return;
       setState(() {
+        _errorMessage = e
+            .toString()
+            .replaceFirst('Exception: ', '')
+            .replaceFirst('DesignFixtureException: ', '');
         _isLoading = false;
-        _errorMessage = response.message ?? 'User profile not found.';
       });
     }
   }
@@ -67,6 +176,80 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
         content: Text(PopoStrings.get('copied_to_clipboard')),
         backgroundColor: PopoTheme.surface,
         duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _handleFollowToggle() async {
+    final nickname = _profile?['nickname']?.toString() ?? 'user';
+    if (ApiConfig.useFinalApi) {
+      final wasFollowing = _isFollowing;
+      try {
+        final res = wasFollowing
+            ? await FinalApiService.instance.unfollowUser(widget.userId)
+            : await FinalApiService.instance.followUser(widget.userId);
+
+        if (!mounted) return;
+        if (!res.isSuccess) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(res.error ?? res.message ?? 'Failed to update follow status.'),
+              backgroundColor: PopoTheme.danger,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+          return;
+        }
+
+        final data = res.data is Map<String, dynamic> ? res.data as Map<String, dynamic> : null;
+        final next = data != null && data.containsKey('isFollowing')
+            ? data['isFollowing'] == true
+            : !wasFollowing;
+        final newFollowers = data != null && data.containsKey('followersCount')
+            ? (data['followersCount'] as num).toInt()
+            : ((_profile?['followersCount'] as int? ?? 0) + (next ? 1 : -1));
+
+        setState(() {
+          _isFollowing = next;
+          if (_profile != null) {
+            _profile = Map<String, dynamic>.from(_profile!);
+            _profile!['followersCount'] = newFollowers < 0 ? 0 : newFollowers;
+            _profile!['isFollowing'] = next;
+          }
+        });
+
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next ? 'Followed $nickname' : 'Unfollowed $nickname'),
+            backgroundColor: PopoTheme.surface,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: PopoTheme.danger,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    final next = DesignFixtures.toggleFollow(widget.userId);
+    setState(() {
+      _isFollowing = next;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(next ? 'Followed $nickname' : 'Unfollowed $nickname'),
+        backgroundColor: PopoTheme.surface,
+        duration: const Duration(seconds: 1),
       ),
     );
   }
@@ -120,6 +303,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     final poppoId = p['poppoId'] ?? '';
     final avatarUrl = p['avatarUrl'] ?? '';
     final country = p['country'] ?? 'Global';
+    // ignore: unused_local_variable
     final countryCode = p['countryCode'] ?? '';
     final bio = p['bio']?.toString() ?? '';
     final followersCount = p['followersCount'] ?? 0;
@@ -310,22 +494,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   ? PopoStrings.get('unfollow')
                   : PopoStrings.get('follow'),
               icon: _isFollowing ? Icons.check_rounded : Icons.add_rounded,
-              onPressed: () {
-                setState(() {
-                  _isFollowing = !_isFollowing;
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      _isFollowing
-                          ? 'Followed $nickname'
-                          : 'Unfollowed $nickname',
-                    ),
-                    backgroundColor: PopoTheme.surface,
-                    duration: const Duration(seconds: 1),
-                  ),
-                );
-              },
+              onPressed: _handleFollowToggle,
             ),
           ],
         ],

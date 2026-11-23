@@ -94,7 +94,8 @@ export default function LiveChatScreen() {
 
     async function fetchInitial() {
       try {
-        const res = await fetch(`/api/live/chat/messages?roomId=${encodeURIComponent(roomId)}&preview=demo`);
+        const previewParam = isPreview ? '&preview=demo' : '';
+        const res = await fetch(`/api/live/chat/messages?roomId=${encodeURIComponent(roomId)}${previewParam}`);
         if (res.ok) {
           const data = await res.json();
           if (isMounted && data.messages) {

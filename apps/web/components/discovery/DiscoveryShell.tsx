@@ -44,16 +44,13 @@ import WebTopNav from './WebTopNav';
 import WebLeftRail, { NavRailId } from './WebLeftRail';
 import WebMobileNav from './WebMobileNav';
 import AppDownloadModal from './AppDownloadModal';
-import DiscoveryBannerCarousel from './DiscoveryBannerCarousel';
-import RankDoorSection from './RankDoorSection';
-import RankingPreviewSection from './RankingPreviewSection';
 import LiveRoomCard from './LiveRoomCard';
 import WebPartyPanel from './WebPartyPanel';
 import WebFollowingPanel from './WebFollowingPanel';
 import WebMessagePanel from './WebMessagePanel';
 import WebProfilePanel from './WebProfilePanel';
 import GoLiveRedirectSheet from './GoLiveRedirectSheet';
-import { LiveApiService } from '@/lib/liveApiService';
+import { LiveApiService, USE_LIVE_API } from '@/lib/liveApiService';
 
 export type DiscoveryTab =
   | 'explore'
@@ -130,31 +127,73 @@ export function DiscoveryShell({
     }
   }, [searchParams]);
 
-  // Read data from DesignFixtures (Initial State) with Live API Service Hydration
-  const [liveRoomsState, setLiveRoomsState] = useState<FixtureLiveRoom[]>(() => {
-    try {
-      return DesignFixtures.liveRooms;
-    } catch {
-      return [] as FixtureLiveRoom[];
-    }
-  });
+  // Live API states
+  const [liveApiRooms, setLiveApiRooms] = useState<FixtureLiveRoom[]>([]);
+  const [liveApiLoading, setLiveApiLoading] = useState<boolean>(USE_LIVE_API);
+  const [liveApiError, setLiveApiError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!USE_LIVE_API) return;
     let isMounted = true;
+    setLiveApiLoading(true);
+    setLiveApiError(null);
+
     LiveApiService.getLiveRooms({
-      country: selectedCountry,
-      search: searchQuery,
-    }).then((rooms) => {
-      if (isMounted && rooms && rooms.length > 0) {
-        setLiveRoomsState(rooms);
-      }
-    }).catch(() => {});
+      country: selectedCountry !== 'ALL' ? selectedCountry : undefined,
+      search: searchQuery || undefined,
+    })
+      .then((rooms) => {
+        if (!isMounted) return;
+        setLiveApiRooms(rooms);
+        setLiveApiLoading(false);
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        setLiveApiError(err.message || 'Failed to load live rooms');
+        setLiveApiLoading(false);
+      });
+
     return () => {
       isMounted = false;
     };
   }, [selectedCountry, searchQuery]);
 
-  const fixturesError = null;
+  // Read live rooms from PostgreSQL when USE_LIVE_API is ON, or DesignFixtures when OFF
+  const { liveRoomsState, fixturesError } = useMemo(() => {
+    if (USE_LIVE_API) {
+      if (liveApiError) {
+        return {
+          liveRoomsState: [] as FixtureLiveRoom[],
+          fixturesError: liveApiError,
+        };
+      }
+      return {
+        liveRoomsState: liveApiRooms,
+        fixturesError: null,
+      };
+    }
+
+    try {
+      if (DesignFixtures.isError) {
+        return {
+          liveRoomsState: [] as FixtureLiveRoom[],
+          fixturesError:
+            DesignFixtures.liveRoomsError?.message ||
+            'Failed to load live broadcast rooms. Please check your network connection and tap to retry.',
+        };
+      }
+      return {
+        liveRoomsState: DesignFixtures.liveRooms || [],
+        fixturesError: null,
+      };
+    } catch (err: any) {
+      return {
+        liveRoomsState: [] as FixtureLiveRoom[],
+        fixturesError:
+          err?.message || 'Design fixture error loading live broadcast rooms.',
+      };
+    }
+  }, [liveApiRooms, liveApiError]);
 
   const allPartyRooms = useMemo(() => {
     try {
@@ -233,13 +272,6 @@ export function DiscoveryShell({
     selectedCountry !== 'ALL' &&
     !POPULAR_COUNTRY_SHORTCUTS.some((p) => p.code === selectedCountry);
 
-  // Tab switching in sub-headers
-  const liveSubTabs = [
-    { id: 'live', label_en: 'Explore', label_ur: 'دریافت' },
-    { id: 'following', label_en: 'Following', label_ur: 'فالوئنگ' },
-    { id: 'new', label_en: 'New', label_ur: 'نئے' },
-  ];
-
   return (
     <div
       className="min-h-screen bg-[#F8F9FA] text-gray-900 flex flex-col font-sans antialiased pb-16 md:pb-0"
@@ -289,40 +321,15 @@ export function DiscoveryShell({
           ) : (
             <>
               {/* ========================================================================= */}
-              {/* TAB 1: LIVE DISCOVERY PANEL */}
+              {/* TAB 1: LIVE DISCOVERY PANEL (R5: Exact 3-Item Order)                      */}
+              {/* 1. Country Filter Chips                                                   */}
+              {/* 2. Live Now Section                                                       */}
+              {/* 3. Portrait Live-Room Cards                                               */}
               {/* ========================================================================= */}
               {(activeTab === 'live' || activeTab === 'explore') && (
-                <div className="space-y-6 animate-in fade-in duration-150">
-                  {/* Sub Tab Switcher Bar */}
-                  <div className="flex items-center justify-between border-b border-gray-200/80 pb-2">
-                    <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar py-0.5">
-                      {liveSubTabs.map((tab) => {
-                        const isSelected = activeTab === tab.id;
-                        return (
-                          <button
-                            key={tab.id}
-                            type="button"
-                            onClick={() => {
-                              setActiveTab(tab.id);
-                              if (tab.id === 'following') router.push('/live?tab=following');
-                              else if (tab.id === 'new') router.push('/live?tab=new');
-                              else router.push('/live');
-                            }}
-                            className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 shrink-0 ${
-                              isSelected
-                                ? 'bg-[#FF1A6C] text-white shadow-xs'
-                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                            }`}
-                          >
-                            <span>{isUr ? tab.label_ur : tab.label_en}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Country Filter Chips */}
-                  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs">
+                <div className="space-y-6 animate-in fade-in duration-150" data-testid="live-discovery-panel">
+                  {/* 1. Country Filter Chips */}
+                  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs" data-testid="country-filter-chips">
                     {POPULAR_COUNTRY_SHORTCUTS.map((c) => {
                       const isSelected = selectedCountry === c.code;
                       return (
@@ -370,17 +377,8 @@ export function DiscoveryShell({
                     </button>
                   </div>
 
-                  {/* 1. Promotional Carousel */}
-                  <DiscoveryBannerCarousel />
-
-                  {/* 2. Rank Door Shortcuts */}
-                  <RankDoorSection />
-
-                  {/* 3. Ranking Podium Preview */}
-                  <RankingPreviewSection />
-
-                  {/* 4. Live Rooms Grid (Light Portrait Cards) */}
-                  <div className="space-y-3">
+                  {/* 2. Live Now Section & 3. Portrait Live-Room Cards */}
+                  <div className="space-y-3" data-testid="live-now-section">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#FF1A6C] animate-pulse" />
@@ -394,7 +392,7 @@ export function DiscoveryShell({
                     </div>
 
                     {fixturesError ? (
-                      <div className="p-10 text-center rounded-3xl bg-white border border-red-200 shadow-xs space-y-3">
+                      <div data-testid="live-error-state" className="p-10 text-center rounded-3xl bg-white border border-red-200 shadow-xs space-y-3">
                         <Radio className="w-10 h-10 text-red-400 mx-auto" />
                         <h3 className="text-sm font-bold text-gray-800">
                           {isUr ? 'لائیو رومز لوڈ کرنے میں مسئلہ پیش آیا' : 'Unable to load live rooms'}
@@ -404,14 +402,17 @@ export function DiscoveryShell({
                         </p>
                         <button
                           type="button"
-                          onClick={() => window.location.reload()}
+                          onClick={() => {
+                            DesignFixtures.reset();
+                            window.location.reload();
+                          }}
                           className="px-4 py-2 rounded-xl bg-[#FF1A6C] text-white text-xs font-bold shadow-xs hover:bg-[#e0125c] transition-colors"
                         >
                           {isUr ? 'دوبارہ کوشش کریں' : 'Retry'}
                         </button>
                       </div>
                     ) : filteredLiveRooms.length === 0 ? (
-                      <div className="p-10 text-center rounded-3xl bg-white border border-gray-200 shadow-xs space-y-3">
+                      <div data-testid="live-empty-state" className="p-10 text-center rounded-3xl bg-white border border-gray-200 shadow-xs space-y-3">
                         <Radio className="w-10 h-10 text-gray-300 mx-auto" />
                         <h3 className="text-sm font-bold text-gray-800">
                           {selectedCountry !== 'ALL'
@@ -430,7 +431,7 @@ export function DiscoveryShell({
                         </button>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
+                      <div data-testid="live-room-cards-grid" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
                         {filteredLiveRooms.map((room) => (
                           <LiveRoomCard key={room.id} room={room} />
                         ))}

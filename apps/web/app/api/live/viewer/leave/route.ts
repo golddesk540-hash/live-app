@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth';
-import { query } from '@/lib/db';
+import { recordViewerLeave } from '@/lib/viewerPresence';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     const roomId = body.roomId;
     const isDemo = body.isDemo === true || req.nextUrl.searchParams.get('preview') === 'demo';
 
-    if (isDemo || !roomId || roomId === 'demo-room-404' || roomId === 'demo') {
+    if (isDemo && (roomId === 'demo-room-404' || roomId === 'demo')) {
       return NextResponse.json({
         success: true,
         message: 'Viewer left demo room',
@@ -19,50 +19,41 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const sessionId = body.sessionId || req.cookies.get('poppo_session')?.value;
-
-    if (sessionId) {
-      // Mark presence inactive
-      const presenceRes = await query(
-        `UPDATE popolive.live_room_viewers
-         SET is_active = false,
-             left_at = CURRENT_TIMESTAMP
-         WHERE room_id = $1 AND session_id = $2 AND is_active = true
-         RETURNING id`,
-        [roomId, sessionId]
+    if (!roomId) {
+      return NextResponse.json(
+        { success: false, error: 'Room ID is required.', code: 'INVALID_ROOM_ID' },
+        { status: 400 }
       );
-
-      if (presenceRes.length > 0) {
-        // Decrement room viewer count
-        await query(
-          `UPDATE popolive.live_rooms
-           SET viewer_count = GREATEST(0, COALESCE(viewer_count, 1) - 1),
-               updated_at = CURRENT_TIMESTAMP
-           WHERE id = $1`,
-          [roomId]
-        );
-      }
     }
 
-    const updatedRoom = await query(
-      `SELECT viewer_count FROM popolive.live_rooms WHERE id = $1 LIMIT 1`,
-      [roomId]
-    );
+    const user = await getAuthenticatedUser(req);
+    const sessionId = (body.sessionId || req.cookies.get('poppo_session')?.value || '').trim() || undefined;
 
-    const count = updatedRoom.length > 0 ? Number(updatedRoom[0].viewer_count) : 0;
-    let viewerDisplay = String(count);
-    if (count >= 1000) {
-      viewerDisplay = `${(count / 1000).toFixed(1)}K`;
-    }
+    const result = await recordViewerLeave({
+      roomIdOrNumber: roomId,
+      userId: user?.id || null,
+      sessionId,
+    });
 
     return NextResponse.json({
       success: true,
       message: 'Viewer successfully left live broadcast',
-      viewerCount: count,
-      viewerDisplay,
+      roomId: result.roomId,
+      roomNumber: result.roomNumber,
+      viewerCount: result.viewerCount,
+      viewerDisplay: result.viewerDisplay,
     });
   } catch (err: any) {
+    if (err.status && err.code) {
+      return NextResponse.json(
+        { success: false, error: err.message, code: err.code },
+        { status: err.status }
+      );
+    }
     console.error('Error in POST /api/live/viewer/leave:', err);
-    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: 'Internal server error', code: 'INTERNAL_ERROR' },
+      { status: 500 }
+    );
   }
 }

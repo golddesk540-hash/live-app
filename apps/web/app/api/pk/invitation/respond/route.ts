@@ -60,27 +60,55 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check expiration
+    // Verify only the invited host can accept or reject
+    if (receiverHostId && invite.receiver_host_id !== receiverHostId) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'FORBIDDEN',
+          error: 'Only the invited host can accept or reject this invitation.',
+          errorUr: 'صرف مدعو کردہ میزبان ہی اس دعوت کو قبول یا مسترد کر سکتا ہے۔',
+        },
+        { status: 403 }
+      );
+    }
+
+    // Check expiration and status
     const now = new Date();
     const expiresAt = new Date(invite.expires_at);
 
     if (invite.status !== 'pending' || now > expiresAt) {
-      const currentStatus = now > expiresAt ? 'expired' : invite.status;
-      if (now > expiresAt && invite.status === 'pending') {
+      const isExpired = now > expiresAt && invite.status === 'pending';
+      const currentStatus = isExpired ? 'expired' : invite.status;
+      if (isExpired) {
         await query(
           `UPDATE popolive.pk_invitations SET status = 'expired', updated_at = NOW() WHERE id = $1`,
           [invitationId]
         );
       }
+
+      let code = 'INVITATION_INACTIVE';
+      let statusCode = 410;
+      if (invite.status === 'accepted') {
+        code = 'ALREADY_ACCEPTED';
+        statusCode = 409;
+      } else if (invite.status === 'rejected') {
+        code = 'ALREADY_REJECTED';
+        statusCode = 409;
+      } else if (currentStatus === 'expired') {
+        code = 'INVITATION_EXPIRED';
+        statusCode = 410;
+      }
+
       return NextResponse.json(
         {
           success: false,
-          code: 'INVITATION_INACTIVE',
+          code,
           status: currentStatus,
           error: `This PK battle invitation has ${currentStatus}.`,
           errorUr: `یہ پی کے دعوت نامہ ${currentStatus === 'expired' ? 'ختم' : currentStatus} ہو چکا ہے۔`,
         },
-        { status: 410 }
+        { status: statusCode }
       );
     }
 
@@ -122,6 +150,20 @@ export async function POST(req: NextRequest) {
       for (const u of usersRes.rows) {
         if (u.in_pk_battle) {
           throw new Error(`HOST_BUSY:${u.nickname} is already in a PK battle.`);
+        }
+      }
+
+      // Verify both rooms remain active / live
+      const roomsRes = await client.query(
+        `SELECT room_number, status, is_live 
+         FROM popolive.live_rooms 
+         WHERE room_number IN ($1, $2)`,
+        [invite.sender_room_number, invite.receiver_room_number]
+      );
+
+      for (const r of roomsRes.rows) {
+        if (r.status !== 'live' && !r.is_live) {
+          throw new Error(`ROOM_ENDED:Room ${r.room_number} has ended or is not live.`);
         }
       }
 
@@ -243,6 +285,17 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: any) {
     console.error('API /api/pk/invitation/respond error:', err);
+    if (err.message && err.message.startsWith('ROOM_ENDED:')) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'ROOM_ENDED',
+          error: err.message.replace('ROOM_ENDED:', ''),
+          errorUr: 'براڈکاسٹ روم بند ہو چکا ہے۔',
+        },
+        { status: 400 }
+      );
+    }
     if (err.message && err.message.startsWith('HOST_BUSY:')) {
       return NextResponse.json(
         {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../services/host/host_task_service.dart';
+import '../../design/design_fixtures.dart';
+import '../../widgets/popo_error_state.dart';
+import '../../widgets/popo_empty_state.dart';
 
 /// Popo Live — Phase 4 Module 8: Host Earning Identity Screen
 /// KYC identification verification, document masking and earning clearance.
@@ -29,16 +31,24 @@ class _EarningIdentityScreenState extends State<EarningIdentityScreen> {
     });
 
     try {
-      final data = await HostTaskService.instance.fetchEarningIdentity();
+      if (DesignFixtures.isError) {
+        throw const DesignFixtureException(
+          message: 'Failed to load host identity [ERR_KYC_SYNC_503]',
+        );
+      }
+      final identity = DesignFixtures.earningIdentity;
       if (!mounted) return;
       setState(() {
-        _identityData = data;
+        _identityData = identity.toMap();
         _isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _errorMessage = e
+            .toString()
+            .replaceFirst('Exception: ', '')
+            .replaceFirst('DesignFixtureException: ', '');
         _isLoading = false;
       });
     }
@@ -136,20 +146,26 @@ class _EarningIdentityScreenState extends State<EarningIdentityScreen> {
     if (submitted == true) {
       setState(() => _isSubmitting = true);
       try {
-        await HostTaskService.instance.submitEarningIdentity(
-          legalName: nameCtrl.text.trim(),
-          country: country,
-          documentType: docType,
-          documentNumber: docCtrl.text.trim(),
-        );
+        await Future.delayed(const Duration(milliseconds: 200));
         if (!mounted) return;
+        setState(() {
+          _identityData = {
+            ...?_identityData,
+            'status': 'UNDER_REVIEW',
+            'legalName': nameCtrl.text.trim(),
+            'documentNumberMasked': docCtrl.text.trim().isNotEmpty
+                ? '${docCtrl.text.trim().substring(0, 3)}••••••••'
+                : '•••• •••• ••••',
+            'documentType': docType,
+            'country': country,
+          };
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Identity submitted successfully for verification!'),
+            content: Text('Identity documents submitted for compliance review.'),
             backgroundColor: Color(0xFF34D399),
           ),
         );
-        _loadIdentity();
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -195,32 +211,25 @@ class _EarningIdentityScreenState extends State<EarningIdentityScreen> {
       );
     }
 
-    if (_errorMessage != null) {
+    if (DesignFixtures.isError || _errorMessage != null) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.shield_outlined, color: Color(0xFFFF1A6C), size: 48),
-              const SizedBox(height: 16),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Color(0xFFCBB9E6), fontSize: 14),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF1A6C),
-                  foregroundColor: Colors.white,
-                  shape: const StadiumBorder(),
-                ),
-                onPressed: _loadIdentity,
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        child: PopoErrorState(
+          title: 'Identity Verification Offline',
+          message: _errorMessage ?? 'Server busy [ERR_KYC_SYNC_503]',
+          retryText: 'Retry',
+          onRetry: _loadIdentity,
+        ),
+      );
+    }
+
+    if (DesignFixtures.isEmpty || (_identityData != null && _identityData!['status'] == 'UNVERIFIED' && _identityData!['legalName'] == '')) {
+      return Center(
+        child: PopoEmptyState(
+          icon: Icons.badge_outlined,
+          title: 'No KYC Records',
+          message: 'Submit your legal identity information to enable host earnings withdrawal.',
+          actionText: 'Submit Identity',
+          onActionTap: _showSubmitDialog,
         ),
       );
     }

@@ -4,7 +4,7 @@
 -- 1. Update check constraints on transactions tables
 ALTER TABLE popolive.coin_transactions DROP CONSTRAINT IF EXISTS coin_transactions_transaction_type_check;
 ALTER TABLE popolive.coin_transactions ADD CONSTRAINT coin_transactions_transaction_type_check
-  CHECK (transaction_type = ANY (ARRAY['topup', 'gift_sent', 'admin_credit', 'admin_debit', 'reversal', 'initial_credit', 'feature_spend', 'seller_sale', 'seller_purchase', 'seller_transfer']));
+  CHECK (transaction_type = ANY (ARRAY['topup', 'gift_sent', 'admin_credit', 'admin_debit', 'reversal', 'initial_credit', 'feature_spend', 'seller_sale', 'seller_purchase', 'seller_transfer', 'vip_subscribe', 'withdrawal', 'task_reward', 'earning_credit']));
 
 ALTER TABLE popolive.points_transactions DROP CONSTRAINT IF EXISTS points_transactions_transaction_type_check;
 ALTER TABLE popolive.points_transactions ADD CONSTRAINT points_transactions_transaction_type_check
@@ -129,7 +129,10 @@ DECLARE
   v_payout_jazzcash_id UUID := 'd1111111-1111-1111-1111-111111111111';
   v_payout_bank_id UUID := 'd2222222-2222-2222-2222-222222222222';
 BEGIN
-  SELECT id INTO v_zara_id FROM popolive.users WHERE email = 'zara.live@popolive.com' OR nickname = 'Zara Live' LIMIT 1;
+  SELECT user_id INTO v_zara_id FROM popolive.agent_profiles WHERE agency_id = v_agency_id LIMIT 1;
+  IF v_zara_id IS NULL THEN
+    SELECT id INTO v_zara_id FROM popolive.users WHERE email = 'zara.live@popolive.com' OR nickname = 'Zara Live' LIMIT 1;
+  END IF;
   SELECT id INTO v_sana_id FROM popolive.users WHERE email = 'sana.khan@popolive.com' OR nickname = 'Sana Khan' LIMIT 1;
 
   IF v_zara_id IS NOT NULL THEN

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
 import '../../models/models.dart';
+import '../../api/api_config.dart';
 import '../../repositories/discovery_repository.dart';
 
 /// Reusable horizontally scrollable country filter chips component
@@ -26,7 +27,7 @@ class _CountryChipsState extends State<CountryChips> {
   List<DiscoveryCountry> _countries = [];
 
   static const List<DiscoveryCountry> _defaultFixtureCountries = [
-    DiscoveryCountry(code: 'ALL', name: 'All', flag: '🌐', activeRooms: 8),
+    DiscoveryCountry(code: 'ALL', name: 'Popular', flag: '🔥', activeRooms: 8),
     DiscoveryCountry(code: 'PK', name: 'Pakistan', flag: '🇵🇰', activeRooms: 8),
     DiscoveryCountry(code: 'SA', name: 'Saudi Arabia', flag: '🇸🇦', activeRooms: 0),
     DiscoveryCountry(code: 'AE', name: 'UAE', flag: '🇦🇪', activeRooms: 0),
@@ -47,7 +48,7 @@ class _CountryChipsState extends State<CountryChips> {
 
   Future<void> _tryFetchDynamicCountries() async {
     try {
-      final list = await _repository.fetchPopularCountries();
+      final list = await _repository.fetchPopularCountries(refresh: true);
       if (!mounted) return;
       if (list.isNotEmpty) {
         setState(() {
@@ -55,7 +56,9 @@ class _CountryChipsState extends State<CountryChips> {
         });
       }
     } catch (_) {
-      // Retain fixture countries
+      if (!ApiConfig.useLiveApi) {
+        // Retain default fixture countries when offline
+      }
     }
   }
 

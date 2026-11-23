@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../api/api.dart';
-import '../profile/public_profile_screen.dart';
 import 'agent_earnings_screen.dart';
 import 'coin_seller_screen.dart';
 import 'withdrawal_screen.dart';
+import '../../design/design_fixtures.dart';
+import '../live/watch_history_screen.dart';
+import '../../widgets/popo_error_state.dart';
 
 /// Popo Live — Phase 4 Module 8: Agency Management Screen
 /// Guild & Agency Administration, Member Host Management, Approval Workflow, and Agency Registration.
@@ -40,33 +42,60 @@ class _AgencyManagementScreenState extends State<AgencyManagementScreen> {
     });
 
     try {
-      final res = await AgencyService.instance.getAgencyInfo();
-      if (!mounted) return;
-
-      if (res.isSuccess && res.data != null) {
-        final data = res.data as Map<String, dynamic>;
-        final agencyMap = data['agency'] as Map<String, dynamic>?;
-        final role = data['roleInAgency']?.toString() ?? 'none';
-
-        setState(() {
-          _agency = agencyMap;
-          _roleInAgency = role;
-          _isLoading = false;
-        });
-
-        if (agencyMap != null && (role == 'admin' || role == 'member')) {
-          _fetchHosts(agencyMap['id']);
-        }
-      } else {
-        setState(() {
-          _errorMessage = res.error ?? 'Failed to load agency.';
-          _isLoading = false;
-        });
+      if (DesignFixtures.isError) {
+        throw const DesignFixtureException(
+          message: 'Agency management portal error [ERR_AGENCY_PORTAL_403]',
+        );
       }
+
+      if (DesignFixtures.isEmpty) {
+        setState(() {
+          _agency = null;
+          _roleInAgency = 'none';
+          _hosts = [];
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final fixtureAgency = DesignFixtures.agencyInfo;
+      final fixtureMembers = DesignFixtures.agencyMembers;
+
+      final agencyMap = {
+        'id': fixtureAgency.agencyId,
+        'agencyCode': fixtureAgency.agencyCode,
+        'name': fixtureAgency.agencyName,
+        'status': fixtureAgency.settlementStatus.contains('Active') ? 'ACTIVE' : 'PENDING',
+        'adminNickname': fixtureAgency.agentLeader,
+        'totalHosts': fixtureAgency.totalActiveHosts,
+        'activeHosts': fixtureAgency.totalActiveHosts,
+        'pendingHosts': 2,
+        'announcement': fixtureAgency.announcement,
+      };
+
+      final hostsList = fixtureMembers.map((m) => {
+        'id': m.id,
+        'userId': m.userId,
+        'nickname': m.nickname,
+        'avatarUrl': m.avatarUrl,
+        'hostLevel': m.hostLevel,
+        'monthlyDiamonds': m.monthlyDiamonds,
+        'status': m.status,
+      }).toList();
+
+      setState(() {
+        _agency = agencyMap;
+        _roleInAgency = 'admin';
+        _hosts = hostsList;
+        _isLoading = false;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _errorMessage = e
+            .toString()
+            .replaceFirst('Exception: ', '')
+            .replaceFirst('DesignFixtureException: ', '');
         _isLoading = false;
       });
     }
@@ -75,22 +104,35 @@ class _AgencyManagementScreenState extends State<AgencyManagementScreen> {
   Future<void> _fetchHosts(String agencyId) async {
     setState(() => _isLoadingHosts = true);
     try {
-      final res = await AgencyService.instance.getAgencyMembers(
-        agencyId: agencyId,
-        statusFilter: _statusFilter,
-        search: _searchQuery,
-      );
-      if (!mounted) return;
-
-      if (res.isSuccess && res.data != null) {
-        final data = res.data as Map<String, dynamic>;
-        setState(() {
-          _hosts = (data['members'] as List<dynamic>?) ?? [];
-          _isLoadingHosts = false;
-        });
-      } else {
-        setState(() => _isLoadingHosts = false);
+      var filtered = DesignFixtures.agencyMembers;
+      if (_statusFilter != 'All') {
+        filtered = filtered
+            .where((m) => m.status.toLowerCase() == _statusFilter.toLowerCase())
+            .toList();
       }
+      if (_searchQuery.isNotEmpty) {
+        final q = _searchQuery.toLowerCase();
+        filtered = filtered
+            .where((m) =>
+                m.nickname.toLowerCase().contains(q) ||
+                m.userId.toLowerCase().contains(q))
+            .toList();
+      }
+      if (!mounted) return;
+      setState(() {
+        _hosts = filtered
+            .map((m) => {
+                  'id': m.id,
+                  'userId': m.userId,
+                  'nickname': m.nickname,
+                  'avatarUrl': m.avatarUrl,
+                  'hostLevel': m.hostLevel,
+                  'monthlyDiamonds': m.monthlyDiamonds,
+                  'status': m.status,
+                })
+            .toList();
+        _isLoadingHosts = false;
+      });
     } catch (_) {
       if (mounted) setState(() => _isLoadingHosts = false);
     }
@@ -403,30 +445,12 @@ class _AgencyManagementScreenState extends State<AgencyManagementScreen> {
 
     if (_errorMessage != null) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline_rounded, color: Color(0xFFFF1A6C), size: 48),
-              const SizedBox(height: 12),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Color(0xFFCBB9E6), fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF1A6C),
-                  foregroundColor: Colors.white,
-                  shape: const StadiumBorder(),
-                ),
-                onPressed: _fetchAgencyInfo,
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        child: PopoErrorState(
+          key: const Key('agency_error_state'),
+          title: 'Agency Directory Unavailable',
+          message: _errorMessage!,
+          retryText: 'Retry',
+          onRetry: _fetchAgencyInfo,
         ),
       );
     }
@@ -670,6 +694,11 @@ class _AgencyManagementScreenState extends State<AgencyManagementScreen> {
               MaterialPageRoute(builder: (_) => const WithdrawalScreen()),
             );
           }),
+          _navTile('Broadcast Watch History', 'Past live broadcast rooms and host sessions', () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const WatchHistoryScreen()),
+            );
+          }),
           _navTile('Agency Profile', 'View contract details and contact info', () {
             setState(() => _selectedTab = 'profile');
           }),
@@ -843,11 +872,15 @@ class _AgencyManagementScreenState extends State<AgencyManagementScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.purpleAccent.withOpacity(0.18)),
       ),
-      child: ListTile(
-        title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-        subtitle: Text(subtitle, style: const TextStyle(color: Color(0xFFBBA9D6), fontSize: 11)),
-        trailing: const Icon(Icons.chevron_right, color: Colors.white54),
-        onTap: onTap,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: ListTile(
+          title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+          subtitle: Text(subtitle, style: const TextStyle(color: Color(0xFFBBA9D6), fontSize: 11)),
+          trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+          onTap: onTap,
+        ),
       ),
     );
   }

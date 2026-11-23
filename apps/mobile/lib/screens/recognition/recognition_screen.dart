@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../../design/design_fixtures.dart';
 
 /// ============================================================================
 /// Popo Live — Phase 7 Module 7.8: Wealth, Shining and Honor System Screen
@@ -18,7 +19,7 @@ class RecognitionScreen extends StatefulWidget {
 
   const RecognitionScreen({
     super.key,
-    required this.apiBaseUrl,
+    this.apiBaseUrl = '',
     this.userId = 'user_wallet_demo_701',
     this.headers,
     this.previewDemo = false,
@@ -76,35 +77,184 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
   Future<void> _loadAll() async {
     setState(() => _loading = true);
     try {
-      final base = widget.apiBaseUrl.replaceAll(RegExp(r'/$'), '');
-      final responses = await Future.wait([
-        http.get(Uri.parse('$base/api/recognition/status$_demoQ'), headers: _reqHeaders),
-        http.get(Uri.parse('$base/api/recognition/catalog'), headers: _reqHeaders),
-        http.get(Uri.parse('$base/api/recognition/history$_demoQ'), headers: _reqHeaders),
-        http.get(
-          Uri.parse('$base/api/recognition/leaderboard?category=$_category&page=1&limit=20'),
-          headers: _reqHeaders,
-        ),
-      ]);
+      if (DesignFixtures.isError) {
+        throw const DesignFixtureException(
+          message: 'Recognition status unavailable [ERR_RECOGNITION_503]',
+        );
+      }
+
+      final user = DesignFixtures.currentUserProfile;
+      final wealth = user.wealthLevel;
+      final shining = user.hostLevel;
+      final honor = user.honorLevel;
 
       if (!mounted) return;
-      final stData = jsonDecode(responses[0].body);
-      final catData = jsonDecode(responses[1].body);
-      final hisData = jsonDecode(responses[2].body);
-      final lbData = jsonDecode(responses[3].body);
-
       setState(() {
-        _summary = stData['summary'] as Map<String, dynamic>?;
-        _honorFactors = List<Map<String, dynamic>>.from(catData['honorFactors'] ?? const []);
-        _levelHistory = List<Map<String, dynamic>>.from(hisData['levelHistory'] ?? const []);
-        _leaderboard = List<Map<String, dynamic>>.from(lbData['entries'] ?? const []);
+        _summary = {
+          'wealth': {
+            'currentLevelNumber': wealth,
+            'currentLevelName': 'Wealth Mogul Lv.$wealth',
+            'currentLevelNameUr': 'دولت لیول $wealth',
+            'currentScore': wealth * 1000 + 450,
+            'progressPercent': 83.0,
+            'nextLevelNumber': wealth + 1,
+            'nextThreshold': (wealth + 1) * 1000,
+            'approvedBenefits': [
+              {
+                'title': 'Gold VIP Name Card',
+                'description': 'Distinguished gold username badge in chat'
+              },
+              {
+                'title': 'Top Supporter Entrance',
+                'description': 'Special entrance banner when joining streams'
+              },
+            ],
+            'allTiers': [
+              {
+                'levelNumber': wealth - 1,
+                'name': 'Tier ${wealth - 1}',
+                'threshold': (wealth - 1) * 1000
+              },
+              {
+                'levelNumber': wealth,
+                'name': 'Tier $wealth',
+                'threshold': wealth * 1000
+              },
+              {
+                'levelNumber': wealth + 1,
+                'name': 'Tier ${wealth + 1}',
+                'threshold': (wealth + 1) * 1000
+              },
+            ],
+          },
+          'shining': {
+            'currentLevelNumber': shining,
+            'currentLevelName': 'Shining Star Host Lv.$shining',
+            'currentLevelNameUr': 'شائننگ ہوسٹ لیول $shining',
+            'currentScore': shining * 1000 + 200,
+            'progressPercent': 91.0,
+            'nextLevelNumber': shining + 1,
+            'nextThreshold': (shining + 1) * 1000,
+            'approvedBenefits': [
+              {
+                'title': 'Stream Feature Priority',
+                'description': 'Recommended placement in Explore tabs'
+              },
+              {
+                'title': '70% Gift Earning Share',
+                'description': 'Maximum payout tier for broadcaster gifts'
+              },
+            ],
+            'allTiers': [
+              {
+                'levelNumber': shining - 1,
+                'name': 'Tier ${shining - 1}',
+                'threshold': (shining - 1) * 1000
+              },
+              {
+                'levelNumber': shining,
+                'name': 'Tier $shining',
+                'threshold': shining * 1000
+              },
+              {
+                'levelNumber': shining + 1,
+                'name': 'Tier ${shining + 1}',
+                'threshold': (shining + 1) * 1000
+              },
+            ],
+          },
+          'honor': {
+            'currentLevelNumber': honor,
+            'currentLevelName': 'Honor Guardian Lv.$honor',
+            'currentLevelNameUr': 'اعزاز لیول $honor',
+            'currentScore': honor * 1000 + 100,
+            'progressPercent': 85.0,
+            'nextLevelNumber': honor + 1,
+            'nextThreshold': (honor + 1) * 1000,
+            'approvedBenefits': [
+              {
+                'title': 'Community Protector Badge',
+                'description': 'Official community peacekeeper emblem'
+              },
+              {
+                'title': 'Exclusive Room Seat Wings',
+                'description': 'Glowing angel wings for party room seats'
+              },
+            ],
+            'allTiers': [
+              {
+                'levelNumber': honor - 1,
+                'name': 'Tier ${honor - 1}',
+                'threshold': (honor - 1) * 1000
+              },
+              {
+                'levelNumber': honor,
+                'name': 'Tier $honor',
+                'threshold': honor * 1000
+              },
+              {
+                'levelNumber': honor + 1,
+                'name': 'Tier ${honor + 1}',
+                'threshold': (honor + 1) * 1000
+              },
+            ],
+          },
+        };
+
+        _leaderboard = [
+          {
+            'rank': 1,
+            'nickname': 'Amina Noor',
+            'score': 185000,
+            'avatarUrl':
+                'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150'
+          },
+          {
+            'rank': 2,
+            'nickname': 'Sana Ali',
+            'score': 142000,
+            'avatarUrl':
+                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'
+          },
+          {
+            'rank': 3,
+            'nickname': 'Zainab Khan',
+            'score': 98000,
+            'avatarUrl':
+                'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150'
+          },
+        ];
+
+        _levelHistory = [
+          {
+            'title': 'Promoted to Wealth Lv. $wealth',
+            'timestamp': '3 days ago',
+            'category': 'wealth'
+          },
+          {
+            'title': 'Promoted to Shining Lv. $shining',
+            'timestamp': '1 week ago',
+            'category': 'shining'
+          },
+          {
+            'title': 'Awarded Honor Guardian Lv. $honor',
+            'timestamp': '2 weeks ago',
+            'category': 'honor'
+          },
+        ];
+        _loading = false;
       });
-    } catch (_) {
+      return;
+    } catch (e) {
       if (mounted) {
-        setState(() => _statusBanner = _isUrdu ? 'ڈیٹا لوڈ کرنے میں خرابی' : 'Unable to sync recognition data.');
+        setState(() {
+          _statusBanner = e
+              .toString()
+              .replaceFirst('Exception: ', '')
+              .replaceFirst('DesignFixtureException: ', '');
+          _loading = false;
+        });
       }
-    } finally {
-      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -116,13 +266,15 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
     try {
       final base = widget.apiBaseUrl.replaceAll(RegExp(r'/$'), '');
       final res = await http.get(
-        Uri.parse('$base/api/recognition/leaderboard?category=$cat&page=1&limit=20'),
+        Uri.parse(
+            '$base/api/recognition/leaderboard?category=$cat&page=1&limit=20'),
         headers: _reqHeaders,
       );
       if (!mounted) return;
       final lbData = jsonDecode(res.body);
       setState(() {
-        _leaderboard = List<Map<String, dynamic>>.from(lbData['entries'] ?? const []);
+        _leaderboard =
+            List<Map<String, dynamic>>.from(lbData['entries'] ?? const []);
       });
     } catch (_) {
     } finally {
@@ -133,7 +285,9 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
   Future<void> _submitHonorRequest() async {
     final text = _evidenceCtrl.text.trim();
     if (text.length < 8) {
-      setState(() => _statusBanner = _isUrdu ? 'کم از کم 8 حروف کی تفصیل درج کریں۔' : 'Enter at least 8 characters.');
+      setState(() => _statusBanner = _isUrdu
+          ? 'کم از کم 8 حروف کی تفصیل درج کریں۔'
+          : 'Enter at least 8 characters.');
       return;
     }
     setState(() => _submittingHonor = true);
@@ -148,7 +302,9 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
         }),
       );
       final json = jsonDecode(res.body);
-      if (res.statusCode >= 200 && res.statusCode < 300 && json['success'] == true) {
+      if (res.statusCode >= 200 &&
+          res.statusCode < 300 &&
+          json['success'] == true) {
         _evidenceCtrl.clear();
         setState(() {
           _statusBanner = _isUrdu
@@ -157,7 +313,8 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
         });
         await _loadAll();
       } else {
-        setState(() => _statusBanner = (json['error'] ?? 'Request failed').toString());
+        setState(() =>
+            _statusBanner = (json['error'] ?? 'Request failed').toString());
       }
     } finally {
       if (mounted) setState(() => _submittingHonor = false);
@@ -169,14 +326,20 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
     final catMap = (_summary?[_category] as Map<String, dynamic>?) ?? {};
     final levelNum = (catMap['currentLevelNumber'] as num?)?.toInt() ?? 1;
     final levelName = _isUrdu
-        ? (catMap['currentLevelNameUr'] ?? catMap['currentLevelName'] ?? 'Level 1').toString()
+        ? (catMap['currentLevelNameUr'] ??
+                catMap['currentLevelName'] ??
+                'Level 1')
+            .toString()
         : (catMap['currentLevelName'] ?? 'Level 1').toString();
     final score = (catMap['currentScore'] as num?)?.toInt() ?? 0;
-    final pct = ((catMap['progressPercent'] as num?)?.toDouble() ?? 0.0).clamp(0.0, 100.0);
+    final pct = ((catMap['progressPercent'] as num?)?.toDouble() ?? 0.0)
+        .clamp(0.0, 100.0);
     final nextNum = catMap['nextLevelNumber'];
     final nextThresh = catMap['nextThreshold'];
-    final tiers = List<Map<String, dynamic>>.from(catMap['allTiers'] ?? const []);
-    final benefits = List<Map<String, dynamic>>.from(catMap['approvedBenefits'] ?? const []);
+    final tiers =
+        List<Map<String, dynamic>>.from(catMap['allTiers'] ?? const []);
+    final benefits =
+        List<Map<String, dynamic>>.from(catMap['approvedBenefits'] ?? const []);
 
     return Directionality(
       textDirection: _isUrdu ? TextDirection.rtl : TextDirection.ltr,
@@ -196,8 +359,10 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
                 _buildTopBar(),
                 if (_statusBanner != null)
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: _neonPink.withOpacity(0.18),
                       borderRadius: BorderRadius.circular(12),
@@ -205,28 +370,36 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
                     ),
                     child: Text(
                       _statusBanner!,
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700),
                     ),
                   ),
                 _buildCategoryTabs(),
                 Expanded(
                   child: _loading && _summary == null
-                      ? const Center(child: CircularProgressIndicator(color: _neonPink))
+                      ? const Center(
+                          child: CircularProgressIndicator(color: _neonPink))
                       : RefreshIndicator(
                           onRefresh: _loadAll,
                           color: _neonPink,
                           child: ListView(
                             padding: const EdgeInsets.all(16),
                             children: [
+                              _buildThreeProgressBarsCard(),
+                              const SizedBox(height: 12),
                               _buildShowcaseCard(levelNum),
                               const SizedBox(height: 12),
-                              _buildProgressCard(levelNum, levelName, score, pct, nextNum, nextThresh),
+                              _buildProgressCard(levelNum, levelName, score,
+                                  pct, nextNum, nextThresh),
                               const SizedBox(height: 12),
                               _buildSubTabs(),
                               const SizedBox(height: 12),
                               if (_subTab == 'overview') ...[
                                 _buildBenefitsCard(benefits),
-                                if (_category == 'honor' && !widget.previewDemo) ...[
+                                if (_category == 'honor' &&
+                                    !widget.previewDemo) ...[
                                   const SizedBox(height: 12),
                                   _buildHonorRequestCard(),
                                 ],
@@ -260,11 +433,15 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
             children: [
               IconButton(
                 onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
+                icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                    color: Colors.white, size: 18),
               ),
               const Text(
                 'Popo Live',
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900),
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900),
               ),
             ],
           ),
@@ -273,21 +450,26 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
               GestureDetector(
                 onTap: () => setState(() => _isUrdu = !_isUrdu),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     _isUrdu ? 'EN' : 'اردو',
-                    style: const TextStyle(color: _goldAccent, fontWeight: FontWeight.w800, fontSize: 11),
+                    style: const TextStyle(
+                        color: _goldAccent,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 11),
                   ),
                 ),
               ),
               const SizedBox(width: 6),
               IconButton(
                 onPressed: _loadAll,
-                icon: const Icon(Icons.refresh_rounded, color: Colors.white70, size: 20),
+                icon: const Icon(Icons.refresh_rounded,
+                    color: Colors.white70, size: 20),
               ),
             ],
           ),
@@ -320,7 +502,8 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   gradient: active
-                      ? const LinearGradient(colors: [_neonPink, Color(0xFFEC4899)])
+                      ? const LinearGradient(
+                          colors: [_neonPink, Color(0xFFEC4899)])
                       : null,
                   borderRadius: BorderRadius.circular(24),
                 ),
@@ -339,6 +522,197 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
           );
         }).toList(),
       ),
+    );
+  }
+
+  Widget _buildThreeProgressBarsCard() {
+    FixtureUserProfile user;
+    try {
+      user = DesignFixtures.currentUserProfile;
+    } catch (_) {
+      user = FixtureUserProfile.empty();
+    }
+
+    final wealth = user.wealthLevel;
+    final shining = user.hostLevel;
+    final honor = user.honorLevel;
+
+    return Container(
+      key: const Key('recognition_three_progress_bars_card'),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.purpleAccent.withOpacity(0.35)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  _isUrdu
+                      ? 'تین درجات کی پیشرفت'
+                      : 'Three Levels Progress Overview',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: _neonPink.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _neonPink.withOpacity(0.4)),
+                ),
+                child: Text(
+                  _isUrdu ? 'سرکاری فکسچرز' : 'Fixture Driven',
+                  style: const TextStyle(
+                    color: _neonPink,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // 1. Wealth Level Progress Bar
+          _buildSingleProgressBarRow(
+            icon: Icons.monetization_on_rounded,
+            title: _isUrdu ? 'دولت کا درجہ' : 'Wealth Level',
+            level: 'Lv.$wealth',
+            scoreText: '${wealth * 1000 + 450} / ${(wealth + 1) * 1000} Exp',
+            percentText: '83%',
+            ratio: 0.83,
+            gradientColors: const [Color(0xFFFFD700), Color(0xFFFF8C00)],
+            accentColor: const Color(0xFFFFD700),
+          ),
+          const SizedBox(height: 12),
+
+          // 2. Shining Host Level Progress Bar
+          _buildSingleProgressBarRow(
+            icon: Icons.auto_awesome_rounded,
+            title: _isUrdu ? 'شائننگ ہوسٹ درجہ' : 'Shining Host Level',
+            level: 'Lv.$shining',
+            scoreText: '${shining * 1000 + 200} / ${(shining + 1) * 1000} Exp',
+            percentText: '91%',
+            ratio: 0.91,
+            gradientColors: const [Color(0xFFFF2E74), Color(0xFFEC4899)],
+            accentColor: const Color(0xFFFF2E74),
+          ),
+          const SizedBox(height: 12),
+
+          // 3. Honor Level Progress Bar
+          _buildSingleProgressBarRow(
+            icon: Icons.military_tech_rounded,
+            title: _isUrdu ? 'اعزاز کا درجہ' : 'Honor Level',
+            level: 'Lv.$honor',
+            scoreText: '${honor * 1000 + 100} / ${(honor + 1) * 1000} Exp',
+            percentText: '85%',
+            ratio: 0.85,
+            gradientColors: const [Color(0xFFA855F7), Color(0xFF7C3AED)],
+            accentColor: const Color(0xFFA855F7),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSingleProgressBarRow({
+    required IconData icon,
+    required String title,
+    required String level,
+    required String scoreText,
+    required String percentText,
+    required double ratio,
+    required List<Color> gradientColors,
+    required Color accentColor,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: accentColor, size: 16),
+                const SizedBox(width: 6),
+                Text(
+                  title,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    level,
+                    style: TextStyle(
+                        color: accentColor,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 10),
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              percentText,
+              style: TextStyle(
+                  color: accentColor,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            height: 7,
+            color: Colors.white.withOpacity(0.08),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: ratio.clamp(0.0, 1.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: gradientColors),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            scoreText,
+            style: const TextStyle(color: Colors.white38, fontSize: 10),
+          ),
+        ),
+      ],
     );
   }
 
@@ -379,7 +753,8 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
                 ),
                 const SizedBox(width: 10),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     color: c.withOpacity(0.22),
                     borderRadius: BorderRadius.circular(14),
@@ -387,7 +762,8 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
                   ),
                   child: Text(
                     s['title'] as String,
-                    style: TextStyle(color: c, fontWeight: FontWeight.w900, fontSize: 12),
+                    style: TextStyle(
+                        color: c, fontWeight: FontWeight.w900, fontSize: 12),
                   ),
                 ),
               ],
@@ -398,7 +774,8 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
     );
   }
 
-  Widget _buildProgressCard(int levelNum, String levelName, int score, double pct, dynamic nextNum, dynamic nextThresh) {
+  Widget _buildProgressCard(int levelNum, String levelName, int score,
+      double pct, dynamic nextNum, dynamic nextThresh) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -418,25 +795,35 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
                   children: [
                     Text(
                       _isUrdu ? 'تصدیق شدہ درجہ' : 'Verified Backend Status',
-                      style: const TextStyle(color: Colors.pinkAccent, fontSize: 10, fontWeight: FontWeight.w800),
+                      style: const TextStyle(
+                          color: Colors.pinkAccent,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'Lv.$levelNum • $levelName',
-                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900),
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: _goldAccent.withOpacity(0.16),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   '$score pts',
-                  style: const TextStyle(color: _goldAccent, fontWeight: FontWeight.w900, fontSize: 12),
+                  style: const TextStyle(
+                      color: _goldAccent,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 12),
                 ),
               ),
             ],
@@ -455,10 +842,16 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('${pct.toStringAsFixed(1)}%', style: const TextStyle(color: Colors.pinkAccent, fontSize: 11, fontWeight: FontWeight.w800)),
+              Text('${pct.toStringAsFixed(1)}%',
+                  style: const TextStyle(
+                      color: Colors.pinkAccent,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800)),
               Text(
                 nextNum != null
-                    ? (_isUrdu ? 'اگلا: Lv.$nextNum ($nextThresh)' : 'Next: Lv.$nextNum ($nextThresh)')
+                    ? (_isUrdu
+                        ? 'اگلا: Lv.$nextNum ($nextThresh)'
+                        : 'Next: Lv.$nextNum ($nextThresh)')
                     : (_isUrdu ? 'اعلیٰ ترین درجہ' : 'Max Tier Reached'),
                 style: const TextStyle(color: Colors.white54, fontSize: 11),
               ),
@@ -485,14 +878,20 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 3),
               padding: const EdgeInsets.symmetric(vertical: 9),
               decoration: BoxDecoration(
-                color: active ? const Color(0xFF2C155E) : const Color(0xFF12072D),
+                color:
+                    active ? const Color(0xFF2C155E) : const Color(0xFF12072D),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: active ? _neonPink.withOpacity(0.5) : Colors.white10),
+                border: Border.all(
+                    color:
+                        active ? _neonPink.withOpacity(0.5) : Colors.white10),
               ),
               child: Center(
                 child: Text(
                   _isUrdu ? t['ur']! : t['en']!,
-                  style: TextStyle(color: active ? Colors.white : Colors.white60, fontWeight: FontWeight.w800, fontSize: 11.5),
+                  style: TextStyle(
+                      color: active ? Colors.white : Colors.white60,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 11.5),
                 ),
               ),
             ),
@@ -514,20 +913,27 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _isUrdu ? 'منظور شدہ غیر مالی مراعات' : 'Approved Visual & Platform Benefits',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13),
+            _isUrdu
+                ? 'منظور شدہ غیر مالی مراعات'
+                : 'Approved Visual & Platform Benefits',
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13),
           ),
           const SizedBox(height: 8),
           ...benefits.map((b) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
                   children: [
-                    const Icon(Icons.check_circle_rounded, color: Color(0xFF34D399), size: 16),
+                    const Icon(Icons.check_circle_rounded,
+                        color: Color(0xFF34D399), size: 16),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        _isUrdu ? (b['titleUr'] ?? b['title'] ?? '').toString() : (b['title'] ?? '').toString(),
-                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        _isUrdu
+                            ? (b['titleUr'] ?? b['title'] ?? '').toString()
+                            : (b['title'] ?? '').toString(),
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 12),
                       ),
                     ),
                   ],
@@ -550,8 +956,13 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            _isUrdu ? 'اعزازی درخواست جمع کروائیں' : 'Submit Honor Verification Request',
-            style: const TextStyle(color: Color(0xFF34D399), fontWeight: FontWeight.w800, fontSize: 13),
+            _isUrdu
+                ? 'اعزازی درخواست جمع کروائیں'
+                : 'Submit Honor Verification Request',
+            style: const TextStyle(
+                color: Color(0xFF34D399),
+                fontWeight: FontWeight.w800,
+                fontSize: 13),
           ),
           const SizedBox(height: 8),
           if (_honorFactors.isNotEmpty)
@@ -562,7 +973,8 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
               items: _honorFactors
                   .map((f) => DropdownMenuItem<String>(
                         value: f['factorKey'].toString(),
-                        child: Text((_isUrdu ? f['titleUr'] : f['title']).toString()),
+                        child: Text(
+                            (_isUrdu ? f['titleUr'] : f['title']).toString()),
                       ))
                   .toList(),
               onChanged: (v) {
@@ -574,11 +986,14 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
             controller: _evidenceCtrl,
             style: const TextStyle(color: Colors.white, fontSize: 12),
             decoration: InputDecoration(
-              hintText: _isUrdu ? 'تصدیق شدہ تفصیل لکھیں...' : 'Verified achievement details...',
+              hintText: _isUrdu
+                  ? 'تصدیق شدہ تفصیل لکھیں...'
+                  : 'Verified achievement details...',
               hintStyle: const TextStyle(color: Colors.white38),
               filled: true,
               fillColor: const Color(0xFF0D0422),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
           const SizedBox(height: 8),
@@ -586,8 +1001,13 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _submittingHonor ? null : _submitHonorRequest,
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
-              child: Text(_submittingHonor ? 'Submitting...' : (_isUrdu ? 'ایڈمن کے لیے بھیجیں' : 'Submit for Admin Review')),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981)),
+              child: Text(_submittingHonor
+                  ? 'Submitting...'
+                  : (_isUrdu
+                      ? 'ایڈمن کے لیے بھیجیں'
+                      : 'Submit for Admin Review')),
             ),
           ),
         ],
@@ -608,7 +1028,8 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
         children: [
           Text(
             _isUrdu ? 'درجات کی ترتیب' : 'Configured Level Tiers',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13),
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13),
           ),
           const SizedBox(height: 8),
           ...tiers.map((t) {
@@ -620,13 +1041,27 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
               leading: CircleAvatar(
                 radius: 15,
                 backgroundColor: unlocked ? _neonPink : Colors.white12,
-                child: Text('${t['levelNumber']}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900)),
+                child: Text('${t['levelNumber']}',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900)),
               ),
               title: Text(
-                (_isUrdu ? (t['levelNameUr'] ?? t['levelName']) : t['levelName']).toString(),
-                style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w700),
+                (_isUrdu
+                        ? (t['levelNameUr'] ?? t['levelName'])
+                        : t['levelName'])
+                    .toString(),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700),
               ),
-              trailing: Text('$thresh pts', style: TextStyle(color: unlocked ? const Color(0xFF34D399) : Colors.white54, fontSize: 11)),
+              trailing: Text('$thresh pts',
+                  style: TextStyle(
+                      color:
+                          unlocked ? const Color(0xFF34D399) : Colors.white54,
+                      fontSize: 11)),
             );
           }),
         ],
@@ -637,11 +1072,15 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
   Widget _buildLeaderboardCard() {
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: _cardColor, borderRadius: BorderRadius.circular(18)),
+      decoration: BoxDecoration(
+          color: _cardColor, borderRadius: BorderRadius.circular(18)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: _leaderboard.isEmpty
-            ? [Text(_isUrdu ? 'کوئی ریکارڈ نہیں' : 'No ranking entries yet.', style: const TextStyle(color: Colors.white54))]
+            ? [
+                Text(_isUrdu ? 'کوئی ریکارڈ نہیں' : 'No ranking entries yet.',
+                    style: const TextStyle(color: Colors.white54))
+              ]
             : _leaderboard
                 .map((r) => ListTile(
                       dense: true,
@@ -649,11 +1088,26 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
                       leading: CircleAvatar(
                         radius: 14,
                         backgroundColor: _goldAccent.withOpacity(0.2),
-                        child: Text('#${r['rank']}', style: const TextStyle(color: _goldAccent, fontSize: 11, fontWeight: FontWeight.w900)),
+                        child: Text('#${r['rank']}',
+                            style: const TextStyle(
+                                color: _goldAccent,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w900)),
                       ),
-                      title: Text((r['nickname'] ?? 'User').toString(), style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w700)),
-                      subtitle: Text('Lv.${r['levelNumber']} • ${r['levelName']}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
-                      trailing: Text('${r['score']} pts', style: const TextStyle(color: _goldAccent, fontWeight: FontWeight.w800, fontSize: 12)),
+                      title: Text((r['nickname'] ?? 'User').toString(),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700)),
+                      subtitle: Text(
+                          'Lv.${r['levelNumber']} • ${r['levelName']}',
+                          style: const TextStyle(
+                              color: Colors.white54, fontSize: 11)),
+                      trailing: Text('${r['score']} pts',
+                          style: const TextStyle(
+                              color: _goldAccent,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12)),
                     ))
                 .toList(),
       ),
@@ -661,22 +1115,35 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
   }
 
   Widget _buildHistoryCard() {
-    final filtered = _levelHistory.where((h) => h['category'] == _category).toList();
+    final filtered =
+        _levelHistory.where((h) => h['category'] == _category).toList();
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: _cardColor, borderRadius: BorderRadius.circular(18)),
+      decoration: BoxDecoration(
+          color: _cardColor, borderRadius: BorderRadius.circular(18)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: filtered.isEmpty
-            ? [Text(_isUrdu ? 'کوئی تبدیلی نہیں' : 'No level transitions yet.', style: const TextStyle(color: Colors.white54))]
+            ? [
+                Text(_isUrdu ? 'کوئی تبدیلی نہیں' : 'No level transitions yet.',
+                    style: const TextStyle(color: Colors.white54))
+              ]
             : filtered
                 .map((h) => ListTile(
                       dense: true,
                       contentPadding: EdgeInsets.zero,
-                      title: Text('Lv.${h['previousLevelNumber']} → Lv.${h['newLevelNumber']} (${h['newLevelName']})',
-                          style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w700)),
-                      subtitle: Text((h['changeReason'] ?? '').toString(), style: const TextStyle(color: Colors.white54, fontSize: 11)),
-                      trailing: Text('${h['scoreAtChange']} pts', style: const TextStyle(color: Colors.pinkAccent, fontSize: 11)),
+                      title: Text(
+                          'Lv.${h['previousLevelNumber']} → Lv.${h['newLevelNumber']} (${h['newLevelName']})',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700)),
+                      subtitle: Text((h['changeReason'] ?? '').toString(),
+                          style: const TextStyle(
+                              color: Colors.white54, fontSize: 11)),
+                      trailing: Text('${h['scoreAtChange']} pts',
+                          style: const TextStyle(
+                              color: Colors.pinkAccent, fontSize: 11)),
                     ))
                 .toList(),
       ),
@@ -689,15 +1156,21 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [_neonPink, Color(0xFFD946EF)]),
+            gradient:
+                const LinearGradient(colors: [_neonPink, Color(0xFFD946EF)]),
             borderRadius: BorderRadius.circular(20),
           ),
-          child: const Text('P7.8', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12)),
+          child: const Text('P7.8',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12)),
         ),
         const SizedBox(height: 6),
         Text(
           _isUrdu ? 'دولت، شائننگ اور اعزاز' : 'Wealth, Shining and Honor',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
+          style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
         ),
       ],
     );

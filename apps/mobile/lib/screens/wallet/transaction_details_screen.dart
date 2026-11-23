@@ -28,7 +28,6 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   late final DateFormat _dateFmt;
 
   bool _isLoading = false;
-  String? _errorMessage;
   FinancialReceiptDetail? _receiptDetail;
 
   @override
@@ -53,7 +52,6 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
   Future<void> _loadReceiptDetail(String id) async {
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
     });
 
     final res = await _financialService.getReceiptDetail(
@@ -71,7 +69,6 @@ class _TransactionDetailsScreenState extends State<TransactionDetailsScreen> {
     } else {
       setState(() {
         _isLoading = false;
-        _errorMessage = res.errorMessage;
       });
     }
   }

@@ -4,9 +4,9 @@ import 'package:flutter/services.dart';
 import '../theme/popo_theme.dart';
 import '../l10n/strings.dart';
 
-/// Premium 5-Destination Bottom Navigation Bar for Popo Live (Phase 2 - D1)
+/// Premium 5-Destination Bottom Navigation Bar for Popo Live (Section 3, R1)
 /// Destinations in exact order:
-/// [0: Live] → [1: Explore] → [2: Square] → [3: Message] → [4: Me]
+/// [0: Live] → [1: Party] → [2: Square] → [3: Message] → [4: Me]
 ///
 /// Clean, uniform bottom navigation without a raised or floating Go Live button.
 class PopoBottomNavigation extends StatelessWidget {
@@ -67,19 +67,20 @@ class PopoBottomNavigation extends StatelessWidget {
             activeIcon: Icons.live_tv_rounded,
             label: PopoStrings.tabLive,
           ),
-          // 1: Explore / Sparkle
+          // 1: Party
           _buildNavItem(
             index: 1,
             icon: Icons.auto_awesome_outlined,
             activeIcon: Icons.auto_awesome_rounded,
-            label: PopoStrings.tabExplore,
+            label: PopoStrings.tabParty,
           ),
-          // 2: Square
+          // 2: Square (Circled Icon, same row height)
           _buildNavItem(
             index: 2,
             icon: Icons.grid_view_outlined,
             activeIcon: Icons.grid_view_rounded,
             label: PopoStrings.tabSquare,
+            isCircled: true,
           ),
           // 3: Message / Chat
           _buildNavItem(
@@ -89,11 +90,11 @@ class PopoBottomNavigation extends StatelessWidget {
             label: PopoStrings.tabMessage,
             badgeCount: _effectiveMessageBadge,
           ),
-          // 4: Me / Bag
+          // 4: Me / Shopping Bag
           _buildNavItem(
             index: 4,
-            icon: Icons.person_outline_rounded,
-            activeIcon: Icons.person_rounded,
+            icon: Icons.shopping_bag_outlined,
+            activeIcon: Icons.shopping_bag_rounded,
             label: PopoStrings.tabMe,
           ),
         ],
@@ -107,6 +108,7 @@ class PopoBottomNavigation extends StatelessWidget {
     required IconData activeIcon,
     required String label,
     int badgeCount = 0,
+    bool isCircled = false,
   }) {
     final isSelected = currentIndex == index;
 
@@ -129,13 +131,45 @@ class PopoBottomNavigation extends StatelessWidget {
                   scale: isSelected ? 1.12 : 1.0,
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeOutCubic,
-                  child: Icon(
-                    isSelected ? activeIcon : icon,
-                    color: isSelected
-                        ? PopoTheme.primary
-                        : PopoTheme.textSecondary,
-                    size: 22,
-                  ),
+                  child: isCircled
+                      ? Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isSelected
+                                ? PopoTheme.primary.withOpacity(0.16)
+                                : PopoTheme.surfaceLight.withOpacity(0.5),
+                            border: Border.all(
+                              color: isSelected
+                                  ? PopoTheme.primary
+                                  : PopoTheme.borderSubtle,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Center(
+                            child: Icon(
+                              isSelected ? activeIcon : icon,
+                              color: isSelected
+                                  ? PopoTheme.primary
+                                  : PopoTheme.textSecondary,
+                              size: 16,
+                            ),
+                          ),
+                        )
+                      : SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: Center(
+                            child: Icon(
+                              isSelected ? activeIcon : icon,
+                              color: isSelected
+                                  ? PopoTheme.primary
+                                  : PopoTheme.textSecondary,
+                              size: 22,
+                            ),
+                          ),
+                        ),
                 ),
                 if (badgeCount > 0)
                   Positioned(

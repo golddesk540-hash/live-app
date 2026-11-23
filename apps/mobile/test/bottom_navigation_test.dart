@@ -98,9 +98,9 @@ void main() {
   setUpAll(() {
     HttpOverrides.global = _TestHttpOverrides();
   });
-  group('Phase 2 (D1) Prompt 1 - Mobile Bottom Navigation Bar Tests', () {
+  group('Section 3, R1 - Mobile Bottom Navigation Bar Tests', () {
     testWidgets(
-        'PopoBottomNavigation renders exactly 5 uniform tabs in correct order',
+        'PopoBottomNavigation renders exactly 5 uniform tabs in correct order (Live, Party, Square, Message, Me)',
         (WidgetTester tester) async {
       int selectedTab = 0;
 
@@ -123,9 +123,9 @@ void main() {
         ),
       );
 
-      // Verify the 5 labels appear in the widget tree
+      // Verify the 5 labels appear in the widget tree in exact order
       expect(find.text(PopoStrings.tabLive), findsOneWidget);
-      expect(find.text(PopoStrings.tabExplore), findsOneWidget);
+      expect(find.text(PopoStrings.tabParty), findsOneWidget);
       expect(find.text(PopoStrings.tabSquare), findsOneWidget);
       expect(find.text(PopoStrings.tabMessage), findsOneWidget);
       expect(find.text(PopoStrings.tabMe), findsOneWidget);
@@ -138,17 +138,17 @@ void main() {
       expect(
           find.byIcon(Icons.live_tv_rounded), findsOneWidget); // Active Tab 0
       expect(find.byIcon(Icons.auto_awesome_outlined),
-          findsOneWidget); // Inactive Tab 1
+          findsOneWidget); // Inactive Tab 1 (Party)
       expect(find.byIcon(Icons.grid_view_outlined),
-          findsOneWidget); // Inactive Tab 2
+          findsOneWidget); // Inactive Tab 2 (Square inside circle)
       expect(find.byIcon(Icons.chat_bubble_outline_rounded),
-          findsOneWidget); // Inactive Tab 3
-      expect(find.byIcon(Icons.person_outline_rounded),
-          findsOneWidget); // Inactive Tab 4
+          findsOneWidget); // Inactive Tab 3 (Message)
+      expect(find.byIcon(Icons.shopping_bag_outlined),
+          findsOneWidget); // Inactive Tab 4 (Me - shopping bag)
 
       // Test tapping each tab triggers onTabSelected with correct index
-      // Tap Explore (index 1)
-      await tester.tap(find.text(PopoStrings.tabExplore));
+      // Tap Party (index 1)
+      await tester.tap(find.text(PopoStrings.tabParty));
       await tester.pumpAndSettle();
       expect(selectedTab, 1);
 
@@ -162,15 +162,39 @@ void main() {
       await tester.pumpAndSettle();
       expect(selectedTab, 3);
 
-      // Tap Me (index 4)
+      // Tap Me (index 4) - verify active shopping bag icon is displayed
       await tester.tap(find.text(PopoStrings.tabMe));
       await tester.pumpAndSettle();
       expect(selectedTab, 4);
+      expect(find.byIcon(Icons.shopping_bag_rounded), findsOneWidget);
 
       // Tap Live (index 0)
       await tester.tap(find.text(PopoStrings.tabLive));
       await tester.pumpAndSettle();
       expect(selectedTab, 0);
+    });
+
+    testWidgets(
+        'PopoBottomNavigation bilingual localization (English & Urdu)',
+        (WidgetTester tester) async {
+      // English check
+      PopoStrings.setLanguage('en');
+      expect(PopoStrings.tabLive, 'Live');
+      expect(PopoStrings.tabParty, 'Party');
+      expect(PopoStrings.tabSquare, 'Square');
+      expect(PopoStrings.tabMessage, 'Message');
+      expect(PopoStrings.tabMe, 'Me');
+
+      // Urdu check
+      PopoStrings.setLanguage('ur');
+      expect(PopoStrings.tabLive, 'لائیو');
+      expect(PopoStrings.tabParty, 'پارٹی');
+      expect(PopoStrings.tabSquare, 'اسکوائر');
+      expect(PopoStrings.tabMessage, 'پیغامات');
+      expect(PopoStrings.tabMe, 'میری پروفائل');
+
+      // Reset to English
+      PopoStrings.setLanguage('en');
     });
 
     testWidgets(

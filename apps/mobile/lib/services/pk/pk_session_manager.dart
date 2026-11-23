@@ -741,9 +741,10 @@ class PkSessionManager extends ChangeNotifier {
     if (res.isSuccess && res.data != null) {
       final totalCoins = gift.coinPrice * quantity;
 
-      // Deduct coins locally in wallet
+      // Deduct coins locally in wallet using server-confirmed remainingCoins
       if (_wallet != null) {
-        final newCoinBalance = (_wallet!.coins - totalCoins).clamp(0, 99999999);
+        final serverRemaining = (res.data?['sender']?['remainingCoins'] as num?)?.toInt();
+        final newCoinBalance = serverRemaining ?? (_wallet!.coins - totalCoins).clamp(0, 99999999);
         _wallet = _wallet!.copyWith(
           coins: newCoinBalance,
           totalSpentCoins: _wallet!.totalSpentCoins + totalCoins,

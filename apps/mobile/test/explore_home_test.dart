@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:popo_live/api/api_config.dart';
 import 'package:popo_live/design/design_fixtures.dart';
 import 'package:popo_live/l10n/strings.dart';
 import 'package:popo_live/screens/discovery/explore_home_screen.dart';
@@ -103,8 +104,13 @@ void main() {
   });
 
   setUp(() {
+    ApiConfig.useLiveApi = false;
     DesignFixtures.reset();
     DesignFixtures.setFilled();
+  });
+
+  tearDown(() {
+    ApiConfig.useLiveApi = true;
   });
 
   void setMobileScreenSize(WidgetTester tester) {

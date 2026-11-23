@@ -29,6 +29,7 @@ import {
   FixturePartySeat,
   FixtureLiveChatMessage,
 } from '@/lib/design/designFixtures';
+import GoLiveRedirectSheet from './GoLiveRedirectSheet';
 import PartySeatRedirectSheet from './PartySeatRedirectSheet';
 import {
   COUNTRIES_LIST,
@@ -587,8 +588,8 @@ export const WebPartyPanel: React.FC<WebPartyPanelProps> = ({
           </div>
         </div>
 
-        {/* PARTY SEAT REDIRECT SHEET */}
-        <PartySeatRedirectSheet
+        {/* PARTY SEAT REDIRECT SHEET (GoLiveRedirectSheet with seat context) */}
+        <GoLiveRedirectSheet
           isOpen={showSeatRedirect}
           seatIndex={redirectSeatIndex}
           roomTitle={activeRoom.title}

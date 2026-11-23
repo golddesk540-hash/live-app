@@ -6,7 +6,7 @@ import { AuthUser, calculateAge } from '@/lib/auth';
  * PARTY MODULE API SERVICE & LOCKED RULES ENGINE
  */
 
-export const USE_PARTY_API: boolean = process.env.NEXT_PUBLIC_USE_PARTY_API !== 'false';
+export const USE_PARTY_API: boolean = process.env.NEXT_PUBLIC_USE_PARTY_API === 'true';
 
 export interface PartySeatInfo {
   seatNumber: number;

@@ -16,6 +16,7 @@ import {
   FileText,
   Sparkles,
 } from 'lucide-react';
+import { DesignFixtures } from '@/lib/design/designFixtures';
 
 export type NavRailId = 'app' | 'live' | 'party' | 'following' | 'message' | 'profile';
 
@@ -23,6 +24,7 @@ export interface WebLeftRailProps {
   activeNav?: NavRailId | string;
   onSelectNav?: (navId: NavRailId) => void;
   onOpenAppModal?: () => void;
+  unreadCount?: number;
   isUr?: boolean;
   className?: string;
 }
@@ -31,11 +33,24 @@ export const WebLeftRail: React.FC<WebLeftRailProps> = ({
   activeNav,
   onSelectNav,
   onOpenAppModal,
+  unreadCount,
   isUr = false,
   className = '',
 }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  // Dynamically compute unread message count from fixtures or props
+  const effectiveUnreadCount = React.useMemo(() => {
+    if (typeof unreadCount === 'number') {
+      return unreadCount;
+    }
+    try {
+      return DesignFixtures.totalUnreadMessages;
+    } catch {
+      return 0;
+    }
+  }, [unreadCount]);
 
   // Determine current active navigation item from URL if not explicitly provided
   const currentNav = React.useMemo<NavRailId>(() => {
@@ -93,7 +108,12 @@ export const WebLeftRail: React.FC<WebLeftRailProps> = ({
       label_ur: 'پیغامات',
       icon: MessageSquare,
       href: '/inbox',
-      badge: '12',
+      badge:
+        effectiveUnreadCount > 0
+          ? effectiveUnreadCount > 99
+            ? '99+'
+            : String(effectiveUnreadCount)
+          : undefined,
     },
     {
       id: 'profile' as NavRailId,
@@ -169,8 +189,9 @@ export const WebLeftRail: React.FC<WebLeftRailProps> = ({
                 </div>
 
                 {/* Right: Badge for HOT, 9-SEAT, or counts */}
-                {item.badge && (
+                {item.badge && item.badge !== '0' && (
                   <span
+                    data-testid={`rail-badge-${item.id}`}
                     className={`hidden lg:inline-flex text-[10px] font-black px-2 py-0.5 rounded-full ${
                       isActive
                         ? 'bg-[#FF1A6C] text-white shadow-xs'

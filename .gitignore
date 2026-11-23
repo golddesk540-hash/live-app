@@ -60,6 +60,11 @@ apps/web/public/uploads/
 
 # Mobile Screen Safety Backups
 apps/mobile/lib/screens_backup_*/
+apps/mobile/screens_backup_*/
+
+# Temporary Emulator Screenshots
+*.png
+**/*.png
 
 # Android Keystore & Release Signing Secrets
 *.keystore

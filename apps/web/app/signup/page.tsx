@@ -107,15 +107,51 @@ export default function SignupPage() {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setErrors({});
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          phone: phoneNumber.trim(),
+          password,
+          nickname: fullName.trim(),
+          birthdate: dob,
+          country,
+          isAdultConfirmed: true,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.code === 'EMAIL_EXISTS') {
+          setErrors({ email: isUr ? 'یہ ای میل پہلے سے رجسٹرڈ ہے۔' : 'An account with this email already exists.' });
+        } else if (data.code === 'PHONE_EXISTS') {
+          setErrors({ phoneNumber: isUr ? 'یہ فون نمبر پہلے سے رجسٹرڈ ہے۔' : 'An account with this phone number already exists.' });
+        } else if (data.code === 'UNDER_18_RESTRICTION') {
+          setErrors({ dob: isUr ? 'پوپو لائیو استعمال کرنے کے لیے آپ کی عمر کم از کم ۱۸ سال ہونا لازمی ہے۔' : 'You must be at least 18 years old to create a Popo Live account.' });
+        } else {
+          setErrors({ form: data.error || (isUr ? 'اکاؤنٹ بنانے میں خرابی پیش آگئی' : 'Failed to create account. Please try again.') });
+        }
+        return;
+      }
+
       setIsSuccess(true);
-    }, 1200);
+      setTimeout(() => {
+        window.location.href = '/complete-profile';
+      }, 1200);
+    } catch (err: any) {
+      setErrors({ form: err.message || (isUr ? 'نیٹ ورک کی خرابی' : 'Network error. Please try again.') });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -395,6 +431,13 @@ export default function SignupPage() {
                 </label>
                 {errors.agreeTerms && <span className="text-xs font-medium text-red-400">{errors.agreeTerms}</span>}
               </div>
+
+              {errors.form && (
+                <div className="p-3 rounded-xl bg-red-950/60 border border-red-500/40 text-red-200 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                  <span>{errors.form}</span>
+                </div>
+              )}
 
               {/* Create Account Button */}
               <Button

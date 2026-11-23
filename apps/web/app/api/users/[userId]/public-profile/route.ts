@@ -24,6 +24,24 @@ export async function GET(
     const viewerId = viewer ? viewer.id : null;
     const isSelf = viewerId === targetUser.id;
 
+    // Record profile visit if authenticated and not self-visit
+    if (viewerId && !isSelf) {
+      const recentVisits = await query(
+        `SELECT id FROM popolive.profile_visits
+         WHERE visitor_id = $1 AND visited_user_id = $2
+           AND visited_at > NOW() - INTERVAL '10 minutes'
+         LIMIT 1`,
+        [viewerId, targetUser.id]
+      );
+      if (recentVisits.length === 0) {
+        await query(
+          `INSERT INTO popolive.profile_visits (visitor_id, visited_user_id, visited_at, source)
+           VALUES ($1, $2, NOW(), 'web_profile')`,
+          [viewerId, targetUser.id]
+        ).catch(() => {});
+      }
+    }
+
     // Check if target user has blocked viewer, or viewer blocked target
     let isBlocked = false;
     let hasBlockedViewer = false;
@@ -61,6 +79,12 @@ export async function GET(
 
     const followersCount = followersRes[0]?.count || 0;
     const followingCount = followingRes[0]?.count || 0;
+
+    const visitorsRes = await query(
+      `SELECT COUNT(*)::int AS count FROM popolive.profile_visits WHERE visited_user_id = $1`,
+      [targetUser.id]
+    );
+    const visitorsCount = visitorsRes[0]?.count || 0;
 
     // Likes / Gifts count
     const giftsRes = await query(
@@ -130,6 +154,8 @@ export async function GET(
         createdAt: targetUser.created_at,
         followersCount,
         followingCount,
+        visitorsCount,
+        visitorCount: visitorsCount,
         likesCount: totalGifts || 0,
         isFollowing,
         isBlocked,

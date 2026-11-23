@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { calculatePKScoreRatios } from '@/lib/pk';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +37,10 @@ export async function GET(
       );
     }
 
+    const scoreA = parseInt(battle.host_a_score || '0', 10);
+    const scoreB = parseInt(battle.host_b_score || '0', 10);
+    const { ratioA, ratioB } = calculatePKScoreRatios(scoreA, scoreB);
+
     return NextResponse.json({
       success: true,
       battle: {
@@ -49,6 +54,7 @@ export async function GET(
           nickname: battle.host_a_nickname,
           avatar: battle.host_a_avatar,
           streamKey: battle.host_a_stream_key,
+          score: scoreA,
         },
         hostB: {
           id: battle.host_b_id,
@@ -56,7 +62,11 @@ export async function GET(
           nickname: battle.host_b_nickname,
           avatar: battle.host_b_avatar,
           streamKey: battle.host_b_stream_key,
+          score: scoreB,
         },
+        leadingHostId: battle.leading_host_id,
+        ratioA,
+        ratioB,
         createdAt: battle.created_at,
         startedAt: battle.started_at,
         endedAt: battle.ended_at,

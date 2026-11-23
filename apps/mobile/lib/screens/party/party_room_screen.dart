@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../api/api.dart';
 import '../../design/design_fixtures.dart';
 import '../../theme/theme.dart';
 
@@ -354,9 +355,43 @@ class _PartyRoomScreenState extends State<PartyRoomScreen> {
                       borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.of(ctx).pop();
-                    _occupySeatLocally(seat.index);
+                    if (ApiConfig.usePartyApi) {
+                      try {
+                        final res = await PartyApiService().requestPartySeat(
+                          roomId: _room.id,
+                          seatNumber: seat.index,
+                        );
+                        if (res.isSuccess) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                    'Seat #${seat.index} request submitted to host! 🎙️'),
+                                backgroundColor: const Color(0xFF00C853),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        } else {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(res.error ??
+                                    'Failed to request Seat #${seat.index}'),
+                                backgroundColor: Colors.redAccent,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        }
+                      } catch (e) {
+                        _occupySeatLocally(seat.index);
+                      }
+                    } else {
+                      _occupySeatLocally(seat.index);
+                    }
                   },
                   child: Text(
                     _myOccupiedSeatIndex != null
@@ -435,6 +470,204 @@ class _PartyRoomScreenState extends State<PartyRoomScreen> {
     _scrollChatToBottom();
   }
 
+  void _showHostSeatRequestsModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: PopoTheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (modalContext, setModalState) {
+            return FutureBuilder<ApiResponse<dynamic>>(
+              future: PartyApiService().getPartyRequests(_room.id),
+              builder: (ctx, snapshot) {
+                final isLoading =
+                    snapshot.connectionState == ConnectionState.waiting;
+                final data = snapshot.data?.data as Map<String, dynamic>?;
+                final requests = (data?['requests'] as List<dynamic>?) ?? [];
+
+                return Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: Colors.white24,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Host Seat Management',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: PopoTheme.gold.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '${requests.length} Pending',
+                              style: const TextStyle(
+                                color: PopoTheme.gold,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      if (isLoading)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(24.0),
+                            child: CircularProgressIndicator(
+                                color: PopoTheme.gold),
+                          ),
+                        )
+                      else if (requests.isEmpty)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.04),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'No pending seat requests at this moment.',
+                              style: TextStyle(
+                                color: PopoTheme.textSecondary,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 280),
+                          child: ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: requests.length,
+                            separatorBuilder: (_, __) =>
+                                const Divider(color: PopoTheme.borderSubtle),
+                            itemBuilder: (context, idx) {
+                              final req = requests[idx] as Map<String, dynamic>;
+                              final reqId = req['id']?.toString() ?? '';
+                              final seatNum =
+                                  req['seatNumber'] ?? req['seat_number'] ?? 2;
+                              final userName = req['userName'] ??
+                                  req['user_name'] ??
+                                  'Guest';
+                              final avatarUrl = req['userAvatar'] ??
+                                  req['user_avatar'] ??
+                                  '/avatars/default.png';
+
+                              return ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: CircleAvatar(
+                                  radius: 18,
+                                  backgroundImage: NetworkImage(avatarUrl),
+                                  backgroundColor: const Color(0xFF33334D),
+                                ),
+                                title: Text(
+                                  userName,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  'Requested Seat #$seatNum',
+                                  style: const TextStyle(
+                                    color: PopoTheme.textSecondary,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.close_rounded,
+                                          color: Colors.redAccent, size: 20),
+                                      tooltip: 'Reject',
+                                      onPressed: () async {
+                                        await PartyApiService()
+                                            .rejectPartyRequest(
+                                          roomId: _room.id,
+                                          requestId: reqId,
+                                        );
+                                        setModalState(() {});
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                          Icons.check_circle_rounded,
+                                          color: Color(0xFF00C853),
+                                          size: 22),
+                                      tooltip: 'Accept',
+                                       onPressed: () async {
+                                         final messenger = ScaffoldMessenger.of(sheetContext);
+                                         final nav = Navigator.of(sheetContext);
+                                         final acceptRes =
+                                             await PartyApiService()
+                                                 .acceptPartyRequest(
+                                           roomId: _room.id,
+                                           requestId: reqId,
+                                         );
+                                         if (acceptRes.isSuccess) {
+                                           if (sheetContext.mounted) {
+                                             nav.pop();
+                                             messenger.showSnackBar(
+                                               SnackBar(
+                                                 content: Text(
+                                                     '$userName accepted for Seat #$seatNum! 🎙️'),
+                                                 backgroundColor:
+                                                     const Color(0xFF00C853),
+                                               ),
+                                             );
+                                           }
+                                         }
+                                       },
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      const SizedBox(height: 12),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
   // ==========================================
   // MICROPHONE CONTROLS
   // ==========================================
@@ -484,6 +717,14 @@ class _PartyRoomScreenState extends State<PartyRoomScreen> {
         joinRequestStatus: 'accepted',
       );
     });
+
+    if (ApiConfig.usePartyApi && _room.id.isNotEmpty && _myOccupiedSeatIndex != null) {
+      PartyApiService().toggleSeatMic(
+        roomId: _room.id,
+        seatNumber: _myOccupiedSeatIndex!,
+        isMuted: _isMicMuted,
+      );
+    }
 
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -712,6 +953,18 @@ class _PartyRoomScreenState extends State<PartyRoomScreen> {
             tooltip: 'Simulate Mic Permission',
             onPressed: _toggleMicPermissionForTesting,
           ),
+
+          // Host Requests Management Button (when host or in Party API mode)
+          if (ApiConfig.usePartyApi ||
+              _room.hostNickname ==
+                  DesignFixtures.currentUserProfile.nickname)
+            IconButton(
+              key: const Key('party_host_requests_button'),
+              icon: const Icon(Icons.people_outline_rounded,
+                  color: PopoTheme.gold, size: 20),
+              tooltip: 'Seat Requests',
+              onPressed: _showHostSeatRequestsModal,
+            ),
 
           // Close button returning to Party Discovery
           IconButton(

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getAuthenticatedUser } from '@/lib/auth';
-import { getCountryFlag } from '@/lib/countries';
+import { getCountryFlag, resolveCountryCode } from '@/lib/countries';
+import { USE_LIVE_API } from '@/lib/clientFlags';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,48 +73,93 @@ const REFERENCE_FOLLOWED_USERS = [
 
 export async function GET(req: NextRequest) {
   try {
+    const authHeader = req.headers.get('authorization');
+    const sessionCookie = req.cookies.get('poppo_session')?.value;
+    const hasCredentials = Boolean(authHeader || sessionCookie);
+
     const viewer = await getAuthenticatedUser(req);
     const { searchParams } = new URL(req.url);
-    const country = searchParams.get('country')?.trim().toUpperCase();
+    const rawCountry = searchParams.get('country')?.trim();
 
-    // If user is not logged in, return reference demo records for visual fidelity (Section 3)
-    if (!viewer) {
-      return NextResponse.json({
-        success: true,
-        authenticated: false,
-        isDemo: true,
-        users: REFERENCE_FOLLOWED_USERS,
-        liveRooms: REFERENCE_FOLLOWED_USERS.map(u => ({
-          roomId: u.roomId,
-          roomNumber: u.roomNumber,
-          title: u.roomTitle,
-          coverUrl: u.avatarUrl,
-          category: 'live',
-          isLive: true,
-          viewerCount: u.viewerCount,
-          viewersFormatted: u.viewersFormatted,
-          coinsEarned: 0,
-          coinsFormatted: '0',
-          country: 'Pakistan',
-          countryCode: 'PK',
-          flagEmoji: '🇵🇰',
-          host: { id: u.userId, nickname: u.nickname, poppoId: u.poppoId, avatarUrl: u.avatarUrl }
-        })),
-        offlineUsers: [],
-        totalFollowed: REFERENCE_FOLLOWED_USERS.length,
-        liveCount: REFERENCE_FOLLOWED_USERS.length,
-      });
+    // Validate country filter
+    let resolvedCountryCode: string | null = null;
+    if (rawCountry) {
+      const resolved = resolveCountryCode(rawCountry);
+      if (!resolved.valid) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Invalid or unsupported country: "${rawCountry}"`,
+            code: 'INVALID_COUNTRY',
+          },
+          { status: 400 }
+        );
+      }
+      if (resolved.code !== 'ALL') {
+        resolvedCountryCode = resolved.code!;
+      }
     }
 
-    let whereClause = 'uf.follower_id = $1';
-    const params: any[] = [viewer.id];
+    // When USE_LIVE_API is active, strict PostgreSQL authentication is enforced
+    if (USE_LIVE_API) {
+      if (!viewer) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: hasCredentials ? 'Unauthorized: Invalid or expired session' : 'Unauthorized. Please log in to view followed broadcasters.',
+            code: 'UNAUTHORIZED',
+          },
+          { status: 401 }
+        );
+      }
+    } else {
+      // Offline / fixture preview mode when USE_LIVE_API is false
+      if (!viewer) {
+        return NextResponse.json({
+          success: true,
+          authenticated: false,
+          isDemo: true,
+          users: REFERENCE_FOLLOWED_USERS,
+          liveRooms: REFERENCE_FOLLOWED_USERS.map((u) => ({
+            id: u.roomId,
+            roomId: u.roomId,
+            roomNumber: u.roomNumber,
+            title: u.roomTitle,
+            coverUrl: u.avatarUrl,
+            category: 'live',
+            status: 'live',
+            isLive: true,
+            viewerCount: u.viewerCount,
+            viewersFormatted: u.viewersFormatted,
+            coinsEarned: 0,
+            coinsFormatted: '0',
+            country: 'Pakistan',
+            countryCode: 'PK',
+            flagEmoji: '🇵🇰',
+            isFollowing: true,
+            hostId: u.userId,
+            hostNickname: u.nickname,
+            hostName: u.nickname,
+            hostAvatar: u.avatarUrl,
+            hostPoppoId: u.poppoId,
+            host: { id: u.userId, nickname: u.nickname, poppoId: u.poppoId, avatarUrl: u.avatarUrl },
+          })),
+          offlineUsers: [],
+          totalFollowed: REFERENCE_FOLLOWED_USERS.length,
+          liveCount: REFERENCE_FOLLOWED_USERS.length,
+        });
+      }
+    }
 
-    if (country && country !== 'ALL') {
-      params.push(country);
+    let whereClause = 'uf.follower_id = $1 AND u.status = $2';
+    const params: any[] = [viewer.id, 'active'];
+
+    if (resolvedCountryCode) {
+      params.push(resolvedCountryCode);
       whereClause += ` AND (u.country_code = $${params.length} OR lr.country_code = $${params.length})`;
     }
 
-    // Fetch followed creators with their live status and notification bell preference
+    // Fetch followed creators with lateral active room join (guarantees 0 duplicate user rows)
     const followedSql = `
       SELECT 
         u.id AS user_id,
@@ -130,6 +176,7 @@ export async function GET(req: NextRequest) {
         lr.title AS room_title,
         lr.cover_url,
         lr.category,
+        lr.status AS room_status,
         lr.is_live,
         lr.is_pk,
         lr.viewer_count,
@@ -139,7 +186,13 @@ export async function GET(req: NextRequest) {
         COALESCE(uf.live_notifications_enabled, true) AS live_notifications_enabled
       FROM popolive.user_follows uf
       JOIN popolive.users u ON uf.following_id = u.id
-      LEFT JOIN popolive.live_rooms lr ON (lr.host_id = u.id AND lr.is_live = true AND lr.status = 'live')
+      LEFT JOIN LATERAL (
+        SELECT id, room_number, title, cover_url, category, status, is_live, is_pk, viewer_count, coins_earned, started_at, country_code
+        FROM popolive.live_rooms
+        WHERE host_id = u.id AND is_live = true AND status = 'live'
+        ORDER BY started_at DESC
+        LIMIT 1
+      ) lr ON true
       WHERE ${whereClause}
       ORDER BY (CASE WHEN lr.is_live = true THEN 1 ELSE 2 END) ASC, lr.viewer_count DESC NULLS LAST, u.nickname ASC
     `;
@@ -176,9 +229,9 @@ export async function GET(req: NextRequest) {
         poppoId: r.poppo_id,
         avatarUrl: r.avatar_url || '/avatars/default.png',
         isLive,
-        roomId: r.room_id,
-        roomNumber: r.room_number,
-        roomTitle: r.room_title,
+        roomId: r.room_id || null,
+        roomNumber: r.room_number || null,
+        roomTitle: r.room_title || null,
         viewerCount,
         viewersFormatted: formatMetric(viewerCount),
         liveNotificationsEnabled: Boolean(r.live_notifications_enabled),
@@ -188,11 +241,13 @@ export async function GET(req: NextRequest) {
 
       if (isLive) {
         liveRooms.push({
+          id: r.room_id,
           roomId: r.room_id,
           roomNumber: r.room_number,
           title: r.room_title,
-          coverUrl: r.cover_url || r.avatar_url,
+          coverUrl: r.cover_url || r.avatar_url || '/avatars/default.png',
           category: r.category || 'live',
+          status: 'live',
           isLive: true,
           isPk: Boolean(r.is_pk),
           viewerCount,
@@ -204,11 +259,16 @@ export async function GET(req: NextRequest) {
           flagEmoji,
           startedAt: r.started_at,
           isFollowing: true,
+          hostId: r.user_id,
+          hostNickname: r.nickname,
+          hostName: r.nickname,
+          hostAvatar: r.avatar_url || '/avatars/default.png',
+          hostPoppoId: r.poppo_id,
           host: {
             id: r.user_id,
             nickname: r.nickname,
             poppoId: r.poppo_id,
-            avatarUrl: r.avatar_url,
+            avatarUrl: r.avatar_url || '/avatars/default.png',
             hostLevel: r.host_level || 1,
             wealthLevel: r.wealth_level || 1,
           },
@@ -242,6 +302,12 @@ export async function GET(req: NextRequest) {
     });
   } catch (err: any) {
     console.error('Error in following API:', err);
+    if (USE_LIVE_API) {
+      return NextResponse.json(
+        { success: false, error: 'Database connection failure', details: err.message },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
       {
         success: true,

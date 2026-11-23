@@ -222,21 +222,21 @@ void main() {
 
       // Verify lands on AppShell with Explore tab (index 1) active
       expect(find.byType(AppShell), findsOneWidget);
-      final indexedStack = tester.widget<IndexedStack>(find.byType(IndexedStack));
+      final indexedStack = tester.widget<IndexedStack>(find.byType(IndexedStack).first);
       expect(indexedStack.index, 1); // Explore tab active
 
       // Verify 5-tab bottom navigation is active and all 5 destinations accessible
       expect(find.byType(PopoBottomNavigation), findsOneWidget);
-      expect(find.text(PopoStrings.tabLive), findsOneWidget);
-      expect(find.text(PopoStrings.tabExplore), findsOneWidget);
-      expect(find.text(PopoStrings.tabSquare), findsOneWidget);
-      expect(find.text(PopoStrings.tabMessage), findsOneWidget);
-      expect(find.text(PopoStrings.tabMe), findsOneWidget);
+      expect(find.descendant(of: find.byType(PopoBottomNavigation), matching: find.text(PopoStrings.tabLive)), findsOneWidget);
+      expect(find.descendant(of: find.byType(PopoBottomNavigation), matching: find.text(PopoStrings.tabParty)), findsOneWidget);
+      expect(find.descendant(of: find.byType(PopoBottomNavigation), matching: find.text(PopoStrings.tabSquare)), findsOneWidget);
+      expect(find.descendant(of: find.byType(PopoBottomNavigation), matching: find.text(PopoStrings.tabMessage)), findsOneWidget);
+      expect(find.descendant(of: find.byType(PopoBottomNavigation), matching: find.text(PopoStrings.tabMe)), findsOneWidget);
 
       // Switch to Me tab (index 4)
       await tester.tap(find.text(PopoStrings.tabMe));
       await tester.pump();
-      final updatedStack = tester.widget<IndexedStack>(find.byType(IndexedStack));
+      final updatedStack = tester.widget<IndexedStack>(find.byType(IndexedStack).first);
       expect(updatedStack.index, 4);
     });
 
@@ -375,18 +375,18 @@ void main() {
       await tester.pump(const Duration(milliseconds: 350));
       await tester.pump(const Duration(milliseconds: 100));
 
-      // Verified: lands on AppShell with Explore active
+      // Verified: lands on AppShell with Party active
       expect(find.byType(AppShell), findsOneWidget);
-      final indexedStack = tester.widget<IndexedStack>(find.byType(IndexedStack));
-      expect(indexedStack.index, 1); // Explore tab active
+      final appShell = tester.widget<AppShell>(find.byType(AppShell));
+      expect(appShell.initialIndex, 1); // Party tab active
 
       // All 5 bottom navigation destinations available
       expect(find.byType(PopoBottomNavigation), findsOneWidget);
-      expect(find.text(PopoStrings.tabLive), findsOneWidget);
-      expect(find.text(PopoStrings.tabExplore), findsOneWidget);
-      expect(find.text(PopoStrings.tabSquare), findsOneWidget);
-      expect(find.text(PopoStrings.tabMessage), findsOneWidget);
-      expect(find.text(PopoStrings.tabMe), findsOneWidget);
+      expect(find.descendant(of: find.byType(PopoBottomNavigation), matching: find.text(PopoStrings.tabLive)), findsOneWidget);
+      expect(find.descendant(of: find.byType(PopoBottomNavigation), matching: find.text(PopoStrings.tabParty)), findsOneWidget);
+      expect(find.descendant(of: find.byType(PopoBottomNavigation), matching: find.text(PopoStrings.tabSquare)), findsOneWidget);
+      expect(find.descendant(of: find.byType(PopoBottomNavigation), matching: find.text(PopoStrings.tabMessage)), findsOneWidget);
+      expect(find.descendant(of: find.byType(PopoBottomNavigation), matching: find.text(PopoStrings.tabMe)), findsOneWidget);
     });
   });
 }

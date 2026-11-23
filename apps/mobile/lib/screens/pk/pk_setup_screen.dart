@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../auth/auth_state.dart';
-import '../../l10n/strings.dart';
 import '../../models/live/live_models.dart';
 import '../../models/pk/pk_models.dart';
 import '../../services/pk/pk_session_manager.dart';

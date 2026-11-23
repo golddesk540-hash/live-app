@@ -41,7 +41,7 @@ class ApiConfig {
   /// Module-level feature flag controlling whether Economy (Coins/Points/Gifts/Transactions) screens
   /// read from the live backend database (true) or design fixtures (false).
   /// Preserves full design fixture compatibility when disabled.
-  static bool useEconomyApi = const bool.fromEnvironment('USE_ECONOMY_API', defaultValue: false);
+  static bool useEconomyApi = const bool.fromEnvironment('USE_ECONOMY_API', defaultValue: true);
 
   /// Module-level feature flag controlling whether VIP, Rewards, Rankings, Honor & Medals screens
   /// read from the live backend database (true) or design fixtures (false).

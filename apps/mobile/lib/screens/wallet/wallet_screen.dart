@@ -3,15 +3,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../../api/api_config.dart';
+import '../../design/design_fixtures.dart';
 import 'coin_history_screen.dart';
 import 'points_history_screen.dart';
 import 'host_earnings_screen.dart';
-import 'topup_screen.dart';
 import 'coin_packages_screen.dart';
 import 'purchase_history_screen.dart';
 import 'transaction_history_screen.dart';
 import 'financial_transactions_screen.dart';
-import 'transaction_details_screen.dart';
 import '../vip/vip_screen.dart';
 import '../recognition/recognition_screen.dart';
 import '../store/store_screen.dart';
@@ -31,6 +30,7 @@ class WalletScreen extends StatefulWidget {
   final bool previewDemo;
   final VoidCallback? onTopupPressed;
   final VoidCallback? onBack;
+  final String initialTab;
 
   const WalletScreen({
     Key? key,
@@ -40,6 +40,7 @@ class WalletScreen extends StatefulWidget {
     this.previewDemo = true,
     this.onTopupPressed,
     this.onBack,
+    this.initialTab = 'coins',
   }) : super(key: key);
 
   @override
@@ -56,22 +57,93 @@ class _WalletScreenState extends State<WalletScreen> {
   static const Color _blueAccent = Color(0xFF42B8FF);
 
   bool _isUrdu = false;
-  String _activeTab = 'coins'; // 'coins' or 'points'
+  late String _activeTab = widget.initialTab; // 'coins' or 'points'
   bool _loading = true;
   bool _refreshing = false;
   String? _error;
 
-  int _coinBalance = 12500;
-  int _pointsBalance = 8420;
+  int _coinBalance = 154200;
+  int _pointsBalance = 420500;
   double _hostGiftSharePercent = 70.0;
   bool _isFrozen = false;
   List<Map<String, dynamic>> _recentCoinTxns = [];
   List<Map<String, dynamic>> _recentPointsTxns = [];
+  List<FixtureCoinPackage> _liveCoinPackages = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchWalletState();
+    if (ApiConfig.useEconomyApi) {
+      _fetchWalletState();
+    } else {
+      _loadFromFixtures();
+    }
+  }
+
+  void _loadFromFixtures() {
+    if (!mounted) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      if (DesignFixtures.isError) {
+        throw const DesignFixtureException(
+          message:
+              'Wallet Ledger Unavailable: Failed to synchronize balances [ERR_WALLET_SYNC_500]',
+        );
+      }
+
+      final wallet = DesignFixtures.wallet;
+      _coinBalance = wallet.coinBalance;
+      _pointsBalance = wallet.pointsBalance;
+      _isFrozen = false;
+      _hostGiftSharePercent = 70.0;
+
+      if (DesignFixtures.isEmpty || wallet.recentTransactions.isEmpty) {
+        _recentCoinTxns = [];
+        _recentPointsTxns = [];
+      } else {
+        _recentCoinTxns = wallet.recentTransactions
+            .where((tx) => tx.amount.contains('coin'))
+            .map((tx) => {
+                  'description': tx.description,
+                  'direction': tx.isCredit ? 'credit' : 'debit',
+                  'coinAmount': int.tryParse(
+                          tx.amount.replaceAll(RegExp(r'[^0-9]'), '')) ??
+                      0,
+                  'status': 'completed',
+                  'transactionType': tx.type,
+                  'timestamp': tx.timestamp,
+                })
+            .toList();
+
+        _recentPointsTxns = wallet.recentTransactions
+            .where((tx) => tx.amount.contains('pt'))
+            .map((tx) => {
+                  'description': tx.description,
+                  'direction': tx.isCredit ? 'credit' : 'debit',
+                  'pointsAmount': int.tryParse(
+                          tx.amount.replaceAll(RegExp(r'[^0-9]'), '')) ??
+                      0,
+                  'status': 'completed',
+                  'transactionType': tx.type,
+                  'timestamp': tx.timestamp,
+                })
+            .toList();
+      }
+
+      _loading = false;
+    } catch (e) {
+      setState(() {
+        _error = e
+            .toString()
+            .replaceFirst('Exception: ', '')
+            .replaceFirst('DesignFixtureException: ', '');
+        _loading = false;
+      });
+    }
   }
 
   Map<String, String> _buildHeaders() {
@@ -98,29 +170,86 @@ class _WalletScreenState extends State<WalletScreen> {
     try {
       if (ApiConfig.useEconomyApi) {
         final responses = await Future.wait([
-          http.get(Uri.parse('${widget.apiBaseUrl}/api/economy/coins/balance'), headers: _buildHeaders()).timeout(const Duration(seconds: 12)),
-          http.get(Uri.parse('${widget.apiBaseUrl}/api/economy/points/balance'), headers: _buildHeaders()).timeout(const Duration(seconds: 12)),
-          http.get(Uri.parse('${widget.apiBaseUrl}/api/economy/coins/history?page=1&limit=5'), headers: _buildHeaders()).timeout(const Duration(seconds: 12)),
-          http.get(Uri.parse('${widget.apiBaseUrl}/api/economy/points/history?page=1&limit=5'), headers: _buildHeaders()).timeout(const Duration(seconds: 12)),
+          http
+              .get(Uri.parse('${widget.apiBaseUrl}/api/economy/coins/balance'),
+                  headers: _buildHeaders())
+              .timeout(const Duration(seconds: 12)),
+          http
+              .get(Uri.parse('${widget.apiBaseUrl}/api/economy/points/balance'),
+                  headers: _buildHeaders())
+              .timeout(const Duration(seconds: 12)),
+          http
+              .get(
+                  Uri.parse(
+                      '${widget.apiBaseUrl}/api/economy/coins/history?page=1&limit=5'),
+                  headers: _buildHeaders())
+              .timeout(const Duration(seconds: 12)),
+          http
+              .get(
+                  Uri.parse(
+                      '${widget.apiBaseUrl}/api/economy/points/history?page=1&limit=5'),
+                  headers: _buildHeaders())
+              .timeout(const Duration(seconds: 12)),
+          http
+              .get(
+                  Uri.parse(
+                      '${widget.apiBaseUrl}/api/economy/coins/packages'),
+                  headers: _buildHeaders())
+              .timeout(const Duration(seconds: 12)),
         ]);
 
-        final coinBalData = jsonDecode(responses[0].body) as Map<String, dynamic>;
-        final pointsBalData = jsonDecode(responses[1].body) as Map<String, dynamic>;
-        final coinHistData = jsonDecode(responses[2].body) as Map<String, dynamic>;
-        final pointsHistData = jsonDecode(responses[3].body) as Map<String, dynamic>;
+        final coinBalData =
+            jsonDecode(responses[0].body) as Map<String, dynamic>;
+        final pointsBalData =
+            jsonDecode(responses[1].body) as Map<String, dynamic>;
+        final coinHistData =
+            jsonDecode(responses[2].body) as Map<String, dynamic>;
+        final pointsHistData =
+            jsonDecode(responses[3].body) as Map<String, dynamic>;
+        final pkgData =
+            jsonDecode(responses[4].body) as Map<String, dynamic>;
+
+        if (responses[0].statusCode != 200 || coinBalData['success'] != true) {
+          throw Exception(coinBalData['error'] ?? 'Failed to load coin balance');
+        }
+        if (responses[1].statusCode != 200 || pointsBalData['success'] != true) {
+          throw Exception(pointsBalData['error'] ?? 'Failed to load points balance');
+        }
+
+        final rawPkgs = (pkgData['packages'] as List?) ?? [];
+        final parsedPkgs = rawPkgs.map((p) {
+          final map = p as Map<String, dynamic>;
+          final totalCoins = (map['totalCoins'] ?? map['total_coins'] ?? map['coins'] ?? map['baseCoins'] ?? 0) as num;
+          final bonusCoins = (map['bonusCoins'] ?? map['bonus_coins'] ?? 0) as num;
+          final priceAmount = (map['priceAmount'] ?? map['price_amount'] ?? map['price'] ?? 0.0) as num;
+          final priceDouble = priceAmount.toDouble();
+          final badge = (map['badgeText'] ?? map['badge_text'] ?? (map['isPopular'] == true ? 'POPULAR' : ''))?.toString() ?? '';
+          return FixtureCoinPackage(
+            id: (map['packageId'] ?? map['id'] ?? '').toString(),
+            coins: totalCoins.toInt(),
+            bonusCoins: bonusCoins.toInt(),
+            priceUsd: priceDouble,
+            pricePkr: (priceDouble * 280).toInt(),
+            badgeLabel: badge,
+          );
+        }).toList();
 
         if (!mounted) return;
         setState(() {
           _coinBalance = (coinBalData['coins'] as num?)?.toInt() ?? 0;
-          _pointsBalance = (pointsBalData['points'] as num?)?.toInt() ?? (pointsBalData['diamondPoints'] as num?)?.toInt() ?? 0;
+          _pointsBalance = (pointsBalData['points'] as num?)?.toInt() ??
+              (pointsBalData['diamondPoints'] as num?)?.toInt() ??
+              0;
           _isFrozen = coinBalData['isFrozen'] == true;
-          _hostGiftSharePercent = (pointsBalData['hostSharePercent'] as num?)?.toDouble() ?? 70.0;
+          _hostGiftSharePercent =
+              (pointsBalData['hostSharePercent'] as num?)?.toDouble() ?? 70.0;
           _recentCoinTxns = ((coinHistData['transactions'] as List?) ?? [])
               .map((e) => Map<String, dynamic>.from(e as Map))
               .toList();
           _recentPointsTxns = ((pointsHistData['transactions'] as List?) ?? [])
               .map((e) => Map<String, dynamic>.from(e as Map))
               .toList();
+          _liveCoinPackages = parsedPkgs;
           _loading = false;
         });
         return;
@@ -138,25 +267,33 @@ class _WalletScreenState extends State<WalletScreen> {
       );
 
       final responses = await Future.wait([
-        http.get(balanceUri, headers: _buildHeaders()).timeout(const Duration(seconds: 12)),
-        http.get(coinHistUri, headers: _buildHeaders()).timeout(const Duration(seconds: 12)),
-        http.get(pointsHistUri, headers: _buildHeaders()).timeout(const Duration(seconds: 12)),
+        http
+            .get(balanceUri, headers: _buildHeaders())
+            .timeout(const Duration(seconds: 12)),
+        http
+            .get(coinHistUri, headers: _buildHeaders())
+            .timeout(const Duration(seconds: 12)),
+        http
+            .get(pointsHistUri, headers: _buildHeaders())
+            .timeout(const Duration(seconds: 12)),
       ]);
 
       final balanceData = jsonDecode(responses[0].body) as Map<String, dynamic>;
       if (responses[0].statusCode != 200 || balanceData['success'] != true) {
-        throw Exception(balanceData['error'] ?? 'Failed to load wallet balance');
+        throw Exception(
+            balanceData['error'] ?? 'Failed to load wallet balance');
       }
 
       final wallet = balanceData['wallet'] as Map<String, dynamic>;
-      final coinHistData = jsonDecode(responses[1].body) as Map<String, dynamic>;
-      final pointsHistData = jsonDecode(responses[2].body) as Map<String, dynamic>;
+      final coinHistData =
+          jsonDecode(responses[1].body) as Map<String, dynamic>;
+      final pointsHistData =
+          jsonDecode(responses[2].body) as Map<String, dynamic>;
 
       if (!mounted) return;
       setState(() {
         _coinBalance = (wallet['coins'] as num?)?.toInt() ?? 0;
-        _pointsBalance =
-            (wallet['points'] as num?)?.toInt() ??
+        _pointsBalance = (wallet['points'] as num?)?.toInt() ??
             (wallet['earningsPoints'] as num?)?.toInt() ??
             0;
         _isFrozen = wallet['isFrozen'] == true;
@@ -247,7 +384,8 @@ class _WalletScreenState extends State<WalletScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final activeList = _activeTab == 'coins' ? _recentCoinTxns : _recentPointsTxns;
+    final activeList =
+        _activeTab == 'coins' ? _recentCoinTxns : _recentPointsTxns;
 
     return Directionality(
       textDirection: _isUrdu ? TextDirection.rtl : TextDirection.ltr,
@@ -272,7 +410,8 @@ class _WalletScreenState extends State<WalletScreen> {
                     onRefresh: _handleRefresh,
                     child: ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 10),
                       children: [
                         Text(
                           _isUrdu ? 'والٹ' : 'Wallet',
@@ -289,6 +428,10 @@ class _WalletScreenState extends State<WalletScreen> {
                         if (_error != null) _buildErrorBanner(),
                         if (_isFrozen) _buildFrozenBanner(),
                         _buildMainBalanceCard(),
+                        if (_activeTab == 'coins') ...[
+                          const SizedBox(height: 16),
+                          _buildCoinPackagesSection(),
+                        ],
                         const SizedBox(height: 14),
                         _buildHistoryNavigationCard(),
                         const SizedBox(height: 14),
@@ -325,7 +468,8 @@ class _WalletScreenState extends State<WalletScreen> {
                   color: Colors.white.withOpacity(0.06),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.arrow_back_ios_new, color: Colors.white70, size: 16),
+                child: const Icon(Icons.arrow_back_ios_new,
+                    color: Colors.white70, size: 16),
               ),
             )
           else
@@ -338,19 +482,26 @@ class _WalletScreenState extends State<WalletScreen> {
                 height: 28,
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: LinearGradient(colors: [_neonPink, Color(0xFF9E44FF)]),
+                  gradient:
+                      LinearGradient(colors: [_neonPink, Color(0xFF9E44FF)]),
                 ),
                 child: const Center(
                   child: Text(
                     'P',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 13),
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               const Text(
                 'Popo Live',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 17),
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 17),
               ),
             ],
           ),
@@ -360,7 +511,8 @@ class _WalletScreenState extends State<WalletScreen> {
               GestureDetector(
                 onTap: () => setState(() => _isUrdu = !_isUrdu),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.07),
                     borderRadius: BorderRadius.circular(20),
@@ -368,7 +520,10 @@ class _WalletScreenState extends State<WalletScreen> {
                   ),
                   child: Text(
                     _isUrdu ? 'EN' : 'اردو',
-                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
@@ -393,7 +548,8 @@ class _WalletScreenState extends State<WalletScreen> {
                     color: Colors.white.withOpacity(0.07),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.card_giftcard_rounded, color: _neonPink, size: 18),
+                  child: const Icon(Icons.card_giftcard_rounded,
+                      color: _neonPink, size: 18),
                 ),
               ),
               const SizedBox(width: 6),
@@ -409,9 +565,11 @@ class _WalletScreenState extends State<WalletScreen> {
                   child: _refreshing
                       ? const Padding(
                           padding: EdgeInsets.all(9),
-                          child: CircularProgressIndicator(strokeWidth: 2, color: _neonPink),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: _neonPink),
                         )
-                      : const Icon(Icons.refresh_rounded, color: Colors.white70, size: 18),
+                      : const Icon(Icons.refresh_rounded,
+                          color: Colors.white70, size: 18),
                 ),
               ),
             ],
@@ -438,16 +596,20 @@ class _WalletScreenState extends State<WalletScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 11),
                 decoration: BoxDecoration(
                   gradient: _activeTab == 'coins'
-                      ? const LinearGradient(colors: [Color(0xFF39276A), Color(0xFF532872)])
+                      ? const LinearGradient(
+                          colors: [Color(0xFF39276A), Color(0xFF532872)])
                       : null,
                   borderRadius: BorderRadius.circular(14),
-                  border: _activeTab == 'coins' ? Border.all(color: _neonPink, width: 1.4) : null,
+                  border: _activeTab == 'coins'
+                      ? Border.all(color: _neonPink, width: 1.4)
+                      : null,
                 ),
                 child: Center(
                   child: Text(
                     _isUrdu ? 'کوائنز' : 'Coins',
                     style: TextStyle(
-                      color: _activeTab == 'coins' ? Colors.white : Colors.white54,
+                      color:
+                          _activeTab == 'coins' ? Colors.white : Colors.white54,
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
                     ),
@@ -463,16 +625,21 @@ class _WalletScreenState extends State<WalletScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 11),
                 decoration: BoxDecoration(
                   gradient: _activeTab == 'points'
-                      ? const LinearGradient(colors: [Color(0xFF252E69), Color(0xFF2D4B8C)])
+                      ? const LinearGradient(
+                          colors: [Color(0xFF252E69), Color(0xFF2D4B8C)])
                       : null,
                   borderRadius: BorderRadius.circular(14),
-                  border: _activeTab == 'points' ? Border.all(color: _blueAccent, width: 1.4) : null,
+                  border: _activeTab == 'points'
+                      ? Border.all(color: _blueAccent, width: 1.4)
+                      : null,
                 ),
                 child: Center(
                   child: Text(
                     _isUrdu ? 'پوائنٹس' : 'Points',
                     style: TextStyle(
-                      color: _activeTab == 'points' ? Colors.white : Colors.white54,
+                      color: _activeTab == 'points'
+                          ? Colors.white
+                          : Colors.white54,
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
                     ),
@@ -498,7 +665,10 @@ class _WalletScreenState extends State<WalletScreen> {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withOpacity(0.12)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.35), blurRadius: 18, offset: const Offset(0, 8)),
+          BoxShadow(
+              color: Colors.black.withOpacity(0.35),
+              blurRadius: 18,
+              offset: const Offset(0, 8)),
         ],
       ),
       child: _loading
@@ -517,8 +687,13 @@ class _WalletScreenState extends State<WalletScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _isUrdu ? 'دستیاب کوائنز' : 'Available Coins (Spendable)',
-                            style: const TextStyle(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.w600),
+                            _isUrdu
+                                ? 'دستیاب کوائنز'
+                                : 'Available Coins (Spendable)',
+                            style: const TextStyle(
+                                color: Colors.white60,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(height: 6),
                           Row(
@@ -528,10 +703,17 @@ class _WalletScreenState extends State<WalletScreen> {
                                 height: 32,
                                 decoration: const BoxDecoration(
                                   shape: BoxShape.circle,
-                                  gradient: LinearGradient(colors: [Color(0xFFFFD84D), Color(0xFFFF8C00)]),
+                                  gradient: LinearGradient(colors: [
+                                    Color(0xFFFFD84D),
+                                    Color(0xFFFF8C00)
+                                  ]),
                                 ),
                                 child: const Center(
-                                  child: Text('¢', style: TextStyle(color: Color(0xFF3E2200), fontWeight: FontWeight.w900, fontSize: 18)),
+                                  child: Text('¢',
+                                      style: TextStyle(
+                                          color: Color(0xFF3E2200),
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 18)),
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -560,24 +742,33 @@ class _WalletScreenState extends State<WalletScreen> {
                                 userId: widget.userId,
                                 authToken: widget.authToken,
                                 isSandbox: widget.previewDemo,
-                                onTopupSuccess: () => _fetchWalletState(forceFresh: true),
+                                onTopupSuccess: () =>
+                                    _fetchWalletState(forceFresh: true),
                               ),
                             ),
                           );
                         }
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 11),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: [_neonPink, Color(0xFFD91E63)]),
+                          gradient: const LinearGradient(
+                              colors: [_neonPink, Color(0xFFD91E63)]),
                           borderRadius: BorderRadius.circular(24),
                           boxShadow: [
-                            BoxShadow(color: _neonPink.withOpacity(0.45), blurRadius: 14, offset: const Offset(0, 4)),
+                            BoxShadow(
+                                color: _neonPink.withOpacity(0.45),
+                                blurRadius: 14,
+                                offset: const Offset(0, 4)),
                           ],
                         ),
                         child: Text(
                           _isUrdu ? 'ٹاپ اپ' : 'Top-up',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15),
                         ),
                       ),
                     ),
@@ -585,7 +776,8 @@ class _WalletScreenState extends State<WalletScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Divider(color: Colors.white.withOpacity(0.1), height: 1),
+                  child:
+                      Divider(color: Colors.white.withOpacity(0.1), height: 1),
                 ),
                 Row(
                   children: [
@@ -594,8 +786,13 @@ class _WalletScreenState extends State<WalletScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            _isUrdu ? 'ہوسٹ کمائی کے پوائنٹس' : 'Earnings Points',
-                            style: const TextStyle(color: Colors.white60, fontSize: 13, fontWeight: FontWeight.w600),
+                            _isUrdu
+                                ? 'ہوسٹ کمائی کے پوائنٹس'
+                                : 'Earnings Points',
+                            style: const TextStyle(
+                                color: Colors.white60,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(height: 6),
                           Row(
@@ -606,9 +803,11 @@ class _WalletScreenState extends State<WalletScreen> {
                                 decoration: BoxDecoration(
                                   color: _blueAccent.withOpacity(0.16),
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: _blueAccent.withOpacity(0.45)),
+                                  border: Border.all(
+                                      color: _blueAccent.withOpacity(0.45)),
                                 ),
-                                child: const Icon(Icons.star_rounded, color: _blueAccent, size: 20),
+                                child: const Icon(Icons.star_rounded,
+                                    color: _blueAccent, size: 20),
                               ),
                               const SizedBox(width: 10),
                               Text(
@@ -625,23 +824,350 @@ class _WalletScreenState extends State<WalletScreen> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: _blueAccent.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _blueAccent.withOpacity(0.35)),
+                        border:
+                            Border.all(color: _blueAccent.withOpacity(0.35)),
                       ),
                       child: Text(
                         _isUrdu
                             ? 'گفٹ کا ${_hostGiftSharePercent.toStringAsFixed(0)}%'
                             : '${_hostGiftSharePercent.toStringAsFixed(0)}% Gift Share',
-                        style: const TextStyle(color: _blueAccent, fontSize: 11, fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                            color: _blueAccent,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700),
                       ),
                     ),
                   ],
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _buildCoinPackagesSection() {
+    List<FixtureCoinPackage> packages = [];
+    if (ApiConfig.useEconomyApi) {
+      packages = _liveCoinPackages;
+    } else {
+      try {
+        packages = DesignFixtures.coinPackages;
+      } catch (_) {
+        packages = [];
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              _isUrdu ? 'کوائن بنڈلز اور ٹاپ اپ' : 'Coin Packages & Top-up',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 16,
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => CoinPackagesScreen(
+                      userId: widget.userId,
+                      authToken: widget.authToken,
+                      isSandbox: widget.previewDemo,
+                      onTopupSuccess: ApiConfig.useEconomyApi
+                          ? () => _fetchWalletState(forceFresh: true)
+                          : _loadFromFixtures,
+                    ),
+                  ),
+                );
+              },
+              child: Text(
+                _isUrdu ? 'مکمل کیٹلاگ' : 'View Catalog',
+                style: const TextStyle(
+                  color: _neonPink,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (packages.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: _cardDark,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withOpacity(0.06)),
+            ),
+            child: Center(
+              child: Text(
+                _isUrdu
+                    ? 'کوئی پیکیج دستیاب نہیں'
+                    : 'No coin packages available',
+                style: const TextStyle(color: Colors.white54, fontSize: 13),
+              ),
+            ),
+          )
+        else
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 1.35,
+            ),
+            itemCount: packages.length,
+            itemBuilder: (context, index) {
+              final pkg = packages[index];
+              return InkWell(
+                onTap: () => _showPackageDetailsModal(pkg),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: _cardDark,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: pkg.badgeLabel.isNotEmpty
+                          ? _goldAccent.withOpacity(0.5)
+                          : Colors.white.withOpacity(0.08),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              const Text('🪙', style: TextStyle(fontSize: 16)),
+                              const SizedBox(width: 4),
+                              Text(
+                                _formatNumber(pkg.coins),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (pkg.badgeLabel.isNotEmpty)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _goldAccent.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                    color: _goldAccent.withOpacity(0.6)),
+                              ),
+                              child: Text(
+                                pkg.badgeLabel,
+                                style: const TextStyle(
+                                  color: _goldAccent,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      if (pkg.bonusCoins > 0)
+                        Text(
+                          '+${_formatNumber(pkg.bonusCoins)} Bonus',
+                          style: const TextStyle(
+                            color: Color(0xFF4ADE80),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        )
+                      else
+                        const SizedBox(height: 14),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Rs. ${pkg.pricePkr}',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            '\$${pkg.priceUsd}',
+                            style: const TextStyle(
+                              color: Colors.white38,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+      ],
+    );
+  }
+
+  void _showPackageDetailsModal(FixtureCoinPackage pkg) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Color(0xFF1B1438),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          border: Border(top: BorderSide(color: Color(0x44FFC83B), width: 1.5)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Text('🪙', style: TextStyle(fontSize: 26)),
+                    const SizedBox(width: 10),
+                    Text(
+                      '${_formatNumber(pkg.coins)} Coins Package',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                  onPressed: () => Navigator.of(ctx).pop(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF120B29),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withOpacity(0.08)),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Base Coins:',
+                          style:
+                              TextStyle(color: Colors.white60, fontSize: 13)),
+                      Text(_formatNumber(pkg.coins),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  if (pkg.bonusCoins > 0) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Promotional Bonus:',
+                            style: TextStyle(
+                                color: Color(0xFF4ADE80), fontSize: 13)),
+                        Text('+${_formatNumber(pkg.bonusCoins)}',
+                            style: const TextStyle(
+                                color: Color(0xFF4ADE80),
+                                fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Price (PKR):',
+                          style:
+                              TextStyle(color: Colors.white60, fontSize: 13)),
+                      Text('Rs. ${pkg.pricePkr}',
+                          style: const TextStyle(
+                              color: _goldAccent,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15)),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Price (USD):',
+                          style:
+                              TextStyle(color: Colors.white60, fontSize: 13)),
+                      Text('\$${pkg.priceUsd} USD',
+                          style: const TextStyle(
+                              color: Colors.white70, fontSize: 13)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _neonPink,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                  elevation: 0,
+                ),
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  DesignFixtures.addCoins(pkg.coins + pkg.bonusCoins);
+                  _loadFromFixtures();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Simulated Top-up successful! +${_formatNumber(pkg.coins + pkg.bonusCoins)} coins credited.',
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                      backgroundColor: const Color(0xFF10B981),
+                    ),
+                  );
+                },
+                child: const Text('Top Up via Google Play',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
     );
   }
 
@@ -669,20 +1195,32 @@ class _WalletScreenState extends State<WalletScreen> {
             leading: Container(
               width: 34,
               height: 34,
-              decoration: BoxDecoration(color: _neonPink.withOpacity(0.14), shape: BoxShape.circle),
-              child: const Icon(Icons.receipt_long_rounded, color: _neonPink, size: 19),
+              decoration: BoxDecoration(
+                  color: _neonPink.withOpacity(0.14), shape: BoxShape.circle),
+              child: const Icon(Icons.receipt_long_rounded,
+                  color: _neonPink, size: 19),
             ),
             title: Text(
               _isUrdu ? 'خریداری کے آرڈرز' : 'Purchase Orders',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16),
             ),
             subtitle: Text(
-              _isUrdu ? 'گوگل پلے اور ایپل پیکیج آرڈرز' : 'In-App Purchase & Top-up Orders',
+              _isUrdu
+                  ? 'گوگل پلے اور ایپل پیکیج آرڈرز'
+                  : 'In-App Purchase & Top-up Orders',
               style: const TextStyle(color: Colors.white54, fontSize: 11),
             ),
-            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+            trailing:
+                const Icon(Icons.chevron_right_rounded, color: Colors.white54),
           ),
-          Divider(color: Colors.white.withOpacity(0.08), height: 1, indent: 16, endIndent: 16),
+          Divider(
+              color: Colors.white.withOpacity(0.08),
+              height: 1,
+              indent: 16,
+              endIndent: 16),
           ListTile(
             onTap: () {
               Navigator.of(context).push(
@@ -698,39 +1236,63 @@ class _WalletScreenState extends State<WalletScreen> {
             leading: Container(
               width: 34,
               height: 34,
-              decoration: BoxDecoration(color: _goldAccent.withOpacity(0.14), shape: BoxShape.circle),
-              child: const Icon(Icons.monetization_on_rounded, color: _goldAccent, size: 19),
+              decoration: BoxDecoration(
+                  color: _goldAccent.withOpacity(0.14), shape: BoxShape.circle),
+              child: const Icon(Icons.monetization_on_rounded,
+                  color: _goldAccent, size: 19),
             ),
             title: Text(
               _isUrdu ? 'کوائنز کی تفصیلی تاریخ' : 'Coin Transactions',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16),
             ),
             subtitle: Text(
-              _isUrdu ? 'ٹاپ اپ، گفٹ کٹوتی اور ریورس' : 'Top-ups, gift deductions & reversals',
+              _isUrdu
+                  ? 'ٹاپ اپ، گفٹ کٹوتی اور ریورس'
+                  : 'Top-ups, gift deductions & reversals',
               style: const TextStyle(color: Colors.white54, fontSize: 11),
             ),
-            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+            trailing:
+                const Icon(Icons.chevron_right_rounded, color: Colors.white54),
           ),
-          Divider(color: Colors.white.withOpacity(0.08), height: 1, indent: 16, endIndent: 16),
+          Divider(
+              color: Colors.white.withOpacity(0.08),
+              height: 1,
+              indent: 16,
+              endIndent: 16),
           ListTile(
             onTap: _openPointsHistory,
             leading: Container(
               width: 34,
               height: 34,
-              decoration: BoxDecoration(color: _blueAccent.withOpacity(0.14), shape: BoxShape.circle),
-              child: const Icon(Icons.star_rounded, color: _blueAccent, size: 20),
+              decoration: BoxDecoration(
+                  color: _blueAccent.withOpacity(0.14), shape: BoxShape.circle),
+              child:
+                  const Icon(Icons.star_rounded, color: _blueAccent, size: 20),
             ),
             title: Text(
               _isUrdu ? 'پوائنٹس کی تاریخ' : 'Points History',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16),
             ),
             subtitle: Text(
-              _isUrdu ? 'ہوسٹ کی 70% گفٹ کمائی' : 'Host 70% gift earnings & reversals',
+              _isUrdu
+                  ? 'ہوسٹ کی 70% گفٹ کمائی'
+                  : 'Host 70% gift earnings & reversals',
               style: const TextStyle(color: Colors.white54, fontSize: 11),
             ),
-            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+            trailing:
+                const Icon(Icons.chevron_right_rounded, color: Colors.white54),
           ),
-          Divider(color: Colors.white.withOpacity(0.08), height: 1, indent: 16, endIndent: 16),
+          Divider(
+              color: Colors.white.withOpacity(0.08),
+              height: 1,
+              indent: 16,
+              endIndent: 16),
           ListTile(
             onTap: () {
               Navigator.of(context).push(
@@ -748,20 +1310,32 @@ class _WalletScreenState extends State<WalletScreen> {
             leading: Container(
               width: 34,
               height: 34,
-              decoration: BoxDecoration(color: _neonPink.withOpacity(0.16), shape: BoxShape.circle),
-              child: const Icon(Icons.pie_chart_rounded, color: _neonPink, size: 20),
+              decoration: BoxDecoration(
+                  color: _neonPink.withOpacity(0.16), shape: BoxShape.circle),
+              child: const Icon(Icons.pie_chart_rounded,
+                  color: _neonPink, size: 20),
             ),
             title: Text(
               _isUrdu ? 'ہوسٹ کمائی ڈیش بورڈ' : 'Host Earnings (70% Share)',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16),
             ),
             subtitle: Text(
-              _isUrdu ? 'یومیہ/ہفتہ وار/ماہانہ پوائنٹس اور 30% پلیٹ فارم شیئر' : 'Daily/weekly/monthly stats & 70/30 split',
+              _isUrdu
+                  ? 'یومیہ/ہفتہ وار/ماہانہ پوائنٹس اور 30% پلیٹ فارم شیئر'
+                  : 'Daily/weekly/monthly stats & 70/30 split',
               style: const TextStyle(color: Colors.white54, fontSize: 11),
             ),
-            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+            trailing:
+                const Icon(Icons.chevron_right_rounded, color: Colors.white54),
           ),
-          Divider(color: Colors.white.withOpacity(0.08), height: 1, indent: 16, endIndent: 16),
+          Divider(
+              color: Colors.white.withOpacity(0.08),
+              height: 1,
+              indent: 16,
+              endIndent: 16),
           ListTile(
             onTap: () {
               Navigator.of(context).push(
@@ -769,7 +1343,9 @@ class _WalletScreenState extends State<WalletScreen> {
                   builder: (_) => VipMembershipScreen(
                     apiBaseUrl: widget.apiBaseUrl,
                     userId: widget.userId,
-                    headers: widget.authToken != null ? {'Authorization': 'Bearer ${widget.authToken}'} : null,
+                    headers: widget.authToken != null
+                        ? {'Authorization': 'Bearer ${widget.authToken}'}
+                        : null,
                     previewDemo: widget.previewDemo,
                     initialUrdu: _isUrdu,
                   ),
@@ -779,20 +1355,32 @@ class _WalletScreenState extends State<WalletScreen> {
             leading: Container(
               width: 34,
               height: 34,
-              decoration: BoxDecoration(color: _goldAccent.withOpacity(0.16), shape: BoxShape.circle),
-              child: const Icon(Icons.workspace_premium_rounded, color: _goldAccent, size: 20),
+              decoration: BoxDecoration(
+                  color: _goldAccent.withOpacity(0.16), shape: BoxShape.circle),
+              child: const Icon(Icons.workspace_premium_rounded,
+                  color: _goldAccent, size: 20),
             ),
             title: Text(
               _isUrdu ? 'وی آئی پی رکنیت (7.7)' : 'VIP Membership & Benefits',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16),
             ),
             subtitle: Text(
-              _isUrdu ? 'وی آئی پی بیج، فریم اور شاہی آمد' : 'VIP Crown Badge, Frame & Entrances',
+              _isUrdu
+                  ? 'وی آئی پی بیج، فریم اور شاہی آمد'
+                  : 'VIP Crown Badge, Frame & Entrances',
               style: const TextStyle(color: Colors.white54, fontSize: 11),
             ),
-            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+            trailing:
+                const Icon(Icons.chevron_right_rounded, color: Colors.white54),
           ),
-          Divider(color: Colors.white.withOpacity(0.08), height: 1, indent: 16, endIndent: 16),
+          Divider(
+              color: Colors.white.withOpacity(0.08),
+              height: 1,
+              indent: 16,
+              endIndent: 16),
           ListTile(
             onTap: () {
               Navigator.of(context).push(
@@ -800,7 +1388,9 @@ class _WalletScreenState extends State<WalletScreen> {
                   builder: (_) => RecognitionScreen(
                     apiBaseUrl: widget.apiBaseUrl,
                     userId: widget.userId,
-                    headers: widget.authToken != null ? {'Authorization': 'Bearer ${widget.authToken}'} : null,
+                    headers: widget.authToken != null
+                        ? {'Authorization': 'Bearer ${widget.authToken}'}
+                        : null,
                     previewDemo: widget.previewDemo,
                     initialUrdu: _isUrdu,
                   ),
@@ -810,20 +1400,34 @@ class _WalletScreenState extends State<WalletScreen> {
             leading: Container(
               width: 34,
               height: 34,
-              decoration: BoxDecoration(color: _neonPink.withOpacity(0.16), shape: BoxShape.circle),
-              child: const Icon(Icons.military_tech_rounded, color: _neonPink, size: 20),
+              decoration: BoxDecoration(
+                  color: _neonPink.withOpacity(0.16), shape: BoxShape.circle),
+              child: const Icon(Icons.military_tech_rounded,
+                  color: _neonPink, size: 20),
             ),
             title: Text(
-              _isUrdu ? 'دولت، شائننگ اور اعزاز (7.8)' : 'Wealth, Shining & Honor',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+              _isUrdu
+                  ? 'دولت، شائننگ اور اعزاز (7.8)'
+                  : 'Wealth, Shining & Honor',
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16),
             ),
             subtitle: Text(
-              _isUrdu ? 'تین الگ درجات، پنکھ اور لیڈر بورڈ' : 'Separate Levels, Wings & Rankings',
+              _isUrdu
+                  ? 'تین الگ درجات، پنکھ اور لیڈر بورڈ'
+                  : 'Separate Levels, Wings & Rankings',
               style: const TextStyle(color: Colors.white54, fontSize: 11),
             ),
-            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+            trailing:
+                const Icon(Icons.chevron_right_rounded, color: Colors.white54),
           ),
-          Divider(color: Colors.white.withOpacity(0.08), height: 1, indent: 16, endIndent: 16),
+          Divider(
+              color: Colors.white.withOpacity(0.08),
+              height: 1,
+              indent: 16,
+              endIndent: 16),
           ListTile(
             onTap: () {
               Navigator.of(context).push(
@@ -831,7 +1435,9 @@ class _WalletScreenState extends State<WalletScreen> {
                   builder: (_) => StoreScreen(
                     apiBaseUrl: widget.apiBaseUrl,
                     userId: widget.userId,
-                    headers: widget.authToken != null ? {'Authorization': 'Bearer ${widget.authToken}'} : null,
+                    headers: widget.authToken != null
+                        ? {'Authorization': 'Bearer ${widget.authToken}'}
+                        : null,
                     previewDemo: widget.previewDemo,
                     initialUrdu: _isUrdu,
                   ),
@@ -841,20 +1447,34 @@ class _WalletScreenState extends State<WalletScreen> {
             leading: Container(
               width: 34,
               height: 34,
-              decoration: BoxDecoration(color: _neonPink.withOpacity(0.16), shape: BoxShape.circle),
-              child: const Icon(Icons.storefront_rounded, color: _neonPink, size: 20),
+              decoration: BoxDecoration(
+                  color: _neonPink.withOpacity(0.16), shape: BoxShape.circle),
+              child: const Icon(Icons.storefront_rounded,
+                  color: _neonPink, size: 20),
             ),
             title: Text(
-              _isUrdu ? 'ورچوئل اسٹور اور انوینٹری (7.9)' : 'Virtual Store & Inventory',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+              _isUrdu
+                  ? 'ورچوئل اسٹور اور انوینٹری (7.9)'
+                  : 'Virtual Store & Inventory',
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16),
             ),
             subtitle: Text(
-              _isUrdu ? 'فریمز، چیٹ ببلز، انٹری ایفیکٹس اور تھیمز' : 'Frames, Chat Bubbles, Entrances & Themes',
+              _isUrdu
+                  ? 'فریمز، چیٹ ببلز، انٹری ایفیکٹس اور تھیمز'
+                  : 'Frames, Chat Bubbles, Entrances & Themes',
               style: const TextStyle(color: Colors.white54, fontSize: 11),
             ),
-            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+            trailing:
+                const Icon(Icons.chevron_right_rounded, color: Colors.white54),
           ),
-          Divider(color: Colors.white.withOpacity(0.08), height: 1, indent: 16, endIndent: 16),
+          Divider(
+              color: Colors.white.withOpacity(0.08),
+              height: 1,
+              indent: 16,
+              endIndent: 16),
           ListTile(
             onTap: () {
               Navigator.of(context).push(
@@ -862,7 +1482,9 @@ class _WalletScreenState extends State<WalletScreen> {
                   builder: (_) => ReceiptsFinanceScreen(
                     apiBaseUrl: widget.apiBaseUrl,
                     userId: widget.userId,
-                    headers: widget.authToken != null ? {'Authorization': 'Bearer ${widget.authToken}'} : null,
+                    headers: widget.authToken != null
+                        ? {'Authorization': 'Bearer ${widget.authToken}'}
+                        : null,
                     previewDemo: widget.previewDemo,
                     initialUrdu: _isUrdu,
                   ),
@@ -872,20 +1494,33 @@ class _WalletScreenState extends State<WalletScreen> {
             leading: Container(
               width: 34,
               height: 34,
-              decoration: BoxDecoration(color: const Color(0xFF10B981).withOpacity(0.16), shape: BoxShape.circle),
-              child: const Icon(Icons.receipt_long_rounded, color: Color(0xFF34D399), size: 20),
+              decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withOpacity(0.16),
+                  shape: BoxShape.circle),
+              child: const Icon(Icons.receipt_long_rounded,
+                  color: Color(0xFF34D399), size: 20),
             ),
             title: Text(
               _isUrdu ? 'رسیدیں اور مالیات (7.10)' : 'Receipts & Finance',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16),
             ),
             subtitle: Text(
-              _isUrdu ? 'مستند رسیدیں اور ٹرانزیکشن ہسٹری' : 'Official Receipts & Financial Records',
+              _isUrdu
+                  ? 'مستند رسیدیں اور ٹرانزیکشن ہسٹری'
+                  : 'Official Receipts & Financial Records',
               style: const TextStyle(color: Colors.white54, fontSize: 11),
             ),
-            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+            trailing:
+                const Icon(Icons.chevron_right_rounded, color: Colors.white54),
           ),
-          Divider(color: Colors.white.withOpacity(0.08), height: 1, indent: 16, endIndent: 16),
+          Divider(
+              color: Colors.white.withOpacity(0.08),
+              height: 1,
+              indent: 16,
+              endIndent: 16),
           ListTile(
             onTap: () {
               Navigator.of(context).push(
@@ -899,18 +1534,27 @@ class _WalletScreenState extends State<WalletScreen> {
             leading: Container(
               width: 34,
               height: 34,
-              decoration: BoxDecoration(color: const Color(0xFF7C4DFF).withOpacity(0.16), shape: BoxShape.circle),
-              child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF7C4DFF), size: 20),
+              decoration: BoxDecoration(
+                  color: const Color(0xFF7C4DFF).withOpacity(0.16),
+                  shape: BoxShape.circle),
+              child: const Icon(Icons.account_balance_wallet_rounded,
+                  color: Color(0xFF7C4DFF), size: 20),
             ),
             title: Text(
               _isUrdu ? 'مالیاتی لیجر اور رسیدیں' : 'Financial Ledger & Audit',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16),
             ),
             subtitle: Text(
-              _isUrdu ? 'تمام ٹاپ اپ، وی آئی پی، گفٹس اور ریفنڈز کی جانچ' : 'Top-ups, VIP, Gifts, Refunds & Reconciliation',
+              _isUrdu
+                  ? 'تمام ٹاپ اپ، وی آئی پی، گفٹس اور ریفنڈز کی جانچ'
+                  : 'Top-ups, VIP, Gifts, Refunds & Reconciliation',
               style: const TextStyle(color: Colors.white54, fontSize: 11),
             ),
-            trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+            trailing:
+                const Icon(Icons.chevron_right_rounded, color: Colors.white54),
           ),
         ],
       ),
@@ -934,7 +1578,8 @@ class _WalletScreenState extends State<WalletScreen> {
               _isUrdu
                   ? 'کوائنز اور پوائنٹس الگ الگ کرنسیاں ہیں۔ گفٹ بھیجنے پر ${_hostGiftSharePercent.toStringAsFixed(0)}% کوائنز ہوسٹ کے پوائنٹس بنتے ہیں۔'
                   : 'Coins & Points are separate balances. ${_hostGiftSharePercent.toStringAsFixed(0)}% of gift coins convert to Host Earnings Points.',
-              style: const TextStyle(color: Colors.white70, fontSize: 11.5, height: 1.35),
+              style: const TextStyle(
+                  color: Colors.white70, fontSize: 11.5, height: 1.35),
             ),
           ),
         ],
@@ -951,15 +1596,26 @@ class _WalletScreenState extends State<WalletScreen> {
           children: [
             Text(
               _activeTab == 'coins'
-                  ? (_isUrdu ? 'حالیہ کوائن لین دین' : 'Recent Coin Transactions')
-                  : (_isUrdu ? 'حالیہ پوائنٹس کمائی' : 'Recent Points Earnings'),
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15),
+                  ? (_isUrdu
+                      ? 'حالیہ کوائن لین دین'
+                      : 'Recent Coin Transactions')
+                  : (_isUrdu
+                      ? 'حالیہ پوائنٹس کمائی'
+                      : 'Recent Points Earnings'),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15),
             ),
             GestureDetector(
-              onTap: _activeTab == 'coins' ? _openCoinHistory : _openPointsHistory,
+              onTap:
+                  _activeTab == 'coins' ? _openCoinHistory : _openPointsHistory,
               child: Text(
                 _isUrdu ? 'سب دیکھیں' : 'View All',
-                style: const TextStyle(color: _neonPink, fontWeight: FontWeight.w700, fontSize: 12.5),
+                style: const TextStyle(
+                    color: _neonPink,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5),
               ),
             ),
           ],
@@ -976,7 +1632,9 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
             child: Center(
               child: Text(
-                _isUrdu ? 'ابھی تک کوئی لین دین موجود نہیں' : 'No transactions yet',
+                _isUrdu
+                    ? 'ابھی تک کوئی لین دین موجود نہیں'
+                    : 'No transactions yet',
                 style: const TextStyle(color: Colors.white54, fontSize: 13),
               ),
             ),
@@ -990,14 +1648,17 @@ class _WalletScreenState extends State<WalletScreen> {
                 : ((tx['pointsAmount'] as num?)?.toInt() ?? 0);
             final signedAmount = direction == 'debit' ? -absAmount : absAmount;
             final status = (tx['status'] ?? 'completed').toString();
-            final txType = (tx['transactionType'] ?? tx['giftSource'] ?? '').toString();
+            final txType =
+                (tx['transactionType'] ?? tx['giftSource'] ?? '').toString();
             final title = (tx['description'] ?? txType).toString();
             final sign = signedAmount >= 0 ? '+' : '';
             final Color amountColor = status == 'failed'
                 ? Colors.redAccent
                 : status == 'reversed'
                     ? Colors.amber
-                    : (signedAmount >= 0 ? const Color(0xFF4ADE80) : Colors.pinkAccent);
+                    : (signedAmount >= 0
+                        ? const Color(0xFF4ADE80)
+                        : Colors.pinkAccent);
 
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
@@ -1017,13 +1678,17 @@ class _WalletScreenState extends State<WalletScreen> {
                           title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13.5),
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13.5),
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 7, vertical: 2),
                               decoration: BoxDecoration(
                                 color: status == 'failed'
                                     ? Colors.red.withOpacity(0.2)
@@ -1048,7 +1713,8 @@ class _WalletScreenState extends State<WalletScreen> {
                             const SizedBox(width: 8),
                             Text(
                               txType.toUpperCase(),
-                              style: const TextStyle(color: Colors.white38, fontSize: 10),
+                              style: const TextStyle(
+                                  color: Colors.white38, fontSize: 10),
                             ),
                           ],
                         ),
@@ -1057,7 +1723,10 @@ class _WalletScreenState extends State<WalletScreen> {
                   ),
                   Text(
                     '$sign${_formatNumber(signedAmount)} ${isCoins ? 'Coins' : 'Pts'}',
-                    style: TextStyle(color: amountColor, fontWeight: FontWeight.w800, fontSize: 14),
+                    style: TextStyle(
+                        color: amountColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14),
                   ),
                 ],
               ),
@@ -1081,7 +1750,8 @@ class _WalletScreenState extends State<WalletScreen> {
           const Icon(Icons.error_outline, color: Colors.redAccent, size: 18),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(_error!, style: const TextStyle(color: Colors.white, fontSize: 12)),
+            child: Text(_error!,
+                style: const TextStyle(color: Colors.white, fontSize: 12)),
           ),
         ],
       ),
@@ -1106,7 +1776,10 @@ class _WalletScreenState extends State<WalletScreen> {
               _isUrdu
                   ? 'یہ والٹ عارضی طور پر منجمد ہے'
                   : 'This wallet is currently frozen by Finance Admin',
-              style: const TextStyle(color: Colors.amberAccent, fontSize: 12, fontWeight: FontWeight.w700),
+              style: const TextStyle(
+                  color: Colors.amberAccent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -1128,13 +1801,19 @@ class _WalletScreenState extends State<WalletScreen> {
             ),
             child: const Text(
               'P7.1',
-              style: TextStyle(color: _goldAccent, fontWeight: FontWeight.w900, fontSize: 12),
+              style: TextStyle(
+                  color: _goldAccent,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12),
             ),
           ),
           const SizedBox(width: 8),
           const Text(
             'Coins and Points',
-            style: TextStyle(color: Colors.white54, fontWeight: FontWeight.w600, fontSize: 13),
+            style: TextStyle(
+                color: Colors.white54,
+                fontWeight: FontWeight.w600,
+                fontSize: 13),
           ),
         ],
       ),

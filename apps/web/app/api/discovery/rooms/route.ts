@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
-import { getCountryFlag } from '@/lib/countries';
+import { getCountryFlag, resolveCountryCode } from '@/lib/countries';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,11 +17,31 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '12', 10)));
     const offset = (page - 1) * limit;
 
-    const countryCode = searchParams.get('country')?.trim().toUpperCase();
+    const rawCountry = searchParams.get('country')?.trim();
     const category = searchParams.get('category')?.trim().toLowerCase();
     const statusParam = searchParams.get('status')?.trim().toLowerCase() || 'live';
     const sortBy = searchParams.get('sort')?.trim().toLowerCase() || 'popular';
-    const searchQuery = searchParams.get('q')?.trim();
+    const tab = searchParams.get('tab')?.trim().toLowerCase() || 'explore';
+    const searchQuery = searchParams.get('q')?.trim() || searchParams.get('search')?.trim();
+
+    // Validate country filter
+    let resolvedCountryCode: string | null = null;
+    if (rawCountry) {
+      const resolved = resolveCountryCode(rawCountry);
+      if (!resolved.valid) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Invalid or unsupported country: "${rawCountry}"`,
+            code: 'INVALID_COUNTRY',
+          },
+          { status: 400 }
+        );
+      }
+      if (resolved.code !== 'ALL') {
+        resolvedCountryCode = resolved.code!;
+      }
+    }
 
     let whereConditions: string[] = [];
     let params: any[] = [];
@@ -38,8 +58,8 @@ export async function GET(req: NextRequest) {
     }
 
     // Filter by country code
-    if (countryCode && countryCode !== 'ALL') {
-      params.push(countryCode);
+    if (resolvedCountryCode) {
+      params.push(resolvedCountryCode);
       whereConditions.push(`(lr.country_code = $${params.length} OR u.country_code = $${params.length})`);
     }
 
@@ -73,6 +93,8 @@ export async function GET(req: NextRequest) {
       orderBy = 'lr.started_at DESC, lr.viewer_count DESC';
     } else if (sortBy === 'viewers') {
       orderBy = 'lr.viewer_count DESC';
+    } else if (sortBy === 'foryou' || sortBy === 'for_you' || tab === 'for_you' || tab === 'foryou') {
+      orderBy = 'lr.viewer_count DESC, lr.coins_earned DESC, lr.started_at DESC';
     }
 
     // Paginated rooms query
@@ -142,6 +164,7 @@ export async function GET(req: NextRequest) {
       const isLive = Boolean(r.is_live && r.status === 'live');
 
       return {
+        id: r.id,
         roomId: r.id,
         roomNumber: r.room_number,
         title: r.title,
@@ -170,6 +193,11 @@ export async function GET(req: NextRequest) {
           wealthLevel: r.wealth_level || 1,
           isVerified: Boolean(r.is_adult_verified || (r.host_level && r.host_level >= 5)),
         },
+        hostId: r.host_id,
+        hostNickname: r.host_nickname || 'Streamer',
+        hostName: r.host_nickname || 'Streamer',
+        hostAvatar: r.host_avatar_url || '/avatars/default.png',
+        hostPoppoId: r.host_poppo_id || '---',
         pkDetails: r.is_pk && r.pk_id ? {
           pkId: r.pk_id,
           title: r.pk_title,
@@ -192,6 +220,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      total,
       rooms,
       pagination: {
         page,

@@ -153,7 +153,7 @@ class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen>
   }
 
   List<FixturePartyRoom> _getAllRooms() {
-    if (ApiConfig.usePartyApi && _apiRooms.isNotEmpty) {
+    if (ApiConfig.usePartyApi) {
       return _apiRooms;
     }
     if (DesignFixtures.isError || DesignFixtures.isEmpty) {
@@ -468,6 +468,9 @@ class _PartyDiscoveryScreenState extends State<PartyDiscoveryScreen>
   }
 
   Widget _buildPartyTab() {
+    if (ApiConfig.usePartyApi && _isLoadingApi) {
+      return const Center(child: CircularProgressIndicator());
+    }
     final rooms = _getFilteredPartyRooms();
 
     if (rooms.isEmpty) {

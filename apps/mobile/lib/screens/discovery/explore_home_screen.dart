@@ -6,6 +6,9 @@ import '../../design/design_fixtures.dart';
 import '../../widgets/popo_empty_state.dart';
 import '../../widgets/popo_error_state.dart';
 import '../../widgets/popo_icon_button.dart';
+import '../../api/api_config.dart';
+import '../../models/discovery_room.dart';
+import '../../repositories/discovery_repository.dart';
 import 'country_chips.dart';
 import 'room_card.dart';
 import 'search_screen.dart';
@@ -31,6 +34,19 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
 
   String _selectedCountry = 'ALL';
 
+  // Live API discovery state
+  bool _isLoadingExplore = false;
+  String? _exploreError;
+  List<DiscoveryRoom> _liveExploreRooms = [];
+
+  bool _isLoadingFollowing = false;
+  String? _followingError;
+  List<DiscoveryRoom> _liveFollowingRooms = [];
+
+  bool _isLoadingForYou = false;
+  String? _forYouError;
+  List<DiscoveryRoom> _liveForYouRooms = [];
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +57,93 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
         setState(() {});
       }
     });
+
+    if (ApiConfig.useLiveApi) {
+      _loadLiveExplore();
+      _loadLiveFollowing();
+      _loadLiveForYou();
+    }
+  }
+
+  Future<void> _loadLiveExplore({bool refresh = false, String? country}) async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingExplore = true;
+      _exploreError = null;
+    });
+
+    try {
+      final rooms = await DiscoveryRepository.instance.fetchExplore(
+        refresh: refresh,
+        countryCode: country ?? (_selectedCountry == 'ALL' ? null : _selectedCountry),
+      );
+      if (mounted) {
+        setState(() {
+          _liveExploreRooms = rooms;
+          _isLoadingExplore = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _exploreError = e.toString();
+          _isLoadingExplore = false;
+          _liveExploreRooms = [];
+        });
+      }
+    }
+  }
+
+  Future<void> _loadLiveFollowing({bool refresh = false}) async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingFollowing = true;
+      _followingError = null;
+    });
+
+    try {
+      final rooms = await DiscoveryRepository.instance.fetchFollowing(refresh: refresh);
+      if (mounted) {
+        setState(() {
+          _liveFollowingRooms = rooms;
+          _isLoadingFollowing = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _followingError = e.toString();
+          _isLoadingFollowing = false;
+          _liveFollowingRooms = [];
+        });
+      }
+    }
+  }
+
+  Future<void> _loadLiveForYou({bool refresh = false}) async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingForYou = true;
+      _forYouError = null;
+    });
+
+    try {
+      final rooms = await DiscoveryRepository.instance.fetchForYou(refresh: refresh);
+      if (mounted) {
+        setState(() {
+          _liveForYouRooms = rooms;
+          _isLoadingForYou = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _forYouError = e.toString();
+          _isLoadingForYou = false;
+          _liveForYouRooms = [];
+        });
+      }
+    }
   }
 
   @override
@@ -102,6 +205,9 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
     setState(() {
       _selectedCountry = code;
     });
+    if (ApiConfig.useLiveApi) {
+      _loadLiveExplore(refresh: true, country: code == 'ALL' ? null : code);
+    }
   }
 
   // ==========================================
@@ -259,6 +365,82 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
   // TAB 1: FOLLOWING
   // ==========================================
   Widget _buildFollowingTab() {
+    if (ApiConfig.useLiveApi) {
+      if (_isLoadingFollowing) {
+        return const Center(
+          child: CircularProgressIndicator(color: PopoTheme.primary),
+        );
+      }
+      if (_followingError != null) {
+        return PopoErrorState(
+          title: 'Unable to Load Following Streams',
+          message: _followingError!,
+          retryText: 'Retry',
+          onRetry: () => _loadLiveFollowing(refresh: true),
+        );
+      }
+      if (_liveFollowingRooms.isEmpty) {
+        return PopoEmptyState(
+          title: 'No Followed Broadcasters Live',
+          subtitle: 'Follow your favorite creators to see them appear here!',
+          icon: Icons.favorite_border_rounded,
+          actionText: 'Discover Creators',
+          onActionTap: () => _tabController.animateTo(1),
+        );
+      }
+
+      return RefreshIndicator(
+        onRefresh: () => _loadLiveFollowing(refresh: true),
+        color: PopoTheme.primary,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+                child: Row(
+                  children: [
+                    const Icon(Icons.favorite_rounded, color: PopoTheme.primary, size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Followed Creators (${_liveFollowingRooms.length} Live)',
+                      style: const TextStyle(
+                        color: PopoTheme.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 3 / 4,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final room = _liveFollowingRooms[index];
+                    return RoomCard(
+                      room: room,
+                      onTap: () => _openLiveViewer(room.toFixtureLiveRoom()),
+                    );
+                  },
+                  childCount: _liveFollowingRooms.length,
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 80)),
+          ],
+        ),
+      );
+    }
+
     if (DesignFixtures.isError) {
       return _buildErrorState();
     }
@@ -333,17 +515,25 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
   // TAB 2: EXPLORE (DEFAULT)
   // ==========================================
   Widget _buildExploreTab() {
-    if (DesignFixtures.isError) {
-      return _buildErrorState();
-    }
-    if (DesignFixtures.isEmpty) {
-      return _buildEmptyState();
+    if (!ApiConfig.useLiveApi) {
+      if (DesignFixtures.isError) {
+        return _buildErrorState();
+      }
+      if (DesignFixtures.isEmpty) {
+        return _buildEmptyState();
+      }
     }
 
-    final filteredRooms = _getFilteredExploreRooms();
+    final filteredRooms = !ApiConfig.useLiveApi ? _getFilteredExploreRooms() : const <FixtureLiveRoom>[];
 
     return RefreshIndicator(
-      onRefresh: () async => setState(() {}),
+      onRefresh: () async {
+        if (ApiConfig.useLiveApi) {
+          await _loadLiveExplore(refresh: true);
+        } else {
+          setState(() {});
+        }
+      },
       color: PopoTheme.primary,
       child: CustomScrollView(
         controller: _scrollController,
@@ -384,40 +574,92 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
             ),
           ),
 
-          // 4. Live Room Grid or Filtered Empty State
-          if (filteredRooms.isEmpty)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: PopoEmptyState(
-                title: 'No Live Streams Found',
-                subtitle: 'No broadcasters live right now in this selected country.',
-                icon: Icons.public_off_rounded,
-                actionText: 'Show All Rooms',
-                onActionTap: () => _onCountrySelected('ALL'),
-              ),
-            )
-          else ...[
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: 3 / 4,
+          // 4. Live Room Grid or State Handlers
+          if (ApiConfig.useLiveApi) ...[
+            if (_isLoadingExplore)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: CircularProgressIndicator(color: PopoTheme.primary),
                 ),
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final room = filteredRooms[index];
-                    return RoomCard.fromFixture(
-                      fixture: room,
-                      onTap: () => _openLiveViewer(room),
-                    );
-                  },
-                  childCount: filteredRooms.length,
+              )
+            else if (_exploreError != null)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: PopoErrorState(
+                  title: 'Unable to Load Live Streams',
+                  message: _exploreError!,
+                  retryText: 'Retry',
+                  onRetry: () => _loadLiveExplore(refresh: true),
+                ),
+              )
+            else if (_liveExploreRooms.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: PopoEmptyState(
+                  title: 'No Live Streams Found',
+                  subtitle: 'No broadcasters live right now in this selected country.',
+                  icon: Icons.public_off_rounded,
+                  actionText: 'Show All Rooms',
+                  onActionTap: () => _onCountrySelected('ALL'),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 3 / 4,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final room = _liveExploreRooms[index];
+                      return RoomCard(
+                        room: room,
+                        onTap: () => _openLiveViewer(room.toFixtureLiveRoom()),
+                      );
+                    },
+                    childCount: _liveExploreRooms.length,
+                  ),
                 ),
               ),
-            ),
+          ] else ...[
+            if (filteredRooms.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: PopoEmptyState(
+                  title: 'No Live Streams Found',
+                  subtitle: 'No broadcasters live right now in this selected country.',
+                  icon: Icons.public_off_rounded,
+                  actionText: 'Show All Rooms',
+                  onActionTap: () => _onCountrySelected('ALL'),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 3 / 4,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final room = filteredRooms[index];
+                      return RoomCard.fromFixture(
+                        fixture: room,
+                        onTap: () => _openLiveViewer(room),
+                      );
+                    },
+                    childCount: filteredRooms.length,
+                  ),
+                ),
+              ),
           ],
 
           const SliverToBoxAdapter(child: SizedBox(height: 80)),
@@ -430,6 +672,82 @@ class _ExploreHomeScreenState extends State<ExploreHomeScreen>
   // TAB 3: FOR YOU
   // ==========================================
   Widget _buildForYouTab() {
+    if (ApiConfig.useLiveApi) {
+      if (_isLoadingForYou) {
+        return const Center(
+          child: CircularProgressIndicator(color: PopoTheme.primary),
+        );
+      }
+      if (_forYouError != null) {
+        return PopoErrorState(
+          title: 'Unable to Load Recommendations',
+          message: _forYouError!,
+          retryText: 'Retry',
+          onRetry: () => _loadLiveForYou(refresh: true),
+        );
+      }
+      if (_liveForYouRooms.isEmpty) {
+        return PopoEmptyState(
+          title: 'No Recommendations Available',
+          subtitle: 'Check back soon for personalized live stream recommendations.',
+          icon: Icons.auto_awesome_rounded,
+          actionText: 'Explore Live Streams',
+          onActionTap: () => _tabController.animateTo(1),
+        );
+      }
+
+      return RefreshIndicator(
+        onRefresh: () => _loadLiveForYou(refresh: true),
+        color: PopoTheme.primary,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          slivers: [
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 14, 16, 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.auto_awesome_rounded, color: PopoTheme.gold, size: 16),
+                    SizedBox(width: 6),
+                    Text(
+                      'Recommended For You',
+                      style: TextStyle(
+                        color: PopoTheme.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 3 / 4,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final room = _liveForYouRooms[index];
+                    return RoomCard(
+                      room: room,
+                      onTap: () => _openLiveViewer(room.toFixtureLiveRoom()),
+                    );
+                  },
+                  childCount: _liveForYouRooms.length,
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 80)),
+          ],
+        ),
+      );
+    }
+
     if (DesignFixtures.isError) {
       return _buildErrorState();
     }

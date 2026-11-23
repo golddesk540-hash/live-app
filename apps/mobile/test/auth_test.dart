@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:popo_live/l10n/strings.dart';
+import 'package:popo_live/api/token_storage.dart';
 import 'package:popo_live/auth/auth_state.dart';
 import 'package:popo_live/screens/auth/age_gate_screen.dart';
 import 'package:popo_live/screens/auth/login_screen.dart';
@@ -8,8 +9,16 @@ import 'package:popo_live/screens/auth/register_screen.dart';
 import 'package:popo_live/screens/auth/phone_otp_screen.dart';
 
 void main() {
+  void setScreenSize(WidgetTester tester) {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+  }
+
   setUp(() {
     PopoStrings.setLanguage('en');
+    TokenStorage.useInMemoryOnly = true;
   });
 
   group('M1 AuthState Lifecycle & Session Tests', () {
@@ -42,6 +51,7 @@ void main() {
     testWidgets(
       'AgeGateScreen renders warning badge, explanation, and buttons',
       (tester) async {
+        setScreenSize(tester);
         await tester.pumpWidget(const MaterialApp(home: AgeGateScreen()));
         await tester.pumpAndSettle();
 
@@ -55,6 +65,7 @@ void main() {
     testWidgets(
       'Tapping Accept without checking box displays validation error',
       (tester) async {
+        setScreenSize(tester);
         await tester.pumpWidget(const MaterialApp(home: AgeGateScreen()));
         await tester.pumpAndSettle();
 
@@ -71,6 +82,7 @@ void main() {
     testWidgets('Tapping Decline opens dialog explaining restriction', (
       tester,
     ) async {
+      setScreenSize(tester);
       await tester.pumpWidget(const MaterialApp(home: AgeGateScreen()));
       await tester.pumpAndSettle();
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/popo_theme.dart';
+import '../../design/design_fixtures.dart';
 import '../../l10n/strings.dart';
 import '../../widgets/popo_icon_button.dart';
 import '../../widgets/popo_secondary_button.dart';
@@ -96,6 +97,106 @@ class SettingsScreen extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               children: [
+                // User Information Card (R4)
+                PopoCard(
+                  key: const Key('settings_user_info_card'),
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundImage: DesignFixtures
+                                .currentUserProfile.avatarUrl.isNotEmpty
+                            ? NetworkImage(
+                                DesignFixtures.currentUserProfile.avatarUrl)
+                            : null,
+                        backgroundColor: const Color(0xFF2A124C),
+                        child: DesignFixtures
+                                .currentUserProfile.avatarUrl.isEmpty
+                            ? const Icon(Icons.person,
+                                color: Colors.white, size: 28)
+                            : null,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  DesignFixtures.currentUserProfile.nickname,
+                                  style: const TextStyle(
+                                    color: PopoTheme.textPrimary,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  DesignFixtures.currentUserProfile.flagEmoji,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'ID: ${DesignFixtures.currentUserProfile.poppoId} • ${DesignFixtures.currentUserProfile.country}',
+                              style: const TextStyle(
+                                color: PopoTheme.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0x33FFB800),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                        color: const Color(0x66FFB800)),
+                                  ),
+                                  child: Text(
+                                    'Wealth Lv.${DesignFixtures.currentUserProfile.wealthLevel}',
+                                    style: const TextStyle(
+                                      color: Color(0xFFFFB800),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0x3300E5FF),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                        color: const Color(0x6600E5FF)),
+                                  ),
+                                  child: Text(
+                                    'Host Lv.${DesignFixtures.currentUserProfile.hostLevel}',
+                                    style: const TextStyle(
+                                      color: Color(0xFF00E5FF),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
                 // Language Selection Card
                 PopoCard(
                   padding: const EdgeInsets.all(16),
@@ -158,6 +259,10 @@ class SettingsScreen extends StatelessWidget {
 
                 // Push Notification Preferences Card
                 const _NotificationPreferencesCard(),
+                const SizedBox(height: 16),
+
+                // Blocked Users Card (R4)
+                const _BlockedUsersCard(),
                 const SizedBox(height: 16),
 
                 // App Info Card
@@ -237,7 +342,7 @@ class _NotificationPreferencesCard extends StatefulWidget {
 
 class _NotificationPreferencesCardState extends State<_NotificationPreferencesCard> {
   UserNotificationPreferences _prefs = const UserNotificationPreferences();
-  bool _isLoading = true;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -348,6 +453,231 @@ class _NotificationPreferencesCardState extends State<_NotificationPreferencesCa
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+
+class _BlockedUsersCard extends StatefulWidget {
+  const _BlockedUsersCard({Key? key}) : super(key: key);
+
+  @override
+  State<_BlockedUsersCard> createState() => _BlockedUsersCardState();
+}
+
+class _BlockedUsersCardState extends State<_BlockedUsersCard> {
+  void _openBlockedUsersSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final blocked = DesignFixtures.blockedUsers;
+
+          return Container(
+            key: const Key('blocked_users_sheet'),
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: Color(0xFF1B1829),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              border: Border(
+                top: BorderSide(color: Color(0x44FF1A6C), width: 1.5),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.block_rounded,
+                            color: Color(0xFFFF1A6C), size: 22),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Blocked People (${blocked.length})',
+                          style: const TextStyle(
+                            color: PopoTheme.textPrimary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded,
+                          color: PopoTheme.textSecondary),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Users you have blocked cannot message you or attend your private rooms.',
+                  style: TextStyle(
+                      color: PopoTheme.textSecondary, fontSize: 12),
+                ),
+                const SizedBox(height: 16),
+                if (blocked.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: Text(
+                        'No blocked users in your list.',
+                        style: TextStyle(
+                            color: PopoTheme.textSecondary, fontSize: 13),
+                      ),
+                    ),
+                  )
+                else
+                  ...blocked.map((u) => Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: PopoTheme.surface,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: PopoTheme.borderSubtle),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 20,
+                              backgroundImage: u.avatarUrl.isNotEmpty
+                                  ? NetworkImage(u.avatarUrl)
+                                  : null,
+                              backgroundColor: const Color(0xFF2A124C),
+                              child: u.avatarUrl.isEmpty
+                                  ? const Icon(Icons.person,
+                                      color: Colors.white, size: 20)
+                                  : null,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    u.nickname,
+                                    style: const TextStyle(
+                                      color: PopoTheme.textPrimary,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${u.reason} • ${u.blockedDate}',
+                                    style: const TextStyle(
+                                      color: PopoTheme.textSecondary,
+                                      fontSize: 11,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: PopoTheme.cyan,
+                                side: const BorderSide(
+                                    color: PopoTheme.cyan),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                shape: const StadiumBorder(),
+                              ),
+                              onPressed: () {
+                                final unblocked =
+                                    DesignFixtures.unblockUser(u.id);
+                                if (unblocked) {
+                                  setSheetState(() {});
+                                  setState(() {});
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          'Unblocked ${u.nickname} successfully.'),
+                                      backgroundColor: PopoTheme.surface,
+                                      duration:
+                                          const Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: const Text('Unblock',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                      )),
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final count = DesignFixtures.blockedUsers.length;
+
+    return PopoCard(
+      key: const Key('settings_blocked_users_card'),
+      padding: const EdgeInsets.all(16),
+      child: InkWell(
+        onTap: () => _openBlockedUsersSheet(context),
+        borderRadius: BorderRadius.circular(12),
+        child: Row(
+          children: [
+            const Icon(Icons.block_rounded,
+                color: Color(0xFFFF1A6C), size: 20),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Blocked People',
+                    style: TextStyle(
+                      color: PopoTheme.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$count user${count == 1 ? "" : "s"} blocked',
+                    style: const TextStyle(
+                      color: PopoTheme.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded,
+                color: PopoTheme.textSecondary, size: 14),
+          ],
+        ),
       ),
     );
   }

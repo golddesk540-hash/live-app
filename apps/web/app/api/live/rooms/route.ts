@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { getAuthenticatedUser } from '@/lib/auth';
 import { query } from '@/lib/db';
 import { generateHostRtcToken } from '@/lib/agora';
+import { resolveCountryCode } from '@/lib/countries';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,12 +21,31 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const tab = (searchParams.get('tab') || 'explore').toLowerCase();
-    const country = searchParams.get('country') || '';
+    const rawCountry = searchParams.get('country')?.trim();
     const category = searchParams.get('category') || '';
     const search = searchParams.get('search') || '';
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '24', 10)));
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const offset = (page - 1) * limit;
+
+    // Validate country filter
+    let resolvedCountryCode: string | null = null;
+    if (rawCountry) {
+      const resolved = resolveCountryCode(rawCountry);
+      if (!resolved.valid) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Invalid or unsupported country: "${rawCountry}"`,
+            code: 'INVALID_COUNTRY',
+          },
+          { status: 400 }
+        );
+      }
+      if (resolved.code !== 'ALL') {
+        resolvedCountryCode = resolved.code!;
+      }
+    }
 
     const authUser = await getAuthenticatedUser(req).catch(() => null);
 
@@ -40,8 +60,8 @@ export async function GET(req: NextRequest) {
     }
 
     // Country filter
-    if (country.trim() && country.toUpperCase() !== 'ALL') {
-      params.push(country.trim().toUpperCase());
+    if (resolvedCountryCode) {
+      params.push(resolvedCountryCode);
       whereConditions.push(`lr.country_code = $${params.length}`);
     }
 
@@ -76,7 +96,11 @@ export async function GET(req: NextRequest) {
     }
 
     const whereSql = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
-    const orderBySql = tab === 'new' ? 'ORDER BY lr.created_at DESC' : 'ORDER BY lr.viewer_count DESC, lr.created_at DESC';
+    const orderBySql = tab === 'new'
+      ? 'ORDER BY lr.created_at DESC'
+      : (tab === 'for_you' || tab === 'foryou')
+        ? 'ORDER BY lr.viewer_count DESC, lr.coins_earned DESC, lr.created_at DESC'
+        : 'ORDER BY lr.viewer_count DESC, lr.created_at DESC';
 
     // Count total matching rooms
     const countQuery = `
@@ -128,6 +152,7 @@ export async function GET(req: NextRequest) {
 
     const rooms = rows.map((r) => ({
       id: r.id,
+      roomId: r.id,
       roomNumber: r.room_number,
       title: r.title,
       coverUrl: r.cover_url || '/assets/viewer/sample_viewer_broadcast.png',
@@ -137,10 +162,16 @@ export async function GET(req: NextRequest) {
       isPk: Boolean(r.is_pk),
       viewerCount: Number(r.viewer_count) || 0,
       viewerDisplay: formatViewerCount(Number(r.viewer_count) || 0),
+      viewersFormatted: formatViewerCount(Number(r.viewer_count) || 0),
       country: r.country || 'Pakistan',
       countryCode: r.country_code || 'PK',
       flagEmoji: r.flag_emoji || '🇵🇰',
       startedAt: r.started_at,
+      hostId: r.host_id,
+      hostNickname: r.host_nickname,
+      hostName: r.host_nickname,
+      hostAvatar: r.host_avatar_url || '/avatars/default.png',
+      hostPoppoId: r.host_poppo_id,
       host: {
         id: r.host_id,
         nickname: r.host_nickname,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../services/host/host_task_service.dart';
+import '../../design/design_fixtures.dart';
+import '../../widgets/popo_error_state.dart';
+import '../../widgets/popo_empty_state.dart';
 
 /// Popo Live — Phase 4 Module 8: New Host Starter Pack Screen
 /// Onboarding rewards, starter guides, and one-time pack claim.
@@ -30,7 +32,12 @@ class _NewHostPackScreenState extends State<NewHostPackScreen> {
     });
 
     try {
-      final data = await HostTaskService.instance.fetchStarterPack();
+      if (DesignFixtures.isError) {
+        throw const DesignFixtureException(
+          message: 'Failed to load starter pack: Server busy [ERR_PACK_SYNC_503]',
+        );
+      }
+      final data = DesignFixtures.starterPack.toMap();
       if (!mounted) return;
       setState(() {
         _packData = data;
@@ -39,7 +46,10 @@ class _NewHostPackScreenState extends State<NewHostPackScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _errorMessage = e
+            .toString()
+            .replaceFirst('Exception: ', '')
+            .replaceFirst('DesignFixtureException: ', '');
         _isLoading = false;
       });
     }
@@ -47,28 +57,19 @@ class _NewHostPackScreenState extends State<NewHostPackScreen> {
 
   Future<void> _handleClaimPack() async {
     setState(() => _isClaiming = true);
-    try {
-      final res = await HostTaskService.instance.claimStarterPack();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(res['message']?.toString() ?? 'Starter pack claimed! Rewards added to wallet.'),
-          backgroundColor: const Color(0xFF34D399),
-        ),
-      );
-      _loadStarterPack();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: const Color(0xFFFF1A6C),
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isClaiming = false);
-      }
+    await Future.delayed(const Duration(milliseconds: 200));
+    DesignFixtures.claimStarterPack();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Starter pack claimed! +200 Points, +50 Coins and Rising Star badge added.'),
+        backgroundColor: Color(0xFF34D399),
+        duration: Duration(seconds: 3),
+      ),
+    );
+    _loadStarterPack();
+    if (mounted) {
+      setState(() => _isClaiming = false);
     }
   }
 
@@ -101,32 +102,25 @@ class _NewHostPackScreenState extends State<NewHostPackScreen> {
       );
     }
 
-    if (_errorMessage != null) {
+    if (DesignFixtures.isError || _errorMessage != null) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.shield_outlined, color: Color(0xFFFF1A6C), size: 48),
-              const SizedBox(height: 16),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Color(0xFFCBB9E6), fontSize: 14),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF1A6C),
-                  foregroundColor: Colors.white,
-                  shape: const StadiumBorder(),
-                ),
-                onPressed: _loadStarterPack,
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        child: PopoErrorState(
+          title: 'Starter Pack Unavailable',
+          message: _errorMessage ?? 'Server busy [ERR_PACK_SYNC_503]',
+          retryText: 'Retry',
+          onRetry: _loadStarterPack,
+        ),
+      );
+    }
+
+    if (DesignFixtures.isEmpty || (_packData != null && (_packData!['rewardPoints'] == 0 && _packData!['rewardCoins'] == 0))) {
+      return Center(
+        child: PopoEmptyState(
+          icon: Icons.card_giftcard_outlined,
+          title: 'No Starter Pack Available',
+          message: 'Creator starter packs are currently not active for this account.',
+          actionText: 'Refresh',
+          onActionTap: _loadStarterPack,
         ),
       );
     }
@@ -248,7 +242,7 @@ class _NewHostPackScreenState extends State<NewHostPackScreen> {
                           color: isClaimed ? const Color(0xFF34D399) : Colors.white,
                         ),
                   label: Text(
-                    isClaimed ? 'Pack Already Claimed' : 'Claim Starter Pack Now',
+                    isClaimed ? 'Pack Claimed' : 'Claim Starter Pack Now',
                     style: TextStyle(
                       fontWeight: FontWeight.w900,
                       color: isClaimed ? const Color(0xFFBBA9D6) : Colors.white,

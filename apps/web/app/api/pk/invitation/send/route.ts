@@ -17,6 +17,19 @@ export async function POST(req: NextRequest) {
     const language = (body.language || 'en').toLowerCase();
     const isUrdu = language === 'ur';
 
+    // Strict 1v1 restriction enforcement
+    if (battleType !== '1v1') {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'UNSUPPORTED_BATTLE_TYPE',
+          error: 'Only 1v1 PK battles are currently supported. 4-host battle invitations are not allowed.',
+          errorUr: 'صرف 1v1 پی کے مقابلے معاونت یافتہ ہیں۔',
+        },
+        { status: 400 }
+      );
+    }
+
     if (!senderHostId) {
       return NextResponse.json(
         {
@@ -100,6 +113,18 @@ export async function POST(req: NextRequest) {
           errorUr: 'آپ پہلے ہی ایک فعال پی کے مقابلے میں ہیں۔',
         },
         { status: 409 }
+      );
+    }
+
+    if (!sender.is_live && sender.room_status !== 'live') {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'SENDER_OFFLINE',
+          error: 'You must have an active live broadcast to send a PK invitation.',
+          errorUr: 'پی کے دعوت نامہ بھیجنے کے لیے آپ کا لائیو ہونا ضروری ہے۔',
+        },
+        { status: 400 }
       );
     }
 

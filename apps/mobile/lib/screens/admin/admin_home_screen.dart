@@ -1664,7 +1664,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             margin: const EdgeInsets.only(top: 2),
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: Colors.emeraldAccent.withOpacity(0.2),
+              color: Colors.greenAccent.withOpacity(0.2),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.check, color: Colors.greenAccent, size: 12),

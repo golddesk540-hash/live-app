@@ -85,29 +85,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _errorMessage = null;
     });
 
-    // Pure design/fixture registration state setup
-    AuthState.instance.setPendingRegistration(
+    final success = await AuthState.instance.register(
       nickname: nickname.isNotEmpty ? nickname : 'Amina Noor',
-      contact: email,
+      email: email,
       password: password,
     );
-
-    await Future.delayed(const Duration(milliseconds: 250));
 
     if (!mounted) return;
     setState(() {
       _isLoading = false;
     });
 
-    // Proceed to Phone OTP step according to D1 specification
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => PhoneOtpScreen(
-          initialPhone: email.contains('@') ? '3001234567' : email,
-          nickname: nickname.isNotEmpty ? nickname : 'Amina Noor',
+    if (success) {
+      // Proceed to Phone OTP step according to registration lifecycle
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PhoneOtpScreen(
+            initialPhone: email.contains('@') ? '3001234567' : email,
+            nickname: nickname.isNotEmpty ? nickname : 'Amina Noor',
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      setState(() {
+        _errorMessage = AuthState.instance.errorMessage ??
+            'Registration failed. Please check your information and try again.';
+      });
+    }
   }
 
   @override

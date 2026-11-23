@@ -113,7 +113,7 @@ class _PKRealGiftsScreenState extends State<PKRealGiftsScreen> {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['wallet'] != null && mounted) {
           setState(() {
-            _viewerCoins = data['wallet']['coins'] ?? 3600;
+            _viewerCoins = data['wallet']['coins'] ?? 0;
           });
         }
       }
@@ -155,6 +155,7 @@ class _PKRealGiftsScreenState extends State<PKRealGiftsScreen> {
           'receiverSide': _selectedHostSide,
           'giftId': gift['id'],
           'quantity': 1,
+          'idempotencyKey': 'pkgift_${widget.currentUserId}_${widget.battleId}_${DateTime.now().millisecondsSinceEpoch}',
         }),
       ).timeout(const Duration(seconds: 4));
 

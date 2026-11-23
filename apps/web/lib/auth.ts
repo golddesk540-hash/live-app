@@ -178,12 +178,6 @@ export async function createAndSendOtp(phone: string, clientIp?: string): Promis
 export async function verifyPhoneOtp(phone: string, otp: string): Promise<boolean> {
   const isRealRequired = process.env.USE_REAL_OTP === 'true' || process.env.NODE_ENV === 'production';
 
-  // Allow universal master dev code '123456' ONLY in development mode when real OTP is not forced
-  if (otp === '123456' && !isRealRequired) {
-    await query('UPDATE popolive.otp_verifications SET verified = true WHERE phone = $1', [phone]);
-    return true;
-  }
-
   const rows = await query(
     `SELECT id, otp_hash, attempts, verified, expires_at
      FROM popolive.otp_verifications
@@ -212,7 +206,10 @@ export async function verifyPhoneOtp(phone: string, otp: string): Promise<boolea
   }
 
   const providedHash = hashOtp(otp);
-  if (providedHash !== record.otp_hash) {
+  const isValidDevBypass = otp === '123456' && !isRealRequired;
+  const isMatch = providedHash === record.otp_hash || isValidDevBypass;
+
+  if (!isMatch) {
     const updatedAttempts = record.attempts + 1;
     await query('UPDATE popolive.otp_verifications SET attempts = $1 WHERE id = $2', [updatedAttempts, record.id]);
     if (updatedAttempts >= 5) {
@@ -276,15 +273,15 @@ export function parseUserAgentDetails(ua: string): { deviceType: string; browser
 
 export async function createSession(
   userId: string,
-  req: NextRequest,
+  req?: NextRequest,
   rememberMe: boolean = false
 ): Promise<{ sessionToken: string; expiresAt: Date }> {
   const sessionToken = crypto.randomBytes(32).toString('hex');
   const durationDays = rememberMe ? 30 : 7;
   const expiresAt = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
 
-  const userAgent = req.headers.get('user-agent') || 'Unknown';
-  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
+  const userAgent = req?.headers?.get('user-agent') || 'Unknown';
+  const clientIp = req?.headers?.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
   const ipHash = crypto.createHmac('sha256', AUTH_SECRET).update(clientIp).digest('hex').substring(0, 16);
 
   const { deviceType, browserName, osName } = parseUserAgentDetails(userAgent);
@@ -325,10 +322,11 @@ export async function validateSessionToken(sessionToken: string): Promise<AuthUs
 
   if (rows.length === 0) return null;
 
+  const r = rows[0];
+  if (r.status !== 'active') return null;
+
   // Touch last_active_at asynchronously
   query('UPDATE popolive.sessions SET last_active_at = CURRENT_TIMESTAMP WHERE session_token = $1', [sessionToken]).catch(() => {});
-
-  const r = rows[0];
   return {
     id: r.id,
     poppo_id: r.poppo_id,
@@ -392,7 +390,7 @@ export async function getUserActiveSessions(
 
 export async function revokeSpecificSession(userId: string, targetSessionId: string): Promise<boolean> {
   const res = await query(
-    `DELETE FROM popolive.sessions WHERE id = $1 AND user_id = $2 RETURNING id`,
+    `UPDATE popolive.sessions SET is_revoked = true WHERE id = $1 AND user_id = $2 RETURNING id`,
     [targetSessionId, userId]
   );
   return res.length > 0;
@@ -400,16 +398,16 @@ export async function revokeSpecificSession(userId: string, targetSessionId: str
 
 export async function revokeAllOtherSessions(userId: string, currentSessionToken: string): Promise<number> {
   const res = await query(
-    `DELETE FROM popolive.sessions WHERE user_id = $1 AND session_token != $2 RETURNING id`,
+    `UPDATE popolive.sessions SET is_revoked = true WHERE user_id = $1 AND session_token != $2 RETURNING id`,
     [userId, currentSessionToken]
   );
   return res.length;
 }
 
 export async function getAuthenticatedUser(req: NextRequest): Promise<AuthUser | null> {
-  let token = req.cookies.get('poppo_session')?.value;
+  let token = req?.cookies?.get?.('poppo_session')?.value;
   if (!token) {
-    const authHeader = req.headers.get('authorization');
+    const authHeader = req?.headers?.get?.('authorization');
     if (authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.substring(7).trim();
     }
@@ -455,7 +453,7 @@ export function validateNicknameFormat(nickname: string): { valid: boolean; erro
 
 export async function destroySession(sessionToken: string): Promise<void> {
   if (!sessionToken) return;
-  await query('DELETE FROM popolive.sessions WHERE session_token = $1', [sessionToken]);
+  await query('UPDATE popolive.sessions SET is_revoked = true WHERE session_token = $1', [sessionToken]);
 }
 
 // -------------------------------------------------------------

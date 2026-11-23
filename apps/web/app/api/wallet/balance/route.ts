@@ -16,28 +16,70 @@ export async function GET(req: NextRequest) {
     const actor = await resolveWalletActor(req);
 
     const requestedUserId = searchParams.get('userId');
-    const targetUserId = requestedUserId || (actor.user ? actor.user.id : DEFAULT_DEMO_WALLET_USER_ID);
 
-    if (!canAccessPrivateWallet(actor, targetUserId, isPreviewDemo)) {
+    // Reject unauthenticated requests unless explicitly in preview demo mode
+    if (!actor.user && !isPreviewDemo) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Unauthorized: You cannot view private financial balances belonging to another user.',
-          code: 'PRIVATE_WALLET_ACCESS_DENIED',
+          error: 'Authentication session required to access private wallet balance.',
+          code: 'UNAUTHORIZED',
         },
-        { status: 403 }
+        { status: 401 }
       );
+    }
+
+    let targetUserId: string;
+
+    if (actor.user) {
+      targetUserId = actor.user.id;
+      // Normal users can NEVER view another user's private wallet balance
+      if (requestedUserId && requestedUserId !== actor.user.id && requestedUserId !== actor.user.poppo_id) {
+        if (!actor.isAdminReadOnly && !actor.isFinanceAdmin) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: 'Forbidden: You cannot view private financial balances belonging to another user.',
+              code: 'PRIVATE_WALLET_ACCESS_DENIED',
+            },
+            { status: 403 }
+          );
+        }
+        targetUserId = requestedUserId;
+      }
+    } else {
+      targetUserId = requestedUserId || DEFAULT_DEMO_WALLET_USER_ID;
+      if (!canAccessPrivateWallet(actor, targetUserId, isPreviewDemo)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Forbidden: You cannot view private financial balances belonging to another user.',
+            code: 'PRIVATE_WALLET_ACCESS_DENIED',
+          },
+          { status: 403 }
+        );
+      }
     }
 
     const wallet = await getWalletSummary(targetUserId, bypassCache);
 
     return NextResponse.json({
       success: true,
+      userId: wallet.userId,
+      walletId: wallet.walletId,
+      coins: wallet.coins,
+      points: wallet.points,
+      diamondPoints: wallet.points,
+      totalSpentCoins: wallet.totalSpentCoins,
+      totalReceivedPoints: wallet.totalReceivedPoints,
+      isFrozen: wallet.isFrozen,
+      hostSharePercentage: wallet.hostSharePercentage,
       wallet: {
         walletId: wallet.walletId,
         userId: wallet.userId,
         coins: wallet.coins,
         points: wallet.points,
+        diamondPoints: wallet.points,
         earningsPoints: wallet.points,
         totalSpentCoins: wallet.totalSpentCoins,
         totalReceivedPoints: wallet.totalReceivedPoints,

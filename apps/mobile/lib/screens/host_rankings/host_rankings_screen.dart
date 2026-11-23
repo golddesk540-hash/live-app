@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../api/api.dart';
 import '../profile/public_profile_screen.dart';
+import '../../design/design_fixtures.dart';
 
 /// Popo Live — Phase 4 Module 8: Host Rankings Screen
 /// Creator Leaderboard with Daily, Weekly, and Monthly Periods, Podium presentation, and Own Rank.
@@ -12,6 +12,7 @@ class HostRankingsScreen extends StatefulWidget {
 }
 
 class _HostRankingsScreenState extends State<HostRankingsScreen> {
+  String _mainSection = 'rankings'; // 'rankings' or 'events'
   String _period = 'daily';
   bool _isLoading = true;
   String? _errorMessage;
@@ -33,27 +34,81 @@ class _HostRankingsScreenState extends State<HostRankingsScreen> {
     });
 
     try {
-      final res = await RankingsService.instance.getHostRankings(period: _period);
+      if (DesignFixtures.isError) {
+        throw const DesignFixtureException(
+          message: 'Leaderboard database timeout [ERR_RANKINGS_TIMEOUT]',
+        );
+      }
+
+      final hosts = DesignFixtures.hostRankings;
       if (!mounted) return;
 
-      if (res.isSuccess && res.data != null) {
-        final data = res.data as Map<String, dynamic>;
-        setState(() {
-          _rankings = (data['rankings'] as List<dynamic>?) ?? [];
-          _podium = data['podium'] as Map<String, dynamic>?;
-          _myRank = data['myRank'] as Map<String, dynamic>?;
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _errorMessage = res.error ?? 'Failed to load rankings.';
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        if (DesignFixtures.isEmpty || hosts.isEmpty) {
+          _rankings = [];
+          _podium = null;
+          _myRank = null;
+        } else {
+          _rankings = hosts
+              .map((h) => {
+                    'rank': h.rank,
+                    'hostNickname': h.hostNickname,
+                    'avatarUrl': h.avatarUrl,
+                    'diamondsEarned': h.diamondsEarned,
+                    'country': h.country,
+                    'countryFlag': h.countryFlag,
+                    'level': h.level,
+                    'userId':
+                        'u_${h.hostNickname.toLowerCase().replaceAll(' ', '_')}',
+                  })
+              .toList();
+
+          if (hosts.length >= 3) {
+            _podium = {
+              'first': {
+                'hostNickname': hosts[0].hostNickname,
+                'avatarUrl': hosts[0].avatarUrl,
+                'diamondsEarned': hosts[0].diamondsEarned,
+                'level': hosts[0].level,
+                'userId': 'u_amina_noor',
+              },
+              'second': {
+                'hostNickname': hosts[1].hostNickname,
+                'avatarUrl': hosts[1].avatarUrl,
+                'diamondsEarned': hosts[1].diamondsEarned,
+                'level': hosts[1].level,
+                'userId': 'u_sana_ali',
+              },
+              'third': {
+                'hostNickname': hosts[2].hostNickname,
+                'avatarUrl': hosts[2].avatarUrl,
+                'diamondsEarned': hosts[2].diamondsEarned,
+                'level': hosts[2].level,
+                'userId': 'u_zainab_khan',
+              },
+            };
+          }
+
+          _myRank = {
+            'rank': 1,
+            'hostNickname': 'Amina Noor',
+            'avatarUrl':
+                'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+            'diamondsEarned': 1850000,
+            'level': 18,
+            'gapToNext': 0,
+          };
+        }
+        _isLoading = false;
+      });
+      return;
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _errorMessage = e
+            .toString()
+            .replaceFirst('Exception: ', '')
+            .replaceFirst('DesignFixtureException: ', '');
         _isLoading = false;
       });
     }
@@ -93,31 +148,314 @@ class _HostRankingsScreenState extends State<HostRankingsScreen> {
         backgroundColor: const Color(0xFF160830),
         child: Column(
           children: [
-            // Period Selector Tabs
+            // Main Section Tabs: Host Rankings vs Event Board (Section 5, R3)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
               color: const Color(0xFF120624),
               child: Row(
                 children: [
-                  _periodTab('DAILY', 'daily'),
-                  const SizedBox(width: 8),
-                  _periodTab('WEEKLY', 'weekly'),
-                  const SizedBox(width: 8),
-                  _periodTab('MONTHLY', 'monthly'),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _mainSection = 'rankings'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 9),
+                        decoration: BoxDecoration(
+                          color: _mainSection == 'rankings'
+                              ? const Color(0xFFFF1A6C)
+                              : Colors.white.withOpacity(0.06),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Host Rankings',
+                            style: TextStyle(
+                              color: _mainSection == 'rankings'
+                                  ? Colors.white
+                                  : Colors.white60,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _mainSection = 'events'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 9),
+                        decoration: BoxDecoration(
+                          color: _mainSection == 'events'
+                              ? const Color(0xFFFF1A6C)
+                              : Colors.white.withOpacity(0.06),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Event Board',
+                            style: TextStyle(
+                              color: _mainSection == 'events'
+                                  ? Colors.white
+                                  : Colors.white60,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
 
-            // Content List or Status
-            Expanded(
-              child: _buildBody(),
-            ),
+            if (_mainSection == 'rankings') ...[
+              // Period Selector Tabs
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                color: const Color(0xFF120624),
+                child: Row(
+                  children: [
+                    _periodTab('DAILY', 'daily'),
+                    const SizedBox(width: 8),
+                    _periodTab('WEEKLY', 'weekly'),
+                    const SizedBox(width: 8),
+                    _periodTab('MONTHLY', 'monthly'),
+                  ],
+                ),
+              ),
 
-            // Authenticated Host Own Rank Card (if available)
-            if (_myRank != null) _buildMyRankCard(),
+              // Content List or Status
+              Expanded(
+                child: _buildBody(),
+              ),
+
+              // Authenticated Host Own Rank Card (if available)
+              if (_myRank != null) _buildMyRankCard(),
+            ] else ...[
+              // Event Board Section
+              Expanded(
+                child: _buildEventBoardView(),
+              ),
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  String _formatDiamonds(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}K';
+    }
+    return count.toString();
+  }
+
+  Widget _buildEventBoardView() {
+    List<FixtureEventRanking> events = [];
+    try {
+      events = DesignFixtures.eventRankings;
+    } catch (_) {
+      events = [];
+    }
+
+    if (events.isEmpty) {
+      return const Center(
+        child: Text(
+          'No event rankings available',
+          style: TextStyle(color: Colors.white54, fontSize: 13),
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Event Banner
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF381559), Color(0xFF1A0A33)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.4)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'ACTIVE EVENT',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                  const Text(
+                    'Ends in 5 days',
+                    style: TextStyle(
+                        color: Color(0xFFFFD700),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                events.first.eventName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Prize Pool: 10,000,000 Diamond Points + Star Trophy',
+                style: TextStyle(color: Color(0xFFD8B4FE), fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        const Text(
+          'Event Leaderboard Standings',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+          ),
+        ),
+        const SizedBox(height: 10),
+        ...events.map((ev) {
+          final isTop3 = ev.rank <= 3;
+          final rankColor = ev.rank == 1
+              ? const Color(0xFFFFD700)
+              : (ev.rank == 2
+                  ? const Color(0xFFE2E8F0)
+                  : (ev.rank == 3 ? const Color(0xFFCD7F32) : Colors.white60));
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF16092D),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isTop3
+                    ? rankColor.withOpacity(0.4)
+                    : Colors.white.withOpacity(0.06),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: rankColor.withOpacity(0.18),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '#${ev.rank}',
+                      style: TextStyle(
+                          color: rankColor,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                ClipOval(
+                  child: Image.network(
+                    ev.avatarUrl,
+                    width: 44,
+                    height: 44,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 44,
+                      height: 44,
+                      color: Colors.white12,
+                      child: const Icon(Icons.person, color: Colors.white38),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        ev.hostNickname,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14),
+                      ),
+                      const SizedBox(height: 3),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF1A6C).withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          ev.badgeTitle,
+                          style: const TextStyle(
+                              color: Color(0xFFFF1A6C),
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Row(
+                      children: [
+                        const Text('💎', style: TextStyle(fontSize: 12)),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatDiamonds(ev.eventPoints),
+                          style: const TextStyle(
+                            color: Color(0xFF00E5FF),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Text('Event Pts',
+                        style: TextStyle(color: Colors.white38, fontSize: 10)),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ],
     );
   }
 
@@ -165,7 +503,8 @@ class _HostRankingsScreenState extends State<HostRankingsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.error_outline_rounded, color: Color(0xFFFF1A6C), size: 48),
+              const Icon(Icons.error_outline_rounded,
+                  color: Color(0xFFFF1A6C), size: 48),
               const SizedBox(height: 12),
               Text(
                 _errorMessage!,
@@ -207,7 +546,8 @@ class _HostRankingsScreenState extends State<HostRankingsScreen> {
     final first = _podium?['first'];
     final second = _podium?['second'];
     final third = _podium?['third'];
-    final remainingRankings = _rankings.length > 3 ? _rankings.sublist(3) : <dynamic>[];
+    final remainingRankings =
+        _rankings.length > 3 ? _rankings.sublist(3) : <dynamic>[];
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -233,7 +573,8 @@ class _HostRankingsScreenState extends State<HostRankingsScreen> {
           final int rank = item['rank'] ?? 0;
           final String name = item['nickname'] ?? 'Creator';
           final String poppoId = item['poppoId'] ?? '';
-          final String scoreFormatted = item['scoreFormatted']?.toString() ?? '0';
+          final String scoreFormatted =
+              item['scoreFormatted']?.toString() ?? '0';
           final String flag = item['flagEmoji'] ?? '🇵🇰';
           final String avatar = item['avatarUrl'] ?? '';
           final int hostLevel = item['hostLevel'] ?? 1;
@@ -247,7 +588,8 @@ class _HostRankingsScreenState extends State<HostRankingsScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFF16082E),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.purpleAccent.withOpacity(0.18)),
+                border:
+                    Border.all(color: Colors.purpleAccent.withOpacity(0.18)),
               ),
               child: Row(
                 children: [
@@ -265,9 +607,11 @@ class _HostRankingsScreenState extends State<HostRankingsScreen> {
                   CircleAvatar(
                     radius: 20,
                     backgroundColor: const Color(0xFF281347),
-                    backgroundImage: avatar.startsWith('http') ? NetworkImage(avatar) : null,
+                    backgroundImage:
+                        avatar.startsWith('http') ? NetworkImage(avatar) : null,
                     child: !avatar.startsWith('http')
-                        ? const Icon(Icons.person, color: Colors.white70, size: 20)
+                        ? const Icon(Icons.person,
+                            color: Colors.white70, size: 20)
                         : null,
                   ),
                   const SizedBox(width: 12),
@@ -298,11 +642,13 @@ class _HostRankingsScreenState extends State<HostRankingsScreen> {
                           children: [
                             Text(
                               'ID: $poppoId',
-                              style: const TextStyle(color: Color(0xFFBBA9D6), fontSize: 11),
+                              style: const TextStyle(
+                                  color: Color(0xFFBBA9D6), fontSize: 11),
                             ),
                             const SizedBox(width: 6),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 1),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFF1A6C).withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(4),
@@ -385,7 +731,8 @@ class _HostRankingsScreenState extends State<HostRankingsScreen> {
     );
   }
 
-  Widget _podiumColumn(dynamic host, int rank, Color color, double avatarRadius) {
+  Widget _podiumColumn(
+      dynamic host, int rank, Color color, double avatarRadius) {
     final String name = host['nickname'] ?? 'Host';
     final String score = host['scoreFormatted']?.toString() ?? '0';
     final String avatar = host['avatarUrl'] ?? '';
@@ -396,7 +743,8 @@ class _HostRankingsScreenState extends State<HostRankingsScreen> {
         children: [
           // Crown for 1st
           if (rank == 1)
-            const Icon(Icons.workspace_premium_rounded, color: Color(0xFFFFC107), size: 28)
+            const Icon(Icons.workspace_premium_rounded,
+                color: Color(0xFFFFC107), size: 28)
           else
             const SizedBox(height: 28),
 
@@ -413,7 +761,8 @@ class _HostRankingsScreenState extends State<HostRankingsScreen> {
                 child: CircleAvatar(
                   radius: rank == 1 ? 34 : 28,
                   backgroundColor: const Color(0xFF2E1352),
-                  backgroundImage: avatar.startsWith('http') ? NetworkImage(avatar) : null,
+                  backgroundImage:
+                      avatar.startsWith('http') ? NetworkImage(avatar) : null,
                   child: !avatar.startsWith('http')
                       ? const Icon(Icons.person, color: Colors.white, size: 28)
                       : null,
@@ -490,7 +839,8 @@ class _HostRankingsScreenState extends State<HostRankingsScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF1A6C),
                   borderRadius: BorderRadius.circular(8),

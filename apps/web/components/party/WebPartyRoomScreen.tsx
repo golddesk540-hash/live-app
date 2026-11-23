@@ -41,6 +41,7 @@ import {
   getPartyThemeById,
 } from '@/lib/party';
 import PartyThemesScreen from './PartyThemesScreen';
+import GoLiveRedirectSheet from '@/components/discovery/GoLiveRedirectSheet';
 
 export interface WebPartyRoomScreenProps {
   roomId: string;
@@ -981,6 +982,14 @@ export default function WebPartyRoomScreen({
           </div>
         </div>
       )}
+
+      {/* GO LIVE REDIRECT SHEET FOR WEB SEAT TAP */}
+      <GoLiveRedirectSheet
+        isOpen={selectedSeat !== null}
+        onClose={() => setSelectedSeat(null)}
+        seatIndex={selectedSeat?.seatNumber ?? 1}
+        roomTitle={room?.title || '9-Seat Party Lounge'}
+      />
 
       {/* FOOTER WATERMARK */}
       <footer className="w-full py-2 text-center text-xs text-white/50 font-semibold tracking-wider">

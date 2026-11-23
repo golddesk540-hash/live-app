@@ -29,6 +29,7 @@ class DiscoveryRepository {
   // In-memory caches
   List<DiscoveryRoom> _cachedExplore = [];
   List<DiscoveryRoom> _cachedFollowing = [];
+  List<DiscoveryRoom> _cachedForYou = [];
   List<DiscoveryRoom> _cachedNew = [];
   List<DiscoveryRoom> _cachedPk = [];
   List<DiscoveryBanner> _cachedBanners = [];
@@ -45,6 +46,7 @@ class DiscoveryRepository {
 
   // Inflight request guards
   bool _isLoadingFollowing = false;
+  bool _isLoadingForYou = false;
   bool _isLoadingNew = false;
   bool _isLoadingPk = false;
 
@@ -54,6 +56,7 @@ class DiscoveryRepository {
   // Getters
   List<DiscoveryRoom> get exploreRooms => List.unmodifiable(_cachedExplore);
   List<DiscoveryRoom> get followingRooms => List.unmodifiable(_cachedFollowing);
+  List<DiscoveryRoom> get forYouRooms => List.unmodifiable(_cachedForYou);
   List<DiscoveryRoom> get newRooms => List.unmodifiable(_cachedNew);
   List<DiscoveryRoom> get pkRooms => List.unmodifiable(_cachedPk);
   List<DiscoveryBanner> get banners => List.unmodifiable(_cachedBanners);
@@ -222,6 +225,38 @@ class DiscoveryRepository {
   }
 
   // ==========================================
+  // FOR YOU FEED (Curated & Deterministic)
+  // ==========================================
+  Future<List<DiscoveryRoom>> fetchForYou({bool refresh = false}) async {
+    if (!refresh && _cachedForYou.isNotEmpty) {
+      return _cachedForYou;
+    }
+    if (_isLoadingForYou) return _cachedForYou;
+
+    _isLoadingForYou = true;
+    try {
+      final response = await _discoveryService.getForYou();
+      if (response.isSuccess && response.data is Map) {
+        final list = (response.data['rooms'] ?? response.data['liveRooms']) as List?;
+        _cachedForYou = list != null
+            ? list
+                .map((r) => DiscoveryRoom.fromJson(Map<String, dynamic>.from(r as Map)))
+                .toList()
+            : <DiscoveryRoom>[];
+        return _cachedForYou;
+      } else {
+        throw ApiException(
+          message: response.message ?? 'Failed to load For You feed',
+          statusCode: response.statusCode,
+          code: response.errorCode,
+        );
+      }
+    } finally {
+      _isLoadingForYou = false;
+    }
+  }
+
+  // ==========================================
   // 3. NEW CREATORS FEED
   // ==========================================
   Future<List<DiscoveryRoom>> fetchNewCreators({bool refresh = false}) async {
@@ -330,22 +365,35 @@ class DiscoveryRepository {
       return _cachedCountries;
     }
 
-    final response = await _countryService.getPopularCountries();
-    if (response.isSuccess && response.data is Map) {
-      final list = response.data['popular'] as List?;
-      if (list != null) {
-        _cachedCountries = list
-            .map(
-              (c) => DiscoveryCountry.fromJson(
-                Map<String, dynamic>.from(c as Map),
-              ),
-            )
-            .toList();
-        return _cachedCountries;
+    try {
+      final response = await _countryService.getPopularCountries();
+      if (response.isSuccess && response.data is Map) {
+        final list = response.data['popular'] as List?;
+        if (list != null) {
+          _cachedCountries = list
+              .map(
+                (c) => DiscoveryCountry.fromJson(
+                  Map<String, dynamic>.from(c as Map),
+                ),
+              )
+              .toList();
+          return _cachedCountries;
+        }
+      }
+      if (ApiConfig.useLiveApi) {
+        throw ApiException(
+          message: response.message ?? 'Failed to load popular countries',
+          statusCode: response.statusCode,
+          code: response.errorCode,
+        );
+      }
+    } catch (e) {
+      if (ApiConfig.useLiveApi) {
+        rethrow;
       }
     }
 
-    // Default fallback popular list
+    // Default fallback popular list for fixture mode
     _cachedCountries = const [
       DiscoveryCountry(code: 'ALL', name: 'Popular', flag: '🔥'),
       DiscoveryCountry(code: 'PK', name: 'Pakistan', flag: '🇵🇰'),
@@ -354,6 +402,33 @@ class DiscoveryRepository {
       DiscoveryCountry(code: 'US', name: 'United States', flag: '🇺🇸'),
     ];
     return _cachedCountries;
+  }
+
+  Future<List<DiscoveryCountry>> fetchCountries({
+    String? search,
+    bool refresh = false,
+  }) async {
+    final response = await _countryService.getCountries(search: search);
+    if (response.isSuccess && response.data is Map) {
+      final list = response.data['countries'] as List?;
+      if (list != null) {
+        return list
+            .map(
+              (c) => DiscoveryCountry.fromJson(
+                Map<String, dynamic>.from(c as Map),
+              ),
+            )
+            .toList();
+      }
+    }
+    if (ApiConfig.useLiveApi) {
+      throw ApiException(
+        message: response.message ?? 'Failed to load countries',
+        statusCode: response.statusCode,
+        code: response.errorCode,
+      );
+    }
+    return const [];
   }
 
   // ==========================================

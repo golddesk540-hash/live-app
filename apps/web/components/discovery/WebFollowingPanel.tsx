@@ -25,6 +25,7 @@ import {
   FixtureUserRelation,
   FixtureLiveRoom,
 } from '@/lib/design/designFixtures';
+import { USE_LIVE_API } from '@/lib/clientFlags';
 
 export interface WebFollowingPanelProps {
   isUr?: boolean;
@@ -48,8 +49,90 @@ export const WebFollowingPanel: React.FC<WebFollowingPanelProps> = ({
   // User profile modal
   const [selectedUser, setSelectedUser] = useState<FixtureUserRelation | null>(null);
 
-  // Retrieve fixtures
+  // Live API data states
+  const [liveApiUsers, setLiveApiUsers] = useState<FixtureUserRelation[]>([]);
+  const [liveApiRoomsMap, setLiveApiRoomsMap] = useState<Record<string, FixtureLiveRoom>>({});
+  const [liveLoading, setLiveLoading] = useState<boolean>(USE_LIVE_API);
+  const [liveError, setLiveError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!USE_LIVE_API) return;
+    let isMounted = true;
+    setLiveLoading(true);
+    setLiveError(null);
+
+    fetch('/api/discovery/following')
+      .then(async (res) => {
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `HTTP ${res.status}: Failed to load followed creators`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (!isMounted) return;
+        if (data.success) {
+          const users: FixtureUserRelation[] = (data.users || []).map((u: any) => ({
+            userId: u.userId || u.id,
+            nickname: u.nickname,
+            avatarUrl: u.avatarUrl,
+            relationType: 'following',
+            isOnline: Boolean(u.isLive),
+            mutualCount: 0,
+            country: 'Pakistan',
+            isFollowing: true,
+          }));
+
+          const roomsMap: Record<string, FixtureLiveRoom> = {};
+          (data.liveRooms || []).forEach((r: any) => {
+            const hostKey = (r.hostNickname || r.host?.nickname || r.hostName || '').toLowerCase();
+            if (hostKey) {
+              roomsMap[hostKey] = {
+                id: r.id || r.roomId,
+                roomNumber: r.roomNumber || r.room_number || '8839001',
+                title: r.title || r.roomTitle,
+                hostNickname: r.hostNickname || r.host?.nickname || r.hostName || 'Broadcaster',
+                hostAvatar: r.hostAvatar || r.host?.avatarUrl || '/avatars/default.png',
+                coverUrl: r.coverUrl || '/assets/viewer/sample_viewer_broadcast.png',
+                category: r.category || 'Live Chat',
+                country: r.country || 'Pakistan',
+                countryCode: r.countryCode || 'PK',
+                flagEmoji: r.flagEmoji || '🇵🇰',
+                viewerCount: Number(r.viewerCount) || 0,
+                heatScore: (Number(r.viewerCount) || 100) * 12 + 450,
+                isLive: true,
+                isPkActive: Boolean(r.isPk),
+                tags: r.tags || ['Live'],
+              };
+            }
+          });
+
+          setLiveApiUsers(users);
+          setLiveApiRoomsMap(roomsMap);
+          setLiveLoading(false);
+        } else {
+          throw new Error(data.error || 'Failed to load following list');
+        }
+      })
+      .catch((err) => {
+        if (!isMounted) return;
+        setLiveError(err.message);
+        setLiveLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Retrieve followed users from PostgreSQL when USE_LIVE_API is ON, or DesignFixtures when OFF
   const { followersList, followingError } = useMemo(() => {
+    if (USE_LIVE_API) {
+      if (liveError) {
+        return { followersList: [] as FixtureUserRelation[], followingError: liveError };
+      }
+      return { followersList: liveApiUsers, followingError: null };
+    }
     try {
       if (DesignFixtures.isError) {
         throw new Error('Follower relationship graph offline. Please retry.');
@@ -61,9 +144,12 @@ export const WebFollowingPanel: React.FC<WebFollowingPanelProps> = ({
         followingError: err?.message || 'Failed to load followed users.',
       };
     }
-  }, []);
+  }, [liveApiUsers, liveError]);
 
   const liveRoomsMap = useMemo(() => {
+    if (USE_LIVE_API) {
+      return liveApiRoomsMap;
+    }
     try {
       const map: Record<string, FixtureLiveRoom> = {};
       DesignFixtures.liveRooms.forEach((r) => {
@@ -73,7 +159,7 @@ export const WebFollowingPanel: React.FC<WebFollowingPanelProps> = ({
     } catch {
       return {};
     }
-  }, []);
+  }, [liveApiRoomsMap]);
 
   // Filtered followers
   const filteredUsers = useMemo(() => {

@@ -54,13 +54,21 @@ export async function GET(req: NextRequest) {
       battleTypes = CANONICAL_PK_BATTLE_TYPES;
     }
 
+    const { searchParams } = new URL(req.url);
+    const includeLocked = searchParams.get('includeLocked') === 'true';
+
+    // Official B7 requirement: Public PK type page displays 1v1 only, 4-host PK remains unreachable and has no public label
+    const displayedBattleTypes = includeLocked ? battleTypes : battleTypes.filter((t) => t.id === '1v1');
+
     return NextResponse.json({
       success: true,
-      battleTypes,
+      battleTypes: displayedBattleTypes,
       defaultType: '1v1',
+      pk1v1Enabled,
+      pk4hostEnabled: false,
       featureFlags: {
         pk1v1Enabled,
-        pk4hostEnabled,
+        pk4hostEnabled: false,
       },
     });
   } catch (error: any) {

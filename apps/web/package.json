@@ -6,7 +6,11 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:migrate": "node scripts/migrate.cjs",
+    "db:validate": "node scripts/migrate.cjs --validate",
+    "db:status": "node scripts/migrate.cjs --status",
+    "db:seed": "node scripts/seed_catalogs.cjs"
   },
   "dependencies": {
     "agora-rtc-sdk-ng": "^4.24.9",

@@ -10,6 +10,7 @@ import 'package:popo_live/screens/host_rankings/host_rankings_screen.dart';
 import 'package:popo_live/screens/invites/invites_screen.dart';
 import 'package:popo_live/screens/store/store_screen.dart';
 import 'package:popo_live/screens/task_level/task_level_screen.dart';
+import 'package:popo_live/screens/recognition/recognition_screen.dart';
 import 'package:popo_live/screens/fan_club/fan_club_screen.dart';
 import 'package:popo_live/screens/live/live_rules_screen.dart';
 import 'package:popo_live/screens/agency_management/agency_management_screen.dart';
@@ -460,7 +461,7 @@ void main() {
       await tester.pumpAndSettle();
     });
 
-    testWidgets('10. Honor Level feature icon opens TaskLevelScreen',
+    testWidgets('10. Honor Level feature icon opens RecognitionScreen (Section 5, R3)',
         (tester) async {
       _setPhoneViewport(tester);
       addTearDown(() {
@@ -483,7 +484,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.byType(TaskLevelScreen), findsOneWidget);
+      expect(find.byType(RecognitionScreen), findsOneWidget);
     });
 
     testWidgets('11. Fan Club feature icon opens FanClubScreen',
@@ -835,8 +836,8 @@ void main() {
       expect(find.byType(MeScreen), findsOneWidget);
       expect(find.text('Amina Noor'), findsOneWidget);
 
-      // Switch to Explore tab (index 1)
-      await tester.tap(find.text('Explore').last);
+      // Switch to Party tab (index 1, Section 3 R1)
+      await tester.tap(find.text('Party'));
       await tester.pumpAndSettle();
 
       // Switch back to Me tab (index 4)

@@ -31,6 +31,17 @@ export async function GET(
       );
     }
 
+    if (room.status === 'ended' || room.status === 'closed' || !room.is_live) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'ROOM_ENDED: This party room has ended and is no longer accepting seat requests.',
+          code: 'ROOM_ENDED',
+        },
+        { status: 400 }
+      );
+    }
+
     // Locked Rule 5: Host verification
     const isHost =
       (room.host_user_id && room.host_user_id.toString() === user.id.toString()) ||
@@ -111,6 +122,17 @@ export async function POST(
       );
     }
 
+    if (room.status === 'ended' || room.status === 'closed' || !room.is_live) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'ROOM_ENDED: This party room has ended and is no longer accepting seat requests.',
+          code: 'ROOM_ENDED',
+        },
+        { status: 400 }
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
 
     // 2. Locked Rule 4: One seat per user in this room
@@ -152,18 +174,49 @@ export async function POST(
       );
     }
 
-    // 4. Target seat selection (Seat 2 to 9, never 1 which is host)
-    let requestedSeat = body.seatNumber ? parseInt(body.seatNumber, 10) : null;
+    // 4. Target seat selection (Seat 2 to 9, Seat 1 is reserved for host)
+    let requestedSeat = body.seatNumber !== undefined && body.seatNumber !== null
+      ? parseInt(body.seatNumber, 10)
+      : null;
 
     if (requestedSeat !== null) {
-      if (requestedSeat < 2 || requestedSeat > 9) {
+      if (isNaN(requestedSeat) || requestedSeat < 1 || requestedSeat > 9) {
         return NextResponse.json(
           {
             success: false,
-            error: 'ROOM_FULL_OR_SEAT_OUT_OF_RANGE: Requested seat must be between 2 and 9.',
+            error: 'ROOM_FULL_OR_SEAT_OUT_OF_RANGE: Requested seat must be between 1 and 9.',
             code: 'ROOM_FULL_OR_SEAT_OUT_OF_RANGE',
           },
           { status: 400 }
+        );
+      }
+
+      // Seat 1 is permanently reserved for the host
+      if (requestedSeat === 1) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'SEAT_ALREADY_OCCUPIED: Seat #1 is reserved for the host and is already occupied.',
+            code: 'SEAT_ALREADY_OCCUPIED',
+          },
+          { status: 409 }
+        );
+      }
+
+      // Check if requested seat is already occupied
+      const targetCheck = await query<any>(
+        `SELECT status, participant_id FROM popolive.party_seats 
+         WHERE room_number = $1 AND seat_number = $2 LIMIT 1`,
+        [room.room_number, requestedSeat]
+      );
+      if (targetCheck.length > 0 && targetCheck[0].status === 'occupied') {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `SEAT_ALREADY_OCCUPIED: Seat #${requestedSeat} is already occupied.`,
+            code: 'SEAT_ALREADY_OCCUPIED',
+          },
+          { status: 409 }
         );
       }
     } else {

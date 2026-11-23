@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ChevronLeft,
-  Lock,
   Users,
   User,
   Swords,
@@ -80,15 +79,7 @@ export default function PKBattleTypeScreen({
   }, []);
 
   // Card click handler
-  const handleSelectCard = (typeId: PKBattleTypeId, isLocked: boolean) => {
-    if (isLocked) {
-      // 4-Host is locked at launch as per strict prompt rules
-      const lockedNotice = isUrdu
-        ? '4 میزبان جنگ فی الوقت مقفل ہے۔ آئندہ اپڈیٹ میں دستیاب ہوگی۔'
-        : '4-Host Battle is locked. Available in a future release.';
-      showToast(lockedNotice);
-      return;
-    }
+  const handleSelectCard = (typeId: PKBattleTypeId) => {
     setSelectedType(typeId);
   };
 
@@ -160,14 +151,11 @@ export default function PKBattleTypeScreen({
     saving: isUrdu ? 'محفوظ کیا جا رہا ہے...' : 'Configuring...',
     oneVsOneName: isUrdu ? '1 بمقابلہ 1' : '1 vs 1',
     oneVsOneSub: isUrdu ? 'دو میزبان الگ الگ اسکور کے ساتھ آمنے سامنے' : 'Two hosts compete in real-time',
-    fourHostName: isUrdu ? '4 میزبان جنگ' : '4-Host Battle',
-    fourHostSub: isUrdu ? 'چار میزبان جنگ (جلد آرہا ہے)' : 'Four host positions (Coming Soon)',
     watermarkTop: '6.1 Battle Types',
-    watermarkBottom: '(1v1, optional 4-host)',
+    watermarkBottom: '(1v1)',
   };
 
   const type1v1 = battleTypes.find((t) => t.id === '1v1') || CANONICAL_PK_BATTLE_TYPES[0];
-  const type4host = battleTypes.find((t) => t.id === '4_host') || CANONICAL_PK_BATTLE_TYPES[1];
 
   return (
     <div
@@ -244,14 +232,10 @@ export default function PKBattleTypeScreen({
         {/* CARD 1: 1 vs 1 PK Battle (Selected & Highlighted matching PNG)     */}
         {/* ================================================================= */}
         <div
-          onClick={() => handleSelectCard('1v1', false)}
+          onClick={() => handleSelectCard('1v1')}
           data-battle-type="1v1"
           data-testid="card-battle-1v1"
-          className={`relative w-full rounded-[22px] p-5 cursor-pointer transition-all duration-200 select-none ${
-            selectedType === '1v1'
-              ? 'bg-[#1e1338] border-2 border-[#ff2d78] shadow-[0_0_20px_rgba(255,45,120,0.38)]'
-              : 'bg-[#160f2d] border border-white/10 hover:border-pink-500/40'
-          }`}
+          className="relative w-full rounded-[22px] p-5 cursor-pointer transition-all duration-200 select-none bg-[#1e1338] border-2 border-[#ff2d78] shadow-[0_0_20px_rgba(255,45,120,0.38)]"
         >
           <div className="flex items-center justify-between">
             {/* Left Content: Title and Subtitle */}
@@ -293,52 +277,6 @@ export default function PKBattleTypeScreen({
                   <User className="w-5 h-5 text-purple-300" />
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ================================================================= */}
-        {/* CARD 2: 4-Host Battle (Locked & Disabled matching PNG)            */}
-        {/* ================================================================= */}
-        <div
-          onClick={() => handleSelectCard('4_host', true)}
-          data-battle-type="4_host"
-          data-testid="card-battle-4host"
-          className="relative w-full rounded-[22px] p-5 cursor-not-allowed bg-[#130d28]/85 border border-white/5 opacity-80 transition-all select-none hover:bg-[#160f2e]"
-        >
-          <div className="flex items-center justify-between">
-            {/* Left Content */}
-            <div className="flex-1 pr-3">
-              <div className="flex items-center space-x-2">
-                <span className="text-[18px] font-bold text-white/90 tracking-wide">
-                  {t.fourHostName}
-                </span>
-                {/* Coming Soon badge */}
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-white/50 border border-white/10">
-                  {isUrdu ? 'جلد آرہا ہے' : 'Coming Soon'}
-                </span>
-              </div>
-
-              {/* 4 Host Silhouettes Graphic */}
-              <div className="mt-2 flex items-center space-x-1.5 opacity-60">
-                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center">
-                  <User className="w-3.5 h-3.5 text-white/70" />
-                </div>
-                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center">
-                  <User className="w-3.5 h-3.5 text-white/70" />
-                </div>
-                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center">
-                  <User className="w-3.5 h-3.5 text-white/70" />
-                </div>
-                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center">
-                  <User className="w-3.5 h-3.5 text-white/70" />
-                </div>
-              </div>
-            </div>
-
-            {/* Right Graphic: Closed Padlock Icon matching reference PNG */}
-            <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-pink-300/80 shrink-0 shadow-inner">
-              <Lock className="w-5 h-5 text-pink-400" />
             </div>
           </div>
         </div>

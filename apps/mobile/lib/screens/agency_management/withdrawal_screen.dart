@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../api/api.dart';
 import '../../theme/popo_theme.dart';
+import '../../design/design_fixtures.dart';
+import '../../widgets/popo_error_state.dart';
 
 /// Popo Live — Phase 4 Module 8: Agent & Host Withdrawal Screen
 /// Payout Method Management (JazzCash, Easypaisa, Bank Transfer) & Secure Funds Withdrawal
@@ -64,39 +66,75 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> with SingleTickerPr
     });
 
     try {
-      final results = await Future.wait([
-        AgentFinancialService.instance.getEarnings(),
-        AgentFinancialService.instance.getPayoutMethods(),
-        AgentFinancialService.instance.getWithdrawals(),
-      ]);
-
-      if (!mounted) return;
-
-      final earningsRes = results[0];
-      final methodsRes = results[1];
-      final historyRes = results[2];
-
-      if (earningsRes.isSuccess && earningsRes.data != null) {
-        final d = earningsRes.data['earnings'] as Map<String, dynamic>? ?? {};
-        _availablePoints = (d['availableBalancePoints'] as num?)?.toInt() ?? 0;
-        _availableUsd = (d['availableUsd'] as num?)?.toDouble() ?? 0.0;
-        _pendingPoints = (d['pendingBalancePoints'] as num?)?.toInt() ?? 0;
+      if (DesignFixtures.isError) {
+        throw const DesignFixtureException(
+          message: 'Withdrawal settlement ledger failed [ERR_PAYOUT_TIMEOUT]',
+        );
       }
 
-      if (methodsRes.isSuccess && methodsRes.data != null) {
-        _payoutMethods = (methodsRes.data['payoutMethods'] as List<dynamic>?) ?? [];
-        if (_payoutMethods.isNotEmpty) {
-          final def = _payoutMethods.firstWhere(
-            (m) => m['isDefault'] == true,
-            orElse: () => _payoutMethods.first,
-          );
-          _selectedMethodId = def['id']?.toString();
-        }
+      if (DesignFixtures.isEmpty) {
+        setState(() {
+          _availablePoints = 0;
+          _availableUsd = 0.0;
+          _pendingPoints = 0;
+          _payoutMethods = [];
+          _selectedMethodId = null;
+          _withdrawals = [];
+          _isLoading = false;
+        });
+        return;
       }
 
-      if (historyRes.isSuccess && historyRes.data != null) {
-        _withdrawals = (historyRes.data['withdrawals'] as List<dynamic>?) ?? [];
-      }
+      final fixturePoints = DesignFixtures.pointsBalance;
+      final fixtureRecords = DesignFixtures.withdrawalRecords;
+
+      _availablePoints = fixturePoints;
+      _availableUsd = fixturePoints / 1000.0;
+      _pendingPoints = 30000;
+
+      _payoutMethods = [
+        {
+          'id': 'pm_easypaisa',
+          'provider': 'easypaisa',
+          'accountTitle': 'Amina Noor',
+          'accountNumber': '0300-8765432',
+          'bankName': null,
+          'isDefault': true,
+        },
+        {
+          'id': 'pm_jazzcash',
+          'provider': 'jazzcash',
+          'accountTitle': 'Amina Noor',
+          'accountNumber': '0321-9876543',
+          'bankName': null,
+          'isDefault': false,
+        },
+        {
+          'id': 'pm_meezan',
+          'provider': 'bank_transfer',
+          'accountTitle': 'Amina Noor',
+          'accountNumber': 'PK89MEZN00018839201',
+          'bankName': 'Meezan Bank Ltd',
+          'isDefault': false,
+        },
+      ];
+      _selectedMethodId ??= 'pm_easypaisa';
+
+      _withdrawals = fixtureRecords
+          .map((r) => {
+                'id': r.id,
+                'pointsAmount': r.amountPoints,
+                'usdAmount': r.amountUsd,
+                'currencyAmount': r.amountPkr.toDouble(),
+                'targetCurrency': 'PKR',
+                'payoutMethod': {
+                  'provider': r.paymentMethod,
+                  'accountTitle': 'Amina Noor'
+                },
+                'status': r.status.toLowerCase(),
+                'createdAt': r.timestamp,
+              })
+          .toList();
 
       setState(() {
         _isLoading = false;
@@ -104,7 +142,10 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> with SingleTickerPr
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = e
+            .toString()
+            .replaceFirst('Exception: ', '')
+            .replaceFirst('DesignFixtureException: ', '');
         _isLoading = false;
       });
     }
@@ -120,92 +161,95 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> with SingleTickerPr
 
     if (_selectedPoints < 10000) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Minimum withdrawal is 10,000 points (\$10 USD).')),
+        const SnackBar(
+            content: Text('Minimum withdrawal is 10,000 points (\$10 USD).')),
       );
       return;
     }
 
     if (_selectedPoints > 5000000) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Maximum withdrawal is 5,000,000 points (\$5,000 USD).')),
+        const SnackBar(
+            content:
+                Text('Maximum withdrawal is 5,000,000 points (\$5,000 USD).')),
       );
       return;
     }
 
     if (_selectedPoints > _availablePoints) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Withdrawal amount exceeds available points.')),
+        const SnackBar(
+            content: Text('Withdrawal amount exceeds available points.')),
       );
       return;
     }
 
+    final selectedMethod = _payoutMethods.firstWhere(
+      (m) => m['id'] == _selectedMethodId,
+      orElse: () => {'provider': 'Easypaisa'},
+    );
+    final methodLabel =
+        '${selectedMethod["provider"]} (${selectedMethod["accountNumber"] ?? "Direct"})';
+
     setState(() => _isSubmitting = true);
 
-    try {
-      final res = await AgentFinancialService.instance.requestWithdrawal(
-        pointsAmount: _selectedPoints,
-        payoutMethodId: _selectedMethodId!,
-      );
+    final success = DesignFixtures.submitWithdrawal(
+      points: _selectedPoints,
+      paymentMethod: methodLabel,
+    );
 
-      if (!mounted) return;
-      setState(() => _isSubmitting = false);
-
-      if (res.isSuccess) {
-        final w = res.data['withdrawal'] as Map<String, dynamic>? ?? {};
-        final ref = w['withdrawalReference'] ?? 'WTH-NEW';
-        final fiat = w['fiatAmount'] ?? (_selectedPoints / 1000).toStringAsFixed(2);
-
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: PopoTheme.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Row(
-              children: [
-                Icon(Icons.check_circle, color: PopoTheme.success),
-                SizedBox(width: 8),
-                Text('Request Submitted', style: TextStyle(color: PopoTheme.textPrimary, fontSize: 18)),
-              ],
-            ),
-            content: Text(
-              'Your withdrawal request of \$$fiat ($_selectedPoints points) was submitted successfully!\n\nReference: $ref\nStatus: Pending Review',
-              style: const TextStyle(color: PopoTheme.textSecondary, fontSize: 14),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  _loadData();
-                  _tabController.animateTo(1);
-                },
-                child: const Text('View History', style: TextStyle(color: PopoTheme.cyan)),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: PopoTheme.primary),
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                  _loadData();
-                },
-                child: const Text('OK', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(res.error ?? 'Failed to submit withdrawal request.'),
-            backgroundColor: PopoTheme.danger,
-          ),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
+    if (!success) {
       setState(() => _isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: PopoTheme.danger),
+        const SnackBar(
+          content: Text('Withdrawal points exceed available balance.'),
+          backgroundColor: PopoTheme.danger,
+        ),
       );
+      return;
     }
+
+    _loadData();
+    setState(() => _isSubmitting = false);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: PopoTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle, color: PopoTheme.success),
+            SizedBox(width: 8),
+            Text('Withdrawal Submitted',
+                style: TextStyle(
+                    color: PopoTheme.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(
+          'Your request to withdraw \$${(_selectedPoints / 1000).toStringAsFixed(2)} USD (${_selectedPoints.toString().replaceAllMapped(RegExp(r"(\d{1,3})(?=(\d{3})+(?!\d))"), (m) => "${m[1]},")} pts) via $methodLabel has been submitted for review.\n\nStatus: Processing\nSettlement: 24–48 hours (Fixture simulation)',
+          style: const TextStyle(color: PopoTheme.textSecondary, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _tabController.animateTo(1);
+            },
+            child: const Text('View Ledger',
+                style: TextStyle(color: PopoTheme.cyan)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: PopoTheme.primary),
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Done', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showAddMethodModal() {
@@ -454,7 +498,7 @@ class _WithdrawalScreenState extends State<WithdrawalScreen> with SingleTickerPr
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Available For Withdrawal', style: TextStyle(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.w600)),
+                  const Text('WITHDRAWAL POINTS BALANCE', style: TextStyle(color: Colors.black87, fontSize: 13, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 8),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.baseline,

@@ -77,11 +77,234 @@ class DesignFixtures {
     currentState = activeDesignFixtureState;
     _mutableCoinBalance = 154200;
     _mutablePointsBalance = 420500;
+    _followedUserIds
+      ..clear()
+      ..addAll([
+        'u_sana_ali',
+        'u_bilal_ahmed',
+        'u_zainab_khan',
+        'u_hamza_tariq',
+        'u_hira_malik',
+        'u_faizan_sheikh',
+      ]);
+    _equippedBagItemIds
+      ..clear()
+      ..addAll(['bag_01', 'bag_02']);
+    _claimedTaskIds
+      ..clear()
+      ..add('task_03');
+    _joinedFanClubIds
+      ..clear()
+      ..add('club_amina');
+    _isStarterPackClaimed = false;
+    _currentProfile = _profileAminaNoor;
+    _withdrawalRecordsList = [
+      const FixtureWithdrawalRecord(
+        id: 'wd_01',
+        amountPoints: 200000,
+        amountUsd: 20.0,
+        amountPkr: 5600,
+        paymentMethod: 'Easypaisa (0300-8765432)',
+        status: 'Completed',
+        timestamp: 'Nov 14, 2026',
+      ),
+      const FixtureWithdrawalRecord(
+        id: 'wd_02',
+        amountPoints: 300000,
+        amountUsd: 30.0,
+        amountPkr: 8400,
+        paymentMethod: 'Meezan Bank (PK89MEZN00018839201)',
+        status: 'Processing',
+        timestamp: 'Today, 09:12 AM',
+      ),
+    ];
+    _blockedUsers = [
+      const FixtureBlockedUser(
+        id: 'u_spambot_01',
+        nickname: 'SpamBot_99',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100',
+        blockedDate: 'Nov 12, 2026',
+        reason: 'Unsolicited promotional messages',
+      ),
+      const FixtureBlockedUser(
+        id: 'u_troll_user_02',
+        nickname: 'TrollUser88',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100',
+        blockedDate: 'Nov 08, 2026',
+        reason: 'Disruptive chat behavior',
+      ),
+    ];
   }
 
   // Mutable state cache for UI simulation
   static int _mutableCoinBalance = 154200;
   static int _mutablePointsBalance = 420500;
+  static int get pointsBalance => _mutablePointsBalance;
+  static int get coinBalance => _mutableCoinBalance;
+  static final Set<String> _followedUserIds = {
+    'u_sana_ali',
+    'u_bilal_ahmed',
+    'u_zainab_khan',
+    'u_hamza_tariq',
+    'u_hira_malik',
+    'u_faizan_sheikh',
+  };
+  static final Set<String> _equippedBagItemIds = {'bag_01', 'bag_02'};
+  static final Set<String> _claimedTaskIds = {'task_03'};
+  static final Set<String> _joinedFanClubIds = {'club_amina'};
+  static bool _isStarterPackClaimed = false;
+  static bool get isStarterPackClaimed => _isStarterPackClaimed;
+  static void claimStarterPack() {
+    _isStarterPackClaimed = true;
+    _mutableCoinBalance += 50;
+    _mutablePointsBalance += 200;
+  }
+
+  static List<FixtureWithdrawalRecord> _withdrawalRecordsList = [
+    const FixtureWithdrawalRecord(
+      id: 'wd_01',
+      amountPoints: 200000,
+      amountUsd: 20.0,
+      amountPkr: 5600,
+      paymentMethod: 'Easypaisa (0300-8765432)',
+      status: 'Completed',
+      timestamp: 'Nov 14, 2026',
+    ),
+    const FixtureWithdrawalRecord(
+      id: 'wd_02',
+      amountPoints: 300000,
+      amountUsd: 30.0,
+      amountPkr: 8400,
+      paymentMethod: 'Meezan Bank (PK89MEZN00018839201)',
+      status: 'Processing',
+      timestamp: 'Today, 09:12 AM',
+    ),
+  ];
+
+  static bool submitWithdrawal({
+    required int points,
+    required String paymentMethod,
+  }) {
+    if (points <= 0 || points > _mutablePointsBalance) return false;
+    final usd = points / 10000.0;
+    final pkr = (usd * 280).toInt();
+    _mutablePointsBalance -= points;
+    final record = FixtureWithdrawalRecord(
+      id: 'wd_${DateTime.now().millisecondsSinceEpoch}',
+      amountPoints: points,
+      amountUsd: usd,
+      amountPkr: pkr,
+      paymentMethod: paymentMethod,
+      status: 'Processing',
+      timestamp: 'Just now',
+    );
+    _withdrawalRecordsList.insert(0, record);
+    return true;
+  }
+
+  static List<FixtureBlockedUser> _blockedUsers = [
+    const FixtureBlockedUser(
+      id: 'u_spambot_01',
+      nickname: 'SpamBot_99',
+      avatarUrl:
+          'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100',
+      blockedDate: 'Nov 12, 2026',
+      reason: 'Unsolicited promotional messages',
+    ),
+    const FixtureBlockedUser(
+      id: 'u_troll_user_02',
+      nickname: 'TrollUser88',
+      avatarUrl:
+          'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100',
+      blockedDate: 'Nov 08, 2026',
+      reason: 'Disruptive chat behavior',
+    ),
+  ];
+
+  static List<FixtureBlockedUser> get blockedUsers {
+    if (isError) {
+      throw const DesignFixtureException(
+        message: 'Failed to query blocked users directory [ERR_BLOCKED_503]',
+      );
+    }
+    if (isEmpty) return const [];
+    return List.unmodifiable(_blockedUsers);
+  }
+
+  static bool unblockUser(String userId) {
+    final initialLen = _blockedUsers.length;
+    _blockedUsers.removeWhere((u) => u.id == userId);
+    return _blockedUsers.length < initialLen;
+  }
+
+  /// Check if a bag item is equipped
+  static bool isBagItemEquipped(String id) => _equippedBagItemIds.contains(id);
+
+  /// Toggle equip state for a bag item
+  static bool toggleEquipBagItem(String id) {
+    if (_equippedBagItemIds.contains(id)) {
+      _equippedBagItemIds.remove(id);
+      return false;
+    } else {
+      _equippedBagItemIds.add(id);
+      return true;
+    }
+  }
+
+  static void equipBagItem(String id) => _equippedBagItemIds.add(id);
+  static void unequipBagItem(String id) => _equippedBagItemIds.remove(id);
+
+  /// Check if a task reward is claimed
+  static bool isTaskClaimed(String id) => _claimedTaskIds.contains(id);
+
+  /// Claim a completed task reward
+  static bool claimTaskReward(String id) {
+    _claimedTaskIds.add(id);
+    _mutablePointsBalance += 1000;
+    return true;
+  }
+
+  /// Check if user has joined a Fan Club
+  static bool isFanClubJoined(String clubId) =>
+      _joinedFanClubIds.contains(clubId);
+
+  /// Toggle Fan Club membership
+  static bool toggleFanClubMembership(String clubId) {
+    if (_joinedFanClubIds.contains(clubId)) {
+      _joinedFanClubIds.remove(clubId);
+      return false;
+    } else {
+      _joinedFanClubIds.add(clubId);
+      return true;
+    }
+  }
+
+  /// Check if a user is followed in fixture state
+  static bool isUserFollowed(String userId) =>
+      _followedUserIds.contains(userId);
+
+  /// Toggle follow state for a user locally
+  static bool toggleFollow(String userId) {
+    if (_followedUserIds.contains(userId)) {
+      _followedUserIds.remove(userId);
+      return false;
+    } else {
+      _followedUserIds.add(userId);
+      return true;
+    }
+  }
+
+  /// Follow a user locally
+  static void followUser(String userId) {
+    _followedUserIds.add(userId);
+  }
+
+  /// Unfollow a user locally
+  static void unfollowUser(String userId) {
+    _followedUserIds.remove(userId);
+  }
 
   /// Current coin balance for live gift transactions
   static int get currentCoinBalance => _mutableCoinBalance;
@@ -297,6 +520,8 @@ class DesignFixtures {
   // --------------------------------------------------------------------------
   // 1. USER PROFILES
   // --------------------------------------------------------------------------
+  static FixtureUserProfile _currentProfile = _profileAminaNoor;
+
   static FixtureUserProfile get currentUserProfile {
     if (isError) {
       throw const DesignFixtureException(
@@ -307,7 +532,21 @@ class DesignFixtures {
       );
     }
     if (isEmpty) return FixtureUserProfile.empty();
-    return _profileAminaNoor;
+    return _currentProfile;
+  }
+
+  static void updateCurrentUserProfile({
+    String? nickname,
+    String? bio,
+    String? country,
+    String? avatarUrl,
+  }) {
+    _currentProfile = _currentProfile.copyWith(
+      nickname: nickname,
+      bio: bio,
+      country: country,
+      avatarUrl: avatarUrl,
+    );
   }
 
   static List<FixtureUserProfile> get userProfiles {
@@ -2093,7 +2332,7 @@ class DesignFixtures {
   }
 
   // --------------------------------------------------------------------------
-  // 12. FRIENDS, FOLLOWERS, AND PROFILE VISITORS
+  // 12. FRIENDS, FOLLOWING, FOLLOWERS, AND PROFILE VISITORS (Section 4, R2)
   // --------------------------------------------------------------------------
   static List<FixtureUserRelation> get friends {
     if (isError) {
@@ -2102,7 +2341,7 @@ class DesignFixtures {
       );
     }
     if (isEmpty) return const [];
-    return const [
+    return [
       FixtureUserRelation(
         userId: 'u_sana_ali',
         nickname: 'Sana Ali',
@@ -2111,6 +2350,8 @@ class DesignFixtures {
         relationType: 'friend',
         isOnline: true,
         mutualCount: 18,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_sana_ali'),
       ),
       FixtureUserRelation(
         userId: 'u_bilal_ahmed',
@@ -2120,6 +2361,8 @@ class DesignFixtures {
         relationType: 'friend',
         isOnline: true,
         mutualCount: 24,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_bilal_ahmed'),
       ),
       FixtureUserRelation(
         userId: 'u_zainab_khan',
@@ -2129,6 +2372,8 @@ class DesignFixtures {
         relationType: 'friend',
         isOnline: false,
         mutualCount: 12,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_zainab_khan'),
       ),
       FixtureUserRelation(
         userId: 'u_hamza_tariq',
@@ -2138,6 +2383,85 @@ class DesignFixtures {
         relationType: 'friend',
         isOnline: true,
         mutualCount: 15,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_hamza_tariq'),
+      ),
+    ];
+  }
+
+  static List<FixtureUserRelation> get following {
+    if (isError) {
+      throw const DesignFixtureException(
+        message: 'Following list synchronization failed [ERR_FOLLOWING_503]',
+      );
+    }
+    if (isEmpty) return const [];
+    return [
+      FixtureUserRelation(
+        userId: 'u_sana_ali',
+        nickname: 'Sana Ali',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        relationType: 'following',
+        isOnline: true,
+        mutualCount: 18,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_sana_ali'),
+      ),
+      FixtureUserRelation(
+        userId: 'u_bilal_ahmed',
+        nickname: 'Bilal Ahmed',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+        relationType: 'following',
+        isOnline: true,
+        mutualCount: 24,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_bilal_ahmed'),
+      ),
+      FixtureUserRelation(
+        userId: 'u_zainab_khan',
+        nickname: 'Zainab Khan',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
+        relationType: 'following',
+        isOnline: false,
+        mutualCount: 12,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_zainab_khan'),
+      ),
+      FixtureUserRelation(
+        userId: 'u_hamza_tariq',
+        nickname: 'Hamza Tariq',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+        relationType: 'following',
+        isOnline: true,
+        mutualCount: 15,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_hamza_tariq'),
+      ),
+      FixtureUserRelation(
+        userId: 'u_hira_malik',
+        nickname: 'Hira Malik',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+        relationType: 'following',
+        isOnline: false,
+        mutualCount: 6,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_hira_malik'),
+      ),
+      FixtureUserRelation(
+        userId: 'u_faizan_sheikh',
+        nickname: 'Faizan Sheikh',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150',
+        relationType: 'following',
+        isOnline: true,
+        mutualCount: 9,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_faizan_sheikh'),
       ),
     ];
   }
@@ -2149,7 +2473,7 @@ class DesignFixtures {
       );
     }
     if (isEmpty) return const [];
-    return const [
+    return [
       FixtureUserRelation(
         userId: 'u_hira_malik',
         nickname: 'Hira Malik',
@@ -2158,6 +2482,8 @@ class DesignFixtures {
         relationType: 'follower',
         isOnline: false,
         mutualCount: 6,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_hira_malik'),
       ),
       FixtureUserRelation(
         userId: 'u_faizan_sheikh',
@@ -2167,6 +2493,8 @@ class DesignFixtures {
         relationType: 'follower',
         isOnline: true,
         mutualCount: 9,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_faizan_sheikh'),
       ),
       FixtureUserRelation(
         userId: 'u_tariq_jamil',
@@ -2176,6 +2504,8 @@ class DesignFixtures {
         relationType: 'follower',
         isOnline: false,
         mutualCount: 14,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_tariq_jamil'),
       ),
       FixtureUserRelation(
         userId: 'u_ayesha_siddiqui',
@@ -2185,6 +2515,74 @@ class DesignFixtures {
         relationType: 'follower',
         isOnline: true,
         mutualCount: 8,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_ayesha_siddiqui'),
+      ),
+    ];
+  }
+
+  static List<FixtureUserRelation> get visitors {
+    if (isError) {
+      throw const DesignFixtureException(
+        message: 'Profile visitor tracking unavailable [ERR_VISITOR_503]',
+      );
+    }
+    if (isEmpty) return const [];
+    return [
+      FixtureUserRelation(
+        userId: 'u_sana_ali',
+        nickname: 'Sana Ali',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+        relationType: 'visitor',
+        isOnline: true,
+        mutualCount: 18,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_sana_ali'),
+      ),
+      FixtureUserRelation(
+        userId: 'u_bilal_ahmed',
+        nickname: 'Bilal Ahmed',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+        relationType: 'visitor',
+        isOnline: true,
+        mutualCount: 24,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_bilal_ahmed'),
+      ),
+      FixtureUserRelation(
+        userId: 'u_hamza_tariq',
+        nickname: 'Hamza Tariq',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+        relationType: 'visitor',
+        isOnline: true,
+        mutualCount: 15,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_hamza_tariq'),
+      ),
+      FixtureUserRelation(
+        userId: 'u_zainab_khan',
+        nickname: 'Zainab Khan',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
+        relationType: 'visitor',
+        isOnline: false,
+        mutualCount: 12,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_zainab_khan'),
+      ),
+      FixtureUserRelation(
+        userId: 'u_hira_malik',
+        nickname: 'Hira Malik',
+        avatarUrl:
+            'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+        relationType: 'visitor',
+        isOnline: false,
+        mutualCount: 6,
+        country: 'Pakistan',
+        isFollowing: isUserFollowed('u_hira_malik'),
       ),
     ];
   }
@@ -2305,8 +2703,8 @@ class DesignFixtures {
       );
     }
     if (isEmpty) return const [];
-    return const [
-      FixtureTask(
+    return [
+      const FixtureTask(
         id: 'task_01',
         title: 'Go Live for 60 Minutes',
         rewardText: '500 Host Points',
@@ -2323,8 +2721,8 @@ class DesignFixtures {
         currentProgress: 3,
         targetGoal: 3,
         unit: 'gifts',
-        status: 'completed',
-        isClaimed: false,
+        status: isTaskClaimed('task_02') ? 'claimed' : 'completed',
+        isClaimed: isTaskClaimed('task_02'),
       ),
       FixtureTask(
         id: 'task_03',
@@ -2611,13 +3009,13 @@ class DesignFixtures {
       );
     }
     if (isEmpty) return const [];
-    return const [
+    return [
       FixtureBagItem(
         id: 'bag_01',
         name: 'Golden Dragon Avatar Frame',
         category: 'Avatar Frame',
         quantity: 1,
-        isEquipped: true,
+        isEquipped: isBagItemEquipped('bag_01'),
         expiresInText: '14 days left',
       ),
       FixtureBagItem(
@@ -2625,7 +3023,7 @@ class DesignFixtures {
         name: 'Cyberpunk Neon Ride Entrance',
         category: 'Entrance Effect',
         quantity: 1,
-        isEquipped: true,
+        isEquipped: isBagItemEquipped('bag_02'),
         expiresInText: '7 days left',
       ),
       FixtureBagItem(
@@ -2633,7 +3031,7 @@ class DesignFixtures {
         name: 'PK Double Points Boost Card',
         category: 'Battle Prop',
         quantity: 3,
-        isEquipped: false,
+        isEquipped: isBagItemEquipped('bag_03'),
         expiresInText: 'Permanent',
       ),
       FixtureBagItem(
@@ -2641,7 +3039,7 @@ class DesignFixtures {
         name: 'VIP 3-Day Trial Pass',
         category: 'Voucher',
         quantity: 1,
-        isEquipped: false,
+        isEquipped: isBagItemEquipped('bag_04'),
         expiresInText: 'Expires in 30 days',
       ),
       FixtureBagItem(
@@ -2649,8 +3047,174 @@ class DesignFixtures {
         name: 'Rose Fireworks Gift Voucher',
         category: 'Gift Prop',
         quantity: 5,
-        isEquipped: false,
+        isEquipped: isBagItemEquipped('bag_05'),
         expiresInText: 'Expires in 60 days',
+      ),
+    ];
+  }
+
+  // --------------------------------------------------------------------------
+  // 15B. INVITATION PROGRAM & FAN CLUBS (R3)
+  // --------------------------------------------------------------------------
+  static FixtureInvitationInfo get invitationInfo {
+    if (isError) {
+      throw const DesignFixtureException(
+        message: 'Invitation referral server unavailable [ERR_INVITE_503]',
+      );
+    }
+    if (isEmpty) {
+      return const FixtureInvitationInfo(
+        inviteCode: 'POPO883901',
+        inviteUrl: 'https://popolive.app/invite/POPO883901',
+        totalInvited: 0,
+        totalCoinsEarned: 0,
+        joinedUsers: [],
+      );
+    }
+    return const FixtureInvitationInfo(
+      inviteCode: 'POPO883901',
+      inviteUrl: 'https://popolive.app/invite/POPO883901',
+      totalInvited: 4,
+      totalCoinsEarned: 20000,
+      joinedUsers: [
+        FixtureInvitedUser(
+          userId: 'u_sana_ali',
+          nickname: 'Sana Ali',
+          avatarUrl:
+              'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+          wealthLevel: 14,
+          hostLevel: 15,
+          joinedAgo: '3 days ago',
+          bonusEarned: 5000,
+        ),
+        FixtureInvitedUser(
+          userId: 'u_bilal_ahmed',
+          nickname: 'Bilal Ahmed',
+          avatarUrl:
+              'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+          wealthLevel: 10,
+          hostLevel: 14,
+          joinedAgo: '1 week ago',
+          bonusEarned: 5000,
+        ),
+        FixtureInvitedUser(
+          userId: 'u_zainab_khan',
+          nickname: 'Zainab Khan',
+          avatarUrl:
+              'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
+          wealthLevel: 9,
+          hostLevel: 12,
+          joinedAgo: '2 weeks ago',
+          bonusEarned: 5000,
+        ),
+        FixtureInvitedUser(
+          userId: 'u_hamza_tariq',
+          nickname: 'Hamza Tariq',
+          avatarUrl:
+              'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+          wealthLevel: 8,
+          hostLevel: 11,
+          joinedAgo: '3 weeks ago',
+          bonusEarned: 5000,
+        ),
+      ],
+    );
+  }
+
+  static List<FixtureFanClub> get fanClubs {
+    if (isError) {
+      throw const DesignFixtureException(
+        message: 'Fan Club directory synchronization failed [ERR_FANCLUB_503]',
+      );
+    }
+    if (isEmpty) return const [];
+    return [
+      FixtureFanClub(
+        id: 'club_amina',
+        name: 'AMINA VIP SYMPHONY',
+        hostName: 'Amina Noor',
+        hostAvatarUrl:
+            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+        fansCount: 1420 + (isFanClubJoined('club_amina') ? 1 : 0),
+        level: 7,
+        badge: 'Symphony Star',
+        isJoined: isFanClubJoined('club_amina'),
+        members: const [
+          FixtureFanClubMember(
+            userId: 'u_sana_ali',
+            nickname: 'Sana Ali',
+            avatarUrl:
+                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
+            fanLevel: 8,
+            fanBadge: 'Honor Fan',
+            contributionPoints: 18500,
+            isOnline: true,
+          ),
+          FixtureFanClubMember(
+            userId: 'u_bilal_ahmed',
+            nickname: 'Bilal Ahmed',
+            avatarUrl:
+                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
+            fanLevel: 7,
+            fanBadge: 'Super Fan',
+            contributionPoints: 14200,
+            isOnline: true,
+          ),
+          FixtureFanClubMember(
+            userId: 'u_hamza_tariq',
+            nickname: 'Hamza Tariq',
+            avatarUrl:
+                'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+            fanLevel: 5,
+            fanBadge: 'Active Member',
+            contributionPoints: 8900,
+            isOnline: false,
+          ),
+          FixtureFanClubMember(
+            userId: 'u_zainab_khan',
+            nickname: 'Zainab Khan',
+            avatarUrl:
+                'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150',
+            fanLevel: 4,
+            fanBadge: 'Active Member',
+            contributionPoints: 6400,
+            isOnline: false,
+          ),
+          FixtureFanClubMember(
+            userId: 'u_hira_malik',
+            nickname: 'Hira Malik',
+            avatarUrl:
+                'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
+            fanLevel: 2,
+            fanBadge: 'New Member',
+            contributionPoints: 2100,
+            isOnline: true,
+          ),
+        ],
+      ),
+      FixtureFanClub(
+        id: 'club_ayesha',
+        name: "AYESHA'S FAN CLUB",
+        hostName: 'Ayesha Khan',
+        hostAvatarUrl:
+            'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+        fansCount: 12840 + (isFanClubJoined('club_ayesha') ? 1 : 0),
+        level: 6,
+        badge: 'Ayesha Star',
+        isJoined: isFanClubJoined('club_ayesha'),
+        members: const [],
+      ),
+      FixtureFanClub(
+        id: 'club_hamza',
+        name: 'HAMZA PK LEGENDS',
+        hostName: 'Hamza Ali',
+        hostAvatarUrl:
+            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
+        fansCount: 18420 + (isFanClubJoined('club_hamza') ? 1 : 0),
+        level: 8,
+        badge: 'PK Titan',
+        isJoined: isFanClubJoined('club_hamza'),
+        members: const [],
       ),
     ];
   }
@@ -2765,26 +3329,107 @@ class DesignFixtures {
       );
     }
     if (isEmpty) return const [];
-    return const [
-      FixtureWithdrawalRecord(
-        id: 'wd_01',
-        amountPoints: 200000,
-        amountUsd: 20.0,
-        amountPkr: 5600,
-        paymentMethod: 'Easypaisa (0300-8765432)',
-        status: 'Completed',
-        timestamp: 'Nov 14, 2026',
-      ),
-      FixtureWithdrawalRecord(
-        id: 'wd_02',
-        amountPoints: 300000,
-        amountUsd: 30.0,
-        amountPkr: 8400,
-        paymentMethod: 'Meezan Bank (PK89MEZN00018839201)',
-        status: 'Processing',
-        timestamp: 'Today, 09:12 AM',
-      ),
-    ];
+    return List.unmodifiable(_withdrawalRecordsList);
+  }
+
+  // --------------------------------------------------------------------------
+  // 17. STARTER PACK, TASK LEVEL, AND EARNING IDENTITY (R4)
+  // --------------------------------------------------------------------------
+  static FixtureStarterPack get starterPack {
+    if (isError) {
+      throw const DesignFixtureException(
+        message: 'Failed to load starter pack: Server busy [ERR_PACK_SYNC_503]',
+      );
+    }
+    if (isEmpty) return FixtureStarterPack.empty();
+    return FixtureStarterPack(
+      title: 'Popo Live Host Starter Pack',
+      description: 'Welcome bonus for new streaming creators',
+      rewardPoints: 200,
+      rewardCoins: 50,
+      badgeName: 'Rising Star Host',
+      isClaimed: _isStarterPackClaimed,
+      guides: const [
+        {
+          'id': 'profile_setup',
+          'title': 'Complete Profile & Avatar',
+          'subtitle': 'Upload clear avatar and set up your bio & country',
+          'isCompleted': true,
+        },
+        {
+          'id': 'first_stream',
+          'title': 'Host First 15-Min Live',
+          'subtitle': 'Broadcast in public room with clear audio and video',
+          'isCompleted': false,
+        },
+        {
+          'id': 'join_party',
+          'title': 'Join 9-Seat Party Lounge',
+          'subtitle': 'Interact with other broadcasters on microphone',
+          'isCompleted': false,
+        },
+        {
+          'id': 'verify_id',
+          'title': 'Submit Earning KYC',
+          'subtitle': 'Clear identity verification for gift earnings payout',
+          'isCompleted': true,
+        },
+      ],
+    );
+  }
+
+  static FixtureEarningIdentity get earningIdentity {
+    if (isError) {
+      throw const DesignFixtureException(
+        message: 'Failed to load earning identity [ERR_KYC_SYNC_503]',
+      );
+    }
+    if (isEmpty) return FixtureEarningIdentity.empty();
+    return const FixtureEarningIdentity(
+      legalName: 'Amina Noor',
+      status: 'VERIFIED',
+      country: 'Pakistan',
+      documentType: 'national_id',
+      documentNumberMasked: '42101-•••••••-8',
+      earningEligible: true,
+      verifiedDate: 'Nov 10, 2026',
+    );
+  }
+
+  static FixtureTaskLevel get taskLevelInfo {
+    if (isError) {
+      throw const DesignFixtureException(
+        message: 'Failed to load task level [ERR_TASK_LEVEL_503]',
+      );
+    }
+    if (isEmpty) return FixtureTaskLevel.empty();
+    return const FixtureTaskLevel(
+      currentLevel: 5,
+      levelName: 'Rising Star Creator',
+      taskPoints: 14500,
+      nextLevel: 6,
+      nextLevelName: 'Established Broadcaster',
+      pointsToNext: 5500,
+      progressRatio: 0.725,
+      benefits: [
+        '70% Host Gift Share revenue tier',
+        'Priority Live Room placement in Discovery',
+        'Exclusive Animated Entrance Star banner',
+        'Access to 9-Seat Audio Party Host seat',
+      ],
+      allLevels: [
+        {'level': 1, 'name': 'New Creator', 'threshold': 1000},
+        {'level': 2, 'name': 'Bronze Host', 'threshold': 3000},
+        {'level': 3, 'name': 'Silver Broadcaster', 'threshold': 6000},
+        {'level': 4, 'name': 'Gold Performer', 'threshold': 10000},
+        {'level': 5, 'name': 'Rising Star Creator', 'threshold': 20000},
+        {'level': 6, 'name': 'Established Broadcaster', 'threshold': 35000},
+        {'level': 7, 'name': 'Elite Host', 'threshold': 55000},
+        {'level': 8, 'name': 'Master Broadcaster', 'threshold': 80000},
+        {'level': 9, 'name': 'Grandmaster Star', 'threshold': 120000},
+        {'level': 10, 'name': 'Popo Legend', 'threshold': 200000},
+      ],
+    );
   }
 
   // --------------------------------------------------------------------------
@@ -2905,6 +3550,7 @@ class DesignFixtures {
     flagEmoji: '🇵🇰',
     wealthLevel: 12,
     hostLevel: 18,
+    honorLevel: 5,
     vipLevel: 3,
     vipStatus: 'Crown Sovereign',
     coinBalance: 154200,
@@ -3126,6 +3772,7 @@ class FixtureUserProfile {
   final String flagEmoji;
   final int wealthLevel;
   final int hostLevel;
+  final int honorLevel;
   final int vipLevel;
   final String vipStatus;
   final int coinBalance;
@@ -3151,6 +3798,7 @@ class FixtureUserProfile {
     required this.flagEmoji,
     required this.wealthLevel,
     required this.hostLevel,
+    this.honorLevel = 5,
     required this.vipLevel,
     required this.vipStatus,
     required this.coinBalance,
@@ -3163,6 +3811,35 @@ class FixtureUserProfile {
     this.isLiveNow = false,
     this.currentLiveRoomId,
   });
+
+  factory FixtureUserProfile.fromMap(Map<String, dynamic> map) {
+    return FixtureUserProfile(
+      userId: map['userId']?.toString() ?? map['id']?.toString() ?? '',
+      poppoId: map['poppoId']?.toString() ?? map['username']?.toString() ?? '',
+      nickname: map['nickname']?.toString() ?? map['displayName']?.toString() ?? 'User',
+      username: map['username']?.toString() ?? map['poppoId']?.toString() ?? '',
+      avatarUrl: map['avatarUrl']?.toString() ?? map['avatar']?.toString() ?? '',
+      bio: map['bio']?.toString() ?? '',
+      gender: map['gender']?.toString() ?? 'unspecified',
+      country: map['country']?.toString() ?? 'Pakistan',
+      countryCode: map['countryCode']?.toString() ?? 'PK',
+      flagEmoji: map['flagEmoji']?.toString() ?? (map['countryCode'] == 'US' ? '🇺🇸' : '🇵🇰'),
+      wealthLevel: (map['wealthLevel'] as num?)?.toInt() ?? 1,
+      hostLevel: (map['hostLevel'] as num?)?.toInt() ?? 1,
+      honorLevel: (map['honorLevel'] as num?)?.toInt() ?? 1,
+      vipLevel: (map['vipLevel'] as num?)?.toInt() ?? 0,
+      vipStatus: map['vipStatus']?.toString() ?? 'None',
+      coinBalance: (map['coinBalance'] as num?)?.toInt() ?? (map['coins'] as num?)?.toInt() ?? 0,
+      pointsBalance: (map['pointsBalance'] as num?)?.toInt() ?? (map['points'] as num?)?.toInt() ?? (map['diamondPoints'] as num?)?.toInt() ?? 0,
+      followingCount: (map['followingCount'] as num?)?.toInt() ?? (map['following'] as num?)?.toInt() ?? 0,
+      followersCount: (map['followersCount'] as num?)?.toInt() ?? (map['followers'] as num?)?.toInt() ?? 0,
+      friendsCount: (map['friendsCount'] as num?)?.toInt() ?? (map['friends'] as num?)?.toInt() ?? 0,
+      visitorCount: (map['visitorCount'] as num?)?.toInt() ?? (map['visitorsCount'] as num?)?.toInt() ?? (map['visitors'] as num?)?.toInt() ?? 0,
+      isHostEligible: map['isHostEligible'] == true || map['goLiveEligible'] == true,
+      isLiveNow: map['isLiveNow'] == true,
+      currentLiveRoomId: map['currentLiveRoomId']?.toString(),
+    );
+  }
 
   factory FixtureUserProfile.empty() => const FixtureUserProfile(
         userId: '',
@@ -3187,6 +3864,59 @@ class FixtureUserProfile {
         visitorCount: 0,
         isHostEligible: false,
         isLiveNow: false,
+      );
+
+  FixtureUserProfile copyWith({
+    String? userId,
+    String? poppoId,
+    String? nickname,
+    String? username,
+    String? avatarUrl,
+    String? bio,
+    String? gender,
+    String? country,
+    String? countryCode,
+    String? flagEmoji,
+    int? wealthLevel,
+    int? hostLevel,
+    int? honorLevel,
+    int? vipLevel,
+    String? vipStatus,
+    int? coinBalance,
+    int? pointsBalance,
+    int? followingCount,
+    int? followersCount,
+    int? friendsCount,
+    int? visitorCount,
+    bool? isHostEligible,
+    bool? isLiveNow,
+    String? currentLiveRoomId,
+  }) =>
+      FixtureUserProfile(
+        userId: userId ?? this.userId,
+        poppoId: poppoId ?? this.poppoId,
+        nickname: nickname ?? this.nickname,
+        username: username ?? this.username,
+        avatarUrl: avatarUrl ?? this.avatarUrl,
+        bio: bio ?? this.bio,
+        gender: gender ?? this.gender,
+        country: country ?? this.country,
+        countryCode: countryCode ?? this.countryCode,
+        flagEmoji: flagEmoji ?? this.flagEmoji,
+        wealthLevel: wealthLevel ?? this.wealthLevel,
+        hostLevel: hostLevel ?? this.hostLevel,
+        honorLevel: honorLevel ?? this.honorLevel,
+        vipLevel: vipLevel ?? this.vipLevel,
+        vipStatus: vipStatus ?? this.vipStatus,
+        coinBalance: coinBalance ?? this.coinBalance,
+        pointsBalance: pointsBalance ?? this.pointsBalance,
+        followingCount: followingCount ?? this.followingCount,
+        followersCount: followersCount ?? this.followersCount,
+        friendsCount: friendsCount ?? this.friendsCount,
+        visitorCount: visitorCount ?? this.visitorCount,
+        isHostEligible: isHostEligible ?? this.isHostEligible,
+        isLiveNow: isLiveNow ?? this.isLiveNow,
+        currentLiveRoomId: currentLiveRoomId ?? this.currentLiveRoomId,
       );
 
   Map<String, dynamic> toMap() => {
@@ -3748,18 +4478,44 @@ class FixtureFanClub {
   final int userIntimacyPoints;
   final String announcement;
   final List<FixtureFanClubMember> topMembers;
+  final String hostName;
+  final String hostAvatarUrl;
+  final bool isJoined;
 
   const FixtureFanClub({
-    required this.clubId,
-    required this.clubName,
-    required this.badgeName,
-    required this.badgeColorHex,
-    required this.totalMembers,
-    required this.userClubLevel,
-    required this.userIntimacyPoints,
-    required this.announcement,
-    required this.topMembers,
-  });
+    String? id,
+    String? name,
+    String? clubId,
+    String? clubName,
+    String? badge,
+    String? badgeName,
+    this.badgeColorHex = '#FFB800',
+    int? fansCount,
+    int? totalMembers,
+    int? level,
+    int? userClubLevel,
+    this.userIntimacyPoints = 14200,
+    this.announcement = '',
+    List<FixtureFanClubMember>? members,
+    List<FixtureFanClubMember>? topMembers,
+    this.hostName = 'Amina Noor',
+    this.hostAvatarUrl =
+        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
+    this.isJoined = true,
+  })  : clubId = clubId ?? id ?? 'fc_001',
+        clubName = clubName ?? name ?? 'Amina Star Club',
+        badgeName = badgeName ?? badge ?? 'STAR',
+        totalMembers = totalMembers ?? fansCount ?? 1840,
+        userClubLevel = userClubLevel ?? level ?? 7,
+        topMembers = topMembers ?? members ?? const [];
+
+  String get id => clubId;
+  String get name => clubName;
+  int get fansCount => totalMembers;
+  int get level => userClubLevel;
+  String get badge => badgeName;
+  String get hostAvatar => hostAvatarUrl;
+  List<FixtureFanClubMember> get members => topMembers;
 
   factory FixtureFanClub.empty() => const FixtureFanClub(
         clubId: '',
@@ -3771,6 +4527,7 @@ class FixtureFanClub {
         userIntimacyPoints: 0,
         announcement: '',
         topMembers: [],
+        isJoined: false,
       );
 }
 
@@ -3781,14 +4538,30 @@ class FixtureFanClubMember {
   final String avatarUrl;
   final int intimacyPoints;
   final int rank;
+  final int fanLevel;
+  final String fanBadge;
+  final bool isOnline;
+  final String joinedDate;
 
   const FixtureFanClubMember({
     required this.userId,
-    required this.nickname,
+    String? nickname,
+    String? name,
     required this.avatarUrl,
-    required this.intimacyPoints,
-    required this.rank,
-  });
+    int? intimacyPoints,
+    int? contributionPoints,
+    int? rank,
+    this.fanLevel = 5,
+    this.fanBadge = 'Super Fan',
+    this.isOnline = true,
+    this.joinedDate = 'Joined 2 weeks ago',
+  })  : nickname = nickname ?? name ?? 'Member',
+        intimacyPoints = intimacyPoints ?? contributionPoints ?? 10000,
+        rank = rank ?? 1;
+
+  String get id => userId;
+  String get name => nickname;
+  int get contributionScore => intimacyPoints;
 }
 
 /// Guardian model
@@ -3816,7 +4589,7 @@ class FixtureGuardian {
   });
 }
 
-/// Social relation (friend/follower) model
+/// Social relation (friend/follower/following/visitor) model
 class FixtureUserRelation {
   final String userId;
   final String nickname;
@@ -3824,6 +4597,8 @@ class FixtureUserRelation {
   final String relationType;
   final bool isOnline;
   final int mutualCount;
+  final String country;
+  final bool isFollowing;
 
   const FixtureUserRelation({
     required this.userId,
@@ -3832,7 +4607,47 @@ class FixtureUserRelation {
     required this.relationType,
     required this.isOnline,
     required this.mutualCount,
+    this.country = 'Pakistan',
+    this.isFollowing = true,
   });
+
+  FixtureUserRelation copyWith({
+    String? userId,
+    String? nickname,
+    String? avatarUrl,
+    String? relationType,
+    bool? isOnline,
+    int? mutualCount,
+    String? country,
+    bool? isFollowing,
+  }) {
+    return FixtureUserRelation(
+      userId: userId ?? this.userId,
+      nickname: nickname ?? this.nickname,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      relationType: relationType ?? this.relationType,
+      isOnline: isOnline ?? this.isOnline,
+      mutualCount: mutualCount ?? this.mutualCount,
+      country: country ?? this.country,
+      isFollowing: isFollowing ?? this.isFollowing,
+    );
+  }
+
+  factory FixtureUserRelation.fromMap(
+    Map<String, dynamic> map, {
+    String relationType = 'friend',
+  }) {
+    return FixtureUserRelation(
+      userId: (map['id'] ?? map['userId'] ?? '').toString(),
+      nickname: (map['nickname'] ?? map['displayName'] ?? map['username'] ?? 'User').toString(),
+      avatarUrl: (map['avatarUrl'] ?? map['avatar'] ?? '/avatars/default.png').toString(),
+      relationType: (map['relationType'] ?? relationType).toString(),
+      isOnline: map['isOnline'] == true,
+      mutualCount: (map['mutualCount'] as num?)?.toInt() ?? 0,
+      country: (map['country'] ?? 'Pakistan').toString(),
+      isFollowing: map['isFollowing'] == true,
+    );
+  }
 }
 
 /// Profile Visitor log
@@ -4181,4 +4996,198 @@ class FixtureEmptyStateInfo {
     required this.actionLabel,
     required this.iconEmoji,
   });
+}
+
+/// User who joined through invitation (R3)
+class FixtureInvitedUser {
+  final String userId;
+  final String nickname;
+  final String avatarUrl;
+  final int wealthLevel;
+  final int hostLevel;
+  final String joinedAgo;
+  final int bonusEarned;
+
+  const FixtureInvitedUser({
+    required this.userId,
+    required this.nickname,
+    required this.avatarUrl,
+    required this.wealthLevel,
+    required this.hostLevel,
+    required this.joinedAgo,
+    required this.bonusEarned,
+  });
+
+  String get name => nickname;
+  int get level => wealthLevel;
+  String get joinedAt => joinedAgo;
+}
+
+/// Invitation program info (R3)
+class FixtureInvitationInfo {
+  final String inviteCode;
+  final String inviteUrl;
+  final int totalInvited;
+  final int totalCoinsEarned;
+  final List<FixtureInvitedUser> joinedUsers;
+
+  const FixtureInvitationInfo({
+    required this.inviteCode,
+    required this.inviteUrl,
+    required this.totalInvited,
+    required this.totalCoinsEarned,
+    required this.joinedUsers,
+  });
+
+  String get invitationCode => inviteCode;
+  String get shareLink => inviteUrl;
+  int get totalRewardCoins => totalCoinsEarned;
+}
+
+/// Blocked user model (R4)
+class FixtureBlockedUser {
+  final String id;
+  final String nickname;
+  final String avatarUrl;
+  final String blockedDate;
+  final String reason;
+
+  const FixtureBlockedUser({
+    required this.id,
+    required this.nickname,
+    required this.avatarUrl,
+    required this.blockedDate,
+    required this.reason,
+  });
+}
+
+/// Host Starter Pack Model (R4)
+class FixtureStarterPack {
+  final String title;
+  final String description;
+  final int rewardPoints;
+  final int rewardCoins;
+  final String badgeName;
+  final bool isClaimed;
+  final List<Map<String, dynamic>> guides;
+
+  const FixtureStarterPack({
+    required this.title,
+    required this.description,
+    required this.rewardPoints,
+    required this.rewardCoins,
+    required this.badgeName,
+    required this.isClaimed,
+    required this.guides,
+  });
+
+  factory FixtureStarterPack.empty() => const FixtureStarterPack(
+        title: '',
+        description: '',
+        rewardPoints: 0,
+        rewardCoins: 0,
+        badgeName: '',
+        isClaimed: false,
+        guides: [],
+      );
+
+  Map<String, dynamic> toMap() => {
+        'title': title,
+        'description': description,
+        'rewardPoints': rewardPoints,
+        'rewardCoins': rewardCoins,
+        'badgeName': badgeName,
+        'isClaimed': isClaimed,
+        'guides': guides,
+      };
+}
+
+/// Earning KYC Identity Model (R4)
+class FixtureEarningIdentity {
+  final String legalName;
+  final String status;
+  final String country;
+  final String documentType;
+  final String documentNumberMasked;
+  final bool earningEligible;
+  final String verifiedDate;
+
+  const FixtureEarningIdentity({
+    required this.legalName,
+    required this.status,
+    required this.country,
+    required this.documentType,
+    required this.documentNumberMasked,
+    required this.earningEligible,
+    required this.verifiedDate,
+  });
+
+  factory FixtureEarningIdentity.empty() => const FixtureEarningIdentity(
+        legalName: '',
+        status: 'UNVERIFIED',
+        country: '',
+        documentType: 'none',
+        documentNumberMasked: '',
+        earningEligible: false,
+        verifiedDate: '',
+      );
+
+  Map<String, dynamic> toMap() => {
+        'legalName': legalName,
+        'status': status,
+        'country': country,
+        'documentType': documentType,
+        'documentNumberMasked': documentNumberMasked,
+        'earningEligible': earningEligible,
+        'verifiedDate': verifiedDate,
+      };
+}
+
+/// Task Level Milestone Model (R4)
+class FixtureTaskLevel {
+  final int currentLevel;
+  final String levelName;
+  final int taskPoints;
+  final int nextLevel;
+  final String nextLevelName;
+  final int pointsToNext;
+  final double progressRatio;
+  final List<String> benefits;
+  final List<Map<String, dynamic>> allLevels;
+
+  const FixtureTaskLevel({
+    required this.currentLevel,
+    required this.levelName,
+    required this.taskPoints,
+    required this.nextLevel,
+    required this.nextLevelName,
+    required this.pointsToNext,
+    required this.progressRatio,
+    required this.benefits,
+    required this.allLevels,
+  });
+
+  factory FixtureTaskLevel.empty() => const FixtureTaskLevel(
+        currentLevel: 1,
+        levelName: 'New Creator',
+        taskPoints: 0,
+        nextLevel: 2,
+        nextLevelName: 'Bronze Host',
+        pointsToNext: 1000,
+        progressRatio: 0.0,
+        benefits: [],
+        allLevels: [],
+      );
+
+  Map<String, dynamic> toMap() => {
+        'currentLevel': currentLevel,
+        'levelName': levelName,
+        'taskPoints': taskPoints,
+        'nextLevel': nextLevel,
+        'nextLevelName': nextLevelName,
+        'pointsToNext': pointsToNext,
+        'progressRatio': progressRatio,
+        'benefits': benefits,
+        'allLevels': allLevels,
+      };
 }

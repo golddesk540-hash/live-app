@@ -17,7 +17,7 @@ import { getHonorLevels as getP7P8HonorLevels, getMedalsMe as getP7P8MedalsMe, H
  * - Watch History (read-only from live_room_history, paginated with replay availability)
  */
 
-export const USE_COMMUNITY_API: boolean = process.env.NEXT_PUBLIC_USE_COMMUNITY_API !== 'false';
+export const USE_COMMUNITY_API: boolean = process.env.NEXT_PUBLIC_USE_COMMUNITY_API === 'true';
 
 // Helper to convert arbitrary user id strings to a UUID if needed
 export function toSafeUuid(id: string): string {

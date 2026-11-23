@@ -25,7 +25,9 @@ class _MessageInboxScreenState extends State<MessageInboxScreen> {
   @override
   void initState() {
     super.initState();
-    MessageStateManager.instance.resetToFixtures();
+    if (!ApiConfig.useMessageApi) {
+      MessageStateManager.instance.resetToFixtures();
+    }
     MessageStateManager.instance.addListener(_onStateChange);
     if (ApiConfig.useMessageApi) {
       MessageStateManager.instance.fetchLiveInbox();

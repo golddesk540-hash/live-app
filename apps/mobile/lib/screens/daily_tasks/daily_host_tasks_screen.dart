@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../widgets/popo_error_state.dart';
 import '../../services/host/host_task_service.dart';
+import '../../design/design_fixtures.dart';
 
 /// Popo Live — Module 9.2 Daily Host Tasks Screen
 /// Authoritative host task tracking, completion status, and diamond points reward claiming.
@@ -79,42 +81,59 @@ class _DailyHostTasksScreenState extends State<DailyHostTasksScreen> {
     });
 
     try {
-      final res = await HostTaskService.instance.fetchDailyTasks();
-      final taskList = (res['tasks'] as List<dynamic>?) ?? [];
-
-      if (mounted) {
-        setState(() {
-          _dateLabel = res['dateLabel']?.toString() ?? 'Today';
-          _completedCount = (res['completedCount'] as num?)?.toInt() ?? 0;
-          _totalCount = (res['totalCount'] as num?)?.toInt() ?? taskList.length;
-          _completionRatio = (res['completionRatio'] as num?)?.toDouble() ?? 0.0;
-          _isEligible = true;
-
-          if (taskList.isNotEmpty) {
-            _tasks = taskList.map((t) {
-              return _DailyTaskViewItem(
-                id: t['id']?.toString() ?? '',
-                title: t['title']?.toString() ?? '',
-                category: t['categoryLabel']?.toString() ?? t['category']?.toString() ?? 'General',
-                current: (t['currentProgress'] as num?)?.toInt() ?? 0,
-                target: (t['targetProgress'] as num?)?.toInt() ?? 1,
-                unit: t['unit']?.toString() ?? '',
-                status: t['status']?.toString() ?? 'Not Started',
-                rewardPoints: (t['rewardPoints'] as num?)?.toInt() ?? 50,
-                isRewardClaimed: t['isRewardClaimed'] == true,
-              );
-            }).toList();
-          }
-          _isLoading = false;
-        });
+      if (DesignFixtures.isError) {
+        throw const DesignFixtureException(
+          message: 'Task progress sync failed: Server busy [ERR_TASK_SYNC_503]',
+        );
       }
+
+      final fixtureTasks = DesignFixtures.tasksAndRewards;
+      if (!mounted) return;
+      setState(() {
+        _dateLabel = 'Today';
+        _tasks = fixtureTasks.map((t) {
+          return _DailyTaskViewItem(
+            id: t.id,
+            title: t.title,
+            category: t.id == 'task_01'
+                ? 'Live Streaming'
+                : (t.id == 'task_02'
+                    ? 'Gift Activity'
+                    : (t.id == 'task_03' ? 'Party Lounges' : 'PK Battle')),
+            current: t.currentProgress,
+            target: t.targetGoal,
+            unit: t.unit,
+            status: t.isClaimed
+                ? 'Claimed'
+                : (t.status == 'completed'
+                    ? 'Completed'
+                    : (t.currentProgress > 0 ? 'In Progress' : 'Not Started')),
+            rewardPoints: t.rewardText.contains('1,000')
+                ? 1000
+                : (t.rewardText.contains('500')
+                    ? 500
+                    : (t.rewardText.contains('300') ? 300 : 2000)),
+            isRewardClaimed: t.isClaimed,
+          );
+        }).toList();
+
+        _completedCount = _tasks
+            .where((t) => t.isRewardClaimed || t.status == 'Completed')
+            .length;
+        _totalCount = _tasks.length;
+        _completionRatio =
+            _totalCount > 0 ? _completedCount / _totalCount : 0.0;
+        _isEligible = true;
+        _isLoading = false;
+      });
+      return;
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = e.toString().replaceAll('Exception: ', '');
-          if (_errorMessage!.contains('403') || _errorMessage!.contains('required')) {
-            _isEligible = false;
-          }
+          _errorMessage = e
+              .toString()
+              .replaceFirst('Exception: ', '')
+              .replaceFirst('DesignFixtureException: ', '');
           _isLoading = false;
         });
       }
@@ -122,31 +141,39 @@ class _DailyHostTasksScreenState extends State<DailyHostTasksScreen> {
   }
 
   Future<void> _claimReward(String taskId) async {
-    try {
-      final res = await HostTaskService.instance.claimTaskReward(taskId);
-      final pts = res['rewardPoints'] ?? 50;
-
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Claimed +$pts Diamond Points!'),
-          backgroundColor: const Color(0xFF1F0E3D),
-        ),
-      );
-      _loadBackendTasks();
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceAll('Exception: ', '')),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-    }
+    DesignFixtures.claimTaskReward(taskId);
+    _loadBackendTasks();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content:
+            Text('Claimed +1,000 Diamond Points! Credited to your wallet.'),
+        backgroundColor: Color(0xFF10B981),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (DesignFixtures.isError || _errorMessage != null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF0D031B),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF120624),
+          foregroundColor: Colors.white,
+          title: const Text('Daily Host Tasks',
+              style: TextStyle(fontWeight: FontWeight.w800)),
+        ),
+        body: Center(
+          child: PopoErrorState(
+            title: 'Task progress sync failed',
+            message: _errorMessage ?? 'Server busy [ERR_TASK_SYNC_503]',
+            retryText: 'Retry',
+            onRetry: _loadBackendTasks,
+          ),
+        ),
+      );
+    }
     final total = _tasks.length;
     final ratio = total > 0 ? _completedCount / total : _completionRatio;
 
@@ -197,10 +224,15 @@ class _DailyHostTasksScreenState extends State<DailyHostTasksScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Host Permission Required',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14)),
                           SizedBox(height: 4),
-                          Text('Daily host tasks require Host Role approval or Wealth Level 5.',
-                              style: TextStyle(color: Color(0xFFD8B4FE), fontSize: 12)),
+                          Text(
+                              'Daily host tasks require Host Role approval or Wealth Level 5.',
+                              style: TextStyle(
+                                  color: Color(0xFFD8B4FE), fontSize: 12)),
                         ],
                       ),
                     ),
@@ -217,14 +249,39 @@ class _DailyHostTasksScreenState extends State<DailyHostTasksScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "TODAY'S PROGRESS · $_dateLabel",
-                    style: const TextStyle(
-                      color: Color(0xFFC3B1DF),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.1,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          "TODAY'S PROGRESS · $_dateLabel",
+                          style: const TextStyle(
+                            color: Color(0xFFC3B1DF),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.1,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (DesignFixtures.claimableTasksCount > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF1A6C),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${DesignFixtures.claimableTasksCount} Claimable Reward',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -242,7 +299,8 @@ class _DailyHostTasksScreenState extends State<DailyHostTasksScreen> {
                       value: ratio.clamp(0.0, 1.0),
                       minHeight: 12,
                       backgroundColor: const Color(0xFF2B174A),
-                      valueColor: const AlwaysStoppedAnimation(Color(0xFFFF1A6C)),
+                      valueColor:
+                          const AlwaysStoppedAnimation(Color(0xFFFF1A6C)),
                     ),
                   ),
                 ],
@@ -258,8 +316,10 @@ class _DailyHostTasksScreenState extends State<DailyHostTasksScreen> {
               )
             else
               ..._tasks.map((task) {
-                final isDone = task.status == 'Completed' || task.status == 'Claimed';
-                final isClaimed = task.isRewardClaimed || task.status == 'Claimed';
+                final isDone =
+                    task.status == 'Completed' || task.status == 'Claimed';
+                final isClaimed =
+                    task.isRewardClaimed || task.status == 'Claimed';
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 12),
@@ -281,17 +341,21 @@ class _DailyHostTasksScreenState extends State<DailyHostTasksScreen> {
                           children: [
                             Row(
                               children: [
-                                Text(
-                                  task.category,
-                                  style: const TextStyle(
-                                    color: Color(0xFFFF85B3),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
+                                Flexible(
+                                  child: Text(
+                                    task.category,
+                                    style: const TextStyle(
+                                      color: Color(0xFFFF85B3),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 const Spacer(),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: const Color(0xFF28124D),
                                     borderRadius: BorderRadius.circular(10),
@@ -332,28 +396,40 @@ class _DailyHostTasksScreenState extends State<DailyHostTasksScreen> {
                       const SizedBox(width: 8),
                       if (isClaimed)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.green.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Text('Claimed', style: TextStyle(color: Colors.greenAccent, fontSize: 11, fontWeight: FontWeight.bold)),
+                          child: const Text('Claimed',
+                              style: TextStyle(
+                                  color: Colors.greenAccent,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold)),
                         )
                       else if (isDone)
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFFB800),
                             shape: const StadiumBorder(),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
                           ),
                           onPressed: () => _claimReward(task.id),
-                          child: const Text('Claim', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 11)),
+                          child: const Text('Claim',
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 11)),
                         )
                       else
                         IconButton(
                           onPressed: () async {
                             try {
-                              await HostTaskService.instance.updateTaskProgress(task.id, absoluteProgress: task.target);
+                              await HostTaskService.instance.updateTaskProgress(
+                                  task.id,
+                                  absoluteProgress: task.target);
                               _loadBackendTasks();
                             } catch (_) {}
                           },

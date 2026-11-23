@@ -19,6 +19,7 @@ export interface PopoUserRecord {
   bio: string | null;
   host_level: number;
   wealth_level: number;
+  live_cover_url?: string | null;
 }
 
 export async function resolveUserByIdentifier(identifier: string): Promise<PopoUserRecord | null> {
@@ -32,11 +33,10 @@ export async function resolveUserByIdentifier(identifier: string): Promise<PopoU
     return (rows[0] as PopoUserRecord) || null;
   }
 
-  // 2. Numeric User ID check
-  const isNumeric = /^\d+$/.test(trimmed);
-  if (isNumeric) {
-    const rows = await query('SELECT * FROM popolive.users WHERE poppo_id = $1 LIMIT 1', [trimmed]);
-    return (rows[0] as PopoUserRecord) || null;
+  // 2. Poppo ID check
+  const poppoRows = await query('SELECT * FROM popolive.users WHERE poppo_id = $1 LIMIT 1', [trimmed]);
+  if (poppoRows.length > 0) {
+    return (poppoRows[0] as PopoUserRecord);
   }
 
   // 3. Fallback to lowercase nickname

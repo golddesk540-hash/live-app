@@ -54,16 +54,51 @@ export async function POST(
     });
 
     return NextResponse.json({
-      success: true,
       ...result,
     });
   } catch (err: any) {
-    if (err.message && err.message.startsWith('INSUFFICIENT_BALANCE:')) {
+    if (
+      err.code === 'INSUFFICIENT_COINS' ||
+      err.code === 'INSUFFICIENT_BALANCE' ||
+      (err.message && err.message.includes('INSUFFICIENT_'))
+    ) {
       return NextResponse.json(
         {
           success: false,
-          error: err.message.replace('INSUFFICIENT_BALANCE: ', ''),
-          code: 'INSUFFICIENT_BALANCE',
+          error: err.message.replace(/^INSUFFICIENT_(COINS|BALANCE):\s*/, ''),
+          code: 'INSUFFICIENT_COINS',
+          requiredCoins: err.requiredCoins,
+          availableCoins: err.availableCoins,
+        },
+        { status: 400 }
+      );
+    }
+    if (err.code === 'ROOM_ENDED') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: err.message.replace(/^ROOM_ENDED:\s*/, ''),
+          code: 'ROOM_ENDED',
+        },
+        { status: 400 }
+      );
+    }
+    if (err.code === 'GIFT_NOT_FOUND') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: err.message.replace(/^GIFT_NOT_FOUND:\s*/, ''),
+          code: 'GIFT_NOT_FOUND',
+        },
+        { status: 404 }
+      );
+    }
+    if (err.code === 'GIFT_UNAVAILABLE') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: err.message.replace(/^GIFT_UNAVAILABLE:\s*/, ''),
+          code: 'GIFT_UNAVAILABLE',
         },
         { status: 400 }
       );
@@ -92,6 +127,16 @@ export async function POST(
       return NextResponse.json(
         { success: false, error: err.message || 'Live room not found.', code: 'ROOM_NOT_FOUND' },
         { status: 404 }
+      );
+    }
+    if (err.code === 'FINANCE_RULE_MISSING' || err.code === 'FINANCE_RULE_INVALID') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: err.message,
+          code: err.code,
+        },
+        { status: 500 }
       );
     }
 

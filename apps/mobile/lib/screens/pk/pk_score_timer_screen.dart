@@ -231,7 +231,7 @@ class _PKScoreTimerScreenState extends State<PKScoreTimerScreen>
                             decoration: BoxDecoration(
                               color: selectedSide == 'host_a' ? _neonPink.withOpacity(0.2) : const Color(0xFF21183C),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.parse(
+                              border: Border.fromBorderSide(
                                 selectedSide == 'host_a'
                                     ? BorderSide(color: _neonPink, width: 2)
                                     : const BorderSide(color: Colors.white10),
@@ -265,7 +265,7 @@ class _PKScoreTimerScreenState extends State<PKScoreTimerScreen>
                             decoration: BoxDecoration(
                               color: selectedSide == 'host_b' ? _neonCyan.withOpacity(0.2) : const Color(0xFF21183C),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.parse(
+                              border: Border.fromBorderSide(
                                 selectedSide == 'host_b'
                                     ? BorderSide(color: _neonCyan, width: 2)
                                     : const BorderSide(color: Colors.white10),

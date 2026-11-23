@@ -5,14 +5,35 @@ allprojects {
     }
 }
 
-rootProject.buildDir = "../build"
-subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
+rootProject.ext {
+    compileSdkVersion = 35
+    targetSdkVersion = 35
+    minSdkVersion = 24
 }
+
+rootProject.layout.buildDirectory.value(rootProject.layout.buildDirectory.dir("../../build").get())
+
+subprojects {
+    project.layout.buildDirectory.value(rootProject.layout.buildDirectory.dir(project.name).get())
+}
+
+subprojects { subproject ->
+    subproject.plugins.withId("com.android.library") {
+        if (subproject.android.hasProperty("compileSdk")) {
+            subproject.android.compileSdk = 35
+        }
+    }
+    subproject.plugins.withId("com.android.application") {
+        if (subproject.android.hasProperty("compileSdk")) {
+            subproject.android.compileSdk = 35
+        }
+    }
+}
+
 subprojects {
     project.evaluationDependsOn(":app")
 }
 
 tasks.register("clean", Delete) {
-    delete rootProject.buildDir
+    delete rootProject.layout.buildDirectory
 }

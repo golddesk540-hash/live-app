@@ -72,7 +72,7 @@ export default function PKRealGiftsScreen({
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.wallet) {
-          setViewerCoins(data.wallet.coins ?? 3600);
+          setViewerCoins(data.wallet.coins ?? 0);
         }
       })
       .catch(() => {});

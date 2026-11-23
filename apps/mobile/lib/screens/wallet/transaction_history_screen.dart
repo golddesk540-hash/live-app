@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../models/wallet/wallet_models.dart';
 import '../../services/wallet/wallet_session_manager.dart';
 import '../../theme/popo_theme.dart';
 import '../../widgets/popo_loading_indicator.dart';

@@ -77,3 +77,28 @@ export function isValidCountryCode(code?: string | null): boolean {
   if (clean === 'ALL' || clean === 'POPULAR') return true;
   return COUNTRIES_LIST.some((c) => c.code.toUpperCase() === clean);
 }
+
+export interface ResolvedCountry {
+  valid: boolean;
+  code?: string;
+  name?: string;
+  flag?: string;
+}
+
+export function resolveCountryCode(input?: string | null): ResolvedCountry {
+  if (!input) return { valid: true, code: 'ALL', name: 'Popular', flag: '🔥' };
+  const clean = input.trim();
+  const upper = clean.toUpperCase();
+  if (upper === 'ALL' || upper === 'POPULAR') {
+    return { valid: true, code: 'ALL', name: 'Popular', flag: '🔥' };
+  }
+  const matchByCode = COUNTRIES_LIST.find((c) => c.code.toUpperCase() === upper);
+  if (matchByCode) {
+    return { valid: true, code: matchByCode.code, name: matchByCode.name, flag: matchByCode.flag };
+  }
+  const matchByName = COUNTRIES_LIST.find((c) => c.name.toLowerCase() === clean.toLowerCase());
+  if (matchByName) {
+    return { valid: true, code: matchByName.code, name: matchByName.name, flag: matchByName.flag };
+  }
+  return { valid: false };
+}

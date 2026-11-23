@@ -74,7 +74,16 @@ export async function POST(
 
       const candidateUserId = requestRow.user_id;
 
-      // 3. Locked Rule 4: One seat per user in this room
+      // 3. Guest cannot approve their own request
+      if (candidateUserId && candidateUserId.toString() === user.id.toString()) {
+        throw {
+          status: 403,
+          message: 'CANNOT_APPROVE_OWN_REQUEST: A guest cannot approve their own seat request.',
+          code: 'CANNOT_APPROVE_OWN_REQUEST',
+        };
+      }
+
+      // 4. Locked Rule 4: One seat per user in this room
       const seatedRes = await client.query(
         `SELECT seat_number FROM popolive.party_seats
          WHERE room_number = $1 AND participant_id = $2 AND status = 'occupied'`,
@@ -94,19 +103,25 @@ export async function POST(
         };
       }
 
-      // 4. Locked Rule 3: Find and lock target seat or any available seat between 2..9
+      // 5. Verify requested seat remains available & lock it with SELECT FOR UPDATE
       let targetSeat = requestRow.seat_number;
 
-      // Try locking requested seat
-      const targetSeatRes = await client.query(
-        `SELECT * FROM popolive.party_seats 
-         WHERE room_number = $1 AND seat_number = $2 AND status = 'available' AND participant_id IS NULL 
-         FOR UPDATE`,
-        [room.room_number, targetSeat]
-      );
+      if (targetSeat !== null && targetSeat !== undefined) {
+        const targetSeatRes = await client.query(
+          `SELECT * FROM popolive.party_seats 
+           WHERE room_number = $1 AND seat_number = $2 AND status = 'available' AND participant_id IS NULL 
+           FOR UPDATE`,
+          [room.room_number, targetSeat]
+        );
 
-      if (targetSeatRes.rows.length === 0) {
-        // Target seat taken or unavailable, find lowest available seat between 2 and 9
+        if (targetSeatRes.rows.length === 0) {
+          throw {
+            status: 409,
+            message: `SEAT_ALREADY_OCCUPIED: Requested Seat #${targetSeat} is no longer available.`,
+            code: 'SEAT_ALREADY_OCCUPIED',
+          };
+        }
+      } else {
         const fallbackSeatRes = await client.query(
           `SELECT seat_number FROM popolive.party_seats
            WHERE room_number = $1 AND seat_number BETWEEN 2 AND 9 AND status = 'available' AND participant_id IS NULL
@@ -127,8 +142,8 @@ export async function POST(
         targetSeat = fallbackSeatRes.rows[0].seat_number;
       }
 
-      // 5. Occupy seat
-      await client.query(
+      // 6. Occupy seat in PostgreSQL
+      const updateSeatRes = await client.query(
         `UPDATE popolive.party_seats
          SET participant_id = $1,
              participant_name = $2,
@@ -136,7 +151,8 @@ export async function POST(
              status = 'occupied',
              occupied_at = CURRENT_TIMESTAMP,
              updated_at = CURRENT_TIMESTAMP
-         WHERE room_number = $4 AND seat_number = $5`,
+         WHERE room_number = $4 AND seat_number = $5
+         RETURNING id, room_number, seat_number, participant_id, participant_name, participant_avatar, is_host, is_muted, status, occupied_at, updated_at`,
         [
           candidateUserId,
           requestRow.user_name,
@@ -146,7 +162,9 @@ export async function POST(
         ]
       );
 
-      // 6. Mark request accepted
+      const updatedSeat = updateSeatRes.rows[0];
+
+      // 7. Mark request accepted
       await client.query(
         `UPDATE popolive.party_seat_requests
          SET status = 'accepted', responded_at = CURRENT_TIMESTAMP, seat_number = $1
@@ -154,7 +172,7 @@ export async function POST(
         [targetSeat, params.requestId]
       );
 
-      // 7. Update current_members in party_rooms
+      // 8. Update current_members in party_rooms
       await client.query(
         `UPDATE popolive.party_rooms
          SET current_members = (SELECT COUNT(*) FROM popolive.party_seats WHERE room_number = $1 AND status = 'occupied'),
@@ -167,6 +185,7 @@ export async function POST(
         assignedSeat: targetSeat,
         participantId: candidateUserId,
         participantName: requestRow.user_name,
+        seat: updatedSeat,
       };
     });
 
@@ -177,6 +196,24 @@ export async function POST(
       participantId: assignment.participantId,
       participantName: assignment.participantName,
       status: 'accepted',
+      seat: {
+        id: assignment.seat.id,
+        roomNumber: assignment.seat.room_number,
+        seatNumber: assignment.seat.seat_number,
+        participantId: assignment.seat.participant_id,
+        participantName: assignment.seat.participant_name,
+        participantAvatar: assignment.seat.participant_avatar,
+        isHost: assignment.seat.is_host,
+        isMuted: assignment.seat.is_muted,
+        status: assignment.seat.status,
+        occupiedAt: assignment.seat.occupied_at,
+        updatedAt: assignment.seat.updated_at,
+      },
+      assignment: {
+        seatNumber: assignment.assignedSeat,
+        participantId: assignment.participantId,
+        participantName: assignment.participantName,
+      },
     });
   } catch (error: any) {
     const status = error.status || 500;

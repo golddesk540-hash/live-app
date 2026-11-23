@@ -6,7 +6,7 @@ import { AuthUser, calculateAge } from '@/lib/auth';
  * MESSAGE MODULE API SERVICE & LOCKED RULES ENGINE
  */
 
-export const USE_MESSAGE_API: boolean = process.env.NEXT_PUBLIC_USE_MESSAGE_API !== 'false';
+export const USE_MESSAGE_API: boolean = process.env.NEXT_PUBLIC_USE_MESSAGE_API === 'true';
 
 /**
  * Enforces Age 18+ Locked Rule for Messaging

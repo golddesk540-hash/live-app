@@ -9,6 +9,61 @@ import '../../api/api_config.dart';
 import '../../api/token_storage.dart';
 import '../../screens/inbox/inbox_screen.dart';
 
+/// Models used for Inbox conversations, users and messages
+class InboxUserModel {
+  final String id;
+  final String name;
+  final String poppoId;
+  final String status;
+  final String lastSeen;
+  final Color ringColor;
+  final bool isOfficial;
+
+  InboxUserModel({
+    required this.id,
+    required this.name,
+    this.poppoId = '',
+    this.status = 'offline',
+    this.lastSeen = 'Offline',
+    this.ringColor = const Color(0xFFFF1A6C),
+    this.isOfficial = false,
+  });
+}
+
+class InboxMessageModel {
+  final String id;
+  final String senderId;
+  final String text;
+  final String time;
+
+  InboxMessageModel({
+    required this.id,
+    required this.senderId,
+    required this.text,
+    required this.time,
+  });
+}
+
+class InboxConversationModel {
+  final String id;
+  final InboxUserModel user;
+  final String lastMessage;
+  final String lastTime;
+  final int unreadCount;
+  final bool isPinned;
+  final List<InboxMessageModel> messages;
+
+  InboxConversationModel({
+    required this.id,
+    required this.user,
+    required this.lastMessage,
+    required this.lastTime,
+    this.unreadCount = 0,
+    this.isPinned = false,
+    this.messages = const [],
+  });
+}
+
 /// Real-time message event payload
 class RealtimeMessageEvent {
   final String eventType;

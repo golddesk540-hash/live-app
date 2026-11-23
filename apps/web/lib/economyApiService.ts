@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { query, withTransaction } from '@/lib/db';
+import { redisDel } from '@/lib/redis';
 import { AuthUser, calculateAge, isStaffMember } from '@/lib/auth';
 
 /**
@@ -8,12 +9,13 @@ import { AuthUser, calculateAge, isStaffMember } from '@/lib/auth';
  * Single authoritative service for Coins, Points, Packages, Gifts & Transactions
  */
 
-export const USE_ECONOMY_API: boolean = process.env.NEXT_PUBLIC_USE_ECONOMY_API !== 'false';
+export const USE_ECONOMY_API: boolean = process.env.NEXT_PUBLIC_USE_ECONOMY_API === 'true';
 
 export interface WalletRecord {
   walletId: string;
   userId: string;
   coins: number;
+  points: number;
   diamondPoints: number;
   totalSpentCoins: number;
   totalReceivedPoints: number;
@@ -26,11 +28,15 @@ export interface CoinPackageItem {
   id: string;
   packageId: string;
   name: string;
+  packageName?: string;
   nameUr: string | null;
+  packageNameUr?: string | null;
+  coins?: number;
   baseCoins: number;
   bonusCoins: number;
   totalCoins: number;
   priceAmount: number;
+  price?: number;
   currency: string;
   iconUrl: string;
   badgeText: string | null;
@@ -106,6 +112,7 @@ export async function getOrCreateUserWallet(userId: string, client?: any): Promi
       walletId: created.wallet_id,
       userId: created.user_id,
       coins: Number(created.coins) || 0,
+      points: Number(created.diamond_points) || 0,
       diamondPoints: Number(created.diamond_points) || 0,
       totalSpentCoins: Number(created.total_spent_coins) || 0,
       totalReceivedPoints: Number(created.total_received_points) || 0,
@@ -120,6 +127,7 @@ export async function getOrCreateUserWallet(userId: string, client?: any): Promi
     walletId: r.wallet_id,
     userId: r.user_id,
     coins: Number(r.coins) || 0,
+    points: Number(r.diamond_points) || 0,
     diamondPoints: Number(r.diamond_points) || 0,
     totalSpentCoins: Number(r.total_spent_coins) || 0,
     totalReceivedPoints: Number(r.total_received_points) || 0,
@@ -146,11 +154,15 @@ export async function getCoinPackages(): Promise<CoinPackageItem[]> {
     id: r.id,
     packageId: r.package_id,
     name: r.package_name,
+    packageName: r.package_name,
     nameUr: r.package_name_ur,
+    packageNameUr: r.package_name_ur,
+    coins: Number(r.base_coins),
     baseCoins: Number(r.base_coins),
     bonusCoins: Number(r.bonus_coins || 0),
     totalCoins: Number(r.total_coins),
     priceAmount: Number(r.price_amount),
+    price: Number(r.price_amount),
     currency: r.currency || 'USD',
     iconUrl: r.icon_url || '/assets/gifts/07_06_top_up.png',
     badgeText: r.badge_text,
@@ -484,6 +496,14 @@ export async function executeAtomicGiftSend({
   const room = roomRows[0];
   const hostId = room.host_id;
 
+  // Validate room status
+  if (room.status === 'ended' || room.status === 'closed') {
+    const error: any = new Error('ROOM_ENDED: Cannot send gifts to a live room that has ended.');
+    error.code = 'ROOM_ENDED';
+    error.status = 400;
+    throw error;
+  }
+
   // Self-gifting disallowance
   if (hostId === senderUser.id) {
     const error: any = new Error('SELF_GIFT_DISALLOWED: Broadcasters cannot send gifts to their own broadcast room.');
@@ -494,7 +514,7 @@ export async function executeAtomicGiftSend({
 
   // 3. Locked Rule 5: Idempotency Key check
   const existingTx = await query<any>(
-    `SELECT id, gift_transaction_id, total_coin_amount, host_points_credited, status
+    `SELECT id, gift_transaction_id, total_coin_amount, host_points_credited, share_percentage, status
      FROM popolive.gift_transactions
      WHERE idempotency_key = $1
      LIMIT 1`,
@@ -505,6 +525,7 @@ export async function executeAtomicGiftSend({
     const tx = existingTx[0];
     const senderWallet = await getOrCreateUserWallet(senderUser.id);
     return {
+      success: true,
       isIdempotentReplay: true,
       message: 'Gift already processed with this transaction token.',
       transactionId: tx.gift_transaction_id,
@@ -515,11 +536,11 @@ export async function executeAtomicGiftSend({
         id: giftId,
         quantity: giftCount,
       },
-      hostSharePercent: 70.0,
+      hostSharePercent: Number(tx.share_percentage || 70.0),
     };
   }
 
-  // 4. Resolve gift price from gift_catalog
+  // 4. Resolve gift price from gift_catalog (authoritative - never fallback to arbitrary prices)
   const giftRows = await query<any>(
     `SELECT id, gift_id, name, coin_price, is_active
      FROM popolive.gift_catalog
@@ -528,29 +549,48 @@ export async function executeAtomicGiftSend({
     [giftId]
   );
 
-  let giftUnitPrice = 10;
-  let giftName = 'Gift';
-  let resolvedGiftId = giftId;
-
-  if (giftRows.length > 0) {
-    giftUnitPrice = Number(giftRows[0].coin_price) || 10;
-    giftName = giftRows[0].name || 'Gift';
-    resolvedGiftId = giftRows[0].gift_id || giftId;
+  if (giftRows.length === 0) {
+    const error: any = new Error(`GIFT_NOT_FOUND: Virtual gift '${giftId}' does not exist in the catalog.`);
+    error.code = 'GIFT_NOT_FOUND';
+    error.status = 404;
+    throw error;
   }
 
+  if (!giftRows[0].is_active) {
+    const error: any = new Error(`GIFT_UNAVAILABLE: Virtual gift '${giftRows[0].name}' is currently inactive.`);
+    error.code = 'GIFT_UNAVAILABLE';
+    error.status = 400;
+    throw error;
+  }
+
+  const giftUnitPrice = Number(giftRows[0].coin_price);
+  const giftName = giftRows[0].name;
+  const resolvedGiftId = giftRows[0].gift_id || giftId;
   const totalCoins = giftUnitPrice * giftCount;
 
-  // 5. Locked Rule 6: Host 70% share from finance_rules
-  const ruleRows = await query<any>(
-    `SELECT rule_value FROM popolive.finance_rules WHERE rule_key = 'host_gift_share_percent' LIMIT 1`
-  );
-  const hostSharePercent = ruleRows.length > 0 ? Number(ruleRows[0].rule_value) : 70.0;
-  const hostPoints = Math.round((totalCoins * hostSharePercent) / 100);
-  const platformShare = totalCoins - hostPoints;
-
-  // 6. Execute atomic transfer with row lock
+  // 5. Execute atomic transfer inside one PostgreSQL transaction
   const transferResult = await withTransaction(async (client) => {
-    // Row-level lock on sender wallet
+    // 5a. Authoritative 70% host share from finance_rules
+    const ruleRows = await client.query(
+      `SELECT rule_value FROM popolive.finance_rules WHERE rule_key = 'host_gift_share_percent' LIMIT 1`
+    );
+    if (ruleRows.rows.length === 0) {
+      const error: any = new Error("FINANCE_RULE_MISSING: Authoritative 'host_gift_share_percent' rule is missing in popolive.finance_rules.");
+      error.code = 'FINANCE_RULE_MISSING';
+      error.status = 500;
+      throw error;
+    }
+    const hostSharePercent = parseFloat(ruleRows.rows[0].rule_value);
+    if (isNaN(hostSharePercent) || hostSharePercent <= 0) {
+      const error: any = new Error("FINANCE_RULE_INVALID: Finance rule 'host_gift_share_percent' has an invalid value.");
+      error.code = 'FINANCE_RULE_INVALID';
+      error.status = 500;
+      throw error;
+    }
+    const hostPoints = Math.floor((totalCoins * hostSharePercent) / 100);
+    const platformShare = totalCoins - hostPoints;
+
+    // 5b. Row-level lock on sender wallet
     let senderWalletRes = await client.query(
       `SELECT wallet_id, user_id, coins FROM popolive.user_wallets WHERE user_id = $1 FOR UPDATE`,
       [senderUser.id]
@@ -573,19 +613,21 @@ export async function executeAtomicGiftSend({
       senderWalletId = senderWalletRes.rows[0].wallet_id;
     }
 
-    // Locked Rule 2: Coin balance must never go negative
+    // 5c. Locked Rule 2: Verify sufficient coins - balance must never go negative
     if (senderCoins < totalCoins) {
       const err: any = new Error(
-        `INSUFFICIENT_BALANCE: You need ${totalCoins.toLocaleString()} coins, but your balance is ${senderCoins.toLocaleString()} coins.`
+        `INSUFFICIENT_COINS: Insufficient coin balance. Required: ${totalCoins.toLocaleString()}, available: ${senderCoins.toLocaleString()}.`
       );
-      err.code = 'INSUFFICIENT_BALANCE';
+      err.code = 'INSUFFICIENT_COINS';
       err.status = 400;
+      err.requiredCoins = totalCoins;
+      err.availableCoins = senderCoins;
       throw err;
     }
 
     const newSenderCoins = senderCoins - totalCoins;
 
-    // Ensure and lock host wallet
+    // 5d. Ensure and lock host wallet
     await client.query(
       `INSERT INTO popolive.user_wallets (wallet_id, user_id, coins, diamond_points, total_spent_coins, total_received_points)
        VALUES (gen_random_uuid(), $1, 0, 0, 0, 0)
@@ -601,7 +643,7 @@ export async function executeAtomicGiftSend({
     const hostPrevPoints = Number(hostWalletRes.rows[0].diamond_points) || 0;
     const hostNewPoints = hostPrevPoints + hostPoints;
 
-    // Deduct coins from sender wallet
+    // 5e. Deduct coins from sender wallet
     await client.query(
       `UPDATE popolive.user_wallets
        SET coins = coins - $1,
@@ -611,7 +653,7 @@ export async function executeAtomicGiftSend({
       [totalCoins, senderUser.id]
     );
 
-    // Credit points to host wallet
+    // 5f. Credit points to host wallet
     await client.query(
       `UPDATE popolive.user_wallets
        SET diamond_points = diamond_points + $1,
@@ -621,7 +663,7 @@ export async function executeAtomicGiftSend({
       [hostPoints, hostId]
     );
 
-    // Record coin transaction row (debit)
+    // 5g. Record coin transaction row (debit)
     const coinTxId = `ctx_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     await client.query(
       `INSERT INTO popolive.coin_transactions (
@@ -644,7 +686,7 @@ export async function executeAtomicGiftSend({
       ]
     );
 
-    // Record gift transaction with 70% host share snapshot
+    // 5h. Record gift transaction with 70% host share snapshot
     const giftTxId = `gtx_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     await client.query(
       `INSERT INTO popolive.gift_transactions (
@@ -678,7 +720,7 @@ export async function executeAtomicGiftSend({
       ]
     );
 
-    // Record points transaction row (credit) for host
+    // 5i. Record points transaction row (credit) for host
     const ptsTxId = `ptx_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     await client.query(
       `INSERT INTO popolive.points_transactions (
@@ -712,7 +754,38 @@ export async function executeAtomicGiftSend({
       ]
     );
 
-    // Update room totals
+    // 5j. Record persistent gift alert / event record
+    await client.query(
+      `INSERT INTO popolive.gift_realtime_events (
+         room_scope, sender_user_id, recipient_host_id, event_type, payload, created_at
+       ) VALUES ($1, $2, $3, 'gift:received', $4::jsonb, CURRENT_TIMESTAMP)`,
+      [
+        `room:${room.id}`,
+        senderUser.id,
+        hostId,
+        JSON.stringify({
+          giftTransactionId: giftTxId,
+          coinTxId,
+          ptsTxId,
+          roomId: room.id,
+          roomNumber: room.room_number,
+          senderId: senderUser.id,
+          senderNickname: senderUser.nickname,
+          recipientHostId: hostId,
+          recipientNickname: room.host_nickname,
+          giftId: resolvedGiftId,
+          giftName,
+          unitPrice: giftUnitPrice,
+          quantity: giftCount,
+          totalCoins,
+          hostPoints,
+          hostSharePercent,
+          sentAt: new Date().toISOString(),
+        }),
+      ]
+    );
+
+    // 5k. Update room totals
     await client.query(
       `UPDATE popolive.live_rooms
        SET coins_earned = coins_earned + $1,
@@ -722,18 +795,110 @@ export async function executeAtomicGiftSend({
       [totalCoins, hostPoints, room.id]
     );
 
+    // 5l. Increment usage count in catalog
+    await client.query(
+      `UPDATE popolive.gift_catalog
+       SET usage_count = usage_count + $1,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE gift_id = $2`,
+      [giftCount, resolvedGiftId]
+    );
+
+    // 5m. Link to active PK Battle if host is currently in PK
+    const pkBattleRes = await client.query(
+      `SELECT id, host_a_id, host_b_id, host_a_room, host_b_room, host_a_score, host_b_score, status
+       FROM popolive.pk_battles
+       WHERE (host_a_id = $1 OR host_b_id = $1 OR host_a_room = $2 OR host_b_room = $2)
+         AND status = 'active'
+       LIMIT 1
+       FOR UPDATE`,
+      [hostId, room.room_number]
+    );
+
+    if (pkBattleRes.rows.length > 0) {
+      const bRow = pkBattleRes.rows[0];
+      const isHostA = bRow.host_a_id === hostId || bRow.host_a_room === room.room_number;
+      const hostSide = isHostA ? 'host_a' : 'host_b';
+      const prevA = parseInt(String(bRow.host_a_score ?? '0'), 10);
+      const prevB = parseInt(String(bRow.host_b_score ?? '0'), 10);
+      const newScoreA = isHostA ? prevA + totalCoins : prevA;
+      const newScoreB = !isHostA ? prevB + totalCoins : prevB;
+      const leadingId =
+        newScoreA > newScoreB ? bRow.host_a_id : newScoreB > newScoreA ? bRow.host_b_id : null;
+
+      await client.query(
+        `UPDATE popolive.pk_battles
+         SET host_a_score = $1, host_b_score = $2, leading_host_id = $3, last_synced_at = NOW()
+         WHERE id = $4`,
+        [newScoreA, newScoreB, leadingId, bRow.id]
+      );
+
+      await client.query(
+        `INSERT INTO popolive.pk_score_events (
+           battle_id, host_side, target_host_id, sender_id, sender_name, points, gift_name, idempotency_key
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         ON CONFLICT (idempotency_key) DO NOTHING`,
+        [
+          bRow.id,
+          hostSide,
+          hostId,
+          senderUser.id,
+          senderUser.nickname,
+          totalCoins,
+          `${giftName}${giftCount > 1 ? ` x${giftCount}` : ''}`,
+          `pk_score_${safeIdempotencyKey}`,
+        ]
+      );
+
+      await client.query(
+        `INSERT INTO popolive.pk_gift_transactions (
+           transaction_id, battle_id, sender_id, sender_name, receiver_id, receiver_name, receiver_side,
+           gift_id, gift_name, coin_price, quantity, total_coins, host_points, pk_score_added, status, idempotency_key
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'completed', $15)
+         ON CONFLICT (idempotency_key) DO NOTHING`,
+        [
+          giftTxId,
+          bRow.id,
+          senderUser.id,
+          senderUser.nickname,
+          hostId,
+          room.host_nickname,
+          hostSide,
+          resolvedGiftId,
+          giftName,
+          giftUnitPrice,
+          giftCount,
+          totalCoins,
+          hostPoints,
+          totalCoins,
+          `pk_tx_${safeIdempotencyKey}`,
+        ]
+      );
+    }
+
     return {
       giftTxId,
       newSenderCoins,
       hostPoints,
       totalCoins,
+      hostSharePercent,
     };
   });
 
+  // Invalidate fast wallet cache so subsequent reads reflect fresh authoritative state
+  await Promise.all([
+    redisDel(`wallet:balance:${senderUser.id}`).catch(() => {}),
+    redisDel(`wallet:balance:${hostId}`).catch(() => {}),
+  ]);
+
   return {
+    success: true,
     isIdempotentReplay: false,
     message: `Sent ${giftCount}x ${giftName} successfully!`,
     transactionId: transferResult.giftTxId,
+    coinsDeducted: transferResult.totalCoins,
+    hostPointsCredited: transferResult.hostPoints,
+    remainingCoins: transferResult.newSenderCoins,
     gift: {
       id: resolvedGiftId,
       name: giftName,
@@ -741,8 +906,6 @@ export async function executeAtomicGiftSend({
       unitPrice: giftUnitPrice,
       totalCoins: transferResult.totalCoins,
     },
-    hostSharePercent,
-    hostPointsCredited: transferResult.hostPoints,
-    remainingCoins: transferResult.newSenderCoins,
+    hostSharePercent: transferResult.hostSharePercent,
   };
 }

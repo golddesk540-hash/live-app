@@ -26,7 +26,10 @@ export async function GET() {
       }
     }
 
+    // 1. Start with the authoritative POPULAR_COUNTRY_SHORTCUTS
+    const seenCodes = new Set<string>();
     const popular = POPULAR_COUNTRY_SHORTCUTS.map((item) => {
+      seenCodes.add(item.code.toUpperCase());
       const isAll = item.code === 'ALL';
       const activeRooms = isAll ? totalRooms : (countMap.get(item.code.toUpperCase()) || 0);
       return {
@@ -36,6 +39,23 @@ export async function GET() {
         activeRooms,
       };
     });
+
+    // 2. Also append any other country from COUNTRIES_LIST that currently has active live rooms
+    for (const r of rows) {
+      const code = (r.country_code || '').toUpperCase();
+      if (code && !seenCodes.has(code) && (r.live_rooms_count || 0) > 0) {
+        const countryMeta = COUNTRIES_LIST.find((c) => c.code.toUpperCase() === code);
+        if (countryMeta) {
+          seenCodes.add(code);
+          popular.push({
+            code: countryMeta.code,
+            name: countryMeta.name,
+            flag: countryMeta.flag,
+            activeRooms: r.live_rooms_count || 0,
+          });
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,

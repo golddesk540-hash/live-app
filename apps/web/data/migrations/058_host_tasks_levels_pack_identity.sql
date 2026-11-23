@@ -120,5 +120,5 @@ CREATE INDEX IF NOT EXISTS idx_host_task_events_user ON popolive.host_task_realt
 -- Update points_transactions_transaction_type_check to permit host task and starter pack reward transactions
 ALTER TABLE popolive.points_transactions DROP CONSTRAINT IF EXISTS points_transactions_transaction_type_check;
 ALTER TABLE popolive.points_transactions ADD CONSTRAINT points_transactions_transaction_type_check
-  CHECK (transaction_type = ANY (ARRAY['gift_earned', 'pk_gift_earned', 'admin_credit', 'admin_debit', 'reversal', 'task_reward', 'starter_pack']));
+  CHECK (transaction_type = ANY (ARRAY['gift_earned', 'pk_gift_earned', 'admin_credit', 'admin_debit', 'reversal', 'task_reward', 'starter_pack', 'agent_commission', 'withdrawal_debit', 'withdrawal_refund']));
 

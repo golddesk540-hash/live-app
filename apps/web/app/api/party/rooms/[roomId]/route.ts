@@ -52,14 +52,41 @@ export async function GET(
 
     const room = rows[0];
 
-    // Query seat count & occupied members
+    // Query all 9 seats from database
     const seatsRes = await query<any>(
-      `SELECT COUNT(*) as occupied_count 
-       FROM popolive.party_seats 
-       WHERE room_number = $1 AND status = 'occupied'`,
+      `SELECT 
+        id,
+        seat_number,
+        participant_id,
+        participant_name,
+        participant_avatar,
+        is_host,
+        is_muted,
+        is_camera_on,
+        status,
+        occupied_at,
+        updated_at
+       FROM popolive.party_seats
+       WHERE room_number = $1
+       ORDER BY seat_number ASC`,
       [room.room_number]
     );
-    const occupiedCount = parseInt(seatsRes[0]?.occupied_count || '1', 10);
+
+    const seats = seatsRes.map((s) => ({
+      id: s.id,
+      seatNumber: s.seat_number,
+      participantId: s.participant_id,
+      participantName: s.participant_name,
+      participantAvatar: s.participant_avatar,
+      isHost: Boolean(s.is_host),
+      isMuted: Boolean(s.is_muted),
+      isCameraOn: Boolean(s.is_camera_on),
+      status: s.status,
+      occupiedAt: s.occupied_at,
+      updatedAt: s.updated_at,
+    }));
+
+    const occupiedCount = seats.filter((s) => s.status === 'occupied').length || 1;
 
     return NextResponse.json({
       success: true,
@@ -85,8 +112,12 @@ export async function GET(
         hostAvatar: room.host_avatar,
         hostUserId: room.host_user_id,
         tags: room.tags || [],
+        seats,
         createdAt: room.created_at,
       },
+      seats,
+      seatsCount: seats.length,
+      occupiedCount,
     });
   } catch (error: any) {
     console.error('Error fetching party room details:', error);

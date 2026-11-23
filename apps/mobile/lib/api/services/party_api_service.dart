@@ -89,12 +89,28 @@ class PartyApiService {
     return _client.post('/api/party/rooms/$roomId/seats/$seatNumber/leave');
   }
 
-  /// Toggles microphone for seat n
+  /// Toggles or updates microphone state for seat n
   Future<ApiResponse<dynamic>> toggleSeatMic({
     required String roomId,
     required int seatNumber,
+    bool? isMuted,
+    String? micState,
   }) async {
-    return _client.post('/api/party/rooms/$roomId/seats/$seatNumber/mic');
+    return _client.post(
+      '/api/party/rooms/$roomId/seats/$seatNumber/mic',
+      body: {
+        if (isMuted != null) 'isMuted': isMuted,
+        if (micState != null) 'micState': micState,
+      },
+    );
+  }
+
+  /// Retrieves current database microphone state for seat n
+  Future<ApiResponse<dynamic>> getSeatMicState({
+    required String roomId,
+    required int seatNumber,
+  }) async {
+    return _client.get('/api/party/rooms/$roomId/seats/$seatNumber/mic');
   }
 
   /// Submits a guest seat join request for Seats 2 to 9

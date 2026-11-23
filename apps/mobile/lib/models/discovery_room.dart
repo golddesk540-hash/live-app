@@ -287,6 +287,26 @@ class DiscoveryRoom {
     );
   }
 
+  FixtureLiveRoom toFixtureLiveRoom() {
+    return FixtureLiveRoom(
+      id: roomId.isNotEmpty ? roomId : id,
+      roomNumber: roomNumber,
+      title: title,
+      hostNickname: host.nickname,
+      hostAvatar: host.avatarUrl,
+      coverUrl: coverUrl,
+      category: category,
+      country: country,
+      countryCode: countryCode,
+      flagEmoji: flagEmoji,
+      viewerCount: viewerCount,
+      heatScore: coinsEarned,
+      isLive: isLive,
+      isPkActive: isPk,
+      tags: tags,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'roomId': roomId,

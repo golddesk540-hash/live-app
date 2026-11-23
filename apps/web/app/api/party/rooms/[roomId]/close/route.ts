@@ -53,6 +53,14 @@ export async function POST(
          WHERE room_number = $1`,
         [room.room_number]
       );
+
+      // Cancel any remaining pending seat requests
+      await client.query(
+        `UPDATE popolive.party_seat_requests
+         SET status = 'cancelled', responded_at = CURRENT_TIMESTAMP
+         WHERE room_number = $1 AND status = 'pending'`,
+        [room.room_number]
+      );
     });
 
     return NextResponse.json({

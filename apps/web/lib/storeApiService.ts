@@ -20,7 +20,7 @@ import { getOrCreateUserWallet } from '@/lib/economyApiService';
  * - Locked Rule 10: No lucky gifts, paid video calls, direct APK, or real payments.
  */
 
-export const USE_STORE_API: boolean = process.env.NEXT_PUBLIC_USE_STORE_API !== 'false';
+export const USE_STORE_API: boolean = process.env.NEXT_PUBLIC_USE_STORE_API === 'true';
 
 // Helper to convert arbitrary user id strings to a UUID if needed
 export function toSafeUuid(id: string): string {

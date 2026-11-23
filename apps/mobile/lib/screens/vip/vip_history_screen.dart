@@ -1,6 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import '../../design/design_fixtures.dart';
 
 /// ============================================================================
 /// Popo Live — Phase 7 Module 7.7: VIP Membership History Screen (Android & iOS)
@@ -48,30 +47,34 @@ class _VipHistoryScreenState extends State<VipHistoryScreen> {
       _error = null;
     });
     try {
-      final qs = StringBuffer('?status=$_statusFilter&limit=25');
-      if (widget.previewDemo) qs.write('&preview=demo');
-
-      final res = await http.get(
-        Uri.parse('${widget.apiBaseUrl}/api/vip/history$qs'),
-        headers: widget.headers,
-      );
-      final data = jsonDecode(res.body);
-      if (!mounted) return;
-      if (res.statusCode != 200 || data['success'] != true) {
-        setState(() {
-          _error = data['error']?.toString() ?? 'Failed to load VIP history';
-          _loading = false;
-        });
-        return;
+      if (DesignFixtures.isError) {
+        throw const DesignFixtureException(
+          message: 'VIP billing history unavailable [ERR_VIP_HIST_500]',
+        );
       }
+      final history = DesignFixtures.vipPlanHistory;
+      if (!mounted) return;
       setState(() {
-        _records = List<Map<String, dynamic>>.from(data['records'] ?? []);
+        _records = history
+            .map((h) => {
+                  'id': h.id,
+                  'planName': h.tierName,
+                  'startDate': h.startDate,
+                  'endDate': h.endDate,
+                  'amount': h.pricePaidUsd,
+                  'status': h.status,
+                })
+            .toList();
         _loading = false;
       });
+      return;
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = e
+            .toString()
+            .replaceFirst('Exception: ', '')
+            .replaceFirst('DesignFixtureException: ', '');
         _loading = false;
       });
     }
@@ -118,16 +121,26 @@ class _VipHistoryScreenState extends State<VipHistoryScreen> {
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   children: [
-                    for (final st in const ['all', 'active', 'expired', 'cancelled', 'suspended', 'refunded'])
+                    for (final st in const [
+                      'all',
+                      'active',
+                      'expired',
+                      'cancelled',
+                      'suspended',
+                      'refunded'
+                    ])
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: ChoiceChip(
-                          label: Text(st.toUpperCase(), style: const TextStyle(fontSize: 11)),
+                          label: Text(st.toUpperCase(),
+                              style: const TextStyle(fontSize: 11)),
                           selected: _statusFilter == st,
                           selectedColor: _neonPink,
                           backgroundColor: _cardColor,
                           labelStyle: TextStyle(
-                            color: _statusFilter == st ? Colors.white : Colors.white70,
+                            color: _statusFilter == st
+                                ? Colors.white
+                                : Colors.white70,
                             fontWeight: FontWeight.w700,
                           ),
                           onSelected: (_) {
@@ -141,22 +154,28 @@ class _VipHistoryScreenState extends State<VipHistoryScreen> {
               ),
               Expanded(
                 child: _loading
-                    ? const Center(child: CircularProgressIndicator(color: _goldAccent))
+                    ? const Center(
+                        child: CircularProgressIndicator(color: _goldAccent))
                     : _error != null
                         ? Center(
-                            child: Text(_error!, style: const TextStyle(color: Colors.redAccent)),
+                            child: Text(_error!,
+                                style:
+                                    const TextStyle(color: Colors.redAccent)),
                           )
                         : _records.isEmpty
                             ? Center(
                                 child: Text(
-                                  _isUrdu ? 'کوئی ریکارڈ نہیں ملا۔' : 'No VIP membership records found.',
+                                  _isUrdu
+                                      ? 'کوئی ریکارڈ نہیں ملا۔'
+                                      : 'No VIP membership records found.',
                                   style: const TextStyle(color: Colors.white60),
                                 ),
                               )
                             : ListView.separated(
                                 padding: const EdgeInsets.all(14),
                                 itemCount: _records.length,
-                                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 10),
                                 itemBuilder: (_, idx) {
                                   final r = _records[idx];
                                   return Container(
@@ -164,13 +183,17 @@ class _VipHistoryScreenState extends State<VipHistoryScreen> {
                                     decoration: BoxDecoration(
                                       color: _cardColor,
                                       borderRadius: BorderRadius.circular(18),
-                                      border: Border.all(color: Colors.purpleAccent.withOpacity(0.25)),
+                                      border: Border.all(
+                                          color: Colors.purpleAccent
+                                              .withOpacity(0.25)),
                                     ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(
                                               '${r['planName'] ?? ''} (${r['badgeLabel'] ?? ''})',
@@ -181,13 +204,19 @@ class _VipHistoryScreenState extends State<VipHistoryScreen> {
                                               ),
                                             ),
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 3),
                                               decoration: BoxDecoration(
                                                 color: Colors.white12,
-                                                borderRadius: BorderRadius.circular(12),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
                                               ),
                                               child: Text(
-                                                (r['status'] ?? '').toString().toUpperCase(),
+                                                (r['status'] ?? '')
+                                                    .toString()
+                                                    .toUpperCase(),
                                                 style: const TextStyle(
                                                   color: _goldAccent,
                                                   fontSize: 10,
@@ -199,20 +228,27 @@ class _VipHistoryScreenState extends State<VipHistoryScreen> {
                                         ),
                                         const SizedBox(height: 6),
                                         Text(
-                                          'ID: ${r['membershipId']}  •  \$${Number.tryParse('${r['purchaseAmount'] ?? 0}')?.toStringAsFixed(2) ?? '0.00'} ${r['currency'] ?? 'USD'} (${r['paymentMethod'] ?? ''})',
-                                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                                          'ID: ${r['membershipId']}  •  \$${num.tryParse('${r['purchaseAmount'] ?? 0}')?.toStringAsFixed(2) ?? '0.00'} ${r['currency'] ?? 'USD'} (${r['paymentMethod'] ?? ''})',
+                                          style: const TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: 12),
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
                                           'Activated: ${r['activationDate'] ?? '—'}  •  Expiry: ${r['expiryDate'] ?? '—'}',
-                                          style: const TextStyle(color: Colors.white54, fontSize: 11),
+                                          style: const TextStyle(
+                                              color: Colors.white54,
+                                              fontSize: 11),
                                         ),
                                         if (r['receiptId'] != null)
                                           Padding(
-                                            padding: const EdgeInsets.only(top: 4),
+                                            padding:
+                                                const EdgeInsets.only(top: 4),
                                             child: Text(
                                               'Receipt: ${r['receiptId']}',
-                                              style: const TextStyle(color: Color(0xFF34D399), fontSize: 11),
+                                              style: const TextStyle(
+                                                  color: Color(0xFF34D399),
+                                                  fontSize: 11),
                                             ),
                                           ),
                                       ],

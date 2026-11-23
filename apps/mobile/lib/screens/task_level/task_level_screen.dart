@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../services/host/host_task_service.dart';
+import '../../design/design_fixtures.dart';
+import '../../widgets/popo_error_state.dart';
+import '../../widgets/popo_empty_state.dart';
 
 /// Popo Live — Phase 4 Module 8: Host Task Level Screen
 /// Dynamic task level tracking, points progress, tier benefits and milestone roadmap.
@@ -28,7 +30,12 @@ class _TaskLevelScreenState extends State<TaskLevelScreen> {
     });
 
     try {
-      final data = await HostTaskService.instance.fetchTaskLevel();
+      if (DesignFixtures.isError) {
+        throw const DesignFixtureException(
+          message: 'Failed to load task level [ERR_TASK_LEVEL_503]',
+        );
+      }
+      final data = DesignFixtures.taskLevelInfo.toMap();
       if (!mounted) return;
       setState(() {
         _levelData = data;
@@ -37,7 +44,10 @@ class _TaskLevelScreenState extends State<TaskLevelScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _errorMessage = e
+            .toString()
+            .replaceFirst('Exception: ', '')
+            .replaceFirst('DesignFixtureException: ', '');
         _isLoading = false;
       });
     }
@@ -72,32 +82,25 @@ class _TaskLevelScreenState extends State<TaskLevelScreen> {
       );
     }
 
-    if (_errorMessage != null) {
+    if (DesignFixtures.isError || _errorMessage != null) {
       return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.shield_outlined, color: Color(0xFFFF1A6C), size: 48),
-              const SizedBox(height: 16),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Color(0xFFCBB9E6), fontSize: 14),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF1A6C),
-                  foregroundColor: Colors.white,
-                  shape: const StadiumBorder(),
-                ),
-                onPressed: _loadTaskLevel,
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        child: PopoErrorState(
+          title: 'Task Level Unavailable',
+          message: _errorMessage ?? 'Server busy [ERR_TASK_LEVEL_503]',
+          retryText: 'Retry',
+          onRetry: _loadTaskLevel,
+        ),
+      );
+    }
+
+    if (DesignFixtures.isEmpty || (_levelData != null && _levelData!['currentLevel'] == 0)) {
+      return Center(
+        child: PopoEmptyState(
+          icon: Icons.military_tech_outlined,
+          title: 'No Task Level Data',
+          message: 'Complete daily host broadcasting tasks to progress through creator milestones.',
+          actionText: 'Refresh',
+          onActionTap: _loadTaskLevel,
         ),
       );
     }

@@ -292,6 +292,7 @@ class PkService {
   /// 10. Finalize battle (voluntary exit, surrender, or time expired)
   Future<ApiResponse<PkBattleResult>> finalizeBattle({
     required String battleId,
+    String? hostId,
     String action = 'end_battle',
     String reason = 'timer_expired',
   }) async {
@@ -299,6 +300,9 @@ class PkService {
       'action': action,
       'reason': reason,
     };
+    if (hostId != null && hostId.isNotEmpty) {
+      payload['hostId'] = hostId;
+    }
 
     final res = await _client.post(
       '/api/pk/battle/$battleId/result',

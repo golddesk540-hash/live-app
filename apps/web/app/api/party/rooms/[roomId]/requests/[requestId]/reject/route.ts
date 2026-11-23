@@ -47,20 +47,36 @@ export async function POST(
       );
     }
 
-    const res = await query<any>(
-      `UPDATE popolive.party_seat_requests
-       SET status = 'rejected', responded_at = CURRENT_TIMESTAMP
-       WHERE id = $1 AND room_number = $2
-       RETURNING id, status, seat_number, user_id`,
+    const existing = await query<any>(
+      `SELECT id, status FROM popolive.party_seat_requests WHERE id = $1 AND room_number = $2`,
       [params.requestId, room.room_number]
     );
 
-    if (res.length === 0) {
+    if (existing.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Seat request not found.', code: 'REQUEST_NOT_FOUND' },
         { status: 404 }
       );
     }
+
+    if (existing[0].status !== 'pending') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Request is already ${existing[0].status}.`,
+          code: 'REQUEST_ALREADY_RESOLVED',
+        },
+        { status: 409 }
+      );
+    }
+
+    const res = await query<any>(
+      `UPDATE popolive.party_seat_requests
+       SET status = 'rejected', responded_at = CURRENT_TIMESTAMP
+       WHERE id = $1 AND room_number = $2 AND status = 'pending'
+       RETURNING id, status, seat_number, user_id`,
+      [params.requestId, room.room_number]
+    );
 
     return NextResponse.json({
       success: true,

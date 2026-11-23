@@ -156,8 +156,8 @@ class LiveApiService {
     bool isDemo = false,
   }) async {
     return _client.post(
-      '/api/live/viewer/join',
-      body: {'roomId': roomId, if (isDemo) 'isDemo': true},
+      '/api/live/rooms/$roomId/join',
+      body: {if (isDemo) 'isDemo': true},
     );
   }
 
@@ -178,8 +178,8 @@ class LiveApiService {
     bool isDemo = false,
   }) async {
     return _client.post(
-      '/api/live/viewer/leave',
-      body: {'roomId': roomId, if (isDemo) 'isDemo': true},
+      '/api/live/rooms/$roomId/leave',
+      body: {if (isDemo) 'isDemo': true},
     );
   }
 
@@ -189,8 +189,19 @@ class LiveApiService {
     bool isDemo = false,
   }) async {
     return _client.post(
-      '/api/live/viewer/join',
-      body: {'roomId': roomId, if (isDemo) 'isDemo': true},
+      '/api/live/rooms/$roomId/heartbeat',
+      body: {if (isDemo) 'isDemo': true},
+    );
+  }
+
+  /// Fetches active viewers and current distinct viewer count from PostgreSQL
+  Future<ApiResponse<dynamic>> getViewers({
+    required String roomId,
+    int limit = 50,
+  }) async {
+    return _client.get(
+      '/api/live/rooms/$roomId/viewers',
+      queryParameters: {'limit': limit.toString()},
     );
   }
 
@@ -407,5 +418,31 @@ class LiveApiService {
       '/api/live/center/history',
       queryParameters: {'filter': filter, if (isDemo) 'preview': 'demo'},
     );
+  }
+
+  // ==========================================
+  // VIRTUAL GIFTS & WALLET (Phase B5)
+  // ==========================================
+
+  /// Sends a virtual gift to the broadcaster of a live room
+  Future<ApiResponse<dynamic>> sendGift({
+    required String roomId,
+    required String giftId,
+    int quantity = 1,
+    String? idempotencyKey,
+  }) async {
+    return _client.post(
+      '/api/live/rooms/$roomId/gift',
+      body: {
+        'giftId': giftId,
+        'quantity': quantity,
+        if (idempotencyKey != null) 'idempotencyKey': idempotencyKey,
+      },
+    );
+  }
+
+  /// Retrieves coin balance of authenticated user
+  Future<ApiResponse<dynamic>> getCoinBalance() async {
+    return _client.get('/api/economy/coins/balance');
   }
 }

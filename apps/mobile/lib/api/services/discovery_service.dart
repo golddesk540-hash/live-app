@@ -15,6 +15,7 @@ class DiscoveryService {
     String? category, // 'live', 'party', 'pk', 'game'
     String? country, // 'ALL' or 2-letter ISO code
     String? search,
+    String? tab,
   }) async {
     return _client.get(
       '/api/discovery/explore',
@@ -24,6 +25,34 @@ class DiscoveryService {
         if (category != null && category.isNotEmpty) 'category': category,
         if (country != null && country.isNotEmpty) 'country': country,
         if (search != null && search.isNotEmpty) 'q': search,
+        if (tab != null && tab.isNotEmpty) 'tab': tab,
+      },
+    );
+  }
+
+  /// Fetches curated For You live rooms
+  Future<ApiResponse<dynamic>> getForYou({
+    int page = 1,
+    int limit = 12,
+  }) async {
+    return _client.get(
+      '/api/discovery/for-you',
+      queryParameters: {'page': page, 'limit': limit},
+    );
+  }
+
+  /// Fetches active Live Now rooms
+  Future<ApiResponse<dynamic>> getLiveNow({
+    int page = 1,
+    int limit = 12,
+    String? country,
+  }) async {
+    return _client.get(
+      '/api/discovery/live-now',
+      queryParameters: {
+        'page': page,
+        'limit': limit,
+        if (country != null && country.isNotEmpty) 'country': country,
       },
     );
   }
